@@ -20,7 +20,8 @@
           "who": "keeper",
           "note": [
             "The bell of {ruin_was} lies in the flooded crypt under {ruin}, where {water} came in the night {ruin_fall}.",
-            "Whatever lies in the drowned crypt under {ruin} has had {ruin_years} alone with the bell."
+            "Whatever lies in the drowned crypt under {ruin} has had {ruin_years} alone with the bell.",
+            "{keeper} will not go near the crypt under {ruin}: the bell lies in the black water there, and the water is deep."
           ],
           "acts": [
             {
@@ -64,7 +65,8 @@
           "ops": [["disposition", "keeper", 35], ["favour", "keeper", "shelter", 2], ["mark", "memorial"], ["xp_story", "fair"]],
           "line": [
             "The bell of {ruin_was} hangs in {town} now, and once a year it is rung for the dead of {ruin}, and only once. {keeper} counts the strokes.",
-            "Raised, and hung, and rung once for every soul of {ruin_was}. Under {water}, nothing rings back."
+            "Raised, and hung, and rung once for every soul of {ruin_was}. Under {water}, nothing rings back.",
+            "The people of {town} stand bareheaded while the bell of {ruin_was} is rung for the dead of {ruin}. {keeper} stands at the front and does not weep."
           ]
         },
         {
@@ -74,7 +76,8 @@
           "ops": [["disposition", "keeper", 25], ["xp_story", "fair"]],
           "line": [
             "The bell rings over {town} again. On still nights, something in the crypt under {ruin} rings back.",
-            "{keeper} wept to hear it. The fishers say the water by {ruin} has gone cold, and stays cold."
+            "{keeper} wept to hear it. The fishers say the water by {ruin} has gone cold, and stays cold.",
+            "They hung the bell in {town} and rang it. Something under {ruin} answered, once, and the ringers have not gone near the water since."
           ]
         },
         {
@@ -84,7 +87,8 @@
           "ops": [["disposition", "keeper", -5], ["xp_story", "small"]],
           "line": [
             "The bell stays under {water}. {keeper} sits by the water at night and listens, and does not say what for.",
-            "Left where it lies. The bell of {ruin_was} still rings on still nights, and {keeper} has stopped asking anyone."
+            "Left where it lies. The bell of {ruin_was} still rings on still nights, and {keeper} has stopped asking anyone.",
+            "No one goes down to the crypt under {ruin}. {keeper} keeps the story of {ruin_was} alone, and listens to the water."
           ]
         }
       ],
@@ -93,7 +97,8 @@
         "ops": [["npc_fate", "keeper", "dead"], ["news", "news_lapse"]],
         "line": [
           "{keeper} was found by {water} at dawn, sitting up, eyes open, facing {ruin}. The bell had rung all night.",
-          "{keeper} went down to the water on a still night and did not come back. The bell has not rung since."
+          "{keeper} went down to the water on a still night and did not come back. The bell has not rung since.",
+          "The bell rang under {water} all one night. In the morning {keeper} was gone from {town}, and the door of the house stood open."
         ]
       },
       "clock": [16, 28],
@@ -102,14 +107,16 @@
         "keep": ["bell"],
         "bell": ["the bell of {ruin}", "the drowned bell of {ruin}"],
         "title": ["The drowned bell", "The bell under {water}", "What rings under {water}"],
-        "stakes": ["the bell of {ruin_was}, and the peace of {keeper}", "{keeper}'s last wish, and the drowned bell"],
+        "stakes": ["the bell of {ruin_was}, and the peace of {keeper}", "{keeper}'s last wish, and the drowned bell", "a bell under {water}, and the one who hears it ring"],
         "plea": [
           "You heard it. Don't tell me you didn't. That's the bell of {ruin_was}, {ruin_years} under the water, and it rings for us who are left. I am the last who keeps its story. Bring it up. Bring it out of the crypt at {ruin} and let it be hung where it can be seen, before it rings for me.",
-          "Every still night since the spring. The bell of {ruin}. My people were born under it, and buried under it. They threw it in the water the year {ruin_fall}, and I thought it was done with us. Raise it. Please. I want to hear it once in the light."
+          "Every still night since the spring. The bell of {ruin}. My people were born under it, and buried under it. They threw it in the water the year {ruin_fall}, and I thought it was done with us. Raise it. Please. I want to hear it once in the light.",
+          "I hear it when the wind drops. The bell of {ruin_was}, under {water}, where our fathers sank it. I keep the story of {ruin}, and I will not be the one who lets it ring alone. Raise it from the crypt, and hang it where the living can hear it too."
         ],
         "first": [
           "On still nights a bell rings under {water}: the bell of {ruin_was}, drowned {ruin_years} ago. {keeper} wants it raised from the crypt under {ruin}.",
-          "{keeper}, the last who keeps the story of {ruin_was}, wants its drowned bell brought up from {ruin}."
+          "{keeper}, the last who keeps the story of {ruin_was}, wants its drowned bell brought up from {ruin}.",
+          "{keeper} hears a bell ring under {water} on still nights, and says it is the bell of {ruin_was}. It lies in the crypt at {ruin}."
         ],
         "news_lapse": ["In {town}, the old {keeper_title} {keeper} was found dead by {water}, facing the ruins of {ruin}."]
       }

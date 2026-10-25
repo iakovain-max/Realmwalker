@@ -1,0 +1,45 @@
+{
+  "_comment": "The meetings of situations inside adventures (C.10; situations.inside.json): the witness's kin turning you from the door, and the hunter at work in the yard who will not hunt.",
+  "scenes": {
+    "sit_turned_away": {
+      "about": "Someone of the witness's house comes out to stop you at the door and sends you off; when they have gone back in, the witness slips out after you.",
+      "cues": [
+        {"cue": "focus", "at": "other"},
+        {"cue": "walk", "who": "other", "to": "you"},
+        {"cue": "say", "who": "other", "key": "door", "ticks": 3},
+        {"cue": "say", "who": "other", "key": "door_more", "ticks": 3},
+        {"cue": "walk", "who": "other", "to": "home"},
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "hush", "ticks": 2},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "door": ["There's nobody here who saw anything. Go on your way.", "Whatever you've heard, it's lies. Leave us be.", "We've had the reeve at the door once already. We'll not have you as well.", "Not in this house. Not a word of it."],
+        "door_more": ["Talk of it brings it. Everyone knows that.", "Go and ask somebody else. Go on.", "If you've any pity, you'll not come back.", "We've enough trouble without strangers stirring it."],
+        "hush": ["Wait. Not so loud.", "Psst. Over here, quick.", "Don't look round. Keep walking, and listen.", "They'll be back out in a moment. Quickly."]
+      },
+      "cast": ["asker", "other"],
+      "given": ["plea"]
+    },
+    "sit_hunter_yard": {
+      "about": "The hunter is at work in a yard, with the old bow hung on the wall behind; neighbours passing say what they used to be; seeing you, the hunter puts the work down and comes over.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 3, "radius": 3, "key": "talk", "ticks": 10},
+        {"cue": "say", "who": "asker", "key": "work", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "talk": ["That one could put an arrow through a hare at a hundred paces, once.", "Never hunts now. Not since that winter.", "Ask about the bow and you'll get nothing.", "Best hunter this side of the river, before.", "Leave them be. They've cause enough.", "There's the one who came back down."],
+        "work": ["Splitting wood will do. Wood doesn't bite.", "Another hide to scrape. Another day.", "No. No more of that. Not for anyone.", "Let them talk. Let them all talk."]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    }
+  }
+}

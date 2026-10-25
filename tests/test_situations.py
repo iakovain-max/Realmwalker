@@ -24,8 +24,9 @@ def life(tables):
 
 
 def plain(tables) -> dict:
-    """The predicaments forged from ordinary roots (not the hand-made vignettes, tests/test_vignettes.py)."""
-    return {k: v for k, v in situations.predicaments(tables).items() if not v.get("vignette")}
+    """The predicaments forged from ordinary roots (not the hand-made vignettes, tests/test_vignettes.py, nor an
+    adventure's steps, tests/test_inside.py)."""
+    return {k: v for k, v in situations.predicaments(tables).items() if not v.get("vignette") and not v.get("inside")}
 
 
 def watched_town(game):

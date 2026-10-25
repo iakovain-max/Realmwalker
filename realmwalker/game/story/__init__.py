@@ -426,10 +426,19 @@ def _show_tale(game, town) -> bool:
     for adv in active(game):
         words = {k: v for k, v in wordsmod.for_adventure(game, adv).items() if isinstance(v, str)}
         for st in open_steps(adv):
+            if st["kind"] == "learn" and "ally" not in adv["keys"]:
+                _hunter_situation(game, adv, st, town)
             if st["kind"] != "witness" or st.get("shown"):
                 continue
             npc = next((n for n in npcs_in(game.world, town.id) if n.alive and _is(game, st["target"].get("who"), n)),
                        None)
+            if npc is not None and "inside" not in st:
+                from realmwalker.game.story import situations
+
+                _bind_if_waiting(game, adv, st, npc)
+                if situations.for_step(game, adv, st, npc) is not None:
+                    st["shown"] = True  # (met in its own scene, by the town's clock)
+                    continue
             if npc is not None and stage.start(game, "survivor", cast={"survivor": npc.id}, words=words) is not None:
                 st["shown"] = True
                 return True
@@ -444,6 +453,24 @@ def _show_tale(game, town) -> bool:
             adv["ally_note"] = int(game.moment.total_days)
             return True
     return False
+
+
+def _hunter_situation(game, adv: dict, st: dict, town) -> None:
+    """The hunter who knows what it fears is in this town: their part may become a situation (C.10)."""
+    from realmwalker.game.people import npcs_in
+    from realmwalker.game.story import situations
+
+    if "inside" in st:
+        return
+    route = next((r for r in st["target"].get("routes", []) if r.get("how") == "talk" and r.get("role") == "ally"),
+                 None)
+    if route is None:
+        return
+    npc = next((n for n in npcs_in(game.world, town.id) if n.alive and _is(game, route.get("who"), n)), None)
+    if npc is None:
+        return
+    _bind_role(game, adv, "ally", npc)
+    situations.for_step(game, adv, st, npc, route="ally")
 
 
 def on_night(game, where: str) -> bool:
@@ -711,11 +738,12 @@ def talk_choices(conv) -> list:
         name = _villain_name(game, adv)
         for st in open_steps(adv):
             t = st["target"]
-            if st["kind"] == "witness" and _is(game, t.get("who"), npc):
+            sit_made = st.get("inside") is not None  # (the step became a situation: its own talk, C.10)
+            if st["kind"] == "witness" and not sit_made and _is(game, t.get("who"), npc):
                 out.append(Choice("story_witness", f"They say you saw {name}. Tell me.",
                                   data={"adv": adv["id"], "step": st["id"]}))
             if st["kind"] == "learn" and any(r.get("how") == "talk" and _is(game, r.get("who"), npc)
-                                             for r in t["routes"]):
+                                             and not (sit_made and r.get("role") == "ally") for r in t["routes"]):
                 out.append(Choice("story_learn", f"What does {name} fear? What will kill it?",
                                   data={"adv": adv["id"], "step": st["id"]}))
         if _is(game, adv["cast"].get("patron"), npc):
@@ -779,8 +807,8 @@ def talk_choose(conv, choice) -> None:
     rng = game.world.rng.child(f"talk/{adv['id']}/{data.get('step', '')}/{conv.npc.id}")
     if cid == "story_witness":
         st = find_step(game, adv["id"], data["step"])
-        lines = tables.get((st or {}).get("words") or "witness_tale") or ["It was dark. I ran."]
-        conv.note(esc(textgen.fill(rng.choice(lines), rng, tables, words)))
+        for line in step_told(game, adv, st, conv.npc.id) if st is not None else []:
+            conv.note(line)
         _bind_if_waiting(game, adv, st, conv.npc)
         step_done(game, adv["id"], data["step"])
     elif cid == "story_learn":
@@ -801,6 +829,20 @@ def talk_choose(conv, choice) -> None:
         ch = chapter(adv)
         lines = tables.get("patron_brief", ["{goal}"])
         conv.note(esc(textgen.fill(rng.choice(lines), rng, tables, dict(words, goal=ch["goal"] if ch else ""))))
+
+
+def step_told(game, adv: dict, st: dict, who: int | None = None) -> list[str]:
+    """What the person of a witness or learn step tells when they tell it (in talk, or as their situation ends)."""
+    from realmwalker.core import textgen
+    from realmwalker.game.story import words as wordsmod
+
+    words = wordsmod.for_adventure(game, adv)
+    if st["kind"] == "learn":
+        return [esc(words.get("weakness_lore", "Nobody knows for sure."))]
+    tables = game.tables.adventures.get("words", {})
+    rng = game.world.rng.child(f"talk/{adv['id']}/{st['id']}/{who if who is not None else 'sit'}")
+    lines = tables.get(st.get("words") or "witness_tale") or ["It was dark. I ran."]
+    return [esc(textgen.fill(rng.choice(lines), rng, tables, words))]
 
 
 def _bind_role(game, adv: dict, role: str, npc) -> None:

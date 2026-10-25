@@ -120,6 +120,11 @@ def live_near(game) -> list[dict]:
     return [s for s in goals.live(game) if goals.within_reach(game, s)]
 
 
+def own(sits: list[dict]) -> list[dict]:
+    """The towns' own troubles: an adventure's situations are its steps, outside the rarity rules (C.10)."""
+    return [x for x in sits if not x.get("adventure")]
+
+
 def _limit(s) -> int:
     return 2 if getattr(s, "great", False) else 1
 
@@ -131,9 +136,9 @@ def due_here(game, s) -> bool:
     if town is None or not town.npcs or _dist(game, s) > _reach(game):
         return False
     r = _rarity(game)
-    if len(live_in(game, s.id)) >= (r["per_great"] if _limit(s) > 1 else r["per_town"]):
+    if len(own(live_in(game, s.id))) >= (r["per_great"] if _limit(s) > 1 else r["per_town"]):
         return False
-    if len(live_near(game)) >= r["near"]:
+    if len(own(live_near(game))) >= r["near"]:
         return False
     nxt = town.flags.get("sit_next")
     return nxt is None or _today(game) >= int(nxt)
@@ -342,9 +347,15 @@ def _bind_given(game, s, sit, spec, rng):
     if entry is None:
         return None
     n = game.world.npcs.get(entry["npc"]) if entry.get("npc") is not None else None
-    if entry.get("npc") is not None and (n is None or not _free(game, sit, n, n.job == "child")):
+    if entry.get("npc") is not None and (n is None or not (_free(game, sit, n, n.job == "child") or _of_tale(sit, n))):
         return None
     return dict(entry)
+
+
+def _of_tale(sit: dict, n) -> bool:
+    """Someone of the adventure this situation is a step of (their own tale's person: C.10)."""
+    adv = sit["root"].get("adv")
+    return bool(adv) and n.alive and (n.flags.get("story") or {}).get("adv") == adv
 
 
 @bind("job")
@@ -648,6 +659,8 @@ def make(game, sid: int, root: dict | None = None, predicament: str | None = Non
     town = w.towns.get(sid)
     if not preds or town is None or not town.npcs:
         return None
+    if predicament in preds and preds[predicament].get("inside") and (root or {}).get("kind") != "adventure":
+        return None  # (an adventure step's own: only for_step makes one)
     if predicament in preds and preds[predicament].get("vignette") and (root or {}).get("vignette") != predicament:
         from realmwalker.game.story import vignettes
 
@@ -707,7 +720,7 @@ def _cast(game, s, root: dict, pid: str, qid: str, rng) -> dict | None:
     today = _today(game)
     sit = {"id": qid, "town": int(s.id), "root": root, "predicament": pid, "roles": {}, "stakes": {}, "clock": {},
            "goals": _story_tag(copy.deepcopy(spec["goals"]), qid), "obstacles": [], "turn": None, "meeting": None, "state": "latent",
-           "ways": [], "flags": [], "used": [], "quest": None, "threat": root.get("threat"), "adventure": None,
+           "ways": [], "flags": [], "used": [], "quest": None, "threat": root.get("threat"), "adventure": root.get("adv"),
            "ending": None, "tone": None, "made": today, "met": None, "life": None, "words": {}, "journal": []}
     _MADE.clear()
     first = [r for r, rs in spec["roles"].items() if rs["bind"] not in MAKES and rs.get("or") not in MAKES]
@@ -725,7 +738,7 @@ def _cast(game, s, root: dict, pid: str, qid: str, rng) -> dict | None:
             return None
         sit["roles"][role] = entry
         n = game.world.npcs.get(entry["npc"]) if entry.get("npc") is not None else None
-        if n is not None:
+        if n is not None and not _of_tale(sit, n):  # (the tale's own people keep their part in it)
             n.flags["story"] = {"sit": qid, "role": role}
     for i, ob in enumerate(spec.get("obstacles", [])):
         if ob.get("who") and ob["who"] not in sit["roles"]:
@@ -1731,6 +1744,31 @@ def _o_news(game, sit, key):
         news.add(game.world, text, s.x, s.y, kind="situation", importance=1, places=[s.id])
 
 
+@op("step")
+def _o_step(game, sit):
+    """The adventure's step this situation is (C.10) is done: the witness tells the tale, the one who knows tells what
+    it fears."""
+    from realmwalker.game import story
+
+    aid = sit.get("adventure")
+    st = story.find_step(game, aid, sit.get("step"))
+    if st is None or st["state"] != "open":
+        return []
+    out = story.step_told(game, story.adventures(game.world)[aid], st)
+    story.step_done(game, aid, st["id"])
+    return out
+
+
+@op("key", "word")
+def _o_key(game, sit, key):
+    """A key of the adventure this situation belongs to (the hunter who will stand with you)."""
+    from realmwalker.game.story import beats
+
+    if not sit.get("adventure"):
+        return []
+    return beats.OPS["key"](game, {"adv": sit["adventure"]}, key) or []
+
+
 @op("say", "word")
 def _o_say(game, sit, key):
     text = _fill(game, sit, spec_of(game, sit).get("words", {}).get(key) or [key], f"say/{key}")
@@ -1792,9 +1830,62 @@ def finish(game, sit: dict, e: dict, lapsed: bool = False) -> list[str]:
         q["state"] = "finished"
         q["journal"].append("It is over, one way or another.")
     _unbind(game, sit)
-    s = game.world.settlements[sit["town"]]
-    _next_gap(game, s, game.world.rng.child(f"situation/{sit['id']}/gap"))
+    if not sit.get("adventure"):  # (an adventure's step leaves the town's own gap alone)
+        s = game.world.settlements[sit["town"]]
+        _next_gap(game, s, game.world.rng.child(f"situation/{sit['id']}/gap"))
     return out
+
+
+# ---------------------------------------------------------------------------- inside adventures (C.10)
+def inside(tables, kind: str, route: str | None = None) -> list[str]:
+    """The predicaments an adventure's step of this kind (and talk route's role) may become."""
+    return [pid for pid, p in sorted(predicaments(tables).items())
+            if (p.get("inside") or {}).get("step") == kind and (p["inside"].get("route") or None) == route]
+
+
+def for_step(game, adv: dict, st: dict, npc, route: str | None = None) -> dict | None:
+    """An adventure's step met in its person's town may become a situation (ADVENTURES.md §5.16): the witness who will
+    not speak, the hunter who will not hunt. Decided once a step (`st["inside"]`); the situation finishes the step
+    (the op "step"), and its lapse never leaves the tale stuck."""
+    if "inside" in st or npc is None or not npc.alive:
+        return None
+    pids = inside(game.tables, st["kind"], route)
+    rng = game.world.rng.child(f"inside/{adv['id']}/{st['id']}")
+    pid = rng.choice(pids) if pids else None
+    st["inside"] = None
+    if pid is None or not rng.chance(float(predicaments(game.tables)[pid]["inside"].get("chance", 1.0))):
+        return None
+    root = {"kind": "adventure", "key": f"adventure:{st['kind']}", "adv": adv["id"], "step": st["id"],
+            "threat": adv.get("threat"), "npc": int(npc.id),
+            "roles": {"asker": {"npc": int(npc.id), "settlement": int(npc.settlement), "job": npc.job}}}
+    sit = make(game, int(npc.settlement), root=root, predicament=pid)
+    if sit is None:
+        return None
+    sit["step"] = st["id"]
+    st["inside"] = sit["id"]
+    return sit
+
+
+def of_step(game, st: dict) -> dict | None:
+    """The live situation an adventure's step became, or None."""
+    sit = records(game.world).get(st.get("inside") or "")
+    return sit if sit is not None and sit["state"] in LIVE else None
+
+
+def _moot(game, sit: dict) -> bool:
+    """An adventure's situation whose step is over, or whose tale is no longer the hero's, simply ends."""
+    from realmwalker.game import story
+
+    if not sit.get("adventure"):
+        return False
+    adv = story.adventures(game.world).get(sit["adventure"])
+    st = story.find_step(game, sit["adventure"], sit.get("step"))
+    return adv is None or adv["state"] != "active" or st is None or st["state"] != "open"
+
+
+def _drop(game, sit: dict) -> None:
+    sit["state"], sit["ending"], sit["tone"], sit["ended"] = "lapsed", "moot", "mixed", _today(game)
+    _unbind(game, sit)
 
 
 def daily(game) -> None:
@@ -1803,6 +1894,9 @@ def daily(game) -> None:
     today = _today(game)
     for sit in list(goals.live(game)):
         if sit.get("predicament") not in predicaments(game.tables):
+            continue
+        if _moot(game, sit):
+            _drop(game, sit)
             continue
         due = int(sit["clock"]["due"])
         if today >= due:
@@ -1819,8 +1913,12 @@ def daily(game) -> None:
 
 
 def on_death(game) -> None:
-    """The hero is dead: their situations lose their work and go back to latent, keeping their clocks."""
+    """The hero is dead: their situations lose their work and go back to latent, keeping their clocks (an adventure's
+    end with its tale)."""
     for sit in goals.live(game):
+        if sit.get("adventure"):
+            _drop(game, sit)
+            continue
         sit["quest"] = None
         sit["state"] = "latent"
         sit["flags"] = [f for f in sit["flags"] if f != "taken"]
@@ -1900,6 +1998,15 @@ def problems(tables) -> list[str]:
                 out.append(f"{where}: the role '{role}' is of '{rs['of']}', which is not a role.")
         if p.get("asks", "asker") not in roles:
             out.append(f"{where}: the one who asks ('{p.get('asks', 'asker')}') is not a role.")
+        if p.get("inside"):
+            from realmwalker.game.story.steps import STEPS
+
+            if p["inside"].get("step") not in STEPS:
+                out.append(f"{where}: it is inside a step of the kind '{p['inside'].get('step')}', which is not one.")
+            if (p["roles"].get("asker") or {}).get("bind") != "given":
+                out.append(f"{where}: the step's person is the one who asks (the role 'asker', bound 'given').")
+            if not any(o and o[0] == "step" for e in p.get("endings", []) for o in e.get("ops", [])):
+                out.append(f"{where}: no ending finishes the adventure's step (the op 'step').")
         for m in p.get("meetings", []):
             if m not in meets:
                 out.append(f"{where}: the meeting '{m}' is not one of situations.json's meetings.")

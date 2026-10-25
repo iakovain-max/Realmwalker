@@ -28,7 +28,8 @@
           "who": "finder",
           "note": [
             "{finder} has kept {ring} in the house since the day the bank slumped at {barrow}, and nothing in {finder}'s yard has thrived since.",
-            "{ring} lies in {finder}'s house, taken from the hand of {barrow_king}. The beasts die, and the dog sleeps in the lane."
+            "{ring} lies in {finder}'s house, taken from the hand of {barrow_king}. The beasts die, and the dog sleeps in the lane.",
+            "Everything that has gone wrong in {finder}'s yard has gone wrong since {finder} took {ring} out of the mound at {barrow}, and {finder} will not touch it twice."
           ],
           "acts": [
             {
@@ -63,7 +64,8 @@
           "who": "priest",
           "note": [
             "{priest} will lay what was taken from a grave back with a rite, but not for nothing, and not for a ring only half understood.",
-            "A priest must be asked to say the proper words, whether the ring goes back into the barrow or stays in {finder}'s house."
+            "A priest must be asked to say the proper words, whether the ring goes back into the barrow or stays in {finder}'s house.",
+            "A barrow is a king's ground, and {priest} will go there only for an offering, or for a good reason spoken in the old form."
           ],
           "acts": [
             {
@@ -133,7 +135,8 @@
           "ops": [["disposition", "finder", 35], ["favour", "finder", "goods", 2], ["contact", "priest", "scholar"], ["xp_story", "fair"]],
           "line": [
             "{ring} went back under {barrow} with the name of {barrow_king} said over it. The beasts of {finder} are fat by midsummer, and the dog sleeps by the hearth.",
-            "Laid by name, in the old form. {finder} will not go near {barrow} again, and does not need to."
+            "Laid by name, in the old form. {finder} will not go near {barrow} again, and does not need to.",
+            "The ring went back on the hand where it belongs, and the name of {barrow_king} was said over it. {finder} stood at the edge of {barrow} and did not go in, and the dog walked home beside {finder}."
           ]
         },
         {
@@ -143,7 +146,8 @@
           "ops": [["disposition", "finder", 30], ["favour", "finder", "goods", 1], ["xp_story", "fair"]],
           "line": [
             "{priest} carried {ring} back to {barrow} at dusk and said the prayers. The dying stopped. The dog came in on the third night, shaking.",
-            "The ring lies in the mound again. Nobody in {town} will say whose hand it is on, but the yard of {finder} is quiet."
+            "The ring lies in the mound again. Nobody in {town} will say whose hand it is on, but the yard of {finder} is quiet.",
+            "{ring} is back in the earth at {barrow}, and {priest} was paid in candles and thanks. {finder} leaves the door unbarred at night, and the beasts live."
           ]
         },
         {
@@ -153,7 +157,8 @@
           "ops": [["disposition", "finder", 15], ["xp_story", "small"]],
           "line": [
             "The yard is blessed, and the beasts stop dying. The dog comes in, and will not lie down in the room where {ring} is kept. {finder} walks around that room.",
-            "A blessing on a house that still holds what was taken from a grave. It holds. {finder} says it holds."
+            "A blessing on a house that still holds what was taken from a grave. It holds. {finder} says it holds.",
+            "The beasts of {finder} live, and the yard is quiet by day. At night the dog still lifts its head toward {barrow}, and {ring} stays where it is."
           ]
         },
         {
@@ -163,7 +168,8 @@
           "ops": [["xp_story", "small"], ["disposition", "finder", -5]],
           "line": [
             "{ring} is yours now. It is a plain grey ring and it does not warm to the hand. Somewhere out at {barrow}, {barrow_king} is still waiting.",
-            "You carry {ring} out of {town}. {finder} watched you go, and crossed to the door, and did not close it for a long time."
+            "You carry {ring} out of {town}. {finder} watched you go, and crossed to the door, and did not close it for a long time.",
+            "{finder} is rid of {ring} and glad of it. You are not, quite. It sits cold in the pocket, and {barrow_king} has not stopped waiting."
           ]
         }
       ],
@@ -172,7 +178,8 @@
         "ops": [["npc_fate", "finder", "ruined"], ["news", "news_lapse"]],
         "line": [
           "The last of {finder}'s beasts died in the spring. {finder} took the ring back to {barrow} by night, alone, and it is not known what was found there.",
-          "{finder} left the farm. The house stands with its door open, and the dog is in the lane."
+          "{finder} left the farm. The house stands with its door open, and the dog is in the lane.",
+          "Nobody in {town} has seen {finder} since the autumn. The beasts are bones in the yard, and the dog was found in the lane, thin, with its face to the house."
         ]
       },
       "clock": [12, 22],
@@ -181,14 +188,16 @@
         "keep": ["ring"],
         "ring": ["the grey ring of {barrow_king}", "the ring taken from the barrow of {barrow_king}"],
         "title": ["The ring from the barrow", "What {finder} took from {barrow_king}", "The dog will not come in"],
-        "stakes": ["{finder}'s yard, and the ring of {barrow_king}", "the beasts of {finder}, and a dead king's ring"],
+        "stakes": ["{finder}'s yard, and the ring of {barrow_king}", "the beasts of {finder}, and a dead king's ring", "a farm's last beasts, and a grave robbed at {barrow}"],
         "plea": [
           "I was cutting turf under {barrow} when the bank slumped, and there was a hand in the earth, grey as a root, and a ring on it. I took the ring. We had nothing. Since then the beasts die one by one, and the dog will not cross my step, and something walks my yard at night. Take it back. I cannot go near that place.",
-          "It is {barrow_king}'s mound, they tell me now. I did not know. I dug, and I found a ring, and I put it in my pocket, and God forgive me I was glad. The beasts are dying and the dog sleeps in the lane. Help me. Take the thing back, or have it blessed away. I have eleven pence and a side of bacon, and they are yours."
+          "It is {barrow_king}'s mound, they tell me now. I did not know. I dug, and I found a ring, and I put it in my pocket, and God forgive me I was glad. The beasts are dying and the dog sleeps in the lane. Help me. Take the thing back, or have it blessed away. I have eleven pence and a side of bacon, and they are yours.",
+          "Something is wrong in my yard since I dug at {barrow}. I took a ring from a hand in the earth, and now I am afraid to keep it and afraid to carry it back. The beasts are dying. The dog will not come near the house. Take it away, lay it down, bless the place, whatever can be done. I will pay what I have."
         ],
         "first": [
           "{finder} took a ring from the barrow of {barrow_king} at {barrow}. Since then the beasts die and the dog will not come in.",
-          "{finder} took a ring from a grave, and something has followed it home."
+          "{finder} took a ring from a grave, and something has followed it home.",
+          "The beasts of {finder} are dying since a ring was taken from {barrow}, and {finder} wants the matter ended."
         ],
         "news_lapse": ["In {town}, {finder}'s farm has been left empty. The beasts all died, and {finder} went to the barrow and did not come back the same."]
       }
@@ -208,7 +217,8 @@
           "who": "survivor",
           "note": [
             "{survivor} tells the night {ruin_fall} the same way every time, word for word, like a prayer, and never looks up while telling it.",
-            "The tale {survivor} tells of {ruin_was} has no gaps in it. That is what is wrong with it."
+            "The tale {survivor} tells of {ruin_was} has no gaps in it. That is what is wrong with it.",
+            "The tale of {ruin_was} never changes by a word, and {survivor}'s voice goes flat in the same place each time, like a cart going round a hole in the road."
           ],
           "acts": [
             {
@@ -286,7 +296,8 @@
           "ops": [["disposition", "survivor", 40], ["favour", "survivor", "word", 2], ["contact", "survivor", "scholar"], ["mark", "memorial"], ["xp_story", "fair"]],
           "line": [
             "{survivor} opened {box} on the doorstep: a lock of hair, a ribbon, a child's slate with a name on it. {survivor} said the name aloud, once, in the street, and the neighbours stopped to hear it.",
-            "{survivor} holds the hearthstone from {ruin} in both hands and talks about the night {ruin_fall} the way it was. By the first frost {survivor} is buried. The box is in the grave."
+            "{survivor} holds the hearthstone from {ruin} in both hands and talks about the night {ruin_fall} the way it was. By the first frost {survivor} is buried. The box is in the grave.",
+            "The night {ruin_fall} was told true, once, in {town}, to anyone who would stand and listen. {survivor} did not tell it twice, and did not need to."
           ]
         },
         {
@@ -297,7 +308,8 @@
           "ops": [["disposition", "survivor", 25], ["xp_story", "fair"]],
           "line": [
             "{survivor} took {box} and did not open it in front of you. You know how {survivor} lived, and {survivor} knows you know. Neither of you says it.",
-            "The box is on {survivor}'s knee, shut. You carried it and carried the other thing too: a woman holding a door, {ruin_years} ago, in a place that is only stones now."
+            "The box is on {survivor}'s knee, shut. You carried it and carried the other thing too: a woman holding a door, {ruin_years} ago, in a place that is only stones now.",
+            "{survivor} thanked you at the door and shut it. You carried {box} and a thing nobody else in {town} knows, and the two weigh about the same."
           ]
         },
         {
@@ -307,7 +319,8 @@
           "ops": [["disposition", "survivor", 20], ["xp_story", "small"]],
           "line": [
             "{survivor} died within the month with {box} on the chest. The tale was told at the grave, and it was the same tale, word for word.",
-            "{box} came home. {survivor} held it, and wept, and did not say why."
+            "{box} came home. {survivor} held it, and wept, and did not say why.",
+            "{survivor} turned {box} over in both hands and did not lift the lid while you were there. The tale of {ruin_was} was told again that evening, unchanged."
           ]
         },
         {
@@ -317,7 +330,8 @@
           "ops": [["disposition", "survivor", -5], ["xp_story", "small"]],
           "line": [
             "{ruin} keeps its hearthstones. {survivor} sits at the edge of {town} where the road to {ruin} starts, facing it, and nobody asks why.",
-            "Left where it lies. {survivor} asks nothing more of anyone, and tells the tale to whoever sits down."
+            "Left where it lies. {survivor} asks nothing more of anyone, and tells the tale to whoever sits down.",
+            "The hearth at {ruin} stays cold. The children of {town} still ask {survivor} what came after, and still get no answer."
           ]
         }
       ],
@@ -326,7 +340,8 @@
         "ops": [["npc_fate", "survivor", "dead"], ["news", "news_lapse"]],
         "line": [
           "{survivor} died before anyone went. They found the old one at the road's end, with the tale half told, facing {ruin}.",
-          "{survivor} is buried in {town}. The last of {ruin_was} took the rest of it to the grave, whatever it was."
+          "{survivor} is buried in {town}. The last of {ruin_was} took the rest of it to the grave, whatever it was.",
+          "{survivor} was found in the chair by the door, facing the road to {ruin}. The box under the hearth was never fetched, and the tale went with the teller."
         ]
       },
       "clock": [14, 24],
@@ -335,14 +350,16 @@
         "keep": ["box"],
         "box": ["the box from under the hearth of {ruin_was}", "the iron-bound box from the hearthstone at {ruin}"],
         "title": ["The last of {ruin_was}", "Under the hearth at {ruin}", "What {survivor} left behind"],
-        "stakes": ["a box under a hearth at {ruin}, and the truth of the night {ruin_fall}", "the last wish of the last of {ruin_was}"],
+        "stakes": ["a box under a hearth at {ruin}, and the truth of the night {ruin_fall}", "the last wish of the last of {ruin_was}", "a dying wish, and a night {ruin_fall} told only in part"],
         "plea": [
           "I was a child when {ruin_fall}, {ruin_years} ago, at {ruin_was}. I am the last of it now. The last of anyone who stood on that ground. I will not see another winter. Under the hearth of my mother's house at {ruin} there is a box: her things, and mine. I want it in my hands before I die. I cannot walk that far. You can.",
-          "Nobody alive but me has stood in {ruin_was}. I was small, and I got out, and there is a box under the hearthstone of my mother's house that I have not been able to stop thinking of. I am old and I cannot go. Will you? I will tell you where. I remember where. I remember everything about the place but one night."
+          "Nobody alive but me has stood in {ruin_was}. I was small, and I got out, and there is a box under the hearthstone of my mother's house that I have not been able to stop thinking of. I am old and I cannot go. Will you? I will tell you where. I remember where. I remember everything about the place but one night.",
+          "I am the last who stood on the ground at {ruin_was}. {ruin_years} ago I got out, and I have told how so often that the telling wears like a stair. There is a box under my mother's hearth at {ruin}. Fetch it, before I go. I will tell you where to dig."
         ],
         "first": [
           "{survivor}, the last of {ruin_was}, wants a box from under the hearth at {ruin}, before dying. The tale {survivor} tells of that night does not sit right.",
-          "{survivor} lived at {ruin_was} as a child, and wants one thing from {ruin} before the end."
+          "{survivor} lived at {ruin_was} as a child, and wants one thing from {ruin} before the end.",
+          "{survivor} asks for a box from under a hearth at {ruin}, and there is more to the old one's story than has been said."
         ],
         "news_lapse": ["In {town}, {survivor}, last of the people of {ruin_was}, has died, and with the old one the last memory of that place."]
       }
@@ -364,7 +381,8 @@
           "who": "scribe",
           "note": [
             "The founding of {town} is in the rolls, {founded_years} ago, and nobody has read the rolls in a generation. {scribe} keeps the key.",
-            "What the town was founded on is written down at {scribe}'s hall. What the house on the square was founded on may not be."
+            "What the town was founded on is written down at {scribe}'s hall. What the house on the square was founded on may not be.",
+            "{scribe} says the rolls of {town} are old and the hand is bad, and a reader will need time, and a fee, and a steady light."
           ],
           "acts": [
             {
@@ -404,7 +422,8 @@
           "who": "claimant",
           "note": [
             "{claimant} carries the founders' name like a coal, and will not put it down.",
-            "{claimant} has nothing but the tale. The tale is old, and the one who tells it has no way to read it."
+            "{claimant} has nothing but the tale. The tale is old, and the one who tells it has no way to read it.",
+            "{claimant} has no paper and cannot read one, and holds to the tale of the founders because it is the one thing nobody has managed to take."
           ],
           "acts": [
             {
@@ -453,7 +472,8 @@
           "who": "notable",
           "note": [
             "{notable_full} laughs, and holds the house on the square, and there is nothing in the rolls that says why.",
-            "The house on the square belongs to {notable}'s family by sitting in it. It has been enough so far."
+            "The house on the square belongs to {notable}'s family by sitting in it. It has been enough so far.",
+            "{notable_full} laughs at a tale and would not laugh at a page. Only something written down will move {notable_them}."
           ],
           "acts": [
             {
@@ -487,7 +507,8 @@
           "ops": [["npc_fate", "claimant", "jailed"], ["standing", -1], ["xp_story", "small"]],
           "line": [
             "The scribe told the notable, the notable told the watch. {claimant} was taken for lying, in the stocks by midday, and the founders' blood was a joke for another year.",
-            "Forging a founder's leaf is a crime in {town}, and it is the claimant who sits in the cells for it, and says nothing, and keeps the tale."
+            "Forging a founder's leaf is a crime in {town}, and it is the claimant who sits in the cells for it, and says nothing, and keeps the tale.",
+            "{claimant} was led off the square in front of the whole of {town}. The founders' blood sits in the cells now, and tells its tale to the wall."
           ]
         },
         {
@@ -497,7 +518,8 @@
           "ops": [["disposition", "claimant", 35], ["disposition", "notable", -15], ["favour", "claimant", "word", 2], ["xp_story", "fair"]],
           "line": [
             "{claimant} sits at the board with the elders of {town} now, and the house on the square has a back room with a pallet in it. Nobody says why. Nobody laughs.",
-            "No deed, and no proof. A place at the table, and a roof. It is not the house on the square. It is more than {claimant} had."
+            "No deed, and no proof. A place at the table, and a roof. It is not the house on the square. It is more than {claimant} had.",
+            "{claimant} was given a place and a roof, not a house. {notable} does not laugh now, and does not speak of it, and {town} has found something else to talk about."
           ]
         },
         {
@@ -507,7 +529,8 @@
           "ops": [["disposition", "claimant", 30], ["standing", -2], ["xp_story", "small"]],
           "line": [
             "There is a leaf in the rolls of {town} that was never there. {notable} frowned over it a long time and gave way, and {claimant} has the back rooms of the house and the name of a founder's heir.",
-            "The founders' leaf stands, so long as nobody asks it to stand too hard. {claimant} is recognised. The scribe knows what you paid for."
+            "The founders' leaf stands, so long as nobody asks it to stand too hard. {claimant} is recognised. The scribe knows what you paid for.",
+            "{claimant} has a roof, a name a day old, and a leaf to stand it on. {notable} does not laugh. The scribe remembers who paid for the ink."
           ]
         },
         {
@@ -517,7 +540,8 @@
           "ops": [["disposition", "claimant", -10], ["disposition", "notable", 20], ["xp_story", "small"]],
           "line": [
             "{claimant} let the claim go, and the town let it be known that it had been let go. It was kinder than the stocks. It did not feel kind.",
-            "The beggar of the founders' blood is just a beggar again. {notable} nodded to you in the street. {claimant} did not."
+            "The beggar of the founders' blood is just a beggar again. {notable} nodded to you in the street. {claimant} did not.",
+            "{claimant} stopped coming to the square, and the laughing stopped with it. The tale is not told in {town} now. It was a quiet end to a loud thing."
           ]
         }
       ],
@@ -526,21 +550,24 @@
         "ops": [["npc_fate", "claimant", "gone"], ["news", "news_lapse"]],
         "line": [
           "{claimant} took the claim to the square once too often, and was whipped out of {town} at the cart's tail. The rolls were never opened.",
-          "The founders' blood walked out of {town} on the road, with a bundle, and nobody went after."
+          "The founders' blood walked out of {town} on the road, with a bundle, and nobody went after.",
+          "{claimant} stopped coming to the square, and nobody in {town} asked where. The house on the square keeps its door shut, and the rolls are as they were."
         ]
       },
       "clock": [12, 22],
       "meetings": ["v_beggar_row"],
       "words": {
         "title": ["The beggar's claim", "The blood of the founders", "The house on the square"],
-        "stakes": ["{claimant}'s claim to the founders' blood, and the house on the square", "{claimant}'s name against {notable}'s deed"],
+        "stakes": ["{claimant}'s claim to the founders' blood, and the house on the square", "{claimant}'s name against {notable}'s deed", "a beggar's name, and a roof that cannot be taken"],
         "plea": [
           "They laugh. {notable_full} laughs loudest. {founded_years} ago this town was founded. In the rolls it says: {founding} My grandmother swore the founders' blood came down to us, and the house on the square was theirs, and so is mine. I cannot read. I cannot prove a word. Go to the rolls. Find what is written. I only want a roof that I cannot be put out of.",
-          "You have seen it. {notable} laughing in my face on the square. I am of the founders. My grandmother's grandmother was of the line that began this place. {founding} I have no paper. I have only the tale. Find me a paper, or find me out, but do not leave me to be laughed at."
+          "You have seen it. {notable} laughing in my face on the square. I am of the founders. My grandmother's grandmother was of the line that began this place. {founding} I have no paper. I have only the tale. Find me a paper, or find me out, but do not leave me to be laughed at.",
+          "{notable} laughs, and the square laughs after. My people were of the founders of {town}, {founded_years} ago, and I have no paper to show for it. I cannot read. Find what the rolls say, and say it to me plain. A roof, that is all I want."
         ],
         "first": [
           "{claimant} says the founders' blood is theirs and the house on the square should be theirs. {notable} laughs.",
-          "{claimant} claims descent from the founders of {town}, and no one will hear it."
+          "{claimant} claims descent from the founders of {town}, and no one will hear it.",
+          "{claimant} asks you to find in the rolls of {town} what became of the founders' line and who owns the house on the square."
         ],
         "news_lapse": ["In {town}, {claimant} was whipped from the square for claiming the founders' blood."]
       }
@@ -560,7 +587,8 @@
           "who": "keeper",
           "note": [
             "{keeper_full} keeps the town's copy of {book}, written by {author} {book_years} ago, and reads from it at the feast.",
-            "{book} says {wronged}'s family sold the town's grain to its enemies, and everyone in {town} knows it is written down."
+            "{book} says {wronged}'s family sold the town's grain to its enemies, and everyone in {town} knows it is written down.",
+            "The copy of {book} in {town} is kept shut in the hall and brought out once a year, and {keeper} will let a stranger see a page for a fee, and not a word more."
           ],
           "acts": [
             {
@@ -675,7 +703,8 @@
           "ops": [["disposition", "wronged", -10], ["xp_story", "small"]],
           "line": [
             "{keeper} caught you at the book. The watch was called, and the family of {wronged} has the shame of a stranger's theft laid on top of the old one.",
-            "A thief in the hall, over {book}. {wronged} is ashamed to be seen with you, and the town says it must be true, if they would burn it."
+            "A thief in the hall, over {book}. {wronged} is ashamed to be seen with you, and the town says it must be true, if they would burn it.",
+            "The watch took you from the hall with {book} half out of its case. {wronged} heard it at the well by evening, and kept the door shut after."
           ]
         },
         {
@@ -686,7 +715,8 @@
           "ops": [["disposition", "wronged", 25], ["favour", "wronged", "word", 1], ["contact", "keeper", "scholar"], ["mark", "memorial"], ["xp_story", "fair"]],
           "line": [
             "The margin was read from the steps. The town heard that the grain-house was opened at the elders' word. {wronged} wept for the first time in years, and held up {wronged_their} head.",
-            "It was true, and it was the town's shame, not the family's alone. The elders do not meet your eye now. {wronged} is not called what the book called them."
+            "It was true, and it was the town's shame, not the family's alone. The elders do not meet your eye now. {wronged} is not called what the book called them.",
+            "The margin was read, and the old families went home quiet. {wronged} was not called by the old name at the well that week, or the next."
           ]
         },
         {
@@ -697,7 +727,8 @@
           "ops": [["disposition", "wronged", 35], ["favour", "wronged", "word", 2], ["contact", "keeper", "scholar"], ["xp_story", "fair"]],
           "line": [
             "{keeper} read the dates aloud from the hall steps, and the town heard it. The page is marked in the margin now: 'a lie, so proven'. The children of {wronged} walk to the well without being spat at.",
-            "It was a bad page in a good book, and now the town knows. {wronged} stood at the back and did not say a word."
+            "It was a bad page in a good book, and now the town knows. {wronged} stood at the back and did not say a word.",
+            "The dates were read out and the town counted them on its fingers. By the week's end {wronged} was nodded to at the well, and {keeper} had the page marked before the next feast."
           ]
         },
         {
@@ -707,7 +738,8 @@
           "ops": [["disposition", "wronged", 15], ["xp_story", "small"]],
           "line": [
             "The page was recopied: 'in doubt, and the family heard'. The town has heard it is in doubt, which is not the same as heard it is false. {wronged} says it is enough.",
-            "Paid for, and written. The old leaf is ash, and the town believes what it believed, only more quietly."
+            "Paid for, and written. The old leaf is ash, and the town believes what it believed, only more quietly.",
+            "The new leaf says doubt, and doubt is what the town will have. The children of {wronged} are teased less. {keeper} took the fee and did not ask whose it was."
           ]
         },
         {
@@ -717,7 +749,8 @@
           "ops": [["disposition", "wronged", 5], ["standing", -1], ["xp_story", "small"]],
           "line": [
             "{keeper} found the copy gone and raged, and the town noticed who was most glad of it. The book is ash and what it said is still said, with the added thing that someone burned it.",
-            "A burned copy is not a disproved one. {wronged} thanks you, and does not look at you."
+            "A burned copy is not a disproved one. {wronged} thanks you, and does not look at you.",
+            "The copy is gone, and the town has no page to read from, only the memory of it. {wronged} knows what you did, has told no one, and starts at every knock."
           ]
         }
       ],
@@ -726,21 +759,24 @@
         "ops": [["npc_fate", "wronged", "ruined"], ["news", "news_lapse"]],
         "line": [
           "{wronged} left {town}. A family can bear a good deal. It cannot bear a page read aloud every year at the feast, and {wronged} did not go to the feast.",
-          "The family of {wronged} took the road one night. {book} is read at the feast as it always was."
+          "The family of {wronged} took the road one night. {book} is read at the feast as it always was.",
+          "The house of {wronged} in {town} stands empty with the shutters closed. At the feast {keeper} read page nine to the room, and some of the room looked at the door where the family used to sit."
         ]
       },
       "clock": [12, 22],
       "meetings": ["v_page_nine"],
       "words": {
         "title": ["What the book says", "Page nine of {book}", "{wronged}'s name in {book}"],
-        "stakes": ["{wronged}'s name, and the page in {book}", "what {author} wrote of {wronged}'s family, {book_years} ago"],
+        "stakes": ["{wronged}'s name, and the page in {book}", "what {author} wrote of {wronged}'s family, {book_years} ago", "the good name of a family, and the truth of {book}"],
         "plea": [
           "There is a book in the hall: {book}, by {author}, written {book_years} ago. It says my family sold this town's grain to its enemies. It is read aloud at the feast. I have heard it said at the well, to my face. I cannot read it myself. Find out if it is true. If it is not, make them hear it. If it is ... I would rather know.",
-          "{book} says my people were oath-breakers. {author} put it there, {book_years} ago, and the town believes it because it is written. My children are called by it in the street. I have no letters. Read it for me. Find where it lies. Or find that it does not, and tell me that."
+          "{book} says my people were oath-breakers. {author} put it there, {book_years} ago, and the town believes it because it is written. My children are called by it in the street. I have no letters. Read it for me. Find where it lies. Or find that it does not, and tell me that.",
+          "The town reads {book} aloud at the feast, and my family is in it as traitors. {author} wrote it {book_years} ago. I cannot read, so I do not know what it says. I only know what it does to us. Go and read it, and tell me if it lies."
         ],
         "first": [
           "{book}, by {author}, written {book_years} ago, says something shameful of {wronged}'s family, and {town} believes it.",
-          "{wronged} wants to know if what {book} says of {wronged_their} family is true."
+          "{wronged} wants to know if what {book} says of {wronged_their} family is true.",
+          "{wronged} asks you to read what {book} says of {wronged_their} family, and to find whether {author} lied."
         ],
         "news_lapse": ["In {town}, {wronged}'s family has left, after years of being named in {book}."]
       }
@@ -762,6 +798,7 @@
           "who": "pilgrim",
           "note": [
             "{pilgrim} fell sick at the inn on the way to {shrine}, and will not live to get there. The offering sewn in {pilgrim}'s coat must go on without {pilgrim_them}.",
+            "{pilgrim} lies at the inn with one hand on the coat, day and night. The offering is the last thing {pilgrim_they} has left to give.",
             "{pilgrim} will not say what the offering is. {pilgrim_they} only says it is for the priest of {shrine}, and no one else."
           ],
           "acts": [
@@ -828,7 +865,8 @@
           "ops": [["give_back", "priest"], ["npc_fate", "pilgrim", "dead"], ["xp_story", "fair"]],
           "line": [
             "The priest of {shrine} read the paper standing, and sat down, and said that the debt was paid and the sin forgiven, and that the pilgrim would be prayed for by name. You did not tell what was in it. {pilgrim} died on the road, shriven.",
-            "Eleven pieces of silver and a name went into the poor-box at {shrine}. You carried it, and knew, and said nothing. {pilgrim} is buried in the pilgrim's ground, and the priest said the words over a grave far away."
+            "Eleven pieces of silver and a name went into the poor-box at {shrine}. You carried it, and knew, and said nothing. {pilgrim} is buried in the pilgrim's ground, and the priest said the words over a grave far away.",
+            "The priest read the name aloud before the altar at {shrine}, and a candle was lit for it. You alone knew what the silver was, and said nothing. {pilgrim} died unburdened."
           ]
         },
         {
@@ -838,7 +876,8 @@
           "ops": [["give_back", "priest"], ["npc_fate", "pilgrim", "dead"], ["xp_story", "small"]],
           "line": [
             "The priest of {shrine} took the packet and went away with it, and came back with eyes red from reading. You were thanked, and not told why.",
-            "It reached {shrine}. What it was, you never knew; only that the priest crossed {priest_their} chest, and that {pilgrim} died at the inn that same week, easy."
+            "It reached {shrine}. What it was, you never knew; only that the priest crossed {priest_their} chest, and that {pilgrim} died at the inn that same week, easy.",
+            "You never learned what you carried. The priest of {shrine} did, and wept, and lit a candle, and {pilgrim} was buried at the inn with a prayer said."
           ]
         },
         {
@@ -848,7 +887,8 @@
           "ops": [["npc_fate", "pilgrim", "dead"], ["xp_story", "small"]],
           "line": [
             "{pilgrim} died in the night, unshriven, with the paper still in your pack and the silver in your purse. No one at {shrine} will ever know.",
-            "You kept the silver. The paper you cannot bring yourself to burn, and cannot bring yourself to carry. {pilgrim} was buried by the inn wall, and the grave is not marked."
+            "You kept the silver. The paper you cannot bring yourself to burn, and cannot bring yourself to carry. {pilgrim} was buried by the inn wall, and the grave is not marked.",
+            "The silver is in your purse and the paper in the lining of your pack, and {pilgrim} lies in the ground behind the inn with no name and no prayer."
           ]
         }
       ],
@@ -857,7 +897,8 @@
         "ops": [["npc_fate", "pilgrim", "dead"], ["news", "news_lapse"]],
         "line": [
           "{pilgrim} died at the inn, and the packet was found sewn in the coat. The innkeeper opened it, and kept what was in it. The pilgrim never reached {shrine}.",
-          "{pilgrim} did not see {shrine}. The offering was buried in the coat, and the coat was buried with the body."
+          "{pilgrim} did not see {shrine}. The offering was buried in the coat, and the coat was buried with the body.",
+          "{pilgrim} was buried quickly, in a borrowed shroud. Whatever was sewn in the coat went into the ground too, and {shrine} waited for a pilgrim who did not come."
         ]
       },
       "clock": [10, 18],
@@ -866,14 +907,16 @@
         "keep": ["offering"],
         "offering": ["a packet of oilcloth, sewn shut, from a dying pilgrim", "the pilgrim's sewn packet for the priest of {shrine}"],
         "title": ["The pilgrim's vow", "An offering for {shrine}", "What the dying one carried"],
-        "stakes": ["{pilgrim}'s offering to the priest of {shrine}, and {pilgrim}'s soul", "a vow that must be kept by someone else"],
+        "stakes": ["{pilgrim}'s offering to the priest of {shrine}, and {pilgrim}'s soul", "a vow that must be kept by someone else", "a packet that must reach {shrine}, and a pilgrim's peace"],
         "plea": [
           "I will not live to see {shrine}. I know it. The fever is in my chest. I took a vow, long ago, and I have a thing sewn in my coat for the priest there, and no one else. Will you carry it? You will be paid at the other end, and I cannot pay you here. It matters more than I can say. I would be shriven, and I cannot go to be.",
-          "Do not look at me like that. I know what I am. I was walking to {shrine}, and I will not get there, and I have an offering. Take it. Give it into the priest's own hand. I do not ask you to be a holy person. I ask you to walk."
+          "Do not look at me like that. I know what I am. I was walking to {shrine}, and I will not get there, and I have an offering. Take it. Give it into the priest's own hand. I do not ask you to be a holy person. I ask you to walk.",
+          "I am not going to see {shrine}, and there is a thing sewn in my coat that must. I will not tell you what. Take it to the priest, only the priest, and put it into the hand. I have nothing to pay you with but the asking."
         ],
         "first": [
           "{pilgrim}, sick at the inn, asks you to carry an offering to the priest at {shrine} before dying.",
-          "A pilgrim on the way to {shrine} will not live to reach it, and wants someone to carry what is sewn in the coat."
+          "A pilgrim on the way to {shrine} will not live to reach it, and wants someone to carry what is sewn in the coat.",
+          "{pilgrim} is dying at the inn and wants the packet in the coat carried to the priest at {shrine}."
         ],
         "news_lapse": ["A pilgrim died at the inn in {town}, on the way to {shrine}, and never arrived."]
       }
@@ -899,7 +942,8 @@
           ],
           "note": [
             "{dead_name} died in the back room of the inn {dead_years} ago, and guests do not sleep there past midnight.",
-            "Nobody lets the back room of {innkeeper}'s house. {dead_name} died in it, and does not seem to have gone."
+            "Nobody lets the back room of {innkeeper}'s house. {dead_name} died in it, and does not seem to have gone.",
+            "Guests who take the back room are out of it before dawn, white and silent, and {innkeeper} has stopped asking what they heard."
           ],
           "acts": [
             {
@@ -1002,7 +1046,8 @@
           "ops": [["disposition", "innkeeper", 40], ["favour", "innkeeper", "shelter", 3], ["mark", "memorial"], ["xp_story", "great"]],
           "line": [
             "{innkeeper} stood in the back room while the rite was said, and the truth with it, and no one heard but the room. The room is a room now. {innkeeper} has a bed in it, and sleeps.",
-            "{dead_name} is laid, and named, and the house's part in it is said. The guests come back, a few at a time. {innkeeper} tells it to anyone who asks."
+            "{dead_name} is laid, and named, and the house's part in it is said. The guests come back, a few at a time. {innkeeper} tells it to anyone who asks.",
+            "The rite was said and the truth with it. The back room is let again, and {dead_name} is laid with a name and a prayer, and the house sleeps."
           ]
         },
         {
@@ -1012,7 +1057,8 @@
           "ops": [["disposition", "innkeeper", 25], ["favour", "innkeeper", "shelter", 1], ["xp_story", "fair"]],
           "line": [
             "The room is quiet. The guests stay. Nobody in {town} knows why, and {innkeeper} does not ask. Whatever {dead_name} wanted, it was not only the rite.",
-            "Laid, and quiet. Under a board in the back room a purse still lies, and the name of {dead_name} is scratched under it, and the house goes on."
+            "Laid, and quiet. Under a board in the back room a purse still lies, and the name of {dead_name} is scratched under it, and the house goes on.",
+            "The rite was said, and the cold went out of the room. {innkeeper} lets it again, and does not say what lies beneath the board."
           ]
         },
         {
@@ -1022,7 +1068,8 @@
           "ops": [["disposition", "innkeeper", -5], ["shop", "innkeeper", "shut", 20], ["xp_story", "small"]],
           "line": [
             "{innkeeper} told it from the square at noon, and the town heard. The inn is shut a season. The room was not laid, and some say the cold is worse now that it is known.",
-            "The truth is out, and the house is ashamed, and the dead one is no more at peace for being told of. It needed the rite as well."
+            "The truth is out, and the house is ashamed, and the dead one is no more at peace for being told of. It needed the rite as well.",
+            "{innkeeper} told the square, and the square believed it. The inn stands quiet and empty, and the back room is as cold as it ever was."
           ]
         },
         {
@@ -1032,7 +1079,8 @@
           "ops": [["standing", -1], ["xp_story", "small"]],
           "line": [
             "The door of the back room is boarded and the damp is blamed. Guests sleep elsewhere in the house and, on still nights, listen. {dead_name} is still in the room.",
-            "Boarded and paid for. {innkeeper} nods to you in the street, and does not look at the back of the house."
+            "Boarded and paid for. {innkeeper} nods to you in the street, and does not look at the back of the house.",
+            "The room is boarded and the trade comes back, in part. Nobody sleeps well under that roof, though no one can say why, and the cold comes under the board at night."
           ]
         }
       ],
@@ -1041,21 +1089,24 @@
         "ops": [["shop", "innkeeper", "shut", 30], ["disposition", "innkeeper", -10], ["news", "news_lapse"]],
         "line": [
           "The last guests left in the night. {innkeeper} closed the inn at the end of the month. The room at the back has had its door nailed shut by someone, from the inside.",
-          "No one slept in the back room. No one slept anywhere in the house, in the end, and {innkeeper}'s inn is shuttered."
+          "No one slept in the back room. No one slept anywhere in the house, in the end, and {innkeeper}'s inn is shuttered.",
+          "The inn of {innkeeper} stands shuttered, and the step is not swept. Boys of {town} dare each other to touch the door of the back room, and none do."
         ]
       },
       "clock": [14, 24],
       "meetings": ["v_room_empty"],
       "words": {
         "title": ["The room nobody lets", "{dead_name}'s room", "What lies under the back room"],
-        "stakes": ["the inn of {innkeeper}, and the peace of {dead_name}", "a dead guest, and a house's old shame"],
+        "stakes": ["the inn of {innkeeper}, and the peace of {dead_name}", "a dead guest, and a house's old shame", "a shuttered trade, and a guest dead {dead_years} ago"],
         "plea": [
           "There is a room at the back of my house that nobody takes. {dead_name} died in it, {dead_years} ago ({dead_cause}). Since then guests who sleep there are out in the yard by midnight, white as lard, and will not say why, and then they tell other people. I am losing the trade. Sleep in it a night. Find out what it wants. I will not charge you for the bed.",
-          "Do you see my guests leaving? Every one, by midnight, out of the back room. {dead_name} died in there, {dead_years} ago, and I will not say what is in the room, but nobody will stay. {dead_cause}, they say. Sleep there. Learn why. Whatever you need, the house will stand it. I cannot go in myself."
+          "Do you see my guests leaving? Every one, by midnight, out of the back room. {dead_name} died in there, {dead_years} ago, and I will not say what is in the room, but nobody will stay. {dead_cause}, they say. Sleep there. Learn why. Whatever you need, the house will stand it. I cannot go in myself.",
+          "Nobody will sleep in my back room, and I am the poorer for it. {dead_name} died there, {dead_years} ago, and since then the room is cold in summer. I will give you the bed and the supper. Find out what it wants. I would sooner know than guess."
         ],
         "first": [
           "{innkeeper}'s back room is empty, and its guests leave by midnight. {dead_name} died there {dead_years} ago.",
-          "The innkeeper of {town} asks you to sleep in the room where {dead_name} died, and learn why the dead one does not rest."
+          "The innkeeper of {town} asks you to sleep in the room where {dead_name} died, and learn why the dead one does not rest.",
+          "{innkeeper} asks you to spend a night in the room where {dead_name} died, and find what the dead one wants."
         ],
         "news_lapse": ["The inn in {town} has closed. Guests would not sleep in the back room, where {dead_name} was killed."]
       }
@@ -1077,7 +1128,8 @@
           "who": "priest",
           "note": [
             "{priest} has heard rumour of a book of the old faith in {town}, and goes from house to house with the watch behind.",
-            "{priest} will reach {keeper}'s house within days, and is not a cruel person, which makes the matter harder to read."
+            "{priest} will reach {keeper}'s house within days, and is not a cruel person, which makes the matter harder to read.",
+            "{keeper}'s house stands on the street the search has reached, and {priest} is a careful searcher who lifts boards and sounds walls."
           ],
           "acts": [
             {
@@ -1175,7 +1227,8 @@
           "ops": [["npc_fate", "keeper", "jailed"], ["xp_story", "small"]],
           "line": [
             "The watch went at dawn. They found the book under the hearthstone, and {keeper} in the doorway with a child on each side. {priest} does not look at you now.",
-            "The book was burned in front of the temple. {keeper} was taken. Some in {town} saw the book as a thing finished. Some saw whose doing it was."
+            "The book was burned in front of the temple. {keeper} was taken. Some in {town} saw the book as a thing finished. Some saw whose doing it was.",
+            "{keeper} was taken from the house at dawn with the children crying in the doorway, and the book went into the fire. {priest} said the words over it without looking up. It was your word that told them where."
           ]
         },
         {
@@ -1186,7 +1239,8 @@
           "ops": [["disposition", "keeper", 35], ["disposition", "priest", 20], ["favour", "keeper", "shelter", 2], ["contact", "keeper", "informant"], ["xp_story", "fair"]],
           "line": [
             "{priest} turned the search away from {keeper}'s street, and wrote that {town} was clean. The book lies where it lay. The two of them have never spoken of it, and do not need to.",
-            "A priest with a grandmother's psalms in the ear is not the worst thing for a persecuted book. {priest} nods to {keeper} at the well, and that is all."
+            "A priest with a grandmother's psalms in the ear is not the worst thing for a persecuted book. {priest} nods to {keeper} at the well, and that is all.",
+            "{priest} wrote that {town} was clean, and walked down {keeper}'s street the next week with a face like a shut door. Once, at the well, {priest} hummed a few bars of an old psalm, and stopped."
           ]
         },
         {
@@ -1196,7 +1250,8 @@
           "ops": [["disposition", "keeper", 25], ["disposition", "priest", 5], ["xp_story", "fair"]],
           "line": [
             "{priest} gave up the search for this season. The house of {keeper} is not searched. The book lies where it lay, and {keeper} does not sleep much.",
-            "Mercy, once. {priest} said so plainly. Next year there will be another letter from the bishop."
+            "Mercy, once. {priest} said so plainly. Next year there will be another letter from the bishop.",
+            "The search moved on past {keeper}'s street. {keeper} takes the book out only at night, to see that it is still there, and puts it back before the light."
           ]
         },
         {
@@ -1206,7 +1261,8 @@
           "ops": [["disposition", "keeper", 30], ["favour", "keeper", "word", 1], ["xp_story", "fair"]],
           "line": [
             "You carried the book out of {town} under your coat, and when {priest} came to {keeper}'s door there was nothing to find. {keeper} lit a candle at the empty hearth, and said it was only damp.",
-            "The book of the old faith left {town} on the road in your pack. What you do with it is yours. {keeper}'s house is clean, and so, as far as the watch can tell, is the town."
+            "The book of the old faith left {town} on the road in your pack. What you do with it is yours. {keeper}'s house is clean, and so, as far as the watch can tell, is the town.",
+            "{keeper} sits at the empty hearth anyway. The watch searched, and found damp, and {priest} wrote the house clean. The book is on the road with you."
           ]
         },
         {
@@ -1216,7 +1272,8 @@
           "ops": [["disposition", "keeper", 20], ["xp_story", "small"]],
           "line": [
             "The book is hidden where {keeper} does not know. {priest} searched {keeper}'s house on the third day, found nothing, and went on to the next street. It is still in the house.",
-            "A good hiding place, so long as nobody looks twice. The searches will come again, and {keeper} will not sleep much. The book is safe for now."
+            "A good hiding place, so long as nobody looks twice. The searches will come again, and {keeper} will not sleep much. The book is safe for now.",
+            "{priest} turned the hearth and the bed and sounded the walls, and found nothing. {keeper} thanked you with a bowed head, and has not asked where the book lies."
           ]
         }
       ],
@@ -1225,7 +1282,8 @@
         "ops": [["law", "keeper", "jailed"], ["news", "news_lapse"]],
         "line": [
           "{priest} searched the house of {keeper} and found the book in the first hour. {keeper} was taken away, and the children are with a neighbour.",
-          "The search reached {keeper}'s street, and the book was found. The faith that was driven out {wrong_years} ago was driven out a second time."
+          "The search reached {keeper}'s street, and the book was found. The faith that was driven out {wrong_years} ago was driven out a second time.",
+          "The watch took {keeper} before the street was awake, and the book went into the fire in front of the temple. {priest} did not meet anyone's eye that day."
         ]
       },
       "clock": [8, 14],
@@ -1234,14 +1292,16 @@
         "keep": ["volume"],
         "volume": ["the book of the old faith, in a bag of oiled cloth", "the little book, wrapped in oilcloth, of the faith driven out of {town}"],
         "title": ["The book under the floor", "The priest at the door", "{keeper}'s hidden book"],
-        "stakes": ["{keeper}'s house and children, and a book of the old faith", "the old faith's last book in {town}"],
+        "stakes": ["{keeper}'s house and children, and a book of the old faith", "the old faith's last book in {town}", "a family's freedom, and the last book of a faith"],
         "plea": [
           "There is a book in my house. My mother's mother kept it, and hers before: the book of the faith they drove out of this town {wrong_years} ago. {old_wrong} It is only words. But {priest} has heard a rumour, and goes from door to door, and will be at mine in a day or two. If it is found I am finished, and my children. Hide it, or take it away. I do not care how.",
-          "Keep your voice down. Listen. {priest} is searching the houses. Everyone knows what for. I have the book. I have had it all my life. They drove the faith out of {town} {wrong_years} ago, and I keep the last of it under my hearth. I will not give it up, and I cannot keep it. Help me."
+          "Keep your voice down. Listen. {priest} is searching the houses. Everyone knows what for. I have the book. I have had it all my life. They drove the faith out of {town} {wrong_years} ago, and I keep the last of it under my hearth. I will not give it up, and I cannot keep it. Help me.",
+          "I have a book the church has forbidden, and {priest} is going from house to house. If it is found I lose my place and my children. Take it where it will not be found. I have nothing to give but the thanks of a house with no more to lose."
         ],
         "first": [
           "{keeper}'s house hides a book of the faith persecuted in {town}. {priest} is searching the houses.",
-          "{keeper} keeps the last book of a persecuted faith, and {priest} is going door to door."
+          "{keeper} keeps the last book of a persecuted faith, and {priest} is going door to door.",
+          "{keeper} asks you to save a forbidden book from the search before {priest} reaches the door."
         ],
         "news_lapse": ["In {town}, the house of {keeper} was searched and a forbidden book found. {keeper} is taken."]
       }

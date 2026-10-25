@@ -1,0 +1,190 @@
+{
+  "_comment": "Situations inside adventures (Expansion 6 C.10; ADVENTURES.md §5.16 'Situations inside adventures'). A predicament with `inside` {step, route, chance} is never forged from a town's own roots: when an adventure's step of that kind is open and its person is in a peopled town, story/situations.for_step may make it that step's situation (its root kind 'adventure', `sit[\"adventure\"]` and `sit[\"step\"]`), its role 'asker' the step's person (bind 'given'). The op 'step' finishes the adventure's step (the witness tells the tale; the one who knows tells what it fears); 'key' gives the adventure a key. Its meetings are the scenes of scenes.inside.json.",
+  "meetings": {
+    "turned_away": {"scene": "sit_turned_away", "cast": {"asker": "asker", "other": "other"}},
+    "hunter_yard": {"scene": "sit_hunter_yard", "cast": {"asker": "asker"}}
+  },
+  "predicaments": {
+    "silent_witness": {
+      "name": "A witness who will not speak",
+      "inside": {"step": "witness", "chance": 0.65},
+      "roles": {
+        "asker": {"bind": "given"},
+        "kin": {"bind": "kin", "of": "asker", "kinds": ["husband", "wife", "father", "mother", "brother", "sister"], "make": true}
+      },
+      "parts": {"other": "kin"},
+      "obstacles": [
+        {
+          "id": "kin", "kind": "silence", "who": "kin",
+          "note": [
+            "{kin_full} will not have {asker} telling the tale: the last one who frightened the market with it was fined by the reeve.",
+            "{kin} keeps {asker} indoors and does the talking at the door. Talk of the beast brings it, {kin_they} says.",
+            "{kin_full} wants the whole thing forgotten, and {asker} will not cross {kin_them}."
+          ],
+          "favour": {"kinds": ["word"], "then": [["flag", "allowed"]]},
+          "spells": ["charm_person", "suggestion"],
+          "by_magic": [["flag", "allowed"]],
+          "magic_note": ["The spell did what words would not: {kin} stood aside."],
+          "acts": [
+            {"id": "reason", "label": ["Let {asker} speak. It is your neighbours who will die next."], "check": ["persuasion", 13],
+             "then": [["flag", "allowed"]],
+             "say": ["...Say it here, then, in the house. Not in the street.", "Go on, then. Tell them. God help us all."],
+             "fail_say": ["You'll go off after it and we'll be the ones left here when it comes. No."]},
+            {"id": "pay", "label": ["For the ox you lost, and the trouble. Let {asker} talk to me."], "price": 1500, "way": "pay",
+             "then": [["flag", "allowed"]],
+             "say": ["...That's the price of the ox and more. All right. Sit down, then."]},
+            {"id": "cow", "label": ["Stand aside. I am not asking."], "check": ["intimidation", 12],
+             "then": [["flag", "allowed"], ["flag", "cowed"], ["disposition", "kin", -30]],
+             "say": ["All right. All right. Talk to them, then, and be gone."],
+             "fail_say": ["You don't scare me half as much as that thing does. Get out."]}
+          ]
+        }
+      ],
+      "acts": [
+        {"id": "tell", "who": "asker", "needs": ["flag:allowed"], "label": ["Now. Tell me what you saw."],
+         "then": [["flag", "told"]],
+         "say": ["...All right. I'll tell it the once, and then I never want to speak of it again.", "Sit down. It takes a while, and I'll not tell it twice."]},
+        {"id": "secret", "who": "asker", "unless": ["flag:allowed"], "label": ["Meet me at the shrine tonight, where {kin} will not see."],
+         "check": ["persuasion", 15],
+         "then": [["flag", "told"], ["flag", "secret"]],
+         "say": ["...After dark, then. By the shrine. If I'm not there, I'm not coming.", "Tonight. Don't wait for me past the bell."],
+         "fail_say": ["I can't. I can't go behind {kin_their} back. Don't ask me."]}
+      ],
+      "goals": [{"id": "told", "test": ["flag", "told"]}],
+      "endings": [
+        {"id": "told_secret", "when": "told", "if": ["flag:secret"], "tone": "mixed",
+         "ops": [["step"], ["disposition", "kin", -20], ["xp_story", "small"]],
+         "line": [
+           "{asker} told it all by the shrine in the dark, and went home before {kin} missed {asker_them}. {kin} found out anyway.",
+           "Told, in secret. {kin} knows now, and has not spoken to {asker} since.",
+           "{asker} slipped out to tell it, and the whole street saw {asker_them} come back. There are words in that house now."
+         ]},
+        {"id": "told_cowed", "when": "told", "if": ["flag:cowed"], "tone": "mixed",
+         "ops": [["step"], ["disposition", "asker", -10], ["xp_story", "small"]],
+         "line": [
+           "{asker} told it with {kin} glaring from the door. Neither of them will look at you in the street.",
+           "You had the tale, and {kin} had a fright. That house will not open its door to you again.",
+           "Told, because you made {kin} stand aside. {asker} shakes still when you pass."
+         ]},
+        {"id": "told", "when": "told", "tone": "good",
+         "ops": [["step"], ["disposition", "asker", 20], ["favour", "asker", "word", 1], ["xp_story", "small"]],
+         "line": [
+           "{asker} told it all, and {kin} sat and listened, and did not stop {asker_them}. It was a weight off that house.",
+           "Told, with {kin}'s leave. {asker} pressed your hand at the door and said to come back when it is dead.",
+           "{asker} has said it out loud at last. {kin} says that if you need a word spoken for you in {town}, ask."
+         ]}
+      ],
+      "lapse": {
+        "tone": "mixed", "ops": [["step"]],
+        "line": [
+          "{asker} could not carry it any longer and told it all to the priest. The priest sent it on to you, days late.",
+          "In the end {asker} told it, to the whole inn, drunk. Someone remembered to send it on to you.",
+          "{asker} told it without you in the end, at the well, with {kin} out in the fields. Word of it reached you late."
+        ]
+      },
+      "clock": [5, 9],
+      "meetings": ["turned_away", "quarrel"],
+      "words": {
+        "title": ["What {asker} saw", "The one who will not tell", "{asker}'s silence"],
+        "stakes": ["what {asker} saw on the road, and whether {kin} lets it be told", "the tale only {asker} can tell", "whether {asker} tells what came out of the dark"],
+        "plea": [
+          "I saw it. Yes. But {kin} says if I tell it, it will come for me, or the reeve will. I can't. Not with {kin} as {kin_they} is.",
+          "Don't ask me here. {kin} won't have it talked of in this house. Talk to {kin}, if you must. Or find another way.",
+          "I want to tell you. Every night I want to tell someone. But {kin} watches me, and says talk brings it."
+        ],
+        "first": [
+          "{asker} saw it on the road and lived, and will not tell it while {kin} forbids it.",
+          "{asker} knows what it looks like, and is keeping quiet for {kin}'s sake.",
+          "The one who saw it is {asker}. {kin} keeps {asker_them} from telling."
+        ],
+        "ask": ["They say you saw it. I need to know what you saw.", "You were on the road that night. Will you tell me?", "You saw it, didn't you? Tell me."],
+        "take": ["I'll talk to {kin}.", "Then I'll find a way for you to tell it.", "Leave {kin} to me."],
+        "thanks": ["...If you can make {kin} see sense, I'll tell you everything.", "Be careful with {kin}. {kin_they} means well. {kin_they} is only afraid."]
+      }
+    },
+    "hunter_holds_back": {
+      "name": "A hunter who will not hunt",
+      "inside": {"step": "learn", "route": "ally", "chance": 0.65},
+      "roles": {"asker": {"bind": "given"}},
+      "obstacles": [
+        {
+          "id": "oath", "kind": "honour", "who": "asker",
+          "note": [
+            "{asker} swore over a grave never to go up after it again, and means to keep the oath.",
+            "{asker} hunted it once, years ago, and came back alone. {asker_they} will not say what happened to the other.",
+            "{asker} has a debt in {town} as well as an oath, and will not go off to be killed with either of them hanging."
+          ],
+          "favour": {"kinds": ["word"], "weight": 2, "then": [["flag", "comes"], ["flag", "eased"]]},
+          "acts": [
+            {"id": "why", "label": ["What happened, the last time you went after it?"], "unless": ["knows:why"], "pass": false,
+             "then": [["learn", "why"]],
+             "say": ["...There were two of us. My brother and me. I came back. That's all there is.", "We went up after it, three of us, the winter I was twenty. I'm the one who came down."]},
+            {"id": "swear", "label": ["Then come up with me and finish it, for the one you lost."], "needs": ["knows:why"],
+             "check": ["persuasion", 12],
+             "then": [["flag", "comes"]],
+             "say": ["...For them. All right. I'll show you the way, and I'll stand with you.", "I've waited long enough. I'll come."],
+             "fail_say": ["You didn't see what it left of them. No. Find someone else."]},
+            {"id": "shame", "label": ["The best hunter in {town}, hiding in a yard while children die."], "check": ["intimidation", 14],
+             "then": [["flag", "comes"], ["flag", "shamed"], ["disposition", "asker", -15]],
+             "say": ["...Damn you. Damn you. I'll come. And if it kills me, that's on you."],
+             "fail_say": ["Say what you like. I've heard worse from myself."]},
+            {"id": "debt", "label": ["What do you owe, and to whom? I'll pay it, and you come."], "price": 2500, "way": "pay",
+             "then": [["flag", "comes"], ["flag", "paid"]],
+             "say": ["...That's every penny of it. Then there's nothing keeping me here. I'll fetch my bow."]}
+          ]
+        }
+      ],
+      "goals": [{"id": "comes", "test": ["flag", "comes"]}],
+      "endings": [
+        {"id": "comes_shamed", "when": "comes", "if": ["flag:shamed"], "tone": "mixed",
+         "ops": [["step"], ["key", "ally"], ["xp_story", "small"]],
+         "line": [
+           "{asker} will come, and will stand with you, and has not forgiven you for how you asked.",
+           "Shamed into it: {asker} has the bow strung and says nothing to you that does not need saying.",
+           "{asker} is coming up with you. {asker_they} spat in the yard when you left."
+         ]},
+        {"id": "comes_paid", "when": "comes", "if": ["flag:paid"], "tone": "good",
+         "ops": [["step"], ["key", "ally"], ["disposition", "asker", 15], ["xp_story", "small"]],
+         "line": [
+           "{asker}'s debt is paid and {asker_their} word is free. {asker_they} told you what it fears, and will stand with you.",
+           "Paid off and free: {asker} is waxing the bowstring and talking of the hill road as if it were years ago.",
+           "{asker} owes nobody in {town} now but you, and means to pay you in the only way a hunter can."
+         ]},
+        {"id": "comes", "when": "comes", "tone": "good",
+         "ops": [["step"], ["key", "ally"], ["disposition", "asker", 25], ["xp_story", "small"]],
+         "line": [
+           "{asker} will come, for the one who did not come down the last time. {asker_they} told you what it fears.",
+           "{asker} has taken the old bow down from the wall. When you go up, {asker_they} goes with you.",
+           "The oath is set aside, not broken. {asker} will stand with you at the end, and told you how it can be hurt."
+         ]}
+      ],
+      "lapse": {
+        "tone": "bitter", "ops": [["npc_fate", "asker", "gone"]],
+        "line": [
+          "{asker} went up into the hills alone the night before last, with the old bow. Nobody has seen {asker_them} since.",
+          "The yard is empty and the bow is gone from the wall. {asker} went to settle it alone.",
+          "{asker} could not bear to wait for you, and went up after it alone. The door of the house stands open."
+        ]
+      },
+      "clock": [6, 10],
+      "meetings": ["hunter_yard", "plea"],
+      "words": {
+        "title": ["The hunter's oath", "Why {asker} will not hunt", "The bow on the wall"],
+        "stakes": ["whether {asker} breaks an old oath to hunt it with you", "{asker}'s help, and what {asker_they} knows of it", "the one hunter in {town} who has faced it and lived"],
+        "plea": [
+          "I know what it fears. I know where it lies up. And I'll not go near it again. I swore that, over a grave.",
+          "You want me up there with you. I know. Everyone wants that. I've my reasons, and they're buried on the hill.",
+          "Ask me anything but that. I'll not hunt it. I've done it once, and once was enough for a lifetime."
+        ],
+        "first": [
+          "{asker} knows the beast better than anyone, and has sworn never to hunt it again.",
+          "{asker} could tell me what it fears and walk the hill road with me, and will not.",
+          "The hunter is {asker}. {asker_they} hunted it once, and something keeps {asker_them} from going again."
+        ],
+        "ask": ["They say you're the hunter here.", "You know the hill road. Will you help me?", "They tell me you've faced it before."],
+        "take": ["Then I'll find what keeps you here.", "Hear me out, at least.", "I'll not go without you, if I can help it."],
+        "thanks": ["...You can try. You'll not be the first.", "Talk all you like. I'll listen."]
+      }
+    }
+  }
+}
