@@ -598,7 +598,7 @@ Measures (storyplay, 20 lives): outlaw 18/20 (19 before; both lost lives died; a
 swelled the finale and one life lost it over and over: they now take the place of one of its men each), risen
 19/20 (18 before; the lost life died). tests/test_risen_outlaw._tale now sets the first hour aside, as storyplay
 does (the first hour's dice follow the hero's name and the world's id, and a terror opening left a beat waiting).
-Checks: CHECKS_LINE.
+Checks: full suite (only the known tactics-coverage timing test missed under load; passes alone), autoplay OK, smoke OK.
 E.2 (2026-10-25, realmwalker-b): the schemes. villains.json moves may say `needs` (villain.NEEDS: helper, companion,
 town, lair; `able`) and `disloyal` (the wedge's beat for a companion under villains.json wedge `loyal` 50); due_move
 fills adv["reprisal"] (helper; the wedge too, for its darkest choice), adv["wedge"] {name, loyalty, offer} (`_tempted`,
