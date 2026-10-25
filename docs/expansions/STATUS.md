@@ -565,11 +565,43 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.2 (*step kinds rescue, fetch, defeat,
-capture (through `story.on_fate` from `fight.decide_captive`), recruit, rally, hold, rite, escort, confront*, on Part C's
-goal predicates where they fit, able to carry a situation (§8.10), and the Part D selectors), on branch
-`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part D, ADVENTURES.md §6.2 (the Risen and
-the Outlaw Lord in full), §8.5 (the generator and the steps) and game/story/steps.py first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.3 (*the Risen and the Outlaw Lord,
+first forms, with all their words (parallel helpers); their scenes (the dead at the camp's edge by night; a warning
+nailed to your door; the inside man followed through the streets at midnight); their arenas (the ford at night with
+burning carts, fire on the field; the hideout); their villains' minimal reactions (a letter in an old hand, as a
+page; a test on the road)*), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part
+D, ADVENTURES.md §6.2 (both blueprints in full), §7 (how storybook prints a tale) and the beast blueprint in
+data/packs/06_adventures_events/adventures.json as the finished example; tests/test_deeds.py has a test blueprint
+that uses every Part D step.
+D.2 (2026-10-25, realmwalker-a): Part D's step kinds in steps.py (bind; `Step.goal(st)`: a goal-language test that
+finishes a step however it was made true, for rescue free(who) when an npc, fetch holds(you, tag), escort at(who,
+to)) and their game side in the new `game/story/deeds.py` (docstring has the API): `setup(game, adv)` when a
+chapter opens (story.take_hook, `_chapter_check`, and daily as a catch-up; `st["set"]`): rescue and fetch become
+step quests (`deeds._quest`: quests.base_quest with `adventure`, `step`, reward 0, 60 days, `text_key`
+story_rescue/story_retrieve/story_escort in data/quests.json; `quests.mark_done` of an adventure quest sets it
+"finished" and calls story.on_quest_end at once; `quests.on_arrive_dungeon` places a target with `level` on that level
+instead of the deepest; `quest_item` adds the target's story `tag`); defeat/capture under a site add a story_sites
+record with `role`/`step`/`group` (`story.boss_for` returns it while its step is open; `dungeon.populate` places a
+story band on any level and `story.tag_band(..., role, step)` tags it; `deeds.on_descend` adds it to a level filled
+before), on the land they meet you on arrival (once a day); hold sets `target["night"]` (today + `days`) and its
+waves are encounters tagged role "wave" (`deeds.on_battle`: a victory brings the next at once, a loss or the night
+passed fails it); rite on arrival with `needs` (key:/flag:/clue:/item:) and a camp.check or its beat; escort starts
+from talk (`story_escort`) as an escort step quest, `deeds.on_travel` springs its `ambush` once, 3+ tiles out;
+capture is finished by `story.on_fate` (fight.decide_captive: a story foe can always be captured; interrogate tells
+`captive_talks`; `_fate_heard` reports spare/rob/execute too; flags `<role>_<fate>`); defeat sets `<role>_slain` or
+`<role>_taken`; recruit (key `<role>`, or `price`), rally (key "militia"), confront (yield with the step's `clue`
+known or a check, else their `group` attacks; flag `<role>_yielded`) are talk choices (STORY_CHOICES), each first
+offered to `situations.for_step` (no `inside` predicaments for them yet: D.3 may add some). `deeds.step_failed`
+leaves `fails_to` (forge now copies it) and `_chapter_check` counts failed steps as resolved (law 6). goals.notify
+calls `deeds.on_goal` first (even with no situations). Words: adventures.json "words" keys recruit_ask/yes/no,
+rally_*, confront_*, escort_*, hold_set/wave/won/lost/missed, rite_done/fail/needs, captive_talks, ambush, band_here
+fall back to `deeds.DEFAULT_WORDS` (one line each: D.3 writes the real ones, three at least). Selectors:
+site_of_figure(path), scar_of(path) (the threat's `source.scar` first), hideout_of(path), band(group) (a role that
+is a band: {"band": group}; cast.describe says "the <creature> and the rest"); people veteran_of, captain_of,
+merchant_of, carter_of, suspect_of. check.BUILT_PARTS has "D"; a fetch's `what` is words, not a selector; `to` is
+checked as one. Journal STEP_WORDS for every kind ({night}, {to}; a failed step shows [lost]); map marks include an
+escort's end. Not yet: storyplay and the autoplay bot have no moves for the new kinds (no tale uses them before
+D.3; D.5's storyplay measure needs them). No save format change. Checks: quick suite green, autoplay clean.
 D.1 (2026-10-25, realmwalker-a): threats.json kinds `risen` (from "tombs": `threats.risen_sources`, barrows with
 `dungeon.depth_for` >= 2 not in `politics["laid"]`; `source.scar` = `nearest_scar` within twice the reach or None;
 kind `creature` "wight", so always tier >= 2) and `outlaw` (from "gangs": `gang_sources`, active bandit_gang with a

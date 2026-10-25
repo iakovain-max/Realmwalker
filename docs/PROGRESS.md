@@ -46,6 +46,27 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.2 — ten new kinds of step for tales — branch `dlc/06-adventures-events`
+
+- Tales can now ask ten new things of you, all played with what the game already has: **rescue** someone held on an
+  upper level of a barrow or hideout (the captive in chains, never in the master's own hall); **fetch** a thing of
+  the story from where it lies (a chest on its level: the dead king's crown, a ledger); **defeat** one of the
+  villain's people, slain or taken alive (their band waits on its dungeon level, or on the road); **capture** one
+  alive and judge them in the aftermath (questioned, they talk); **recruit** someone to stand with you (talked round,
+  or paid); **rally** a town's people (the militia); **hold** a place on a set night, written in the journal - the
+  enemy comes in waves, one fight straight after another with no rest between; perform a **rite** at a place, with
+  what it needs; **escort** someone to another town while the gang watches the road (an ambush on the way); and
+  **confront** someone with what you know (if you know enough they break, if not they call their men).
+- A step that can no longer be done (the night missed, the one to be taken alive killed) fails and leaves its mark
+  on the tale, and the tale goes on.
+- The journal says each of them in plain words, and the map marks where they are.
+- No tale uses them yet: the Risen and the Outlaw Lord, written in D.3, are the first.
+
+Decisions (Anton may want to change): the step jobs a tale gives (rescue, fetch, escort) pay nothing and last 60
+days; a hold's night is "in N days" (the calendar has no moon), and missing it by more than a day loses the place; a
+recruit or rally refused can be asked again the next day; a foe of the tale taken alive can always be bound and kept
+(no reward is needed for it); the bands of steps are made for the land's danger at the high difficulty.
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.1 — the risen and the outlaw lord as threats — branch `dlc/06-adventures-events`
 
 - Two new dangers live in the world beside the named beasts. **The risen**: a king or chieftain of the history

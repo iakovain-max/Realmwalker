@@ -323,7 +323,7 @@ with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
 - [x] D.1 Threat kinds *risen* (from `tombs` and `scars`; the barrow at least two levels deep) and *outlaw lord* (from
   active gangs), with schemes, signs (as marks and scenes where they can be: the emptied hamlet, the dead on the road
   at night), bounded dooms and the world's own endings (politics already hangs gangs).
-- [ ] D.2 Step kinds rescue, fetch, defeat, capture (through `story.on_fate` from `fight.decide_captive`), recruit,
+- [x] D.2 Step kinds rescue, fetch, defeat, capture (through `story.on_fate` from `fight.decide_captive`), recruit,
   rally, hold (waves as successive battles with no rest, at a settlement or a road tile laid by `game/arena.build`, on
   a set night: the calendar's new moon if it has one, else "in N days"), rite, escort, confront – written on Part C's
   goal predicates where they fit, and able to carry a situation (§8.10); the Part D selectors.
