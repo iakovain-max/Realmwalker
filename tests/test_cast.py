@@ -66,12 +66,19 @@ def test_with_the_company_full_the_ally_rides_with_the_patron_and_fights_beside_
     adv["keys"] += ["anchor", "name", "ford"]
     for c in game.party:
         c.level = max(c.level, adv["target_level"])
+    from realmwalker.game.story import lieutenants
+
+    turned = [rec for _, rec in lieutenants._tale_lieutenants(game, adv)]
+    for lt in turned:
+        lt["fate"] = "turned"  # (the waker came over to you: it stands with you at the end)
     _to_level(game, adv["places"]["home"])
     band = next(a for a in game.local.actors if a.creatures and (getattr(a.creatures[0], "story", None) or {})
                 .get("role") == "villain")
     assert story.hold_for_finale(game, band)
     story.fight_finale(game)
     b = game.battle
+    for lt in turned:
+        assert any(f.creature is not None and f.name == lieutenants.full(lt) for f in b.side(PARTY)),             "a turned lieutenant keeps faith at the end"
     beside = [f for f in b.side(PARTY) if f.bond is not None and f.bond.get("kind") == "story_ally"
               and f.char is not None]
     assert len(beside) == 1 and beside[0].char.name == ally.name, "the ally is on the field, a character of their own"

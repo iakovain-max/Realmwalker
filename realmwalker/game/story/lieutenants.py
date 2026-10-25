@@ -30,6 +30,7 @@ from realmwalker.core.textgen import escape_markup as esc
 
 FREE = ("unmet", "met", "escaped", "spared", "turncoat")  # still the villain's: they stand with it at the end
 AGAIN = ("unmet", "met", "escaped", "spared")  # who come back with a villain that returns
+ESCAPES = 2  # a lieutenant who has got away this often is cornered: it no longer tries (a step is never endless)
 
 
 def spec(game) -> dict:
@@ -189,7 +190,7 @@ def arm(battle, f, game) -> None:
     trait = sp["traits"].get(rec["trait"], {})
     d = dict(f.cdef)
     d["morale"] = trait.get("morale", d.get("morale", "warrior"))
-    if float(trait.get("flee_at", 0)) > 0 and not d.get("boss_phase"):
+    if float(trait.get("flee_at", 0)) > 0 and not d.get("boss_phase") and int(rec.get("escapes", 0)) < ESCAPES:
         rng = battle.rng.child(f"lt-lines/{f.id}")
         d["boss_phase"] = {"at": float(trait["flee_at"]), "kind": "escape",
                            "lines": [_fill(game, x, _words(game, adv, rec), rng)
@@ -252,6 +253,7 @@ def _escaped(game, adv: dict | None, rec: dict, c, rng) -> None:
     """Got away: a grudge, and a scar if you made them bleed."""
     if adv is not None:
         rec["fate"] = "escaped"
+    rec["escapes"] = int(rec.get("escapes", 0)) + 1
     _grudge(game, rec)
     if c.hp < c.max_hp:
         left = [s for s in spec(game)["scars"] if s not in rec["scars"]]

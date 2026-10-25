@@ -154,6 +154,9 @@ def setup(game, adv: dict) -> None:
         if st["state"] == "open" and st["kind"] in SETUP and not st.get("set"):
             st["set"] = True
             SETUP[st["kind"]](game, adv, st)
+    from realmwalker.game.story import stakes
+
+    stakes.won_over(game, adv)  # (a recruit step for one who already came with you: F.1)
 
 
 def _giver(game, adv: dict):

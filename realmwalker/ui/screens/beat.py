@@ -93,14 +93,18 @@ class BeatScreen(Screen):
         super().__init__(app)
         self.game = game
         self.rec = beats.pending(game)
-        if self.rec and game.tables.beats.get(self.rec["beat"], {}).get("family") == "villain":
+        family = game.tables.beats.get(self.rec["beat"], {}).get("family") if self.rec else None
+        if family == "villain":
             self.sound_open = "villain_move"  # (its move reaches you: E.7)
+        elif family == "ally":
+            self.sound_open = "fire"  # (an ally's word by the fire: F.1)
+        self.family = family
         self.pages = beats.pages(game, self.rec) if self.rec else []
         self.page = 0
         self.result: list[str] | None = None
 
     def music(self) -> str | None:
-        return "story/omen"
+        return "rest" if self.family == "ally" else "story/omen"
 
     def choose(self, i: int) -> None:
         opts = beats.choices(self.game, self.rec)

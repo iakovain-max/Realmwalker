@@ -569,11 +569,35 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.1 (*allies with stakes, join
-conditions (often a situation of their own) and three-beat arcs; the new bond `oath` (companions.json); the full party
-case (`Battle.add_ally`); their fates; tests/test_cast.py*), on branch `dlc/06-adventures-events` (Part E is on main).
-Read docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.3 and §5.6, game/story/cast.py, the E.3 note
-below (a turned lieutenant as an ally waits for F) and rules/allies.py's `add_ally`.
+Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.2 (*rivals: bands with their own
+clocks - race, theft, ambush, truce, plea, sale to the villain, found dead (a scene in the lair) - and a relation from
+-2 to 2*), on branch `dlc/06-adventures-events` (Part E is on main; F.1 on the branch). Read
+docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.6 (Rivals), game/story/stakes.py (F.1, the
+pattern: a record on the tale, beats by the fire, a fate in the epilogue), finale.py's `rival_arrives` key and
+`RIVAL_KIND` (a rival befriended already comes at a round), and the F.1 note below.
+F.1 (2026-10-25, realmwalker-b): `game/story/stakes.py` (docstring has it all). The key "ally" (beats.OPS["key"], every
+road to it: recruit talk, the hunter's situation, story_learn's ally route) calls `stakes.join`: `adv["ally"]` {npc,
+stake, words {stake, confidence}, state joined|riding|taken|broke|home|fell|sworn, joined, told, crisis, held,
+at_finale, fate, fate_due}; stakes in adventures.allies.json (`allies`: classes by job, arc days, stakes by blueprint/
+job with crisis revenge|doubt, values, want, words; riding lines; fates fell_well/fell/broke/home/sworn), schema in
+ADVENTURES. With `companions.room`: `companions.build` at the hero's level, `enlist(bond "oath", adv=, stake=)`
+(companions.json bonds oath, pledged; bond_text knows {stake}); else "riding": `to_battle` (finale.prepare, after the
+militia) adds them as a character (`add_ally(None, leader, "story_ally", char=)`, auto) to every fight with a foe
+tagged with the tale (battle.__dict__["story_allies"] {fid: aid}; `fighting`), and at the finale a lieutenant with fate
+"turned" as its creature (the E.3 gap). `finale._ally_fights` adds no creature when the tale has an ally record (here:
+a line; elsewhere nothing); without a record (storyplay's keys set by hand) the old creature fallback stays. Arc:
+`on_night` (story.on_night after deeds) offers beats.allies.json ally_confidence (after `confidence_after` days, with
+you, or riding and at the inn of their town), ally_crisis_<revenge|doubt|taken> (told `crisis_after` days ago, chapter
+>= 1, not the finale chapter, `crisis_chance` a night; riding: taken through villain.kidnap when it has a lair),
+ally_fate (fate_due). Op `ally` (told/held/held_hard n, breaks, home, taken, sworn, farewell); condition `party_room`
+(beats._why "your company is full"). Hooks: companions.dismiss -> `dismissed` (deserted: broke, key lost; else riding),
+companions.died -> `died` (fell), story.on_battle -> `on_battle` (a riding ally dead on the field: the npc dies;
+at_finale), defeat.on_retreat's ally_lost -> op ally home, endings.finish -> `after_tale` after lieutenants (fell_well
+when at_finale, broke, home; a won tale's living ally gets fate_due; the epilogue's "ally" page replaced by the fate
+line). situations.allies.json: ally_unburied, ally_doubts (inside recruit, risen only: their endings give ["key",
+"ally"], their lapse ["step"]). Journal "Beside you" (`journal_line`). Autoplay `_check_allies`. Not in F.1: the
+Outlaw's tale has no ally (F.5's full forms), the Reading's named ally whom the villain targets (F.4), a traitor among
+the cast (F.3); an ally riding with the patron is a fresh character each fight (wounds are not kept).
 E.7 (2026-10-25, realmwalker-a): a beat's `tempers` {temper: [first-page variants]} replace its text[0] when its tale's
 villain has that temper (beats.pages); fragments beats.voices_a/b/c.json (`_merge`; named to sort after
 beats.villain.json: fragments merge in name order) give every move of every temper three (77 pairs; floor test

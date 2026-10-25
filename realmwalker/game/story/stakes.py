@@ -65,6 +65,7 @@ def join(game, adv: dict) -> list[str]:
 
     sp = spec(game)
     who = cast.person(game.world, adv["cast"].get("ally"))
+    won_over(game, adv)
     if not sp or adv.get("ally") or who is None or not hasattr(who, "job") or not who.alive:
         return []
     rng = game.world.rng.child(f"ally/{adv['id']}")
@@ -88,6 +89,15 @@ def join(game, adv: dict) -> list[str]:
     _story().journal(adv, esc(f"{who.name} rides with {words.get('patron', 'the patron')}, for "
                               f"{rec['words']['stake']}."), _today(game))
     return [f"<good>{esc(line)}</>"]
+
+
+def won_over(game, adv: dict) -> None:
+    """A recruit step for someone already won over another way (the one who knows came with you when they told
+    you) is done: nobody asks twice. From `join` and deeds.setup (a later chapter's step)."""
+    story = _story()
+    for st in [s for s in story.open_steps(adv) if s["kind"] == "recruit"
+               and s["target"].get("role") in adv["keys"]]:
+        story.step_done(game, adv["id"], st["id"])
 
 
 def _pick_stake(game, adv: dict, npc, rng) -> str:
@@ -290,8 +300,12 @@ def to_battle(battle, game, advs: dict) -> list[str]:
     ids = sorted({t["adv"] for t in (story_of(f.creature) for f in battle.side(FOE) if f.creature is not None)
                   if t and t.get("adv")})
     out = []
+    bosses = {t["adv"] for t in (story_of(f.creature) for f in battle.side(FOE) if f.creature is not None)
+              if t and t.get("role") == "villain"}
     for aid in ids:
         adv = advs.get(aid)
+        if adv is not None and aid in bosses and adv.get("state") == "active":
+            out += _turned_lieutenants(battle, game, adv, leader)
         rec = (adv or {}).get("ally")
         if adv is None or adv.get("state") != "active" or not rec or "ally" not in adv["keys"]:
             continue
@@ -304,6 +318,26 @@ def to_battle(battle, game, advs: dict) -> list[str]:
         f.auto = True
         battle.__dict__.setdefault("story_allies", {})[f.id] = aid
         out.append(f"<good>{esc(npc.first_name)} is here, as {_pronoun(npc)} promised, armed and beside you.</>")
+    return out
+
+
+def _turned_lieutenants(battle, game, adv: dict, leader) -> list[str]:
+    """At the finale, a lieutenant who came over to you (fate "turned", E.3) stands on your side of the field."""
+    from realmwalker.game.story import finale, lieutenants
+    from realmwalker.rules.creatures import spawn
+
+    if not finale._is_finale(adv):
+        return []
+    out = []
+    for i, (role, rec) in enumerate(lieutenants._tale_lieutenants(game, adv)):
+        if rec.get("fate") != "turned" or rec.get("creature") not in game.tables.creatures:
+            continue
+        c = spawn(game.tables, rec["creature"], battle.rng.child(f"turned/{adv['id']}/{role}"), 9300 + i,
+                  now=int(battle.now or 0))
+        c.name, c.named = lieutenants.full(rec), True
+        f = battle.add_ally(c, leader, "story_ally")
+        f.auto = True
+        out.append(f"<good>{esc(lieutenants.full(rec))} keeps faith with you, and stands on your side of it.</>")
     return out
 
 

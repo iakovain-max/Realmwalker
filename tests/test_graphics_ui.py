@@ -813,3 +813,32 @@ def test_the_fallen_and_their_blood_are_drawn(pictured):
     names = {c.name for c in commands(canvas, Sprite)}
     assert any(n.startswith("decal/pool") for n in names) and any(n.startswith("decal/blood") for n in names)
     assert app.error_count == 0
+
+
+def test_an_ally_speaks_by_the_fire(pictured):
+    """Expansion 6 F.1: an ally's beat opens with the fire's crackle and the camp's music, the camp at night above
+    their words."""
+    from realmwalker.game.story import beats, forge
+    from realmwalker.ui.gfx.scene import Sprite
+    from realmwalker.world import threats
+
+    app, game = pictured
+    t = next((t for t in threats.records(game.world).values() if t["kind"] == "beast" and t["state"] != "ended"
+              and forge.fitting(game, t)), None)
+    if t is None:
+        pytest.skip("no beast tale in this world")
+    if t["state"] == "dormant":
+        threats.stir(game.world, app.tables, t, game.world.rng, day=0)
+    adv = forge.make(game, t)
+    d = beats.director(game.world)
+    d["pending"], d["card"] = None, None
+    words = {"ally": "Wenna", "stake": "the friend she lost", "confidence": "\"We were two, the last time.\""}
+    beats.offer(game, "ally_confidence", adv=adv["id"], where="camp", words=words)
+    render(app)
+    canvas = render(app)
+    screen = app.screens[-1]
+    assert type(screen).__name__ == "BeatScreen" and screen.sound_open == "fire" and screen.music() == "rest"
+    assert any(c.name.startswith("feature/campfire") for c in commands(canvas, Sprite))
+    app.handle_event(KeyEvent("enter"))
+    canvas = render(app)
+    assert "We were two" in canvas.words()

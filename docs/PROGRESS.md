@@ -46,6 +46,37 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (night, later): Adventures & Events Part F, task F.1 — allies with stakes — branch `dlc/06-adventures-events`
+
+- **The ally comes with you.** When you win over a tale's ally (the hunter who knows what the Beast fears, the old
+  soldier who will stand at the barrow), they now join your company as a full companion of their own trade (a
+  hunter fights as a fighter, a herder as a rogue, a priest as a cleric), at your level, and ask no wage: the party
+  screen says what they came for ("Came for the friend they lost to the Beast, and gave you their word to see it
+  through"). They like and dislike what you do by their own values, like any companion.
+- **A stake of their own.** Each ally has a reason: a friend lost, a brother taken, a home burned, an old vow over
+  the barrow-stones, an old shame to wipe out. The Journal shows them under "Beside you".
+- **If your company is full**, the ally rides with the patron instead, and comes to every fight with the tale's foes
+  (its bands, the night at the ford, the finale) as a fighter of their own beside you, on Auto, without taking a
+  place in the party. If they fall there, they are dead.
+- **Three beats by the fire.** A night or two after joining, the ally tells you why they came (listen, promise it
+  will be paid for, or tell them grief is poor company). Once the tale is in its second chapter, a crisis: one
+  out for revenge wants to go after the villain now (talk them down, take their pack from them, or let them go),
+  one with doubts wants to go home (persuade them, find out what really frightens them, or let them go). One who
+  rides with the patron may be carried off to the villain's hall instead, and the tale gains a rescue. When a won
+  tale is over and they live, they offer you their oath by the fire (they stay as a companion sworn to you for good)
+  or you send them home. Dying in the finale is dying well, and the epilogue says so; a retreat that breaks their
+  heart sends them home.
+- **Winning them over may be a story of its own.** The Risen's old soldier may not leave a parent unburied (pay the
+  priest, say the rite yourself, or talk the reeve into a grave on the hill), or may doubt you can win at all.
+- Try it: take the Beast or the Risen, win the ally, camp a couple of nights, and open the Journal (j) and the
+  party screen.
+
+Decisions (Anton may want to change): the ally fights at the hero's level as the class of their trade; the crisis
+comes at most once, on a night once the second chapter has begun (half the nights); one who rides with the patron
+tells you their reason only at the inn of their own town; at the end of a won tale the oath is asked at the next
+night's fire and needs a place in the company; a lost or abandoned tale sends the ally home; the Outlaw Lord's tale
+has no ally yet (its full form, F.5, may give it one).
+
 ### Session, 2026-10-25 (night): Adventures & Events Part E, task E.7 — every villain in its own voice — **Part E merged into `main`**
 
 - **Words.** Each kind of villain now makes its moves in its own way. A zealot's letter comes folded like an
