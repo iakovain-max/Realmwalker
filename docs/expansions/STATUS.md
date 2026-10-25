@@ -579,6 +579,11 @@ sid)` for C.6). Shows: `flags["dress"]="mourning"` + `mourning_until` (dolls.npc
 `Town.flags["life_gathering"]` {kind, spot, ids, from, until, murmur} made the town's gathering by `lives.gather`
 (townlife.tick and settle) in its hours (funeral 9-11 the next day at the grave; wedding 11-13 / christening 10-12 at
 the temple door). Start-up check `lives.problems` (via story/check). Autoplay checks lives. No save format change.
+Only the keeper shuts the house (`keeps_shop`; a shut keeper sells no services either); `_may_die` spares figures,
+story people, companions, escorts, guards who stay, visitors and a town's only one of a trade; words are rewritten
+after every event (`write_profile`). C.4's checks: full suite green twice but for the turn-time tests (enemy casters,
+tactics coverage: each passed alone, as before); autoplay clean twice (seeds 1 and 5); smoke clean; a fresh review's
+points fixed (bb3f524).
 C.3 (2026-10-25, realmwalker-b): contracts are `world.politics["contracts"]` {sid: [record]} (`work.contracts(game,
 s)` renews: `_stale` drops expired/dead-giver/dead-traveller ones, `renew` fills `slots(s)` (2 for a city or great
 city) from work.json `contracts.kinds` caravan/papers/pilgrims/raiders, then looks again only after `renew` days
