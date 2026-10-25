@@ -284,7 +284,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
   servants, a gang, a lair's beasts) so it can turn into a situation; built through `make` for `escort`, `deliver` and
   `defend`, paid by `base_quest`; bounties on real gangs, beasts with lairs and threats' servants; the Work tab shows
   terms. The muster and the levy wait for Under the Banner (K.3). Tests: `tests/test_work.py`.
-- [ ] C.4 **Lives** (`game/story/lives.py`, `lives.json`): `npc.flags["life"]` made by `lives.ensure` when a town near
+- [x] C.4 **Lives** (`game/story/lives.py`, `lives.json`): `npc.flags["life"]` made by `lives.ensure` when a town near
   the hero is populated (notables and up to twelve others); ties (kin are names first), wants, fears, secrets (the
   cults' hidden members among them), things of note; `npc.profile` written from the life; weekly life events within
   30 tiles (at most three a town) that show by themselves (mourning at the well, a shop shut with a sign, a new grave,

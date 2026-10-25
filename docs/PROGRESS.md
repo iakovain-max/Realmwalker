@@ -46,6 +46,31 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.4 — lives — branch `dlc/06-adventures-events` (not yet on main)
+
+The people of the towns near you now have lives of their own, and the weeks change them.
+- **Who they are.** The notables of a town and a dozen others carry a family (those under one roof are husband and
+  wife, parents and children; others are names: a son in the city, a mother long dead; a figure of the old history
+  brings the family the history gave them), and often a rival, a creditor, a patron, a lover or an enemy among the
+  neighbours. Each has something they want, something they fear, now and then a secret (the cults' and thieves'
+  hidden members hide theirs), and perhaps a thing of note: an heirloom, a deed, a good grey mare.
+- **What they tell you.** Ask someone about themselves and they say who they have ("She has a husband, Odo, and
+  three children...") and, when it is fresh, what has just happened to them. What they want, fear and hide is
+  written from their life, so the old words and the new agree.
+- **The weeks.** Once a week, in the towns within thirty miles' reach of you, up to three people a town live
+  something: an old one dies, a fever, a debt comes due, the levy takes a son in wartime, a wedding, a birth, a
+  theft, a quarrel, a love found out.
+- **It shows by itself**: the family in black (a new mourning dress on their figures), keeping to the house the
+  first days; the shop shut with a sign on the door ("Closed. A death in the house.") when you walk in, and no
+  trading; a fresh grave in the graveyard; the next morning a crowd round the grave, or at the temple door for a
+  wedding or a christening, murmuring; and what they say in passing ("I keep setting the table for two.").
+- Some of these are marked as the seed of a story, for the situations that come next (C.6).
+- How to try: stay near a town for a few weeks (rest at the inn), then walk its streets; ask people about
+  themselves.
+- Choices made without Anton: kin who are only names never share a first name with a neighbour; the same kind of
+  thing does not happen to the same person twice in six weeks; the levy takes only kin who are names, not a son
+  living in town; an old one's death goes through the same door as any townsperson's (their work ends with them).
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.3 — paid work — branch `dlc/06-adventures-events` (not yet on main)
 
 Every town with people in it has paid work again: honest, small and few.

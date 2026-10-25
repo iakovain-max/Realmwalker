@@ -556,10 +556,29 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.4 (*lives*: `game/story/lives.py`,
-`lives.json`: `npc.flags["life"]` by `lives.ensure` for towns near the hero; ties, wants, fears, secrets, things of
-note; `npc.profile` from the life; weekly life events that show by themselves; tests/test_lives.py), on branch
-`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §5.16, §8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.5 (*the goal language*:
+`game/story/goals.py`: the predicates of ADVENTURES.md §8.10 with `all`, `any`, `not`, checked at start-up;
+`goals.notify` from a conversation's end, battles, captives' fates, the law, items changing hands, entering and leaving
+towns and buildings, and the day; ways through recorded by kind; tests/test_goals.py), on branch
+`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §8.10 first.
+C.4 (2026-10-25, realmwalker-a): a life is `npc.flags["life"]` {ties [{kind (husband/wife/son/daughter/father/mother/
+brother/sister or lover/rival/creditor/patron/enemy), name, npc id|None, figure id|None, state alive/dead/levied,
+age?}], want, fear (ids in lives.json), secrets [{kind, to?, faction?, known}], things [{kind, words, state
+kept/stolen}], events [{day, kind, seed?, used?, ...}]}, made by `lives.ensure(game, sid)` (people.populate_town after
+cast.place_people, and story.on_enter_town) for the notables and `others` (12) more; households (same `home`) are kin
+by id (`_kin`), a figure brings its history family (`_figure_kin`); `write_profile` writes profile want/fear/secret
+(a grudge want is kept). `lives.daily` (from story.daily) puts away shows and runs `week` every 7 days: towns with
+people within 30 tiles, at most 3 events a town, an event kind not again for one person within REST_DAYS (42); events
+are `EVENTS` (can -> factor, do -> record) for death_of_age (self through alive=False + quests.on_npc_death +
+townlife.forget_person, or a parent who is a name), sickness, debt_due, levy (realm at war; only kin who are names),
+marriage, birth, theft, quarrel, love_found_out; `happen` records with `seed` by the data's chance (`lives.seeds(game,
+sid)` for C.6). Shows: `flags["dress"]="mourning"` + `mourning_until` (dolls.npc, sprites outfits "mourning"),
+`closed_until` (`lives.sign`: services' trade disabled, `GameState._walk_in` says the sign), `home_until`
+(townlife.activity "home"), `life_show` {kind, until} (`lives.bark` in townlife._words_for, `lives.note` and
+`family_line` in Conversation.who), a fresh grave (remains._grave_spot, lm.meta["graves"]) and
+`Town.flags["life_gathering"]` {kind, spot, ids, from, until, murmur} made the town's gathering by `lives.gather`
+(townlife.tick and settle) in its hours (funeral 9-11 the next day at the grave; wedding 11-13 / christening 10-12 at
+the temple door). Start-up check `lives.problems` (via story/check). Autoplay checks lives. No save format change.
 C.3 (2026-10-25, realmwalker-b): contracts are `world.politics["contracts"]` {sid: [record]} (`work.contracts(game,
 s)` renews: `_stale` drops expired/dead-giver/dead-traveller ones, `renew` fills `slots(s)` (2 for a city or great
 city) from work.json `contracts.kinds` caravan/papers/pilgrims/raiders, then looks again only after `renew` days
