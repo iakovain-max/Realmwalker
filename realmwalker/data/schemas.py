@@ -1534,6 +1534,11 @@ BLUEPRINT = Obj({
                    "words": Map(word_list(1, 600), optional=True)}),
     "endings": List(ENDING, min_items=2),
     "epithets": List(Str(max_len=40), optional=True),  # tags of the epithets its epilogue offers
+    # (E.3) the cast roles led by a named lieutenant: the creature at the band's head, their byname, and what one
+    # who turns gives you ("clue:anchor", "key:inside")
+    "lieutenants": List(Obj({"as": Str(max_len=30), "creature": List(Str(max_len=40), optional=True),
+                             "titles": word_list(3, 60), "turns": List(Str(max_len=60), optional=True)}),
+                        optional=True),
 })
 ADVENTURES = Obj({
     "max_active": Int(min=1, max=10, optional=True),
@@ -1603,6 +1608,21 @@ VILLAINS = Obj({
                       "needs": List(Str(max_len=20), optional=True), "disloyal": Str(max_len=60, optional=True)})),
     "bosses": Map(BOSS),
     "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
+    # (E.3) lieutenants who remember (story/lieutenants.py): traits, grudges, scars, the nemesis, their words
+    "lieutenants": Obj({
+        "grudge": Obj({"max": Int(min=1, max=10), "hp": Float(min=0, max=2), "ac": Int(min=0, max=5),
+                       "ac_max": Int(min=0, max=10), "blade": List(Str(max_len=10), min_items=1)}),
+        "nemesis": Obj({"grudge": Int(min=0, max=10), "first": List(Int(min=0, max=365), min_items=2, max_items=2),
+                        "again": List(Int(min=1, max=365), min_items=2, max_items=2),
+                        "band": Map(Str(max_len=40))}),
+        "traits": Map(Obj({"words": Str(max_len=40), "morale": Str(max_len=20), "flee_at": Float(min=0, max=0.95),
+                           "turn": Float(min=0, max=1), "betray": Float(min=0, max=1)}), min_items=3),
+        "weaknesses": word_list(6, 200), "looks": word_list(6, 200), "scars": word_list(6, 100),
+        "lines": Obj({k: word_list(3, 300) for k in (
+            "escape", "escaped", "returns", "spared_back", "turned", "slain_grief", "slain_rage", "joins",
+            "joins_grudge", "turncoat", "nemesis", "nemesis_slain", "nemesis_fled")}),
+        "epilogue": Obj({k: word_list(3, 300) for k in ("slain", "taken", "turned", "turncoat", "free", "promoted")}),
+    }, optional=True),
 })
 CUE = Obj({"cue": Str(max_len=20)}, strict=False)  # its other keys are its cue's own (story/stage.py CUES)
 SCENE = Obj({

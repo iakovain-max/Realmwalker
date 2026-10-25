@@ -87,7 +87,8 @@ def role_name(game, adv: dict, role: str) -> str | None:
     """The name of the person a role is bound to (None: a band, a village, or someone not yet placed)."""
     from realmwalker.game.story import cast
 
-    return cast.describe(game, adv, role) if cast.person(game.world, adv["cast"].get(role)) is not None else None
+    entry = adv["cast"].get(role) or {}
+    return cast.describe(game, adv, role) if cast.person(game.world, entry) is not None or "lt" in entry else None
 
 
 def _place_words(game, place: dict) -> str:
@@ -243,9 +244,9 @@ def cap(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------- the story's bands
-def band(game, adv: dict, st: dict, role: str, group: str, rng) -> list:
+def band(game, adv: dict, st: dict, role: str, group: str, rng, said: list | None = None) -> list:
     """A band of the story spawned now (a step's foe, a wave): tagged with the tale, its first named for the role's
-    person when there is one."""
+    person when there is one, or made the lieutenant at its head (what one who got away says goes in `said`)."""
     from realmwalker.game.encounters import land_budget
     from realmwalker.rules.creatures import spawn_group
 
@@ -259,6 +260,11 @@ def band(game, adv: dict, st: dict, role: str, group: str, rng) -> list:
             c.story["alive"] = True  # (wanted alive: a beaten blow knocks them out, on Auto too)
     if creatures and name:
         creatures[0].name, creatures[0].named = name, True
+    from realmwalker.game.story import lieutenants
+
+    back = lieutenants.on_spawn(game, adv, role, creatures, rng) if role not in ("wave", "ambush") else ""
+    if back and said is not None:
+        said.append(back)
     return creatures
 
 
@@ -267,8 +273,9 @@ def _encounter(game, adv: dict, st: dict, role: str, group: str, intro: str):
 
     rng = game.world.rng.child(f"deed-fight/{adv['id']}/{st['id']}/{game.world.time}")
     enc = make_encounter(game, group, rng)
-    enc.creatures = band(game, adv, st, role, group, rng.child("band")) or enc.creatures
-    enc.intro = intro
+    said: list[str] = []
+    enc.creatures = band(game, adv, st, role, group, rng.child("band"), said) or enc.creatures
+    enc.intro = " ".join(said + [intro])
     enc.attitude = "hostile"
     game.encounter = enc
     game.travel = None

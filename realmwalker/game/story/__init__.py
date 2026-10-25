@@ -343,6 +343,10 @@ def on_travel(game, minutes: float) -> bool:
 
     if opening.on_travel(game):  # (walking away from the start without going in: D.4)
         return True
+    from realmwalker.game.story import lieutenants
+
+    if lieutenants.on_travel(game):  # (a nemesis comes for you with the villain's old company: E.3)
+        return True
     if int(d.get("travel_beat_day", -10)) >= today:
         return False
     from realmwalker.game.story import deeds
@@ -697,8 +701,9 @@ def finish_off(game, result) -> list[str]:
 
 def on_battle(game, result, actor=None) -> None:
     """After a fight: a story's foe dead, taken or fled (by its story tag, never by its name)."""
-    from realmwalker.game.story import deeds, endings, villain
+    from realmwalker.game.story import deeds, endings, lieutenants, villain
 
+    lieutenants.on_battle(game, result)  # (a lieutenant slain, taken or got away; a nemesis: E.3)
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
     seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \
@@ -713,7 +718,7 @@ def on_battle(game, result, actor=None) -> None:
             seen.append((adv, how))
         elif how == "dead":  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
             h = harm.setdefault(adv["id"], {"servants": 0, "lieutenants": 0})
-            h["servants" if tag.get("role") == "minion" else "lieutenants"] += 1
+            h["servants" if tag.get("role") in ("minion", "wave", "ambush") else "lieutenants"] += 1
     for aid, h in harm.items():
         villain.on_fight(game, adventures(game.world)[aid], servants=min(1, h["servants"]),
                          lieutenants=h["lieutenants"])
@@ -749,9 +754,10 @@ def on_fate(game, creature, fate: str) -> str | None:
     """A story foe taken alive is judged in the aftermath (fight.decide_captive): what they tell, or None. A tale's
     villain taken alive ends the tale by the fate chosen: spared or robbed and let go (the codeword villain_spared),
     else given to the lord's justice or put to death (D.3)."""
-    from realmwalker.game.story import beats, deeds, endings
+    from realmwalker.game.story import beats, deeds, endings, lieutenants
 
     tag = getattr(creature, "story", None) or {}
+    said = lieutenants.on_fate(game, creature, fate)  # (a lieutenant spared may turn, or go back: E.3)
     adv = adventures(game.world).get(tag.get("adv"))
     if tag.get("role") == "villain" and adv is not None and adv["state"] == "active" and adv.get("boss_taken"):
         adv["villain_fate"] = fate
@@ -762,7 +768,8 @@ def on_fate(game, creature, fate: str) -> str | None:
         for line in endings.finish(game, adv):
             game.say(line, "story")
         return None
-    return deeds.on_fate(game, creature, fate)
+    told = deeds.on_fate(game, creature, fate)
+    return told if told is not None or said is None else said
 
 
 def on_quest_end(game, q: dict, ok: bool) -> None:
@@ -1218,6 +1225,12 @@ def fight_finale(game) -> None:
     actor = next((a for a in (lm.actors if lm is not None else []) if a.id == (rec or {}).get("actor")), None)
     if actor is None:
         return
+    adv = adventures(game.world).get((rec or {}).get("adv"))
+    if adv is not None:
+        from realmwalker.game.story import lieutenants
+
+        for line in lieutenants.join_finale(game, adv, actor):  # (its hands still free stand beside it: E.3)
+            game.say(f"<danger>{esc(line)}</>", "story")
     name = actor.creatures[0].name if actor.creatures else "it"
     start_battle(game, actor.creatures, f"{name}!", surprised=None if actor.alert else FOE, actor=actor,
                  title=name)

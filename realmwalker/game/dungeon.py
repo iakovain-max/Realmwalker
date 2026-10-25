@@ -794,6 +794,11 @@ def populate(game, lm) -> None:
         elif story_band is not None and has_boss and n == 0 and creatures:
             story.tag_band(creatures, story_band["adv"], story_band["name"], story_band.get("role", "villain"),
                            story_band.get("step"))
+            adv = story.adventures(game.world).get(story_band["adv"])
+            if story_band.get("role") and adv is not None:
+                from realmwalker.game.story import lieutenants
+
+                lieutenants.on_spawn(game, adv, story_band["role"], creatures, rng.child("lt"))
         elif boss_name and has_boss and n == 0 and creatures:
             creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
             creatures[0].named = True

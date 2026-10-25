@@ -92,6 +92,11 @@ def tale_lines(game, adv) -> str:
     known = [r for r in ("patron", "ally", "witness") if r in adv["cast"]]
     if known:
         lines += ["", "<title>People</> " + "; ".join(f"{esc(cast.describe(game, adv, r))} ({r})" for r in known)]
+    from realmwalker.game.story import lieutenants
+
+    hands = lieutenants.journal_lines(game, adv)  # (its lieutenants as far as you know them: E.3)
+    if hands:
+        lines += ["", "<title>Its hands</>"] + hands
     if adv["keys"]:
         lines += ["", "<title>Found</> " + "; ".join(esc(wordsmod.key_text(game, adv, k)) for k in adv["keys"])]
     th = threats.records(w).get(adv["threat"])

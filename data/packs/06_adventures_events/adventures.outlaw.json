@@ -70,6 +70,10 @@
         "lookout": {"pick": ["band(bandits)"]},
         "innocent": {"pick": ["settlement(town)"]}
       },
+      "lieutenants": [
+        {"as": "raiders", "creature": ["thug"], "titles": ["the Right Hand", "Red-Hand", "the Butcher", "Half-a-Crown", "the Sergeant"], "turns": ["key:backway"]},
+        {"as": "lookout", "creature": ["bandit"], "titles": ["the Crow", "Long-Eyes", "the Weasel", "the Watcher", "Quiet"], "turns": ["clue:inside"]}
+      ],
       "hidden": {},
       "chapters": [
         {

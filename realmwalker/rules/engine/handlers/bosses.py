@@ -56,6 +56,26 @@ def _breaks_off(battle, f, spec) -> None:
     battle._check_end()
 
 
+@phase("escape")
+def _escape(battle, f, spec) -> None:
+    """A story's lieutenant, hurt, tries to get away (game/story/lieutenants.py): with nobody beside it and nothing
+    holding it, it is gone at once (a horse waiting, smoke, a ditch it knew); with a foe at its side or held, it must
+    run for it like anything else, and can be cut down on the way (law: an escape can be prevented)."""
+    if f.state != "fighting":
+        return
+    line = battle.rng.choice(spec["lines"])
+    battle.say(line, "danger")
+    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "escape", "name": f.name, "line": line})
+    held = any(c in f.conditions for c in ("grappled", "restrained", "paralyzed"))
+    if held or any(battle.gap(f, e) <= 1 for e in battle.enemies_of(f) if e.standing):
+        f.state = "fleeing"
+        return
+    f.state = "fled"
+    battle._event("leave", who=f.id)
+    battle._release(f)
+    battle._check_end()
+
+
 @phase("raise")
 def _raise(battle, f, spec) -> None:
     """Its second phase brings more of its own onto the field beside it (the barrow wakes and its sarcophagi open;

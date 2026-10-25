@@ -72,6 +72,9 @@
         "waker": {"pick": ["band(cultists)"]},
         "innocent": {"pick": ["settlement(town)"]}
       },
+      "lieutenants": [
+        {"as": "waker", "creature": ["cult_fanatic"], "titles": ["the grave-robber", "the hedge-priest", "the candle-man", "the bone-picker", "the sexton"], "turns": ["clue:anchor"]}
+      ],
       "hidden": {},
       "chapters": [
         {

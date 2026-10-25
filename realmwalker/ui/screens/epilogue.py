@@ -10,7 +10,7 @@ from realmwalker.ui.widgets import Canvas
 
 PICTURE_ROWS = 9  # (a picture above each page: ui/gfx/vignette.for_epilogue)
 ABOUT = {"place": "The place", "patron": "The one who asked", "ally": "The one who helped", "witness": "The one who saw",
-         "innocent": "The ones it would have taken", "hero": "You"}
+         "innocent": "The ones it would have taken", "hero": "You", "lieutenant": "Its right hand"}
 
 
 class EpilogueScreen(Screen):
@@ -78,7 +78,7 @@ class EpilogueScreen(Screen):
         pic = PICTURE_ROWS if self.adv and canvas.height >= len(body) + extra + PICTURE_ROWS + 14 else 0
         x, y, w, h = modal_box(canvas, width, len(body) + extra + 9 + (pic + 1 if pic else 0),
                                self.adv["title"] if self.adv else self.title)
-        canvas.markup(x + 3, y + 2, f"<title>{ABOUT.get(page['about'], 'What became of them')}</>  "
+        canvas.markup(x + 3, y + 2, f"<title>{ABOUT.get(page['about'].split(':')[0], 'What became of them')}</>  "
                                     f"<dim>{self.page + 1} of {len(self.pages)}</>", max_width=iw)
         row = y + 4
         if pic:  # the place as it now is, the one the page tells of (B.9)

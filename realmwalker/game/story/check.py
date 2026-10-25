@@ -127,6 +127,17 @@ def problems(tables) -> list[str]:
                         _selector(f"{sw}, {field}", st[field], bound, out)
                 for route in st.get("routes", []):
                     _selector(f"{sw}, routes", route, bound | {"lore", "town"}, out)
+        for lt in bp.get("lieutenants", []):  # (E.3: a band's named head)
+            lw = f"{where}, lieutenant {lt['as']}"
+            picks = (bp["cast"].get(lt["as"]) or {}).get("pick", [])
+            if not picks or not all(p.startswith("band(") for p in picks):
+                out.append(f"{lw}: a lieutenant leads a cast role that is a band (band(...)).")
+            for cid in lt.get("creature", []):
+                if creatures is not None and cid not in creatures:
+                    out.append(f"{lw}: there is no creature '{cid}'.")
+            for g in lt.get("turns", []):
+                if g.partition(":")[0] not in ("clue", "key"):
+                    out.append(f"{lw}: one who turns gives a clue or a key, not '{g}'.")
         fin = bp["finale"]
         if fin["template"] not in bosses:
             out.append(f"{where}: the finale's boss template '{fin['template']}' is not in villains.json.")
@@ -187,6 +198,15 @@ def problems(tables) -> list[str]:
         if boss.get("phase", {}).get("creature") and boss["phase"]["creature"] not in tables.creatures:
             out.append(f"villains.json: boss {tid}: there is no creature '{boss['phase']['creature']}' to come at its "
                        f"second phase.")
+    from realmwalker.rules.combat import MORALE_HP, FEARLESS
+
+    for trait, tr in (tables.villains.get("lieutenants") or {}).get("traits", {}).items():
+        if tr["morale"] not in set(MORALE_HP) | FEARLESS:
+            out.append(f"villains.json: lieutenants' trait {trait}: the morale '{tr['morale']}' is not one the game "
+                       f"knows.")
+    for kind, group in (tables.villains.get("lieutenants") or {}).get("nemesis", {}).get("band", {}).items():
+        if creatures is not None and group not in creatures.encounters:
+            out.append(f"villains.json: lieutenants' nemesis band for {kind}, '{group}', is not an encounter.")
     from realmwalker.game.story import villain
 
     for mid, move in tables.villains.get("moves", {}).items():

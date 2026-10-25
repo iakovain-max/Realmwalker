@@ -86,7 +86,10 @@ def prepare(battle, game) -> list[str]:
     out: list[str] = []
     advs = game.world.politics.get("adventures", {})
     out += _militia(battle, game, advs)
+    from realmwalker.game.story import lieutenants
+
     for f in battle.side(FOE):
+        lieutenants.arm(battle, f, game)  # (a lieutenant's morale, its try at escape, its grudges: E.3)
         tag = story_of(f.creature) if f.creature is not None else None
         if not tag or tag.get("role") != "villain":
             continue

@@ -91,6 +91,9 @@ def finish(game, adv: dict) -> list[str]:
     adv["epilogue"] = [{"about": about, "text": textgen.fill(rng.choice(lst), rng, tables, words)}
                        for about, lst in e.get("pages", {}).items() if about == "hero" or about == "place"
                        or adv["cast"].get(about)]
+    from realmwalker.game.story import lieutenants
+
+    lieutenants.after_tale(game, adv)  # (their pages, and the promotion of the one with the greatest grudge: E.3)
     t = threats.records(game.world).get(adv["threat"])
     if t is not None and t.get("adventure") == adv["id"]:
         t["adventure"] = None  # (the threat goes on in the world if it was not ended)

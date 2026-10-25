@@ -1,0 +1,153 @@
+{
+  "_comment": "Lieutenants who remember (docs/ADVENTURES.md §5.5, the nemesis rule; game/story/lieutenants.py): the villain's named hands. A trait sets how they fight (`morale`; `flee_at`, the share of their hit points where they try to get away, 0: never) and what mercy does to them (`turn`: the chance a spared one comes over to you, robbed half that; `betray`: the chance one who turned was lying). Each escape or mercy refused is a grudge (`grudge`: the most it grows; `hp` more hit points a grudge, `ac` a grudge up to `ac_max`, a better blade from `blade`); a scar from `scars` for each escape that bled them. Words: {name} the lieutenant's whole name, {short} the first name, {villain} the villain, {scar} their newest scar, {trait} and {weakness} in words. A survivor with a grudge after its villain falls is promoted (`nemesis`: the days before they come for you, the grudge they need).",
+  "lieutenants": {
+    "grudge": {"max": 3, "hp": 0.25, "ac": 1, "ac_max": 2, "blade": ["1d4", "1d4", "1d6"]},
+    "nemesis": {"grudge": 1, "first": [10, 30], "again": [20, 45], "band": {"risen": "cultists", "outlaw": "bandits"}},
+    "traits": {
+      "cruel": {"words": "cruel", "morale": "warrior", "flee_at": 0.3, "turn": 0.1, "betray": 0.5},
+      "vain": {"words": "vain", "morale": "bandit", "flee_at": 0.35, "turn": 0.35, "betray": 0.5},
+      "devout": {"words": "devout", "morale": "fanatic", "flee_at": 0.0, "turn": 0.15, "betray": 0.2},
+      "cowardly": {"words": "cowardly", "morale": "coward", "flee_at": 0.5, "turn": 0.6, "betray": 0.35},
+      "loyal": {"words": "loyal to the end", "morale": "warrior", "flee_at": 0.25, "turn": 0.1, "betray": 0.6},
+      "greedy": {"words": "greedy", "morale": "bandit", "flee_at": 0.4, "turn": 0.5, "betray": 0.3},
+      "bitter": {"words": "bitter", "morale": "warrior", "flee_at": 0.3, "turn": 0.4, "betray": 0.15}
+    },
+    "weaknesses": [
+      "drinks more than is good for anyone who sleeps in the open",
+      "cannot read, and hides it badly",
+      "owes money to people worse than {villain}",
+      "is afraid of fire, and keeps away from it",
+      "has a sister in a village near here who thinks they are dead",
+      "will not fight in the dark if there is any choice",
+      "talks too much when they think they have won",
+      "trusts nobody, not even {villain}",
+      "limps when it rains, from an old fall",
+      "prays before every fight, and takes a long time about it"
+    ],
+    "looks": [
+      "tall and stooped, with a long grey face",
+      "short and broad, with a shaven head and a heavy jaw",
+      "thin as a rake, all elbows and quick eyes",
+      "big, soft-spoken, with hands like shovels",
+      "wiry and weathered, with hair cut short as a soldier's",
+      "pale and neat, with a voice like a clerk's",
+      "dark-browed and handsome, and knows it",
+      "grey-bearded and hard, with the look of a hanged man reprieved",
+      "young, red-haired, with a fresh brand on one wrist",
+      "heavy and slow, with small pale eyes that miss nothing"
+    ],
+    "scars": [
+      "a burn down one cheek",
+      "a notched ear",
+      "a white seam across the brow",
+      "two fingers gone from the left hand",
+      "a limp they did not have before",
+      "a broken nose set crooked",
+      "a raw cut from the corner of the mouth to the ear",
+      "one eye clouded white"
+    ],
+    "lines": {
+      "escape": [
+        "{name} has had enough. They break away and run, and they do not look back.",
+        "{name} spits blood, backs off a step, and then turns and runs for it.",
+        "\"Not today,\" {short} says through their teeth, and goes for the edge of the fight.",
+        "{name} throws something into the fire, and in the smoke and stink they are running."
+      ],
+      "escaped": [
+        "{name} got away from you. They will not forget it, or you.",
+        "{name} is gone, bleeding, into the country. Someone will tell {villain}, and {short} will tell it worse.",
+        "You lost {name} in the rough. That is not the last you will see of {short}.",
+        "{name} ran. People who run from you come back, as a rule, angrier."
+      ],
+      "returns": [
+        "{name} is back, with {scar}, and this time they came ready.",
+        "It is {name} again. They have {scar} now, and a better blade, and they have been thinking about you.",
+        "\"Remember me?\" says {name}. You do. The {scar} is new.",
+        "{name} again, with {scar} and the look of someone who has rehearsed this."
+      ],
+      "spared_back": [
+        "{name} goes back to {villain}. Mercy has only made them hate you more.",
+        "You let {name} go. They do not thank you. They go straight back to {villain}, and they will remember being on their knees.",
+        "{short} takes your mercy and runs with it, back to {villain}. Some people cannot be shamed into goodness."
+      ],
+      "turned": [
+        "{name} sits a long time in the road after you let them go. Then they come after you, slowly, and tell you what they know.",
+        "\"You could have cut my throat,\" {short} says. \"{villain} would have.\" Then they talk, and it is worth hearing.",
+        "{name} looks at the hand you did not cut off, and then at you. \"All right,\" they say. \"Listen.\""
+      ],
+      "slain_grief": [
+        "Somewhere, {villain} hears that {name} is dead, and for a whole night nothing else is done.",
+        "Word goes back to {villain} that {name} is dead. It is said {villain} sat with the body till dawn.",
+        "{name} is dead. People who serve {villain} say it took the news quietly, and that the quiet was worse than shouting."
+      ],
+      "slain_rage": [
+        "Word goes back to {villain} that {name} is dead. Someone will pay for that, and {villain} means it to be you.",
+        "{name} is dead, and {villain} knows it before nightfall. It does not grieve. It plans.",
+        "When they bring {villain} the news of {name}, it breaks the messenger's arm. Then it asks where you are sleeping."
+      ],
+      "joins": [
+        "{name} is there beside {villain}, as they always meant to be.",
+        "{name} stands at {villain}'s right hand, and grins when they see you.",
+        "And there is {name}, waiting, with their blade out."
+      ],
+      "joins_grudge": [
+        "{name} is there beside {villain}, with {scar} and a grudge worth more than the blade in their hand.",
+        "{name} pushes to the front when they see you. The {scar} you gave them is still red.",
+        "\"I told it you would come,\" says {name}, touching {scar}. \"I asked for you myself.\""
+      ],
+      "turncoat": [
+        "{name} is there beside {villain}. They were never yours. They laugh when they see your face.",
+        "And there, at {villain}'s side, is {name}, who swore to you on the road. Every word was a lie.",
+        "{name} gives you a little bow from beside {villain}. \"You should have cut my throat when you could,\" they say."
+      ],
+      "nemesis": [
+        "{name} steps out into the road ahead. {villain} is gone, and they have come to settle what is left between you.",
+        "There is a band across the road, and at its head {name}, with {scar}. \"They say you killed {villain},\" {short} says. \"Now there is only me.\"",
+        "{name} has been waiting for you, a long time by the look of the camp. They have {villain}'s old company now, and one thing left to do.",
+        "\"I said I would find you,\" says {name}, with {scar} pale in the light. The men behind them spread out."
+      ],
+      "nemesis_slain": [
+        "{name} is dead at last. What was left of {villain}'s company scatters with the news.",
+        "That is the end of {name}, and of the last thing {villain} left behind.",
+        "{name} dies cursing you. Nobody comes looking for you on their account again."
+      ],
+      "nemesis_fled": [
+        "{name} gets away again. You will see them on another road.",
+        "{name} is gone once more, with one more thing to hate you for.",
+        "Again {name} runs, and again they will be back."
+      ]
+    },
+    "epilogue": {
+      "slain": [
+        "{name} lies in a shallow grave by the road, and nobody comes to stand over it.",
+        "{name} died as they lived, in {villain}'s service, and the crows had them before the week was out.",
+        "Of {name} there is only a story now, and not a kind one."
+      ],
+      "taken": [
+        "{name} was given to the law, and the law was not gentle. They sit in a cell still, and talk to the wall about you.",
+        "{name} was hanged at the next assize, and said nothing on the scaffold.",
+        "{name} went in chains to the lord's justice. The last anyone heard, they were working a quarry, and older than their years."
+      ],
+      "turned": [
+        "{name} kept their word to you. They have a small place now, a long way from here, and they light a candle for you on the day you spared them.",
+        "{name} went straight, as far as anyone does. When people ask about the scar, they tell your story, not theirs.",
+        "{name} was seen at a market the next spring, buying seed. They nodded to anyone who said your name."
+      ],
+      "turncoat": [
+        "{name} went into the dark with {villain}'s secrets and their own. You will know better next time.",
+        "{name} lied to you and lived. Somewhere they are telling the story, and laughing at the end.",
+        "Nobody knows where {name} went after. You have a fair idea what they are doing."
+      ],
+      "free": [
+        "{name} is still out there, with a grudge and a good memory.",
+        "{name} was not found among the dead. People say they went north. People say a lot of things.",
+        "{name} got clear of it all, and is somewhere now, waiting."
+      ],
+      "promoted": [
+        "{name} took up what was left of {villain}'s company, and swore an oath on {scar}. They are coming for you.",
+        "With {villain} gone, {name} is the one they follow now. They have told everyone what they will do when they find you.",
+        "{name} has {villain}'s old place now, and a grudge older than the title. You will meet again."
+      ]
+    }
+  }
+}

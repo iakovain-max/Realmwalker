@@ -241,6 +241,9 @@ class Forge:
                "words": {"hook": rng.choice(bp["hook"]), "premise": rng.choice(bp["premise"])}}
         for role, entry in self.cast.items():
             adv["cast"][role] = castmod.bind_now(game, adv, role, entry) if castmod.pending(entry) else dict(entry)
+        from realmwalker.game.story import lieutenants
+
+        lieutenants.forge(game, adv, t, bp, rng)  # (the bands' named heads, or the threat's own back again: E.3)
         # (the words are written once the cast is bound: the patron, the villain's kind, its victim, the area)
         from realmwalker.game.story import words as wordsmod
 

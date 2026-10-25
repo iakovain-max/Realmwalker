@@ -149,6 +149,12 @@ def describe(game, adv: dict, role: str) -> str:
             job = game.tables.people["occupations"].get(entry["job"], {}).get("name", entry["job"])
             return f"the {job} of {s.name}"
         return s.name
+    if entry and "lt" in entry:  # (a band led by a named lieutenant: E.3)
+        from realmwalker.game.story import lieutenants
+
+        rec = lieutenants.of(game, adv, role)
+        if rec is not None:
+            return lieutenants.full(rec)
     if entry and entry.get("band") in game.tables.creatures.encounters:  # (a band as a role: D.2)
         first = game.tables.creatures.encounters[entry["band"]]["members"][0][0]
         return f"the {game.tables.creatures[first]['name'].lower()} and the rest"
