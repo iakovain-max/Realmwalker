@@ -252,6 +252,18 @@ def problems(tables) -> list[str]:
     for b in early.BEATS:  # (E.4: the beats the code plays by name)
         if b not in beats:
             out.append(f"story/early.py: there is no beat called '{b}'.")
+    from realmwalker.game.story import rivals
+
+    rv = tables.adventures.get("rivals") or {}
+    for b in rivals.BEATS if rv else ():  # (F.2: the rivals' beats, played by name)
+        if b not in beats:
+            out.append(f"story/rivals.py: there is no beat called '{b}'.")
+    for kid, kind in rv.get("kinds", {}).items():
+        for part in ("leader", "band"):
+            for tier in kind[part]:
+                for c in tier:
+                    if creatures is not None and c not in creatures:
+                        out.append(f"adventures.rivals.json: {kid}'s {part} '{c}' is not a creature.")
     for mid, move in tables.villains.get("moves", {}).items():
         for b in (move["beat"], move.get("disloyal")):
             if b and b not in beats:

@@ -363,6 +363,7 @@ def _check_adventures(game, fail) -> None:
     _check_villains(game, fail)
     _check_lieutenants(game, fail)
     _check_allies(game, fail)
+    _check_rivals(game, fail)
     _check_early(game, fail)
     _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
@@ -397,6 +398,32 @@ def _check_allies(game, fail) -> None:
             fail(f"{where}: joined, but not in the company under oath (nor carried, fallen)")
         if c is not None and (npc is None or not npc.alive):
             fail(f"{where}: with you, and dead")
+
+
+def _check_rivals(game, fail) -> None:
+    """Expansion 6 F.2: a tale's rival has a kind the data knows, a state the game knows and a relation from -2 to 2;
+    one met has a prize; one holding a thing to fetch is ahead of you; a truce is a key of the tale."""
+    from realmwalker.game import story
+    from realmwalker.game.story import rivals
+
+    sp = rivals.spec(game)
+    if not sp:
+        return
+    for adv in story.adventures(game.world).values():
+        r = adv.get("rival")
+        if not r:
+            continue
+        where = f"tale {adv['id']}, rival {r.get('name')}"
+        if r.get("kind") not in sp["kinds"] or r.get("state") not in rivals.STATES:
+            fail(f"{where}: an unknown kind or state ({r.get('kind')}, {r.get('state')})")
+        if not -2 <= int(r.get("relation", 0)) <= 2:
+            fail(f"{where}: a relation out of bounds ({r.get('relation')})")
+        if r.get("state") == "racing" and (r.get("prize") is None or r.get("due") is None):
+            fail(f"{where}: racing for nothing")
+        if r.get("holds") and r.get("state") not in ("ahead",) + tuple(s for s in rivals.STATES if s not in rivals.LIVE):
+            fail(f"{where}: holds the prize, but is {r.get('state')}")
+        if adv["state"] == "active" and r.get("state") == "truce" and "rival" not in adv["keys"]:
+            fail(f"{where}: under truce, but the tale has no key 'rival'")
 
 
 def _check_lieutenants(game, fail) -> None:

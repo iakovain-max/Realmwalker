@@ -1354,6 +1354,10 @@ def on_chest(game, feature: dict) -> list[Item]:
     q = by_id(game, feature.get("quest"))
     if q is None:
         return []
+    if q["target"].get("rival"):  # (a tale's rival reached it first: Expansion 6 F.2)
+        game.say(f"<warn>The lock is forced and {q['target'].get('item', 'what you came for')} is gone. "
+                 "Someone was here before you.</>", "warn")
+        return []
     item = quest_item(game, q)
     mark_done(game, q)
     return [item]

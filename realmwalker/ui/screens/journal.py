@@ -136,6 +136,11 @@ def tale_lines(game, adv) -> str:
     beside = stakes.journal_line(game, adv)  # (the ally and their stake: F.1)
     if beside:
         lines += ["", "<title>Beside you</> " + beside]
+    from realmwalker.game.story import rivals
+
+    against = rivals.journal_line(game, adv)  # (who races you for it: F.2)
+    if against:
+        lines += ["", "<title>Rivals</> " + against]
     hands = lieutenants.journal_lines(game, adv)  # (its lieutenants as far as you know them: E.3)
     if hands:
         lines += ["", "<title>Its hands</>"] + hands

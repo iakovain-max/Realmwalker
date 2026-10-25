@@ -25,7 +25,7 @@ HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selector
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
                    "realmwalker.game.story.situations", "realmwalker.game.story.opening",
-                   "realmwalker.game.story.arenas", "realmwalker.game.story.stakes")
+                   "realmwalker.game.story.arenas", "realmwalker.game.story.stakes", "realmwalker.game.story.rivals")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
                  "sit_act", "fav_call", "fav_hide", "contact_ask",  # (situations, C.6; favours and contacts, C.7)
                  "story_recruit", "story_rally", "story_confront", "story_escort"}  # (Part D's steps: story/deeds.py)
@@ -290,6 +290,9 @@ def daily(game) -> None:
     from realmwalker.game.story import early
 
     early.daily(game)  # (a villain you put down walks again: you hear of it first, E.4)
+    from realmwalker.game.story import rivals
+
+    rivals.daily(game)  # (a rival for each tale, their race run, a band left pinned: F.2)
     for item in list(d.get("scheduled", [])):
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
@@ -610,6 +613,10 @@ def on_night(game, where: str) -> bool:
 
     if stakes.on_night(game, where):  # (an ally's confidence, crisis or fate: F.1)
         return True
+    from realmwalker.game.story import rivals
+
+    if rivals.on_night(game, where):  # (a rival met, racing, offering a truce, robbing or selling you: F.2)
+        return True
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
         if beat is not None:
@@ -672,6 +679,9 @@ def on_descend(game, lm) -> None:
     from realmwalker.game.story import deeds
 
     deeds.on_descend(game, lm)  # (a step's band on a level filled before: D.2)
+    from realmwalker.game.story import rivals
+
+    rivals.on_descend(game, lm)  # (a rival who went in ahead of you, found: F.2)
     for adv in active(game):
         for st in [s for ch in adv["chapters"] for s in ch["steps"] if s["state"] == "open"]:  # (early too)
             if st["kind"] != "finale" or st["target"].get("level") != lm.key:
@@ -721,6 +731,9 @@ def on_battle(game, result, actor=None) -> None:
     from realmwalker.game.story import stakes
 
     stakes.on_battle(game, result)  # (an ally who rode with the patron and fell; one at the finale: F.1)
+    from realmwalker.game.story import rivals
+
+    rivals.on_battle(game, result)  # (a rival's band fought, or fought beside you: F.2)
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
     seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \
@@ -733,7 +746,7 @@ def on_battle(game, result, actor=None) -> None:
             continue
         if tag.get("role") == "villain":
             seen.append((adv, how))
-        elif how == "dead":  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
+        elif how == "dead" and tag.get("role") != "rival":  # (a rival's band is no servant of its: F.2)  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
             h = harm.setdefault(adv["id"], {"servants": 0, "lieutenants": 0})
             h["servants" if tag.get("role") in ("minion", "wave", "ambush", "endure") else "lieutenants"] += 1
     for aid, h in harm.items():

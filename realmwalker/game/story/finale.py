@@ -199,6 +199,9 @@ def prepare(battle, game) -> list[str]:
     from realmwalker.game.story import stakes
 
     out += stakes.to_battle(battle, game, advs)  # (an ally who rides with the patron comes to the tale's fights: F.1)
+    from realmwalker.game.story import rivals
+
+    out += rivals.to_battle(battle, game, advs)  # (a rival you rode to help, with their band: F.2)
     from realmwalker.game.story import lieutenants
 
     for f in battle.side(FOE):
@@ -251,6 +254,7 @@ def prepare(battle, game) -> list[str]:
                 line = KEYS[name](battle, game, adv, f, *args)
                 if line:
                     out.append(line)
+        out += rivals.at_finale(battle, game, adv, f)  # (the wounds they gave it, your road sold, the truce kept: F.2)
     return out
 
 

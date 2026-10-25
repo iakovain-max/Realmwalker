@@ -117,7 +117,8 @@ KEY_WORDS = {"weakness": "what it fears", "means": "the means to use it", "bait"
              "anchor": "what binds {villain_short} to the world, in your hands", "name": "{his} true name",
              "militia": "the people of {town}, ready to stand", "ford": "the ford held against {his} dead",
              "backway": "the hideout's back way, that the gang does not watch",
-             "inside": "the man in {town} who sold the caravans' days, turned"}
+             "inside": "the man in {town} who sold the caravans' days, turned",
+             "rival": "a truce with your rivals: they will come when you face it"}
 
 
 def key_text(game, adv: dict, k: str) -> str:

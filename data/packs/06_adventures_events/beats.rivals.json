@@ -1,0 +1,246 @@
+{
+  "_comment": "Rivals (Expansion 6 F.2, game/story/rivals.py): the meeting, the race, the truce, the theft, the sale to the villain, the ambush, the plea for help, the prize they reached first, and found dead in its hall. Played by the code (weight 0), with the rival's words: {rival}, {rival_full}, {rival_band}, {rival_who}, {prize}, {price}, {child}, and {they} {them} {their} {theirs} {s} {are} {have} for the rival's leader.",
+  "beats": {
+    "rival_meeting": {
+      "family": "rival", "picture": "here", "weight": 0,
+      "title": ["Others on the same road", "{rival_full}", "Someone else wants it"],
+      "text": [
+        ["There is a band at the next table, armed for more than the road, and their leader has been watching you since you sat down. At last {they} come{s} over with two cups. \"{rival_full},\" {they} say{s}. \"{rival_who}. And you're after {villain_short}. So am I.\"",
+         "Their fire is close enough to yours to share the dark. A figure comes over from it, hands open. \"{rival_full},\" {they} say{s}, sitting without asking. \"{rival_who}. We are going the same way, you and I, and for the same thing.\"",
+         "You are not the first to ask about {villain_short} here. \"Another lot came through,\" says the keeper, and points. {rival_full} raises a cup to you from across the room: {rival_who}, and not one to hide it."],
+        ["\"{prize},\" {rival} says. \"That's what I'm after. Whoever gets there first has it, and I mean it to be me. No hard feelings. Not yet.\"",
+         "\"There's only one {prize},\" {rival} says. \"I've a band to pay and a name to make, and I don't intend to come second. I thought you should hear that from me.\"",
+         "\"I'll be honest with you,\" {rival} says, \"because I'd want the same. I want {prize}. So do you. We'll see who's quicker.\""]
+      ],
+      "choices": [
+        {"label": ["Drink with {them}. Trade what you know of the road."],
+         "ops": [["rival", "met", 1]],
+         "result": ["You drink, and talk, and {rival} laughs more than you expected. When {they} go{es} back to {their} band, {they} clap{s} your shoulder. Rivals, then. Not enemies.",
+                    "You trade what you know for what {they} know{s}. It is a fair trade, which surprises you both."]},
+        {"label": ["Warn {them} off. This is your hunt."],
+         "check": {"skill": "intimidation", "dc": 13},
+         "success": [["rival", "met", -1], ["rival", "slow", 3]],
+         "failure": [["rival", "met", -1]],
+         "result": ["{rival} looks at you a long moment, and then at your hand on your hilt, and then away. \"We'll see,\" {they} say{s}. But {their} band does not leave at dawn.",
+                    "\"Hard words,\" {rival} says, and goes, and you see {them} arguing with {their} band about it half the night."],
+         "fail_result": ["{rival} laughs in your face. \"Threaten me on the road,\" {they} say{s}, \"and see how far you get.\"",
+                         "\"Is that how it is,\" {rival} says. It is not a question. {They} go{es} back to {their} band without another word."]},
+        {"label": ["Say little. Watch {them}, and {their} band."],
+         "check": {"skill": "insight", "dc": 12},
+         "success": [["rival", "met", 0], ["rival", "read"]],
+         "failure": [["rival", "met", 0]],
+         "result": ["You let {rival} talk, and learn more than {they} mean{s} to tell: which road {they} mean{s} to take, and about how fast.",
+                    "{rival} talks too much, the way the nervous do, and by the end of it you know {their} road and {their} pace."],
+         "fail_result": ["{rival} gives nothing away, and neither do you. You part like two dogs over one bone.",
+                         "You watch, and learn nothing. {rival} is better at this than {they} look{s}."]}
+      ]
+    },
+    "rival_race": {
+      "family": "rival", "picture": "here", "weight": 0,
+      "title": ["Ahead of you on the road", "{rival_band}", "The race"],
+      "text": [
+        ["Word on the road: {rival_band} passed this way two days ago, riding hard. They are ahead of you, and they know it.",
+         "A carter you pass has seen them: {rival_full} and {their} band, going fast, asking the same questions you have been asking. They are ahead.",
+         "Their tracks are fresh on the road, and their camp was cold by dawn. {rival_band} will be at {prize} before you, at this rate."],
+        ["You could catch them up at their camp tonight, if you push. What you do there is another matter.",
+         "Their camp is not far off. You could be there by dark.",
+         "If you went now, you could be at their fire before it burns down."]
+      ],
+      "choices": [
+        {"label": ["Go to their fire and offer a truce. Share the prize, share the danger."],
+         "check": {"skill": "persuasion", "dc": 14},
+         "success": [["rival", "truce"]],
+         "failure": [["rival", "relation", -1]],
+         "result": ["{rival} hears you out with {their} arms folded, and then unfolds them and holds out a hand. \"Together, then,\" {they} say{s}. \"And may we both live to argue over it.\"",
+                    "\"I've been thinking the same,\" {rival} admits. \"Neither of us will get it alone.\" You shake on it over the fire."],
+         "fail_result": ["\"Share?\" {rival} says. \"I'm ahead of you. Why would I share?\" {Their} band laughs.",
+                         "{rival} hears you out, and shakes {their} head. \"You'd say that,\" {they} say{s}, \"being behind.\""]},
+        {"label": ["Slip into their camp by night and cut their girths."],
+         "check": {"skill": "stealth", "dc": 13},
+         "success": [["rival", "slow", 4], ["rival", "relation", -1]],
+         "failure": [["rival", "relation", -2]],
+         "result": ["By morning their horses are loose and half their tack is cut. It will cost them days. They will know who did it, of course.",
+                    "You leave their camp in a fine mess. They will be days putting it right, and they will not forgive it."],
+         "fail_result": ["A sentry shouts. You get away, just. {rival} knows exactly who it was.",
+                         "Someone in their camp is awake. You are seen, and named, and you run. {rival} will not forget it."]},
+        {"label": ["Let them go. Ride your own road."],
+         "ops": [["rival", "relation", 0]],
+         "result": ["You let them be. If they are quicker, they are quicker.",
+                    "You ride your own road, at your own pace. Let {rival} wear out {their} horses."]}
+      ]
+    },
+    "rival_truce": {
+      "family": "rival", "picture": "camp_night", "weight": 0,
+      "title": ["An offer by the fire", "{rival} comes to talk", "A truce"],
+      "text": [
+        ["{rival_full} walks into your firelight alone, hands open, and sits. \"I've been thinking,\" {they} say{s}. \"About {villain_short}. About how many of us it will take.\"",
+         "A rider from {rival_band} brings word: {rival} would talk, tonight, at your fire. {They} come{s} alone, and sit{s} down before you can say no.",
+         "\"I'll say it plain,\" {rival_full} says, crouching by your fire. \"I don't like you. But I like {villain_short} less.\""],
+        ["\"A truce. You and me. We go in together when it comes to it, and we split {prize} after, if there's any after. What do you say?\"",
+         "\"Swear me a truce,\" {rival} says. \"When you go in, I come with you, and my band with me. We'll argue about {prize} when it's dead.\"",
+         "\"Here's my offer. When you face it, send word, and we'll be there. And whatever it's guarding, we share. Fair?\""]
+      ],
+      "choices": [
+        {"label": ["Swear it. When you face it, they come."],
+         "ops": [["rival", "truce"]],
+         "result": ["You clasp hands across the fire. {rival} grins. \"Send word,\" {they} say{s}, \"and we'll come running.\"",
+                    "You swear it, and so does {rival}, and {their} band cheers from the dark beyond the fire."]},
+        {"label": ["Refuse. You will do this alone."],
+         "ops": [["rival", "relation", -1]],
+         "result": ["{rival} stands, slowly. \"Your choice,\" {they} say{s}. \"I hope you don't regret it.\"",
+                    "\"Alone, then,\" {rival} says, and goes. {They} do{es} not look back."]}
+      ]
+    },
+    "rival_theft": {
+      "family": "rival", "picture": "here", "weight": 0,
+      "title": ["Light fingers", "Robbed in the night", "{rival}'s parting gift"],
+      "text": [
+        ["You wake to a cut purse-string and an empty space where your coin was. Down the road, someone is riding away fast, and you know whose band it is.",
+         "In the morning your packs have been gone through. Coin is missing, and someone has scratched a mark into the strap: {rival}'s, and meant to be found.",
+         "One of {rival_band} drank with you last night and was gone before dawn. So is a good part of your money."]
+      ],
+      "choices": [
+        {"label": ["Go after them, now, while the trail is warm."],
+         "check": {"skill": "survival", "dc": 13},
+         "success": [["rival", "recover"], ["rival", "relation", -1]],
+         "failure": [["rival", "relation", -1]],
+         "result": ["You catch the thief on the road at noon, and take back what was yours, and a little for your trouble. {rival} will hear of it.",
+                    "The trail is clear and the thief is careless. You get it back, all of it, and send {them} back to {rival} on foot."],
+         "fail_result": ["The trail splits at a ford and you lose it. The money is gone.",
+                         "You ride half the day and find nothing. They are better at running than you are at chasing."]},
+        {"label": ["Let it go. Remember it."],
+         "ops": [["rival", "relation", -1]],
+         "result": ["You let it go. But you do not forget whose mark was on the strap.",
+                    "Coin is coin. You will settle it with {rival} another time."]}
+      ],
+      "ops": [["rival", "steal"]]
+    },
+    "rival_sold": {
+      "family": "rival", "picture": "here", "weight": 0,
+      "title": ["Sold", "{rival}'s bargain", "Word has gone ahead of you"],
+      "text": [
+        ["A drunk in a corner of the inn, one of {rival_band} by his coat, is boasting to anyone who'll listen: his captain has made a deal. {villain_short} knows your road now, and {rival} has been paid for it.",
+         "You hear it from a woman who fled {rival}'s camp: a rider came there by night from {home}, and {rival} talked with it a long while, and was paid. It was about you.",
+         "\"Your friend {rival},\" says the keeper, not meeting your eye, \"was asking which road you'd take. Then {they} sent a man east. Towards {home}.\""],
+        ["{villain_short} knows you are coming now. Whatever you had hoped to surprise, it will be waiting.",
+         "There will be no catching {villain_short} unawares now. {rival} has seen to that.",
+         "Somewhere, {villain_short} is getting ready for you. You have {rival} to thank."]
+      ],
+      "ops": [["rival", "sold"], ["attention", 1]],
+      "choices": [
+        {"label": ["Find {rival}'s camp and have it out with {them}."],
+         "ops": [["rival", "fight"]],
+         "result": ["You find their camp before dark. {rival} sees you coming and does not run. {They} draw{s}.",
+                    "{rival_band} are camped where the drunk said. They see you coming, and reach for their weapons."]},
+        {"label": ["There is no time. Go on, and be ready."],
+         "result": ["You go on. You will deal with {rival} after, if there is an after.",
+                    "No time for {rival} now. But you will remember."]}
+      ]
+    },
+    "rival_ambush": {
+      "family": "rival", "picture": "camp_night", "weight": 0,
+      "title": ["Not wolves", "{rival_band}", "An ambush"],
+      "text": [
+        ["Shapes in the dark at the edge of the firelight, and the creak of a bow being drawn. \"Stay where you are,\" calls {rival_full}. \"We're done racing you.\"",
+         "You hear them before you see them: boots in the brush, too many, too careful. Then {rival} steps into the light, sword out. \"I warned you,\" {they} say{s}.",
+         "The horses scream first. By the time you are on your feet, {rival_band} are all round the camp, and {rival} is at the front of them."]
+      ],
+      "choices": [
+        {"label": ["Draw. If they want a fight, they can have one."],
+         "ops": [["rival", "fight"]],
+         "result": ["You draw. {rival} smiles, as if {they} had hoped you would.",
+                    "There is no talking now. Steel comes out on both sides."]},
+        {"label": ["Talk {them} down. There is a worse enemy than you up ahead."],
+         "check": {"skill": "persuasion", "dc": 15},
+         "success": [["rival", "relation", 1]],
+         "failure": [["rival", "fight"]],
+         "result": ["\"And when we've killed each other,\" you say, \"who does that leave standing? {villain_short}.\" A long silence. Then {rival} lowers {their} sword, and {their} band melts back into the dark.",
+                    "You talk, and {rival} listens, and in the end {they} spit{s} and call{s} {their} band off. \"Not tonight,\" {they} say{s}."],
+         "fail_result": ["{rival} hears half of it and has heard enough. \"Take them,\" {they} say{s}.",
+                         "\"Save your breath,\" says {rival}, and comes for you."]},
+        {"label": ["Throw {them} a purse. Buy the night. ({price})"],
+         "requires": {"rival_price": true},
+         "ops": [["rival", "pay_off"]],
+         "result": ["{rival} weighs the purse, and grins, and is gone. It was never personal.",
+                    "The purse buys you the night, and {rival}'s good humour, for now."]}
+      ]
+    },
+    "rival_plea": {
+      "family": "rival", "picture": "here", "weight": 0,
+      "title": ["A rider, bleeding", "{rival} needs you", "In over their heads"],
+      "text": [
+        ["A rider finds you, one of {rival_band}, with an arrow still in his shoulder. \"{rival} sent me,\" he gasps. \"We went too close. {villain_short}'s creatures have us pinned. {They} said you'd come.\"",
+         "The boy on the lathered horse is {rival}'s squire, or was. \"They're holding,\" he says. \"Not for long. {rival} says you swore a truce, and {they} need{s} it kept now.\"",
+         "A message, in {rival}'s own hand and in a hurry: they have been caught on the way to {home}. They can hold a little while. After that, nothing."]
+      ],
+      "choices": [
+        {"label": ["Ride to them, now."],
+         "ops": [["rival", "plea_go"]],
+         "result": ["You ride. You hear the fighting before you see it.",
+                    "You go at once, and find them at bay, and throw yourselves in beside them."]},
+        {"label": ["You cannot. Not now."],
+         "ops": [["rival", "plea_refused"]],
+         "result": ["The rider looks at you for a long moment, then turns his horse and goes back alone.",
+                    "You send the boy back with nothing. You do not watch him go."]}
+      ]
+    },
+    "rival_prize": {
+      "family": "rival", "picture": "here", "weight": 0,
+      "title": ["Too slow", "{rival} got there first", "{prize}"],
+      "text": [
+        ["The news is all over the road: {rival_full} came out of the dark with {prize}, and is drinking on it at the next inn, and showing it to anyone who'll pay for a look.",
+         "You find {rival_band} camped by the road with a fire and a cask, and {rival} sitting on a crate with {prize} on {their} knees. \"Too slow,\" {they} say{s}, almost kindly.",
+         "{rival} has it. {prize}. {They} came out of there a day before you, and {they} are not hiding it."],
+        ["\"It's mine,\" {rival} says. \"But everything has a price.\"",
+         "\"I know what it's worth to you,\" {rival} says. \"So let's talk about that.\"",
+         "\"You want it,\" {rival} says. \"I can see it on your face. Make me an offer.\""]
+      ],
+      "choices": [
+        {"label": ["Pay {their} price. ({price})"],
+         "requires": {"rival_price": true},
+         "ops": [["rival", "buy"]],
+         "result": ["The coin changes hands, and so does {prize}. {rival} counts it twice, and grins.",
+                    "You pay. It is robbery, and you both know it, but you pay."]},
+        {"label": ["Ask {them} for it, for what's coming. You have been fair to {them}."],
+         "requires": {"rival": 1},
+         "check": {"skill": "persuasion", "dc": 12},
+         "success": [["rival", "give"]],
+         "failure": [["rival", "relation", -1]],
+         "result": ["{rival} looks at {prize} a long while, and then at you. \"Take it,\" {they} say{s}. \"You'll need it more than I will. And I'll be there when you do.\"",
+                    "\"Damn you,\" {rival} says, and hands it over. \"Just kill the thing.\""],
+         "fail_result": ["\"Fair?\" {rival} says. \"Fair is first come. I came first.\"",
+                         "{rival} shakes {their} head. \"Friendship's one thing. This is another.\""]},
+        {"label": ["Take it from {them}."],
+         "ops": [["rival", "fight"]],
+         "result": ["{rival} sets {prize} down, carefully, and stands, and draws. \"I hoped it wouldn't come to this,\" {they} say{s}.",
+                    "\"So that's how it is,\" {rival} says, and {their} band is already on its feet."]},
+        {"label": ["Let it go. Find another way."],
+         "ops": [["rival", "let_go"]],
+         "result": ["You turn away. {rival} watches you go, puzzled, and a little sorry.",
+                    "Let {them} have it. There will be another way, or there won't."]}
+      ]
+    },
+    "rival_found_dead": {
+      "family": "rival", "picture": "lair", "weight": 0,
+      "title": ["Here before you", "{rival_full}", "Found"],
+      "text": [
+        ["They are here: {rival_band}, all of them, laid out across the floor as if somebody had wanted you to see. {rival} is at the front. {Their} sword is broken. {They} got a long way in.",
+         "You find {rival} first, sitting against the wall with {their} eyes open, as if {they} had stopped to rest. Then you find the others. Then you find what is left of the others.",
+         "The smell tells you before the light does. {rival_band} came this far, and no further. {rival} is the last of them, a little nearer the dark than the rest."],
+        ["{They} hurt it before the end. There is blood on the stones that is not theirs, and the marks of a hard fight going deeper.",
+         "There is other blood here too, black and thick, going on into the dark. {rival} made it pay for this.",
+         "Whatever did this did not come away clean. Its blood is on {rival}'s broken blade."]
+      ],
+      "choices": [
+        {"label": ["Search them. They will not need it now."],
+         "ops": [["rival", "search"]],
+         "result": ["You take what they had. It is what {rival} would have done.",
+                    "You go through their packs quickly, and do not look at their faces."]},
+        {"label": ["Close {their} eyes, and go on."],
+         "ops": [["rival", "honour"]],
+         "result": ["You close {rival}'s eyes, and say {their} name once aloud, so that something here has heard it said kindly.",
+                    "You lay {rival}'s broken sword across {their} chest, and go on, into the dark where {they} went before you."]}
+      ]
+    }
+  }
+}

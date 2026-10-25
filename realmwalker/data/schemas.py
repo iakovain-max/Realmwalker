@@ -1588,6 +1588,20 @@ ADVENTURES = Obj({
         "riding": word_list(3, 300),
         "fates": Map(word_list(3, 400)),
     }, optional=True),
+    # (F.2) rivals (story/rivals.py): the chance a blueprint's tale has one, their clock, their kinds (leader and band
+    # by tier, the relation they start at, their words) and the epilogue's line for each way it ended
+    "rivals": Obj({
+        "chance": Map(Float(min=0, max=1)),
+        "clock": Obj({"meet_after": Int(min=0, max=60), "race_days": List(Int(min=1, max=90), min_items=2, max_items=2),
+                      "every": Int(min=1, max=30), "event_chance": Float(min=0, max=1), "wounds": Float(min=0, max=0.9),
+                      "price": List(Int(min=0, max=10_000_000), min_items=4, max_items=4)}),
+        "kinds": Map(Obj({"weight": Int(min=0, max=20), "relation": Int(min=-2, max=2), "noble": Bool(optional=True),
+                          "leader": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+                          "band": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+                          "most": List(Int(min=1, max=12), min_items=4, max_items=4),
+                          "who": word_list(3, 200), "band_words": word_list(3, 100)}), min_items=1),
+        "fates": Map(word_list(2, 400)),
+    }, optional=True),
 })
 
 GREAT_ATTACK = Obj({

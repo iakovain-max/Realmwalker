@@ -1,0 +1,71 @@
+{
+  "_comment": "Rivals (Expansion 6 F.2, docs/ADVENTURES.md 5.6; game/story/rivals.py): a band after the same prize as you. `chance` by blueprint that a tale has one; `clock`: the days before you meet them (`meet_after`), the days their race takes once met (`race_days`), how often something of theirs may happen (`every` days, `event_chance` a night), how much of the villain's hit points they take with them when they die in its hall (`wounds`), what they ask for the prize by tier (`price`, in copper). `kinds`: a hero of the land with companions, a band of deserters, a lord's child with paid swords: their weight, the relation they start at (-2 to 2), their leader and band by tier (the leader is the first that fits the party's budget, the band fills it), the most of them by tier, and their words. `fates`: the epilogue's line for each way it ended. Words: {rival} (first name), {rival_full}, {rival_band} (them as a band), {rival_who} (what they are), {prize}, {they}/{their}... for the leader.",
+  "rivals": {
+    "chance": {"beast": 0.6, "risen": 0.5, "outlaw": 0.5},
+    "clock": {"meet_after": 1, "race_days": [7, 13], "every": 3, "event_chance": 0.5, "wounds": 0.2,
+              "price": [6000, 15000, 40000, 100000]},
+    "kinds": {
+      "hero": {
+        "weight": 3, "relation": 0,
+        "leader": [["berserker", "bandit_captain"], ["berserker", "priest"], ["mage", "assassin"], ["assassin", "mage"]],
+        "band": [["thug", "bandit_archer"], ["thug", "bandit_archer", "berserker"], ["berserker", "bandit_archer", "priest"],
+                 ["berserker", "mage_apprentice", "priest"]],
+        "most": [3, 4, 5, 6],
+        "who": ["a sword for hire with a name in every inn from here to the coast",
+                "a hunter of bounties who has outlived three companies",
+                "one of the heroes they sing about in {town}, older now than the songs"],
+        "band_words": ["{rival} and {their} companions", "{rival}'s company", "{rival} and the three who ride with {them}"]
+      },
+      "deserters": {
+        "weight": 2, "relation": -1,
+        "leader": [["bandit_captain"], ["bandit_captain", "berserker"], ["berserker", "assassin"], ["assassin"]],
+        "band": [["deserter", "deserter", "bandit_archer"], ["deserter", "thug", "bandit_archer"],
+                 ["thug", "berserker", "bandit_archer"], ["berserker", "thug", "bandit_archer"]],
+        "most": [4, 5, 6, 6],
+        "who": ["a sergeant who walked away from a lost war and took {their} section with {them}",
+                "the last of a free company that broke its contract and ran",
+                "a deserter with a price on {their} head and a plan to pay it off"],
+        "band_words": ["{rival}'s deserters", "{rival} and {their} runaways", "the deserters under {rival}"]
+      },
+      "noble": {
+        "weight": 2, "relation": 0, "noble": true,
+        "leader": [["noble"], ["noble", "spy"], ["spy", "mage"], ["mage", "spy_master"]],
+        "band": [["guard", "thug"], ["thug", "bandit_archer", "guard"], ["berserker", "bandit_archer", "thug"],
+                 ["berserker", "bandit_archer", "priest"]],
+        "most": [4, 5, 5, 6],
+        "who": ["a lord's {child} with a borrowed sword and a purse of {their} father's silver",
+                "the youngest {child} of a great house, out to win the name the eldest was given",
+                "a lord's {child} who has paid good coin for swords and means to be seen using them"],
+        "band_words": ["{rival}'s paid swords", "{rival} and {their} hired men", "the swords {rival} has bought"]
+      }
+    },
+    "fates": {
+      "slain": ["{rival_full} died by your hand, over {prize}. In {town} they do not say which of you was in the right.",
+                "{rival_full} wanted what you wanted, and is dead for it. You buried {them} by the road, which is more than {they} would have done for you.",
+                "Nobody sings of {rival_full}. You saw to that, on a cold day, over {prize}."],
+      "lair": ["{rival_full} went into {home} ahead of you. You found what was left. When the tale is told in {town}, {their} name is the one that makes them quiet.",
+               "{rival_full} got there first. That is all anyone says of {them} now: that {they} got there first.",
+               "You found {rival_full} in {home}, and you did not tell {town} how. Some things should not be told twice."],
+      "overrun": ["{rival_full} sent for help when {they} needed it, and help did not come. {Their} band was found on the road a week later.",
+                  "{rival_full} died out there, alone with {their} band, waiting for you. Nobody blames you. Not aloud.",
+                  "{rival_full} is dead, overrun where {they} had made {their} stand. You were asked, and you did not go."],
+      "prize": ["{rival_full} rode off with {prize}, and sold it, or kept it, or lost it at dice; the tales disagree.",
+                "{rival_full} won that race. {They} still tell the story of it in the inns, and {they} tell it well.",
+                "{prize} hangs on {rival_full}'s wall now, and {they} will show it to anyone who asks."],
+      "bought": ["{rival_full} sold you {prize} and drank the price in {town}. {They} speak{s} well of you, which is something.",
+                 "You paid {rival_full} for what you should have had for nothing. {They} took the silver with a grin, and {they} earned it."],
+      "friend": ["{rival_full} kept the truce, to the end and after it. When you pass through {town}, the first drink is {theirs}.",
+                 "You and {rival_full} wanted the same thing, and in the end you shared it. {They} speak{s} of you as a friend.",
+                 "{rival_full} rides on, somewhere, and when {they} hear{s} your name, {they} raise{s} a cup to it."],
+      "fought": ["{rival_full} came when it mattered, as {they} swore {they} would, and stood with you at the end.",
+                 "At the end {rival_full} came over the hill with {their} band, and that was the turn of it. {They} tell{s} it differently, and better.",
+                 "{rival_full} kept {their} word and came to the last fight. In {town} they drink to the both of you."],
+      "gone": ["{rival_full} gave it up in the end and rode away. You do not know where {they} went.",
+               "{rival_full} was beaten to it, by you, and took it badly, and left.",
+               "{rival_full} went home with nothing to show but the road. {They} will not forget your name."],
+      "late": ["{rival_full} came to {home} the day after it was over, and found you had been first.",
+               "{rival_full} rode in too late, saw what you had done, and rode out again without a word.",
+               "{rival_full} heard how it ended from a stranger in an inn, and paid for the stranger's drink, and left."]
+    }
+  }
+}
