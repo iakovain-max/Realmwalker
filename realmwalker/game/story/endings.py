@@ -77,10 +77,10 @@ def finish(game, adv: dict) -> list[str]:
     for op in e["ops"]:
         lines += OPS[op[0]](game, adv, *op[1:]) or []
     adv["state"] = "won" if e["id"] in WON else "abandoned" if e["id"] == "abandoned" else "lost"
-    if adv["state"] == "won":
+    if adv["state"] == "won" or (adv.get("boss_dead") and e["id"] != "bargained"):
         from realmwalker.game import law
 
-        lines += law.clear_framed(game, adv["id"])  # (its frames come to light: E.2)
+        lines += law.clear_framed(game, adv["id"])  # (its frames come to light with its fall: E.2)
         from realmwalker.game.story import experience
 
         lines += experience.award(game, "finale", f"finale/{adv['id']}")  # (on top of the finale fight's own: C.8)

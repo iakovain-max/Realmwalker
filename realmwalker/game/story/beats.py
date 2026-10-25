@@ -584,8 +584,13 @@ def _invite(game, rec, days: int = 6, beat: str = "villain_dinner"):
     adv = adventure(game, rec)
     if adv is None:
         return []
+    from realmwalker.game.story import places
+
     today = int(game.moment.total_days)
-    adv["invited"] = {"day": today, "until": today + int(days), "state": "going", "beat": beat}
+    p = game.player
+    home = adv["places"].get("home")
+    dist = places.dist(game.world, home, {"tile": [p.x, p.y]}) if home else None
+    adv["invited"] = {"day": today, "until": today + int(days), "state": "going", "beat": beat, "dist": dist}
     hall = words_for(game, rec).get("home", "its hall")
     return [f"<warn>Safe conduct: nothing will trouble you on the road to {textgen.escape_markup(hall)} for "
             f"{int(days)} days.</>"]
@@ -596,6 +601,9 @@ def _conduct(game, rec, days: int = 2):
     """After the dinner: safe conduct home again for `days`, and then it is over."""
     adv = adventure(game, rec)
     if adv is None or not adv.get("invited"):
+        return []
+    if int(days) <= 0:  # (guest-right broken at its table: no conduct at all)
+        adv.pop("invited", None)
         return []
     today = int(game.moment.total_days)
     adv["invited"].update({"state": "home", "until": today + int(days)})

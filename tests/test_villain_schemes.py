@@ -141,9 +141,15 @@ def test_an_invitation_gives_safe_conduct_and_a_dinner(made, tables, monkeypatch
     assert adv["invited"]["state"] == "going" and villain.invited(game) is not None
     monkeypatch.setattr(encounters, "encounter_chance", lambda *a, **k: 1.0)
     game.player.x, game.player.y = t["reach"]["x"], t["reach"]["y"]
-    assert game.world.settlement_at(game.player.x, game.player.y) is None or True
     assert encounters.roll_encounter(game, 600) is None, "no band troubles its guest"
-    game.player.x, game.player.y = places.xy(game.world, adv["places"]["home"])
+    hx, hy = places.xy(game.world, adv["places"]["home"])
+    away = max(((x, y) for x in range(game.world.width) for y in range(game.world.height)
+                if abs(x - hx) + abs(y - hy) > adv["invited"]["dist"] + 12 and abs(x - hx) + abs(y - hy) < 60),
+               key=lambda xy: -abs(xy[0] - hx) - abs(xy[1] - hy), default=None)
+    if away is not None:
+        game.player.x, game.player.y = away
+        assert villain.invited(game) is None, "its conduct is for the road to its hall, not the country at large"
+    game.player.x, game.player.y = hx, hy
     assert story.on_arrive(game) and beats.pending(game)["beat"] == "villain_dinner"
     rec = beats.pending(game)
     assert "{" not in " ".join(beats.pages(game, rec)) and len(beats.pages(game, rec)) == 3
@@ -152,7 +158,6 @@ def test_an_invitation_gives_safe_conduct_and_a_dinner(made, tables, monkeypatch
     _days(game, 3)
     villain.lapse(game, adv)
     assert "invited" not in adv and villain.invited(game) is None, "the conduct home runs out"
-    assert encounters.roll_encounter(game, 600) is not None or True
 
 
 def test_an_invitation_not_taken_up_is_a_slight(made, tables):
@@ -200,9 +205,10 @@ def test_a_disloyal_companion_goes_over_to_it_with_what_you_knew(made, tables, m
     adv["attention"] = 3
     _temper_moves(monkeypatch, game, adv, {"wedge": 1})
     _night(game)
+    assert villain.due_move(game, adv, "camp") is None, "gone in the night: it is found out in the morning"
+    game.world.time += 7 * 60
     beat = villain.due_move(game, adv, "camp")
     assert beat == "villain_wedge_taken"
-    game.world.time += 8 * 60
     beats.offer(game, beat, adv=adv["id"], where="camp")
     beats.choose(game, beats.pending(game), -1)
     assert c not in game.party and adv["turned"]["name"] == c.name

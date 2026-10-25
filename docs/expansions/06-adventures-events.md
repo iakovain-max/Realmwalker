@@ -341,7 +341,7 @@ with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
 ADVENTURES.md §5.4, §5.5, §5.8.
 - [x] E.1 Attention in full and the whole move set with tempers' weights, spies that steal tokens and tailored next
   moves, wrath after a setback; the limits (one move in two days; beasts never write). Tests: `tests/test_villain.py`.
-- [ ] E.2 Visits staged on the map (at camp or inn by night: the fire dims, a figure steps out of the dark; never at
+- [x] E.2 Visits staged on the map (at camp or inn by night: the fire dims, a figure steps out of the dark; never at
   full strength), letters as pages in the villain's own hand, invitations under safe conduct (op `invite`: no
   encounters on the way) and the dinner beat at the villain's hall (its vignette), bargains and wedges (the dark
   endings wired), reprisals that are seen (a helper on the gibbet in the square: a mark and a crowd; a burned

@@ -116,14 +116,14 @@
            "\"I shall say so,\" the clerk says, and rises, and brushes down his coat, and is gone. It is the manner of it that stays with you."
          ]},
         {"label": ["Take the gold, and walk away from {town}."],
-         "ops": [["money", 800], ["flag", "bargain_taken"], ["finish"]],
+         "ops": [["money", 8000], ["flag", "bargain_taken"], ["finish"]],
          "result": [
            "The purse is very heavy. You do not count it in front of the clerk, and you do not look back at the road to {town}.",
            "The gold changes hands. It weighs more than it ought to, and you are on the road before the clerk has finished his wine, and you do not turn towards {town} again.",
            "You take it. It is a great deal of money. You put it away without looking at it, and go, and the road you leave behind is the one to {town}."
          ]},
         {"label": ["Ask what it would pay you to stand at its side."],
-         "ops": [["money", 400], ["flag", "joined_it"], ["flag", "bargain_taken"], ["finish"]],
+         "ops": [["money", 4000], ["flag", "joined_it"], ["flag", "bargain_taken"], ["finish"]],
          "result": [
            "The clerk smiles for the first time. \"More,\" the clerk says. \"A great deal more. Come.\"",
            "For the first time something moves in the clerk's face. \"Ah,\" he says softly. \"That is a different conversation. Come. I will show you.\"",

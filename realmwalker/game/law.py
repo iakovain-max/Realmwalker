@@ -207,12 +207,17 @@ def clear_framed(game, by: str) -> list[str]:
         if rec.get("framed") != by or rec.get("settled"):
             continue
         rec["settled"] = True
+        spec = crime_def(game, rec["crime"])
         if rec.get("reported"):
             realm = int(rec["realm"])
             game.renown.bounties[realm] = max(0, int(game.renown.bounties.get(realm, 0)) - int(rec["bounty"]))
-            reputation.change_standing(game, realm, float(crime_def(game, rec["crime"])["standing"]) * -1)
-        out.append(f"<good>The truth is out: you never did {crime_def(game, rec['crime'])['name']} in "
-                   f"{place_for(game, rec)}. It is struck from the record.</>")
+            reputation.change_standing(game, realm, -float(spec["standing"]))
+            if int(rec.get("owner", realm)) != realm:
+                reputation.change_standing(game, int(rec["owner"]), -float(spec["standing"]) * 0.6)
+        from realmwalker.core.textgen import escape_markup
+
+        out.append(f"<good>The truth is out: you never did {spec['name']} in "
+                   f"{escape_markup(place_for(game, rec))}. It is struck from the record.</>")
     return out
 
 

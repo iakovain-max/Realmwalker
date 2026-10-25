@@ -567,11 +567,41 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.2 (*visits staged on the map, letters
-in the villain's hand, invitations under safe conduct and the dinner, bargains and wedges with the dark endings wired,
-reprisals that are seen, frames, kidnaps*), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-
-events.md Part E, docs/ADVENTURES.md §5.4, §5.18, game/story/villain.py (docstring), data/packs/06_adventures_events/
-beats.villain.json, and the E.1 note below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.3 (*lieutenants who remember: escapes,
+scars, grudges, promotion, turning; their epilogue lines*), on branch `dlc/06-adventures-events`. Read docs/expansions/
+06-adventures-events.md Part E, docs/ADVENTURES.md §5.5, game/story/villain.py (docstring and the E.2 sections),
+game/story/finale.py, and the E.2 and E.1 notes below.
+E.2 (2026-10-25, realmwalker-b): the schemes. villains.json moves may say `needs` (villain.NEEDS: helper, companion,
+town, lair; `able`) and `disloyal` (the wedge's beat for a companion under villains.json wedge `loyal` 50); due_move
+fills adv["reprisal"] (helper; the wedge too, for its darkest choice), adv["wedge"] {name, loyalty, offer} (`_tempted`,
+words {tempted} {offer}), adv["frame"] {settlement, victim, name} (`_frame_plan`, words {frame_town} {frame_victim}).
+New moves invitation, bargain, wedge, frame, kidnap, reprisal_fire, beats in beats.schemes.json (words by a sonnet
+helper); temper weights and a temper `hand` {face, ink, seal} (letters.write `ink`, LetterScreen; beats op `letter`
+"dark" with a tale uses `villain.hand`). Visits: beat `leaves` "visitor" (story.LEFT; `story.left_record` {what, adv},
+a visitor only while its beat waits; scenes.camp `_visitor`: the fire low, the villain's doll dark at the light's
+edge) and beat `stage` (at an inn `story._stage_at_inn` plays scenes.villain.json villain_visit_inn: stage `arrive`
+`as: "villain"` -> npc.flags["as_creature"], dolls.npc draws the creature). `fight.rest(inn=True)` (services._room)
+calls story.on_night(game, "inn") at midnight and morning. Ops: `invite` (adv["invited"] {state going|home, until,
+beat}; `villain.invited` stops encounters.roll_encounter; story.on_arrive at its home plays villain_dinner, picture
+"lair" = its hall with its figure; `conduct`; `villain.lapse` from story.daily: a slight), `loyalty`, `betray` (the
+companion dismissed deserted, a key lost: adv["turned"]), `frame` (villain.frame -> law.framed: a reported crime with
+`framed` = the tale; endings.finish clears them when won: law.clear_framed), `kidnap` (villain.kidnap: an optional
+rescue step `kidnap` on lair() level 1, its quest villains.json kidnap days 12; failed -> villain.lost kills them),
+condition `helper`. `villain.pay` (the reprisal's death, now shared): marks.json `gibbet`/`burned_out` (SEEN by how) and
+director["reprisals"] -> `villain.seen_in_town` (from story.on_enter_town) plays reprisal_gibbet/reprisal_ashes.
+Endings: `bargained` first in risen and outlaw (flag:bargain_taken; consequence `bargained` lo hi: the threat's scheme
+held, t["bargained"] = until, story._can_take refuses it; consequence `mark` place mark; pages by a sonnet helper).
+check.py: beat `stage`, move `needs`/`disloyal`, SEEN scenes. Autoplay `_check_villains` checks the schemes; storyplay
+plays a beat with no choices through choose(-1). Not in E.2: the "relic moved", "pays the rival" (E.4, Part F); the
+guest-right fight uses named_fight villain (needs the boss's `before`). tests/test_villain_schemes.py (14).
+The fresh review's fixes: safe conduct holds only on the way there (no further from its hall than when taken, +3;
+adv["invited"]["dist"]) and home again; guest-right broken ends the conduct at once; the wedge's companion is the least
+loyal (`_weakest`), and the beat it would play is the one checked for its hour (`_beat_of`: a turned companion is
+found gone in the morning); a kidnap needs an open chapter; frames are struck off when the villain dies too (not on a
+bargain), with the town's lord's standing given back; names escaped. Measures (storyplay, 20 lives): outlaw 19/20
+(19 before), risen 18/20 (18 before; both lost lives died, none stuck). Checks: full suite (only the known timing
+tests of enemy casters and tactics coverage missed, run beside two storyplay measures; they pass alone), autoplay OK,
+smoke OK.
 E.1 (2026-10-25, realmwalker-a): `game/story/villain.py` (docstring has it all). villains.json `attention` (max 5,
 `levels`, `servants`, `great_magic`/`great_level`, `chance` by attention, `per_chapter` 2), `wrath` {jump, min, weight,
 days, steps: fetch, rescue}, `spy` {dc, tailored, tokens, missing}, `reprisal_roles` (witness, carter); moves carry

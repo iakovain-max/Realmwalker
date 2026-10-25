@@ -46,6 +46,43 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (afternoon): Adventures & Events Part E, task E.2 — the villain's schemes, shown — branch `dlc/06-adventures-events`
+
+- The villain's night visit is now seen. At camp, the fire burns low and the villain stands beyond it at the edge of
+  the light, dark against the dark, until it has said its piece. In a room at an inn (a night's room from the
+  innkeeper), the villain is suddenly there by your bed on the town's map, speaks, and is gone; nights at inns now
+  bring the villain's moves at all (letters by morning, nightmares, visits), as nights at camp did.
+- Its letters are in its own hand: each kind of villain has its ink, its writing and its seal colour (the proud dead
+  king in old purple and gold, the cunning outlaw a neat green-black, the cruel one red).
+- New moves, chosen by its temper: an **invitation** to dine at its hall (accept, and nothing on the road troubles you
+  for six days there and two days back; at its table you learn nothing you can use, and leave with a threat; draw
+  steel at the table if you dare, and it fights, and breaks off when hurt; never go, and it takes the slight); a
+  **bargain** (refuse, or take its gold and walk away, or join it: the tale ends darkly - the town is spared for a
+  season but haunted by the dead or paying the gang, you are infamous, and nobody offers you that tale again while
+  its word holds); a **wedge** driven at a companion (a loyal one brings you the offer: refuse it together, feed it
+  lies through them, or let it have one who helped you - a dark ending too; one who is not loyal is simply gone in the
+  morning, and something you knew about the villain goes with them); a **reprisal by fire**; a **frame** (a murder in
+  a nearby town, sworn to by two false witnesses: a real price on your head there, struck off when you win the tale);
+  a **kidnap** (one who helped you is carried off to the first level of its hall: an extra rescue in your journal, with
+  twelve days to do it, or they die there).
+- Reprisals are seen: the town of the one who paid has a gibbet in its square (or a burned house) for some weeks, and
+  the first time you walk in, a crowd stands round it and someone tells you what you cost them.
+- Try it: take on the Risen or the outlaw tale, push the villain's eye to "testing" (do its steps, kill its servants),
+  and camp, sleep at inns and travel; a companion makes the wedge possible.
+
+Decisions (Anton may want to change): a wedge works on a companion below 50 loyalty; the bargain pays 80 gold pieces
+to walk away and 40 to join (with the dark ending either way); its word holds 60-120 days; a kidnap gives twelve
+days; an invitation not taken up within six days is a slight (+1 attention). A villain visits an inn only when the
+town's stage is free; otherwise its visit is told as at camp. The dinner's picture is its hall (the barrow's halls,
+the outlaws' hideout, or a hall).
+
+Safe conduct is for the road to the villain's hall and back: wander off elsewhere and the roads are as dangerous as
+ever. A frame is struck off your record when you win the tale or the villain dies.
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 19 of 20 finished, the
+Risen's 18 of 20 (as before E.2; the lost lives died in fights). Checks: tests/test_villain_schemes.py (14), the full
+suite (only the known timing tests missed while other measures ran; they pass alone), autoplay OK, smoke test OK.
+
 ### Session, 2026-10-25 (midday): Adventures & Events Part E, task E.1 — villains who act — branch `dlc/06-adventures-events`
 
 - The villain of a tale now notices you, and how much it cares is shown in the journal ("Its eye": unaware, has heard

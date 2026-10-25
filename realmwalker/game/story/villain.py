@@ -165,7 +165,7 @@ def due_move(game, adv: dict, where: str) -> str | None:
             continue
         if not all(able(game, adv, need) for need in _needs(move)):
             continue
-        if not beats.eligible(game, move["beat"], {"adv": adv["id"], "where": where}):
+        if not beats.eligible(game, _beat_of(game, move), {"adv": adv["id"], "where": where}):
             continue
         weight = float(wt) * (tailor if move.get("tailored") else 1.0)
         normal[0].append(mid)
@@ -197,8 +197,7 @@ def due_move(game, adv: dict, where: str) -> str | None:
     if "companion" in _needs(move):
         adv["reprisal"] = _helper(game, adv)  # (one it might be given instead: the wedge's darkest answer)
         adv["wedge"] = _tempted(game, adv, rng)
-        loyal = float((game.tables.villains.get("wedge") or {}).get("loyal", 50))
-        if move.get("disloyal") and adv["wedge"]["loyalty"] < loyal:
+        if _beat_of(game, move) != move["beat"]:
             return move["disloyal"]  # (one who is not yours already: they go over to it, and say nothing)
     if "town" in _needs(move):
         adv["frame"] = _frame_plan(game, adv, rng)
@@ -265,7 +264,9 @@ def able(game, adv: dict, need: str) -> bool:
     if need == "town":
         return _frame_town(game, adv) is not None
     if need == "lair":
-        return lair(game, adv) is not None
+        from realmwalker.game import story
+
+        return lair(game, adv) is not None and story.chapter(adv) is not None
     return False
 
 
@@ -281,11 +282,25 @@ def lair(game, adv: dict) -> dict | None:
 
 
 # ---------------------------------------------------------------------------- the wedge (E.2)
-def _tempted(game, adv: dict, rng) -> dict:
-    """The companion it whispers to (the least loyal is the likeliest), and what it offers them."""
+def _weakest(game):
+    """The companion its wedge is driven at: the least loyal (by name when two are alike), or None."""
     pool = [c for c in game.party[1:] if c.alive and c.companion]
-    weights = [max(5.0, 110.0 - float(c.companion.get("loyalty", 50))) for c in pool]
-    c = rng.weighted(pool, weights)
+    return min(pool, key=lambda c: (float(c.companion.get("loyalty", 50)), c.name)) if pool else None
+
+
+def _beat_of(game, move: dict) -> str:
+    """The beat a move would play now: a wedge's `disloyal` beat when the one it whispers to is not loyal enough."""
+    if move.get("disloyal"):
+        c = _weakest(game)
+        loyal = float((game.tables.villains.get("wedge") or {}).get("loyal", 50))
+        if c is not None and float(c.companion.get("loyalty", 50)) < loyal:
+            return move["disloyal"]
+    return move["beat"]
+
+
+def _tempted(game, adv: dict, rng) -> dict:
+    """The companion it whispers to (the least loyal), and what it offers them."""
+    c = _weakest(game)
     offers = (game.tables.villains.get("wedge") or {}).get("offers") or ["what they want most"]
     return {"name": c.name, "loyalty": float(c.companion.get("loyalty", 50)), "offer": rng.choice(offers),
             "day": int(game.moment.total_days)}
@@ -344,9 +359,21 @@ def invited(game) -> dict | None:
     day = float(game.moment.total_days)
     for adv in story.active(game):
         rec = adv.get("invited")
-        if rec and day <= float(rec["until"]):
+        if rec and day <= float(rec["until"]) and (rec.get("state") != "going" or _on_the_way(game, adv, rec)):
             return rec
     return None
+
+
+def _on_the_way(game, adv: dict, rec: dict) -> bool:
+    """Going to its hall: no further from it than when the invitation was taken (a few miles' grace). Its safe
+    conduct is for the road there, not for the country at large."""
+    from realmwalker.game.story import places
+
+    home = adv["places"].get("home")
+    if not home or rec.get("dist") is None:
+        return True
+    p = game.player
+    return places.dist(game.world, home, {"tile": [p.x, p.y]}) <= float(rec["dist"]) + 3
 
 
 def lapse(game, adv: dict) -> None:
@@ -508,7 +535,10 @@ def kidnap(game, adv: dict) -> str | None:
     npc.flags["kidnapped"] = {"adv": adv["id"], "day": int(game.moment.total_days)}
     adv.setdefault("kidnapped", []).append(int(npc.id))
     adv["reprisal"] = None
-    story.journal(adv, f"{npc.name} was taken to {places.name(game.world, place)}.", int(game.moment.total_days))
+    from realmwalker.core.textgen import escape_markup
+
+    story.journal(adv, escape_markup(f"{npc.name} was taken to {places.name(game.world, place)}."),
+                  int(game.moment.total_days))
     return npc.name
 
 
