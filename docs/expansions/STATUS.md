@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part C (quests reborn: situations, lives and honest work) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part D (the Risen, the Outlaw Lord, and the opening) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -22,7 +22,10 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   **released as v1.5.0**) · 06 Adventures & Events Part A (2026-10-24: threats, the story engine and the Beast of
   {place} from its hook to its epilogue; saves format 19) · Part B (2026-10-25: the stage and its scenes, pictures for
   stories, title cards and letters, marks on places stamped on their maps, the fallen and graves, eavesdropping and
-  tailing, live fire, signs on the world map, the Beast shown; saves format 20)
+  tailing, live fire, signs on the world map, the Beast shown; saves format 20) · Part C (2026-10-25: the weekly job
+  board retired; contracts and bounties; lives of townsfolk; situations met in scenes and ended however you end them;
+  favours and contacts; experience from stories; twenty vignettes; the Beast's witness and hunter as situations;
+  saves format 21)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -562,11 +565,31 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.10 (*situations inside adventures and
-the proof*: the Beast's witness and hunter steps as situations, storybook prints situations and --check holds §5.15,
-the variety, rarity, income and likeness measures, words to the floors of §8.8, FORMAT_VERSION +1, the fresh reader of
-thirty situations, Part C to `main`), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md
-Part C and ADVENTURES.md §5.16, §7, §9 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.1 (*threat kinds risen and outlaw lord*:
+from `tombs` and `scars` (the barrow at least two levels deep) and from active gangs, with schemes, signs as marks and
+scenes, bounded dooms and the world's own endings), on branch `dlc/06-adventures-events`. Read
+docs/expansions/06-adventures-events.md Part D and ADVENTURES.md §5.1, §5.12, §6.2 first. Part D's steps (D.2) can
+carry a situation the way C.10's witness and hunter do (`situations.for_step`, predicaments with `inside`).
+C.10 (2026-10-25, realmwalker-b): situations inside adventures: a predicament with `inside` {step, route, chance}
+(data situations.inside.json, meetings sit_turned_away / sit_hunter_yard in scenes.inside.json) is made only by
+`situations.for_step(game, adv, st, npc, route=)` (from story._show_tale for the witness step, `_hunter_situation`
+for the learn step's ally route), decided once a step (`st["inside"]`: None, or the situation's id); its record has
+`adventure` and `step`; ops `step` (story.step_told + step_done) and `key`; `_moot`/`_drop` end it quietly when its
+step or tale is over (daily, on_death); `own()` keeps an adventure's situations out of the rarity counts; the plain
+witness/ally talk waits while the step is a situation. The tale's people keep `flags["story"]["adv"]`
+(`_of_tale`, `_bind_given`). Forging: no two alike in root, predicament and meeting (`_meeting`'s twin set), the
+weights count latent troubles too; a made kin never shares a first name in the situation (`_names_in`); `money` takes
+from the asker's purse. `tools/storybook.py --situations N [--check]` prints situations (§7) and checks the six rules
+(`situation_rules`) and every line filled (`situation_words`); `tools/storyplay.py --meet` is the variety, likeness
+and rarity measure (`meet_once`, `parts`, `likeness`, `twins`); the income measure's Earner also takes a trouble whose
+work is honest (`take_trouble`). Boards carry the nearest den (`quests.DENS` = 1, a clear_lair from the watch,
+notices.py poster). Tests: tests/test_inside.py, test_situations (two slow: the measures, the six rules),
+test_text_variety (situation floors). Save format 21.
+C.10 measures: storybook --check 0 problems on 30 situations in each of the three test worlds; --meet on all three:
+30 met in 105-147 days, 19-21 predicaments, 14-15 meetings, likeness 0.14-0.15, no twins, no rarity breach, longest
+wait 17 days. Income (storyplay --income, 48 runs): 0.82 of the C.1 reference (67,081 cp; band 0.7-1.3); 16 of 48
+runs died (the reference: 5 of 24), the dens and troubles take the careful party underground more often; on 24 runs
+before the troubles were taken the measure read 0.64-0.67 (the reference's own standard error is about 15%).
 C.9 (2026-10-25, realmwalker-a): `game/story/vignettes.py` (docstring has the API): a vignette is a predicament with
 `vignette` {needs, weight} (data situations.vignettes*.json; their meetings v_* in the same files, scenes vig_* in
 scenes.vignettes*.json); `NEEDS` (twenty, by name) find what each is about around a town and return roles (bound with

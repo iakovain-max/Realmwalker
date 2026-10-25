@@ -13,6 +13,12 @@ from realmwalker.world import factions as fx
 PROCLAIMED = ("war", "peace", "succession", "crisis", "elected", "taken", "sacked", "siege", "plague", "famine",
               "rebellion", "freedom", "crushed", "gang_new", "gang_destroyed", "treaty", "marriage", "cult_purged",
               "dragon", "dragon_tribute", "dragon_slain")
+DEN_LINES = (  # (the watch's poster for a den near the town, C.10: chosen by the place)
+    "Whatever has made its den at {site}, {where}, has taken stock and travellers.",
+    "Something lairs at {site}, {where}, and the roads past it are not safe after dark.",
+    "Two have gone out to {site}, {where}, this season and not come back.",
+    "The herds will not graze within sight of {site}, {where}, and the watch will not go in.",
+)
 
 
 def notices(game, settlement) -> list[dict]:
@@ -42,10 +48,11 @@ def notices(game, settlement) -> list[dict]:
                                 f"within {q['days']} days."})
             continue
         if q["template"] == "clear_lair":  # (a den near the town: C.10)
+            line = DEN_LINES[q["target"]["site"] % len(DEN_LINES)].format(site=esc(words["site"]),
+                                                                          where=esc(words["where"]))
             out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
-                        "text": f"Whatever has made its den at {esc(words['site'])}, {esc(words['where'])}, has "
-                                f"taken stock and travellers. {money_text(q['reward'])} from the watch of "
-                                f"{esc(settlement.name)} to whoever clears it out, within {q['days']} days."})
+                        "text": f"{line} {money_text(q['reward'])} from the watch of {esc(settlement.name)} to "
+                                f"whoever clears it out, within {q['days']} days."})
             continue
         out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
                     "text": f"{esc(words['target'])} and the outlaws called {esc(words['gang'])}, for robbery and "

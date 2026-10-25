@@ -906,8 +906,13 @@ def _check_quests(game, fail) -> None:
         if sit.get("adventure"):  # (an adventure's own step, C.10: outside the towns' rarity)
             from realmwalker.game import story
 
-            if story.find_step(game, sit["adventure"], sit.get("step")) is None:
+            st = story.find_step(game, sit["adventure"], sit.get("step"))
+            if st is None:
                 fail(f"{where} is the step {sit.get('step')} of {sit['adventure']}, which has no such step")
+            elif st.get("inside") != sit["id"]:
+                fail(f"{where}: its step {st['id']} does not know it")
+            if sit["state"] not in situations.LIVE and sit.get("ending") is None:
+                fail(f"{where} ended with no ending")
         elif sit["state"] in situations.LIVE:
             live_by_town[int(sit["town"])] = live_by_town.get(int(sit["town"]), 0) + 1
             if sit["state"] == "taken" and sit.get("life") != situations._life(game) and sit.get("life"):

@@ -9,7 +9,8 @@ A situation is a record in `world.politics["situations"]` (goals.situations), wo
      "stakes": {"what"}, "clock": {"due": day, "half": bool}, "goals": [{"id", "test", "reached"?, "way"?}],
      "obstacles": [{"id", "kind", "who", "acts", "spells", "state"}], "turn": {"id", "state"} | None,
      "meeting": {"kind", "state"}, "state", "ways": [...], "flags": [...], "used": [act ids], "quest": id | None,
-     "threat": tid | None, "adventure": None, "ending": None, "tone", "made": day, "met": day, "life": hero's life,
+     "threat": tid | None, "adventure": aid | None, "step": step id (an adventure's, C.10), "ending": None, "tone",
+     "made": day, "met": day, "life": hero's life,
      "words": {...}, "journal": [lines]}
 
 States: `latent` (forged; its meeting waits for the hero in its town) -> `met` (seen: in the journal's Troubles) ->
@@ -707,7 +708,8 @@ def make(game, sid: int, root: dict | None = None, predicament: str | None = Non
             if r.get("kind") == "life" and r.get("event") is not None:
                 _use_seed(game, r)
             _turn(game, sit, "forge")
-            _next_gap(game, s, rng)
+            if not sit.get("adventure"):  # (an adventure's step leaves the town's own gap alone)
+                _next_gap(game, s, rng)
             return sit
     return None
 
@@ -832,7 +834,8 @@ def _meeting(game, sit: dict, spec: dict, rng) -> dict | None:
     twin = {s["meeting"]["kind"] for s in records(game.world).values() if s.get("meeting") and s is not sit
             and s["predicament"] == sit["predicament"] and s["root"].get("kind") == sit["root"].get("kind")
             and (s.get("life") == life or s["state"] == "latent")}  # (never two alike in root, shape and meeting)
-    fresh = [k for k in ok if k not in seen and k not in twin] or [k for k in ok if k not in twin] or         [k for k in ok if k not in seen] or ok
+    fresh = [k for k in ok if k not in seen and k not in twin] or [k for k in ok if k not in twin] or \
+        [k for k in ok if k not in seen] or ok
     return {"kind": rng.choice(fresh), "state": "waiting"}
 
 
@@ -1901,7 +1904,15 @@ def _moot(game, sit: dict) -> bool:
 
 
 def _drop(game, sit: dict) -> None:
+    from realmwalker.game import quests
+
     sit["state"], sit["ending"], sit["tone"], sit["ended"] = "lapsed", "moot", "mixed", _today(game)
+    if sit.get("met") is not None:
+        sit["journal"].append("The tale it belonged to has gone on without it.")
+    q = quests.by_id(game, sit.get("quest"))
+    if q is not None and q["state"] in quests.LIVE and not q["done"]:
+        q["state"] = "finished"
+        q["journal"].append("It is over, one way or another.")
     _unbind(game, sit)
 
 
@@ -2024,6 +2035,10 @@ def problems(tables) -> list[str]:
                 out.append(f"{where}: the step's person is the one who asks (the role 'asker', bound 'given').")
             if not any(o and o[0] == "step" for e in p.get("endings", []) for o in e.get("ops", [])):
                 out.append(f"{where}: no ending finishes the adventure's step (the op 'step').")
+            if p["inside"].get("step") == "witness" and not any(o and o[0] == "step"
+                                                                 for o in (p.get("lapse") or {}).get("ops", [])):
+                out.append(f"{where}: a witness's lapse must still finish the step (the op 'step'): the tale has no "
+                           f"other way to hear it.")
         for m in p.get("meetings", []):
             if m not in meets:
                 out.append(f"{where}: the meeting '{m}' is not one of situations.json's meetings.")
