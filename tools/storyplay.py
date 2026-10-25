@@ -509,6 +509,9 @@ class Player:
             return
         story.hold_for_finale(g, band)
         self.settle()
+        if st["state"] == "open" and adv["state"] == "active" and g.over is None:
+            self.note("the master fell back into the dark; an hour's breath before going after them")
+            g.pass_time(60, "rest")
 
 
 # ---------------------------------------------------------------------------- the income measure (§9)

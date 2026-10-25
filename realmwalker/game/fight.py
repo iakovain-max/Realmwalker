@@ -346,8 +346,8 @@ def finish_battle(game) -> Aftermath:
     elif result.outcome == "parley":
         after.text = rng.choice(game.tables.combat_text["aftermath"]["parley"])
         after.xp = result.xp
-        if actor is not None and lm is not None and actor in lm.actors:
-            lm.actors.remove(actor)
+        if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
+            lm.actors.remove(actor)  # (a tale's master talked down is still at home: their tale ends its own way)
     from realmwalker.game import gear
 
     after.notes += gear.wear_from_battle(game, battle)  # blows given and taken wear blades and armour

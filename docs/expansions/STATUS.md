@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part D (the Risen, the Outlaw Lord, and the opening) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part E (villains who act; the finale in full) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -25,7 +25,9 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   tailing, live fire, signs on the world map, the Beast shown; saves format 20) · Part C (2026-10-25: the weekly job
   board retired; contracts and bounties; lives of townsfolk; situations met in scenes and ended however you end them;
   favours and contacts; experience from stories; twenty vignettes; the Beast's witness and hunter as situations;
-  saves format 21)
+  saves format 21) · Part D (2026-10-25: the Risen and the Outlaw Lord from hook to epilogue, ten new kinds of step,
+  the first hour of every new life; the dead at the camp's edge, the hideout and the barrow's halls shown; saves
+  format 22)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -565,12 +567,31 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.5 (*pictures (barrow and hideout
-backdrops for the vignettes; the new beats' pictures, the dead left at the camp), sounds; text floors; storyplay and
-the autoplay bot learn Part D's steps (rescue, fetch, defeat, capture, recruit, rally, hold, rite, escort, confront)
-and the openings, and each blueprint finishes in at least 90% of runs; FORMAT_VERSION +1; verify; Part D to `main`*),
-on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part D, tools/storyplay.py, the
-D.2-D.4 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.1 (*attention in full and the whole
+move set with tempers' weights, spies that steal tokens and tailored next moves, wrath after a setback; the limits
+(one move in two days; beasts never write). Tests: `tests/test_villain.py`*), on branch `dlc/06-adventures-events`.
+Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.4, §5.5, §5.8, game/story/villain.py, and
+the D.5 note below.
+D.5 (2026-10-25, realmwalker-b; Part D merged into main): `tools/storyplay.py --kind risen|outlaw` (Player methods
+per Part D kind: `delve` goes down a site level by level, climbs out to a long rest when pressed and comes back;
+`shed` drops the heaviest loose things when laden - a party once stood still for 60 days under barrow loot;
+`wait_a_day` after a refusal; `hold` waits at the place an hour at a time; `battle` questions a story captive and
+keeps a hold's next wave) and `--openings` (`open_once`: new_game as the game begins a life, the town's clock ticked
+two hours for a staged scene; `Opened.begun`); `play_tale` is the shared step loop. Measures (20 each): outlaw 19/20,
+risen RISEN_RESULT, openings 19/20 begun, all finished (no crisis drawn in 20: the start towns tried lie outside their
+threats' reach). Game fixes: `fight._at_home` (a finale band that beats you, robs you or leaves you for dead stays
+on its level; one that flees in a won fight keeps its fled creatures as the actor, alert); `Battle._knock_out`
+defaults "yes" for a creature whose `story["alive"]` (deeds.band sets it on a capture step's quarry); selector
+`open_tile_near(ref, lo, hi)` (river tiles first) as the last alternative of the Risen's field/ford/camp and the
+outlaws' road. Pictures: vignette BACKDROPS "hideout" and "barrow_hall" (`vignette.is_hideout(world, site)`: an
+active bandit_gang's site; `for_place` gives hideout for it; beat "here" under ground is hideout or barrow_hall);
+story.LEFT has "dead" (beat risen_at_camp `leaves`; scenes.camp draws four undead at the light's edge); opening_captive
+pictures "hideout". Sounds (tools/build_sounds.py `part_d_sounds`, seed 609; the rest byte-identical): horn
+(`deeds._wave`), dead (story.on_night when the dead are left), seal (`letters.mark_read`, the first reading).
+Autoplay: `_part_d_move` (a tale's Part D step: talk choices story_recruit/rally/confront/escort, else arrive at its
+place) and `_check_part_d` (step quests, held nights, bound bands, the opening's record, "alive" only on captures).
+Floors: test_text_variety `test_part_d_has_enough_ways_to_be_told`. Tests: tests/test_part_d_shown.py (5),
+test_storyplay (+3, slow: six lives each). FORMAT_VERSION 22.
 D.4 (2026-10-25, realmwalker-a): the first hour, `game/story/opening.py` (docstring has the API). `story.begin` picks
 the threat as before (now up to twice `start.tiles` away when nothing is nearer) and `opening.begin` records
 `politics["director"]["opening"]` {kind, threat, town, day, state} instead of the day-0 scheduled hook. Kinds and

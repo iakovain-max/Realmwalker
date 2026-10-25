@@ -105,3 +105,35 @@ def test_the_autoplay_bot_takes_part_d_steps_and_checks_them(made, tables):
                 autoplay._check_part_d(game, faults.append)
         assert not faults, faults
         assert moved >= 4, f"the bot found its {kind} steps ({moved} moves)"
+
+
+def _den(made, tables, kind):
+    game, adv, t = _tale(made, tables, kind)
+    _open_chapter(game, adv, len(adv["chapters"]) - 1)
+    _to_level(game, adv["places"]["home"])
+    band = next(a for a in game.local.actors if a.creatures and getattr(a.creatures[0], "story", None)
+                and a.creatures[0].story.get("role") == "villain")
+    fight.start_battle(game, band.creatures, "Here.", actor=band)
+    return game, adv, band, game.battle
+
+
+def test_a_master_driven_off_or_winning_stays_in_the_den(made, tables):
+    game, adv, band, b = _den(made, tables, "risen")
+    boss = band.creatures[0]
+    for f in b.side(FOE):
+        f.state = "fled" if f.creature is boss else "dead"
+        if f.creature is not boss:
+            f.hp = 0
+            f.creature.hp = 0
+    b.outcome = "victory"
+    fight.finish_battle(game)
+    assert band in game.local.actors and band.creatures == [boss], "turned, he fell back into the dark"
+    assert adv["state"] == "active" and any(st["kind"] == "finale" for st in story.open_steps(adv))
+    game.aftermath = None
+
+    game, adv, band, b = _den(made, tables, "outlaw")
+    for f in b.side(PARTY):
+        f.hp, f.state = 0, "down"
+    b.outcome = "defeat"
+    fight.finish_battle(game)
+    assert band in game.local.actors, "the captain who beat you is still at his fire"

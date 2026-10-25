@@ -431,7 +431,8 @@ def part_d_sounds() -> dict[str, list[np.ndarray]]:
         i = int(at * RATE)
         crack[i:i + n] += burst * amp
     rustle_n = int(0.35 * RATE)
-    rustle = fft_filter(drng.normal(0, 1, rustle_n), RATE, hp=2500, lp=9000) *         np.sin(np.pi * np.arange(rustle_n) / rustle_n) * 0.18
+    rustle = fft_filter(drng.normal(0, 1, rustle_n), RATE, hp=2500, lp=9000)
+    rustle = rustle * np.sin(np.pi * np.arange(rustle_n) / rustle_n) * 0.18
     crack[int(0.16 * RATE):int(0.16 * RATE) + rustle_n] += rustle
     out["seal"] = [crack]
     return out
