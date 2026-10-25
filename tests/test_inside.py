@@ -33,6 +33,9 @@ def _witness_sit(made, tables, monkeypatch):
     st = _step(adv, "witness")
     sit = situations.of_step(game, st)
     assert sit is not None and sit["predicament"] == "silent_witness", "the witness's step became a situation"
+    from tools import storybook
+
+    assert not storybook.situation_words(game, sit) + storybook.situation_rules(game, sit)
     return game, adv, st, sit, witness
 
 
@@ -81,6 +84,9 @@ def test_the_hunter_who_will_not_hunt_comes_when_the_oath_is_answered(made, tabl
     sit = situations.of_step(game, st)
     assert sit is not None and sit["predicament"] == "hunter_holds_back"
     hunter = situations.asker(game, sit)
+    from tools import storybook
+
+    assert not storybook.situation_words(game, sit) + storybook.situation_rules(game, sit)
     assert cast.person(game.world, adv["cast"]["ally"]) is hunter
     talk(game, hunter, "sit_ask")
     talk(game, hunter, "sit_take")

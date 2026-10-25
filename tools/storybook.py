@@ -441,7 +441,7 @@ def _act_text(game, sit: dict, a: dict) -> str:
     label = situations._fill(game, sit, a.get("label") or a["id"], f"act/{a['id']}")
     extra = []
     if a.get("check"):
-        extra.append(f"{a['check'][0].replace('_', ' ').title()} {a['check'][1]}")
+        extra.append(f"{a['check'][0].replace('_', ' ').capitalize()} {a['check'][1]}")
     if a.get("price"):
         extra.append(money_text(situations._price(sit, a)))
     if a.get("needs"):

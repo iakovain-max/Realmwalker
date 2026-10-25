@@ -277,7 +277,7 @@ def _bounty(game, npc, target, rng, town):
 
 
 DEN_STYLES = ("cellars", "crypt", "cave", "warren", "tower")
-DENS = 2  # (dens on a town's board at once: C.10)
+DENS = 1  # (dens on a town's board at once: C.10; two drew the careful into more than they could kill)
 
 
 def _clear_lair_pick(game, npc, rng, town):
@@ -903,7 +903,7 @@ def _all_quests(game) -> list[dict]:
 def board_bounties(game, settlement) -> list[dict]:
     """Bounties posted on the notice board here, paid by the town's watch: one for each gang within reach, and for
     the two nearest beasts of the history that lair within it (a threat's villain among them: taking that bounty
-    opens its tale, story.on_job_taken), and the two nearest dens to be cleared (C.10)."""
+    opens its tale, story.on_job_taken), and the nearest den to be cleared (C.10)."""
     from realmwalker.game import past
     from realmwalker.game.people import town_of
 

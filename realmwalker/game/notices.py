@@ -41,6 +41,12 @@ def notices(game, settlement) -> list[dict]:
                                 f"{money_text(q['reward'])} from the watch of {esc(settlement.name)} for its head, "
                                 f"within {q['days']} days."})
             continue
+        if q["template"] == "clear_lair":  # (a den near the town: C.10)
+            out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
+                        "text": f"Whatever has made its den at {esc(words['site'])}, {esc(words['where'])}, has "
+                                f"taken stock and travellers. {money_text(q['reward'])} from the watch of "
+                                f"{esc(settlement.name)} to whoever clears it out, within {q['days']} days."})
+            continue
         out.append({"kind": "wanted", "title": "WANTED", "bounty": q,
                     "text": f"{esc(words['target'])} and the outlaws called {esc(words['gang'])}, for robbery and "
                             f"murder on the roads. They hide at {esc(words['site'])}. {money_text(q['reward'])} from "

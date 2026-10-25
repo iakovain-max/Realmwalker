@@ -399,7 +399,7 @@
         "first": [
           "{asker} and {rival} both want {prize}; {judge} decides {due}.",
           "{prize} is the quarrel between {asker} and {rival}, and {asker} wants my help.",
-          "{asker} asked me to speak for {asker}'s claim to {prize} before {judge}."
+          "{asker} asked me to speak for {asker_their} claim to {prize} before {judge}."
         ]
       }
     },
@@ -494,7 +494,7 @@
           "line": [
             "It stays buried. {asker} sleeps again.",
             "{knower} will say nothing. {asker} owes you more than coin.",
-            "Nothing is said in {town}. {asker} walks the street with {asker}'s head up again."
+            "Nothing is said in {town}. {asker} walks the street with {asker_their} head up again."
           ]
         },
         {
@@ -515,8 +515,8 @@
           "ops": [["disposition", "asker", -20], ["xp_story", "small"]],
           "line": [
             "You used it. {asker} pays, and hates you, and will go on paying.",
-            "Used: {asker}'s secret is yours now, and so is a little of {asker}'s coin.",
-            "You have {asker}'s coin and {asker}'s secret, and {asker} knows it every time you meet."
+            "Used: {asker}'s secret is yours now, and so is a little of {asker_their} coin.",
+            "You have {asker}'s coin and {asker_their} secret, and {asker} knows it every time you meet."
           ]
         }
       ],
@@ -926,7 +926,7 @@
           "line": [
             "{lord} judged {lord_their} own {culprit_kin}. {culprit} is in the cells.",
             "Judged: the town saw that the law is for {lord}'s house too.",
-            "{culprit} sleeps in a cell tonight, and {asker} walked home with {asker}'s head up."
+            "{culprit} sleeps in a cell tonight, and {asker} walked home with {asker_their} head up."
           ]
         },
         {
@@ -1174,7 +1174,7 @@
         "plea": [
           "My {marked_kin}... {avenger} has sworn to kill {marked_them}. It's the feud. It's always the feud. Make it stop.",
           "{avenger}'s family and ours. Three dead already, in my lifetime. {marked} is next. Please.",
-          "The feud has woken again. {avenger} has said {avenger}'s piece against my {marked_kin} {marked}, and I am afraid. Can anyone end it?"
+          "The feud has woken again. {avenger} has said {avenger_their} piece against my {marked_kin} {marked}, and I am afraid. Can anyone end it?"
         ],
         "first": [
           "The feud says {avenger} must kill {marked}; {asker} begs for peace.",
@@ -1428,7 +1428,7 @@
         "first": [
           "{asker}'s house lies under a curse.",
           "The milk sours and the children cry at night in {asker}'s house; {asker} thinks it is cursed.",
-          "{asker} asked me to look at the signs on {asker}'s house and undo what was done."
+          "{asker} asked me to look at the signs on {asker_their} house and undo what was done."
         ]
       }
     },
@@ -1951,7 +1951,7 @@
           "id": "unmasked",
           "when": "unmasked",
           "tone": "good",
-          "ops": [["favour", "asker", "word", 1], ["standing", 2], ["money", 1200], ["xp_story", "small"]],
+          "ops": [["favour", "asker", "word", 1], ["standing", 2], ["money", 1200], ["law", "stranger", "accused"], ["xp_story", "small"]],
           "line": [
             "Unmasked: {stranger} is in the watch's hands, and {asker} sleeps easier.",
             "{asker} has the truth about {stranger}, and so does the watch.",
@@ -2145,7 +2145,7 @@
           "id": "served",
           "when": "served",
           "tone": "good",
-          "ops": [["standing", 4], ["favour", "asker", "door", 2], ["xp_story", "fair"]],
+          "ops": [["standing", 4], ["favour", "asker", "door", 2], ["money", 1500], ["xp_story", "fair"]],
           "line": [
             "Served: the letter came where it was going, and {asker} remembers who carried it.",
             "{asker}'s need was met. Doors in {town} open a little wider for you.",
@@ -2384,7 +2384,7 @@
         "tone": "bitter",
         "ops": [["shop", "asker", "shut", 30], ["disposition", "asker", -10]],
         "line": [
-          "Angered: it broke the shutters on {asker}'s house, and {asker}'s family sleep at the temple now.",
+          "Angered: it broke the shutters on {asker}'s house, and {asker_their} family sleep at the temple now.",
           "The dead did not rest. Now nobody in {asker}'s street does.",
           "The dead were not answered, and they came closer. {asker} has left the house to them."
         ]

@@ -417,6 +417,9 @@ class Earner(Player):
 
         g = self.game
         self.asked[s.id] = self.day()
+        q = self.take_trouble(s)
+        if q is not None:
+            return q
         best, best_worth, best_npc = None, 0.0, None
         for npc, q in work.offers_here(g, s):
             tiles = self.trip_tiles(q, s)
@@ -446,6 +449,31 @@ class Earner(Player):
             return None
         self.note(f"took {best['template']} from {best['giver_name']} for {best['reward']}")
         return best
+
+    def take_trouble(self, s) -> dict | None:
+        """A trouble of the town whose way through is honest work it can walk to (the son at the bandits' camp, the
+        body out at the ruin: what the weekly rescue and retrieval offers were before Part C): hear the one who asks,
+        take it on, and do its work."""
+        from realmwalker.game.story import situations
+
+        g = self.game
+        for sit in situations.own(situations.live_in(g, s.id)):
+            work = (situations.spec_of(g, sit).get("work") or {}).get("kind")
+            who = situations.asker(g, sit)
+            if work not in HONEST or who is None or not who.alive or sit["state"] not in ("latent", "met"):
+                continue
+            for cid in ("sit_ask", "sit_take"):
+                conv = Conversation(g, who)
+                ch = next((c for c in conv.menu() if c.id == cid and c.data.get("sit") == sit["id"]), None)
+                if ch is not None:
+                    conv.choose(ch)
+            q = next((q for q in g.quests if q.get("situation") == sit["id"] and q["state"] == "active"), None)
+            tiles = self.trip_tiles(q, s) if q is not None else None
+            if q is None or tiles is None or tiles > 2 * REACH:
+                continue
+            self.note(f"took {q['template']} for {who.name}'s trouble ({sit['predicament']})")
+            return q
+        return None
 
     def where(self, q: dict) -> tuple[int, int] | None:
         w, t = self.game.world, q["target"]

@@ -446,6 +446,16 @@ def _kin_age(kind: str, of, rng, young: bool = False) -> int:
     return max(16, of.age + rng.randint(-6, 6))
 
 
+def _names_in(game, sit: dict, of) -> set:
+    """The first names already in a situation (and its kin's), so a kin made now is never their double."""
+    out = {of.first_name}
+    for rec in sit["roles"].values():
+        n = game.world.npcs.get(rec["npc"]) if rec.get("npc") is not None else None
+        if n is not None:
+            out.add(n.first_name)
+    return out
+
+
 @bind("kin")
 def _bind_kin(game, s, sit, spec, rng):
     """A tie of another role (`of`, `kinds`): the person if they are one, else made now from their name. With `make`, a
@@ -460,7 +470,8 @@ def _bind_kin(game, s, sit, spec, rng):
         return None
     kinds = spec.get("kinds") or list(KIN_SEX)
     ties = [t for t in lf["ties"] if t["kind"] in kinds and t.get("state", "alive") == "alive"
-            and t.get("figure") is None and (not spec.get("young") or int(t.get("age", 99)) < 14)]
+            and t.get("figure") is None and (not spec.get("young") or int(t.get("age", 99)) < 14)
+            and (t.get("npc") is not None or t.get("name") not in _names_in(game, sit, of))]  # (no two of one name)
     for t in ties:
         n = game.world.npcs.get(t["npc"]) if t.get("npc") is not None else None
         if n is not None and n.settlement == s.id and _free(game, sit, n, n.job == "child"):
@@ -471,7 +482,7 @@ def _bind_kin(game, s, sit, spec, rng):
 
         kind = rng.choice(kinds)
         name = forge(game.world, game.tables).given(of.culture, KIN_SEX.get(kind, "male"), rng,
-                                                     avoid={t["name"] for t in lf["ties"]})
+                                                     avoid={t["name"] for t in lf["ties"]} | _names_in(game, sit, of))
         t = {"kind": kind, "name": name, "npc": None, "figure": None, "state": "alive",
              "age": _kin_age(kind, of, rng, bool(spec.get("young")))}
         lf["ties"].append(t)

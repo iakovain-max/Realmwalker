@@ -903,7 +903,12 @@ def _check_quests(game, fail) -> None:
             if n is not None and sit["state"] in situations.LIVE and n.alive and \
                     (n.flags.get("story") or {}).get("sit") not in (sit["id"], None):
                 fail(f"{where}: its {role} {n.name} belongs to another story")
-        if sit["state"] in situations.LIVE:
+        if sit.get("adventure"):  # (an adventure's own step, C.10: outside the towns' rarity)
+            from realmwalker.game import story
+
+            if story.find_step(game, sit["adventure"], sit.get("step")) is None:
+                fail(f"{where} is the step {sit.get('step')} of {sit['adventure']}, which has no such step")
+        elif sit["state"] in situations.LIVE:
             live_by_town[int(sit["town"])] = live_by_town.get(int(sit["town"]), 0) + 1
             if sit["state"] == "taken" and sit.get("life") != situations._life(game) and sit.get("life"):
                 fail(f"{where} is taken by a hero who is not this one")
