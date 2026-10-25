@@ -576,7 +576,10 @@ half of the road), not deadly first, threat > gang > lair, else what `choose_enc
 the watch pays; gangs' posters first; a threat's villain's opens its tale through story.on_job_taken). "A threat's
 servants" is read as the threat villain's own encounter group (threats have no lieutenants yet). The Earner's
 careful check reads `q["danger"]`. test_storyplay asks jobs >= 1 again; test_first_hour asserts a contract in every
-first town. Autoplay checks contract slots, kinds and dangers. No save format change.
+first town. Autoplay checks contract slots, kinds and dangers. No save format change. The board posts only beasts
+below DEADLY_RATIO (so test_work's board test skips where none fits). C.3's checks: full suite green twice but for
+the turn-time tests (enemy casters, tactics coverage: each passed alone, as before); autoplay clean; smoke clean;
+a fresh review's points fixed (bd10f2c).
 C.2 (2026-10-25, realmwalker-a): the weekly offers are gone (`offer_for`, `offers_in`, the "work" choice,
 `_offer_work`, `GameScreen._think_of_work`, `shadows.guild_work`, `Town.flags["offers"/"offer_day"]`). quests.py:
 each kind is `_<kind>_pick(game, npc, rng, town)` -> target ids (or None) and `_<kind>(game, npc, target, rng, town)`
