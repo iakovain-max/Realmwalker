@@ -567,13 +567,37 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.5 (*the finale in full: arenas (a burning
-village with fire that spreads, a ritual circle, a throne hall, a bridge, a tower top), phases that change the arena
-(`Field.set_terrain`), telegraphed great attacks, boss entrances, boss templates for tiers 3-4, a "command its
-minions" legendary action, every key of ADVENTURES.md §8.6, the retreat rule, defeat as content (`story.on_defeat`)*),
-on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.8
-and §8.6, game/story/finale.py and rules/engine/handlers/bosses.py (docstrings), game/arena.py FIELDS, and the E.4,
-E.3 notes below. E.5 is big: it may be split in two sessions (arenas and phases; then keys, retreat and defeat).
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.6 (*the fairness measure:
+`tests/test_story_balance.py` (slow): every key ≥80% wins, no key ≤45%, the retreat works; the careful player's deaths
+measured before and after (`tools/balance.py`)*), on branch `dlc/06-adventures-events`. Read
+docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.8 (fairness rules) and §9, game/story/finale.py,
+game/story/defeat.py, game/story/arenas.py and rules/engine/handlers/bosses.py (docstrings), tools/storyplay.py, and
+the E.5 note below. The finale's numbers to tune there: villains*.json bosses (hp, resistances, actions, great dc and
+damage by tier, by_tier), adventures.finale.json retreat/defeat.
+E.5 (2026-10-25, realmwalker-a; one session for both halves): arenas `game/story/arenas.py` (ARENAS lay on the terrain
+before the Field is made: game/arena._finale_arena for a dungeon finale's band, via story.finale_band; CHANGES run at
+the second phase as a battle `phase_hooks` hook from bosses.after_damage; choice once in adv["finale"]["arena"] by the
+level's style, adventures.json "arenas" {styles, wild, enter, change}; blueprint finale `arenas`); burning_village is
+a wild FIELDS entry (field `village`: fire._widen keeps timbers catching after `_derive`), used by the outlaw's
+contingency endure (finale `endure_field` -> early._contingency_step target field -> deeds.endure enc.field).
+Great attacks: template `great` {name, area {size, range}, save, dc[], damage[], type, every, first, warn, go} ->
+cdef boss_great (finale.great_at by tier) -> bosses.turn_start (from Battle's turn engine after turn_start): an "omen"
+zone (owner the boss; harmless; drawn red; a hazard in move_tree for its foes; tactics._out_of_harm steps out; gone if
+the boss falls), then `_fall` next turn (save for half, takes the action, fizzles if it cannot act). Entrance: template
+`entrance` said by finale.prepare. Tiers: `by_tier` {"3": {...}} via finale.at_tier. Legendary "command"
+(bosses.command from Battle._legendary_window when it has no blow of its own). New keys (finale.py): rival_arrives(n)
+(a round hook: two scouts, the cast "rival" named if any), party_buff(bless|courage|warded) (PARTY_BUFFS),
+rite_allowed (battle flag; story.on_battle on the boss's death does open rite steps whose needs are met and sets the
+rite beat's success flags: `_rite_flags`), lieutenant_absent(role) (off the field and out of its band before the
+fight). Ending condition rite_done. Retreat and defeat: `game/story/defeat.py` (battle `finale_of` set where the boss
+is made; on_retreat from story.on_battle on "fled"; on_defeat from fight.finish_battle's defeat branch before the
+robbers; adventures.finale.json retreat {attention, ally_lost}, defeat {tempers, lock}; outcome "taken"; step kind
+"escape", optional, done by defeat.on_leave from GameState.leave_local; adv["taken_alive"] once). Blueprint keys: the
+risen's name += party_buff(courage), rite_allowed; the outlaw's inside += lieutenant_absent(raiders). Not in E.5:
+places that seal (no blueprint says so yet; the retreat is always open), rival bands (Part F's cast: the key works,
+nothing uses it yet), the party blessed by a beacon (the key works with "bless"/"warded"; only "courage" is used).
+Tests: tests/test_finale_arenas.py (12), tests/test_finale_end.py (8); autoplay `_check_finale`; storyplay
+`reclaim` (after "taken": open the chest, arm again).
 E.4 (2026-10-25, realmwalker-b): `game/story/early.py` (docstring has it all). Escapes: `may_escape` (not after
 adv["escaped"], kept by `on_fled` from story.on_battle; not with a found key whose finale effects include the new KEYS
 `no_escape`: the risen's anchor) gates the template `before` in finale.prepare; else `no_flight` (morale fanatic, the

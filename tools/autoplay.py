@@ -363,6 +363,7 @@ def _check_adventures(game, fail) -> None:
     _check_villains(game, fail)
     _check_lieutenants(game, fail)
     _check_early(game, fail)
+    _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
@@ -395,6 +396,25 @@ def _check_lieutenants(game, fail) -> None:
     for i, n in enumerate(game.world.politics.get("nemeses", [])):
         if n.get("state") not in ("hunting", "slain", "taken") or not n.get("life") or                 n.get("band") not in game.tables.creatures.encounters:
             fail(f"nemesis {i}: a state, a hero or a band missing ({n.get('state')}, {n.get('band')})")
+
+
+def _check_finale(game, fail) -> None:
+    """Expansion 6 E.5: an escape step only in a tale whose villain took the party alive (once), and only optional; a
+    finale's chosen arena is one the game knows and its blueprint names."""
+    from realmwalker.game import story
+    from realmwalker.game.story import arenas
+
+    for adv in story.active(game):
+        where = f"tale {adv['id']}"
+        esc = [st for ch in adv["chapters"] for st in ch["steps"] if st["kind"] == "escape"]
+        if esc and not adv.get("taken_alive"):
+            fail(f"{where}: an escape step, but it never took the party alive")
+        if len(esc) > 1 or any(not st["optional"] for st in esc):
+            fail(f"{where}: more than one escape, or one the tale waits on")
+        aid = (adv.get("finale") or {}).get("arena")
+        if aid and (aid not in arenas.ARENAS or aid not in
+                    game.tables.adventures["blueprints"][adv["blueprint"]]["finale"].get("arenas", ())):
+            fail(f"{where}: its finale's arena '{aid}' is not one its blueprint names")
 
 
 def _check_early(game, fail) -> None:

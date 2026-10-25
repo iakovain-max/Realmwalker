@@ -288,6 +288,20 @@
       ]
     }
   },
+  "boss_words": {
+    "fizzle": [
+      "What {name} was gathering breaks apart and is gone.",
+      "{name} loses hold of it: the gathered force spills away to nothing.",
+      "Whatever {name} was making ready dies before it can be loosed.",
+      "The moment passes. {name} cannot finish what it began."
+    ],
+    "command": [
+      "{name} snaps an order, and {man} strikes.",
+      "\"Now!\" {name} barks, and {man} lunges.",
+      "At a gesture from {name}, {man} attacks.",
+      "{name} points, and {man} obeys at once."
+    ]
+  },
   "bosses": {
     "beast": {
       "tiers": [

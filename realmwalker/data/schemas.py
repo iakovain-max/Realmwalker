@@ -1610,6 +1610,8 @@ WEAKNESS = Obj({"id": Str(max_len=30), "name": Str(max_len=60), "keys": List(Str
                 "for": List(Str(max_len=40), optional=True), "lore": word_list(3, 400),
                 "means": List(Str(max_len=40), optional=True)})
 VILLAINS = Obj({
+    # (E.5) a boss's lines in a fight: a great attack that fizzles, an order to its men ({name}, {man})
+    "boss_words": Obj({"fizzle": word_list(3, 300), "command": word_list(3, 300)}, optional=True),
     "attention": Obj({"step": Int(min=0, max=5), "lieutenant": Int(min=0, max=5), "fortnight": Int(min=-5, max=0),
                       "max": Int(min=1, max=20), "moves_apart_days": Int(min=0, max=30),
                       "per_chapter": Int(min=0, max=10),

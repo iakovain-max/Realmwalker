@@ -62,7 +62,9 @@ def turn_start(battle, f) -> None:
     z = Zone(battle._zone_id(), OMEN, set(cells), owner=f.id, rounds=-1)
     battle._add_zone(z)
     st["cells"], st["zone"] = sorted(cells), z.id
-    line = battle.rng.choice(spec["warn"]).replace("{name}", f.the_name)
+    from realmwalker.core.textgen import escape_markup as esc
+
+    line = battle.rng.choice(spec["warn"]).replace("{name}", esc(f.the_name))
     battle.say(line[:1].upper() + line[1:], "danger")
     battle._event("telegraph", by=f.id, name=spec.get("name", ""), cells=sorted(cells), line=line)
 
@@ -104,13 +106,16 @@ def _aim(battle, f, spec) -> set | None:
 def _fall(battle, f, spec, st) -> None:
     cells = {tuple(c) for c in st["cells"]}
     z = next((z for z in battle.zones if z.id == st["zone"]), None)
-    if z is not None:
-        battle._remove_zone(z)
     st["cells"], st["zone"], st["last"] = None, None, battle.round
+    if z is None:
+        return  # (its omen is gone from the field: nothing falls where nothing was shown)
+    battle._remove_zone(z)
     if not f.can_act():
-        battle.say(f"What {f.the_name} was gathering breaks apart and is gone.", "good")
+        battle.say(_words(battle, "fizzle", f), "good")
         return
-    line = battle.rng.choice(spec["go"]).replace("{name}", f.the_name)
+    from realmwalker.core.textgen import escape_markup as esc
+
+    line = battle.rng.choice(spec["go"]).replace("{name}", esc(f.the_name))
     battle.say(line[:1].upper() + line[1:], "danger")
     caught = [e for e in battle.enemies_of(f) if any(c in cells for c in e.cells)]
     battle._event("great", by=f.id, name=spec.get("name", ""), cells=sorted(cells), hit=[e.id for e in caught])
@@ -121,15 +126,40 @@ def _fall(battle, f, spec, st) -> None:
     battle._check_end()
 
 
+def _omens_against(battle, f) -> list:
+    """The omens of `f`'s foes still standing (one whose boss fell or fled is gone from the field)."""
+    out = []
+    for z in [z for z in battle.zones if z.kind == OMEN]:
+        owner = next((x for x in battle.fighters if x.id == z.owner), None)
+        if owner is None or not owner.active:
+            battle._remove_zone(z)
+            if owner is not None and owner.__dict__.get("great"):
+                owner.great["cells"], owner.great["zone"] = None, None  # (what it gathered is lost with it)
+        elif owner.team != f.team:
+            out.append(z)
+    return out
+
+
+WORDS = {"fizzle": ["What {name} was gathering breaks apart and is gone."],
+         "command": ["{name} snaps an order, and {man} strikes."]}  # (if villains.json "boss_words" has none)
+
+
+def _words(battle, key: str, f, m=None) -> str:
+    """A line of villains.json "boss_words" (the fizzle of a great attack, an order to its men), names escaped."""
+    from realmwalker.core.textgen import escape_markup as esc
+
+    lines = (getattr(battle.t, "villains", None) or {}).get("boss_words", {}).get(key) or WORDS[key]
+    text = battle.rng.choice(lines).replace("{name}", esc(f.the_name)).replace("{man}", esc(m.the_name if m else ""))
+    return text[:1].upper() + text[1:]
+
+
 def in_omen(battle, f) -> bool:
     """`f` stands where a foe's great attack is about to fall."""
-    return any(z.kind == OMEN and z.owner is not None and battle.fighter(z.owner).team != f.team and
-               any(c in z.cells for c in f.cells) for z in battle.zones)
+    return any(any(c in z.cells for c in f.cells) for z in _omens_against(battle, f))
 
 
 def omen_cells(battle, f) -> set:
-    return {c for z in battle.zones if z.kind == OMEN and z.owner is not None and
-            battle.fighter(z.owner).team != f.team for c in z.cells}
+    return {c for z in _omens_against(battle, f) for c in z.cells}
 
 
 # ---------------------------------------------------------------------------- command its minions
@@ -153,8 +183,7 @@ def command(battle, f, left: int) -> bool:
         return False
     m, opt, t = best
     f.creature.uses["legendary_actions"] = left - 1
-    battle.say(f"{f.the_name[:1].upper() + f.the_name[1:]} snaps an order, and {m.the_name} strikes. "
-               f"<dim>(Legendary Action)</>", "danger")
+    battle.say(_words(battle, "command", f, m) + " <dim>(Legendary Action)</>", "danger")
     battle._event("legendary", by=f.id, what="command", who=m.id)
     battle._attack(m, opt, t)
     battle._check_end()

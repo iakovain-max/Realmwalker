@@ -167,10 +167,45 @@ class Player:
         fight.leave_loot(g)
         self.shed()
         g.aftermath = None
+        if after.outcome == "taken":
+            self.reclaim()
         if g.encounter is enc:  # (a hold's next wave is a new encounter: it stays)
             g.encounter = None
         if g.over is None:
             self.recover()
+
+    def reclaim(self) -> None:
+        """Taken alive at the end (E.5): out of the cell, to the chest they threw your things in, open it (a few tries
+        at the lock), take it all back and arm again. Then the journal's next step leads out (the escape)."""
+        from realmwalker.rules.inventory import add_existing, equip_everything_sensible
+
+        g = self.game
+        lm = g.local
+        if lm is None:
+            return
+        spot = next((xy for xy, f in lm.features.items() if f.get("story") and f.get("kind") == "chest"
+                     and not f.get("opened")), None)
+        if spot is None:
+            return
+        self.note("woke in the cells; after the chest with our things")
+        walk = g.tables.terrain.walk[g.remap_for(lm)[lm.terrain]]
+        near = next(((spot[0] + dx, spot[1] + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                     if (dx or dy) and lm.in_bounds(spot[0] + dx, spot[1] + dy) and walk[spot[0] + dx, spot[1] + dy]),
+                    None)
+        if near is None:
+            return
+        g.player.lx, g.player.ly = near
+        for _ in range(6):
+            dungeon.open_chest(g, lm, *spot)
+            if lm.features[spot].get("opened"):
+                break
+            g.pass_time(10)
+        for it in lm.items.pop(near, []):
+            add_existing(g.leader, g.tables.items, it)
+        for c in g.party:
+            if c.alive:
+                equip_everything_sensible(c, g.tables.items)
+        self.recover()
 
     def shed(self) -> None:
         """Nobody walks laden: the heaviest things nobody wears or the tale needs are left behind."""

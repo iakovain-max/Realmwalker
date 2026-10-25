@@ -150,7 +150,9 @@ def prepare(battle, game) -> list[str]:
             out.append(line)
         entrance = at_tier(template, int(adv["tier"])).get("entrance")
         if entrance:  # (its entrance: the words, and its name across the mat)
-            words = battle.rng.choice(entrance).replace("{name}", f.the_name)
+            from realmwalker.core.textgen import escape_markup as esc
+
+            words = battle.rng.choice(entrance).replace("{name}", esc(f.the_name))
             out.append(f"<danger>{words[:1].upper() + words[1:]}</>")
         battle.events.append({"kind": "boss", "who": f.id, "name": f.name, "line": adv["title"]})
         from realmwalker.game.story import arenas
@@ -363,11 +365,11 @@ def _rival_arrives(battle, game, adv, boss, rnd: str = "3") -> str:
                 c.name, c.named = name, True
             f = b.add_ally(c, leader, "story_ally", point=edge)
             f.auto = True
-        b.say(f"{name or 'Your rivals'} {'comes' if name else 'come'} running onto the field to stand with you!", "good")
+        b.say(_say(game, adv, "rival_comes", who=f"{name} and their band" if name else "your rivals"), "good")
         b._event("arrive", who=leader.id)
 
     battle.round_hooks.append(arrive)
-    return f"<good>{name or 'Your rivals'} said they would come. Hold until they do.</>"
+    return f"<good>{_say(game, adv, 'rival_promised', who=f"{name} and their band" if name else "your rivals")}</>"
 
 
 @key("party_buff")
@@ -381,9 +383,7 @@ def _party_buff(battle, game, adv, boss, name: str = "bless") -> str:
     for f in battle.side(PARTY):
         if f.active:
             durations.buff(f, dict(buff, source=f"story:{name}"))
-    return {"bless": "<good>You go into it blessed: the light you kindled is still with you.</>",
-            "courage": "<good>Nothing it can show you will make you run.</>",
-            "warded": "<good>The wards you raised hold off the cold of the grave.</>"}.get(name, "")
+    return f"<good>{_say(game, adv, 'blessed_' + name)}</>"
 
 
 @key("rite_allowed")
@@ -391,7 +391,7 @@ def _rite_allowed(battle, game, adv, boss, *args) -> str:
     """The rite can be finished over its body: if it falls in this fight with what the rite needs in your hands, the
     rite is done (story.on_battle)."""
     battle.__dict__["rite_allowed"] = adv["id"]
-    return "<good>You know the words. If it falls, you can finish it for good.</>"
+    return f"<good>{_say(game, adv, 'rite_allowed')}</>"
 
 
 @key("lieutenant_absent")
@@ -407,4 +407,12 @@ def _lieutenant_absent(battle, game, adv, boss, role: str = "") -> str:
             battle.order.remove(f.id)
         for a in bands:  # (it is off on the errand it was given: free, and still the villain's)
             a.creatures = [c for c in a.creatures if c is not f.creature]
-    return f"<good>{gone[0].name} is not here: the errand worked.</>" if gone else ""
+    return f"<good>{_say(game, adv, 'lieutenant_absent', who=gone[0].name)}</>" if gone else ""
+
+
+def _say(game, adv, key: str, **more) -> str:
+    """A line of the finale's words (adventures.finale.json), filled and escaped for the battle's log."""
+    from realmwalker.core.textgen import escape_markup as esc
+    from realmwalker.game.story import deeds
+
+    return esc(deeds.say(game, adv, key, **more))

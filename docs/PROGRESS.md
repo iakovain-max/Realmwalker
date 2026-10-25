@@ -46,7 +46,48 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
-### Session, 2026-10-25 (afternoon, late): Adventures & Events Part E, task E.4 — escapes, early ends and villains who come back — branch `dlc/06-adventures-events`
+### Session, 2026-10-25 (evening): Adventures & Events Part E, task E.5 — the finale in full — branch `dlc/06-adventures-events`
+
+- **The last fight has a place.** Where the villain waits at the bottom of its den, the ground is dressed for the end,
+  picked once for each tale by what kind of place it is: a **throne hall** (a seat behind the boss, braziers either
+  side, pillars down the hall, stone coffins along the walls), a **ritual circle** cut in the floor round it with
+  standing stones at the quarters, a **chasm** across the way with one narrow bridge over it, or, in a wizard's tower,
+  the **tower top** (a ring of old parapet and the long drop beyond). The outlaw captain's last orders, if you killed
+  him early, can now be carried out in a **burning village**: timber houses alight on both sides of the lane, the
+  fire jumping from roof to roof.
+- **The place changes when the boss does.** At half its hit points the boss turns, and the ground turns with it: the
+  coffins grind open and the dead climb out of them; or two pillars crack and come down; the circle fills with a cold
+  light that burns whoever crosses it; the chasm's edge falls away; the parapet crumbles; the fire leaps to the next
+  roof. Each with its own line.
+- **Great attacks are warned a turn ahead.** Every boss now has one: the beast's rampage round itself, the captain's
+  volley of arrows from the dark, the dead king's grave-cold. On its turn it marks the ground (a red, pulsing patch on
+  the battle mat, and a line: "drops low and gathers itself... get clear of it"); on its next turn the blow falls
+  there, a save for half. Step out and it misses you. Your companions on Auto step out by themselves. Stun it or hold
+  it down in between and it fizzles.
+- **Bosses enter with words** ("Out of the dark of its den it comes...") and their name crosses the mat.
+- **Stronger bosses for the higher tiers** (3 and 4): more Legendary Resistances, more legendary actions, and a
+  harder great attack. The Risen king at tier 2 and up, and the outlaw captain from the start, can use a legendary
+  action to **command their men**: one of the gang standing next to you strikes at once, out of turn.
+- **Everything you found matters, in all the ways the design lists.** New: speaking the dead king's true name gives
+  your party courage (he cannot frighten you) and, with his crown in your hands too, lets you finish the rite over his
+  body when he falls (the "laid to rest" ending instead of the "destroyed" one). The captain's inside man keeps the
+  Right Hand away from the last fight. A rival band that comes on a later round, and blessings for the party, are
+  ready for the tales that will use them.
+- **You can always run from the finale, but it costs.** The boss is whole again when you come back, its scheme moves
+  on a stage, its eye on you hardens, and an ally who came with you may lose heart and go home. The tale goes on.
+- **Losing the finale need not be death.** A proud, cruel or cunning villain (the dead king, the outlaw captain) takes
+  the beaten alive: you wake in a cell at the far end of its den, at 1 hit point, your weapons, armour and money
+  thrown into a locked chest in a room nearby. Get them back, get out (a new line in the journal: "Get out of ...
+  alive"), and come back for the end when you are ready. It does this once in a tale; a beast never does.
+- Try it: take the Risen tale, go down to the barrow's last level and fight the king; watch for the frost ring on the
+  floor and step out of it; let him beat you once.
+
+Decisions (Anton may want to change): great attacks come first on round 2 and then every 3 rounds; save DC 12/14/16/18
+and damage 2d10/4d10/6d10/8d10 by tier (the captain's volley 2d8 per tier step); the circle's burning ground is 2d6
+necrotic (Constitution save, the great attack's DC); a retreat loses the ally one time in three; the chest with your
+things has a DC 12 lock; the cells are the room farthest from the boss; all arenas fit only where there is room (a
+cramped level stays as it is).
+
 
 - **A villain gets away from you once.** Meet the outlaw captain (or the beast) before its den and hurt it badly,
   and it breaks off as before; but only once in a tale. The journal notes it ("It will not get away a second

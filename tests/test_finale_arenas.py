@@ -243,3 +243,32 @@ def test_the_burning_village_on_the_land(made, tables):
     names = {b.field.name(x, y) for x in range(b.field.width) for y in range(b.field.height)}
     assert "wall_wood" in names and "floor_wood" in names
     assert b.field.flammable[b.field.terrain == tables.terrain.index["floor_wood"]].all(), "the houses' floors catch"
+
+
+@pytest.mark.parametrize("aid", ["throne_hall", "ritual_circle", "bridge", "tower_top"])
+def test_an_arena_that_does_not_fit_leaves_the_ground_and_a_way_off_always_stays(made, tables, aid):
+    import numpy as np
+
+    from realmwalker.core.rng import RNG
+
+    game, adv, band = _den(made, tables, "risen", arena=aid)
+    T = tables.terrain
+    floor = T.index["floor_stone"]
+    for lead, foe in (((2, 8), (20, 8)), ((8, 8), (14, 8)), ((6, 6), (12, 6)), ((10, 8), (15, 9))):
+        terrain = np.full((24, 16), floor, np.uint16)
+        before = terrain.copy()
+        out = arenas.lay(game, adv, "tower", terrain, lead, foe, RNG(5).numpy("t"))
+        if out is None:
+            assert (terrain == before).all(), "nothing laid, nothing changed"
+            continue
+        walk = T.walk[terrain]
+        seen, todo = {lead}, [lead]
+        while todo:
+            x, y = todo.pop()
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    n = (x + dx, y + dy)
+                    if 0 <= n[0] < 24 and 0 <= n[1] < 16 and n not in seen and walk[n]:
+                        seen.add(n)
+                        todo.append(n)
+        assert any(x in (0, 23) or y in (0, 15) for x, y in seen), f"{aid}: a way off the field (law 3)"

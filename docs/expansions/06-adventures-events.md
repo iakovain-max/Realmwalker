@@ -349,7 +349,7 @@ ADVENTURES.md §5.4, §5.5, §5.8.
 - [x] E.3 Lieutenants who remember: escapes, scars, grudges, promotion, turning; their epilogue lines.
 - [x] E.4 Escapes once per adventure, anchors, returning villains, early ends (contingencies, a lieutenant's
   succession, "the cat is away"); step kind `endure`.
-- [ ] E.5 The finale in full: arenas (a burning village with fire that spreads, a ritual circle, a throne hall, a
+- [x] E.5 The finale in full: arenas (a burning village with fire that spreads, a ritual circle, a throne hall, a
   bridge, a tower top), phases with lines that change the arena (`Field.set_terrain`: sarcophagi open, a floor
   falls), telegraphed great attacks, boss entrances, boss templates for tiers 3–4, a "command its minions" legendary
   action (a kernel handler), every key of ADVENTURES.md §8.6, the retreat rule, defeat as content

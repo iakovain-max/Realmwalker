@@ -67,11 +67,44 @@ def lay(game, adv: dict, style: str | None, terrain, lead, foe_at, rng) -> dict 
     aid = choose(game, adv, style)
     if aid is None:
         return None
-    out = ARENAS[aid](terrain, game.tables, lead, foe_at, rng)
+    work = terrain.copy()  # (laid on a copy: an arena that does not fit leaves the ground as it was)
+    out = ARENAS[aid](work, game.tables, lead, foe_at, rng)
     if out is None:
         return None
+    _way_off(work, game.tables, lead)
+    terrain[...] = work
     out["id"] = aid
     return out
+
+
+def _way_off(terrain, tables, lead) -> None:
+    """The party can always get away (law 3: no place here seals): if no edge of the field can be walked to from
+    where it stands, a way is cut to the nearest edge (the tower's stair, a gap in the rubble)."""
+    from collections import deque
+
+    W, H = terrain.shape
+    walk = tables.terrain.walk[terrain]
+    seen = {lead}
+    todo = deque([lead])
+    while todo:
+        x, y = todo.popleft()
+        if x in (0, W - 1) or y in (0, H - 1):
+            return
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                n = (x + dx, y + dy)
+                if 0 <= n[0] < W and 0 <= n[1] < H and n not in seen and walk[n]:
+                    seen.add(n)
+                    todo.append(n)
+    edges = [(0, lead[1]), (W - 1, lead[1]), (lead[0], 0), (lead[0], H - 1)]
+    end = min(edges, key=lambda e: abs(e[0] - lead[0]) + abs(e[1] - lead[1]))
+    floor = tables.terrain.index["flagstones" if "flagstones" in tables.terrain.index else "dirt"]
+    steps = max(abs(end[0] - lead[0]), abs(end[1] - lead[1]))
+    for i in range(steps + 1):
+        x = round(lead[0] + (end[0] - lead[0]) * i / max(1, steps))
+        y = round(lead[1] + (end[1] - lead[1]) * i / max(1, steps))
+        if not walk[x, y]:
+            terrain[x, y] = floor
 
 
 def on_finale(battle, game, adv: dict, boss) -> list[str]:

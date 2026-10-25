@@ -90,8 +90,7 @@ def on_retreat(game, battle) -> list[str]:
     if "ally" in adv["keys"] and rng.chance(float(rs.get("ally_lost", 0.0))):
         adv["keys"].remove("ally")
         out.append(f"<danger>{esc(_say(game, adv, 'retreat_ally'))}</>")
-    _story().journal(adv, "You fell back from the last fight, and the enemy had time to recover.",
-                     int(game.moment.total_days))
+    _story().journal(adv, esc(_say(game, adv, "journal_retreat")), int(game.moment.total_days))
     return out
 
 
@@ -129,16 +128,15 @@ def on_defeat(game, battle, result, after) -> bool:
     from realmwalker.game.fight import lie_senseless
 
     after.outcome = "taken"
-    after.text = _say(game, adv, "taken_wake")
+    after.text = esc(_say(game, adv, "taken_wake"))
     after.notes.append(lie_senseless(game, 2 + game.world.rng.child(f"taken/{adv['id']}").randint(0, 3)))
     if chest is not None:
-        after.notes.append(_say(game, adv, "taken_gear"))
+        after.notes.append(esc(_say(game, adv, "taken_gear")))
     _escape_step(game, adv, lm, chest)
     from realmwalker.game.story import villain
 
     villain.notice(game, adv, 1)
-    _story().journal(adv, "Beaten at the end, you were taken alive and woke in the dark, in chains.",
-                     int(game.moment.total_days))
+    _story().journal(adv, esc(_say(game, adv, "journal_taken")), int(game.moment.total_days))
     return True
 
 
