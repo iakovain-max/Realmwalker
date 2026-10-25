@@ -23,6 +23,11 @@ JOBS = {
     "hunter_of": ("woodcutter", "herder", "farmer"),
     "kin_of_victim": ("farmer", "herder", "washerwoman", "labourer"),
     "survivor_of": ("herder", "farmer", "carter", "woodcutter", "labourer"),
+    "veteran_of": ("soldier", "guard", "smith", "farmer"),  # (Part D: the militia's old sergeant)
+    "captain_of": ("guard", "soldier", "lord"),  # (the watch's captain, the lord's man)
+    "merchant_of": ("market_trader", "shopkeeper", "moneylender", "innkeeper"),  # (a patron whose roads bleed)
+    "carter_of": ("carter", "porter", "labourer"),  # (the robbed carter, the caravan's driver)
+    "suspect_of": ("innkeeper", "stablemaster", "market_trader", "porter", "crier"),  # (the gang's man in town)
 }
 
 
@@ -144,4 +149,7 @@ def describe(game, adv: dict, role: str) -> str:
             job = game.tables.people["occupations"].get(entry["job"], {}).get("name", entry["job"])
             return f"the {job} of {s.name}"
         return s.name
+    if entry and entry.get("band") in game.tables.creatures.encounters:  # (a band as a role: D.2)
+        first = game.tables.creatures.encounters[entry["band"]]["members"][0][0]
+        return f"the {game.tables.creatures[first]['name'].lower()} and the rest"
     return "someone"

@@ -14,7 +14,7 @@ from realmwalker.game.story import beats as beatlang
 from realmwalker.game.story import endings, finale, selectors, steps
 from realmwalker.world import threats
 
-BUILT_PARTS = {"A"}  # the parts of Expansion 6 whose content may be used (from_part)
+BUILT_PARTS = {"A", "D"}  # the parts of Expansion 6 whose content may be used (from_part)
 
 
 def _ensure_loaded() -> None:
@@ -115,7 +115,9 @@ def problems(tables) -> list[str]:
                     out.append(f"{sw}: a {st['kind']} step does not take {', '.join(sorted(extra))}.")
                 if "beat" in st and st["beat"] not in beats:
                     out.append(f"{sw}: there is no beat called '{st['beat']}'.")
-                for field in ("at", "who", "about", "what"):
+                for field in ("at", "who", "about", "what", "to"):
+                    if field == "what" and st["kind"] == "fetch":
+                        continue  # (a thing's name in words: "the crown of {villain_short}")
                     if isinstance(st.get(field), str):
                         _selector(f"{sw}, {field}", st[field], bound, out)
                 for route in st.get("routes", []):

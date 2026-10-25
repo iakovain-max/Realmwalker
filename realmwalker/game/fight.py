@@ -904,6 +904,19 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
     name = creature.name if creature.named else f"the {creature.name}"
     cname = name[:1].upper() + name[1:]
     text = ""
+    if getattr(creature, "story", None) and fate in ("capture", "interrogate"):
+        from realmwalker.game import story
+
+        told = story.on_fate(game, creature, fate)  # (a tale's foe taken alive: Expansion 6 D.2)
+        if told is not None or fate == "capture":
+            text = told or f"You bind {name} and take them along; those who wait on this tale will want to see them."
+            after.fates[creature.uid] = fate
+            game.say(text, "info")
+            game.dirty = True
+            from realmwalker.game.story import goals
+
+            goals.notify(game, "captive", "talk" if fate == "interrogate" else "fight", creature=creature, fate=fate)
+            return text
     if fate == "capture":
         reward = int(game.tables.law["rewards"].get(creature.def_id, 0))
         if reward <= 0:
@@ -976,7 +989,11 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
 
 def _fate_heard(game, creature: Creature, fate: str) -> None:
     """A captive's fate settles a story's band and may reach a goal (Expansion 6 C.5): by blood or by word."""
+    from realmwalker.game import story
     from realmwalker.game.story import goals
+
+    if getattr(creature, "story", None):
+        story.on_fate(game, creature, fate)  # (a tale's foe spared, robbed or put to death: D.2)
 
     goals.notify(game, "captive", "talk" if fate in ("spare", "interrogate") else "fight", creature=creature, fate=fate)
 

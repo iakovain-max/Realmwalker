@@ -577,6 +577,9 @@ def notify(game, kind: str, way: str | None = None, **refs) -> list[tuple[str, s
     Returns (situation, goal, way) for every goal reached now."""
     if kind not in EVENTS:
         raise ValueError(f"goals.notify: unknown event kind '{kind}'")
+    from realmwalker.game.story import deeds
+
+    deeds.on_goal(game)  # (an adventure's steps with a goal of their own: D.2)
     sits = situations(game.world)
     if not sits:
         return []

@@ -193,6 +193,8 @@ class Forge:
                       "optional": bool(spec.get("optional", False)), "gives": list(spec.get("gives", []))}
                 if "beat" in spec:
                     st["beat"] = spec["beat"]
+                if "fails_to" in spec:
+                    st["fails_to"] = spec["fails_to"]
                 steps.append(st)
             self._content_rule(ch["id"], steps)
             chapters.append({"id": ch["id"], "state": "open" if ci == 0 else "locked", "need": ch["need"],

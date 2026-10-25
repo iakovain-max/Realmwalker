@@ -1063,6 +1063,11 @@ def mark_done(game, q, text: str | None = None) -> None:
     q["journal"].append(line)
     game.say(f"<good>Journal: {line}</>", "good")
     game.dirty = True
+    if q.get("adventure"):  # (a step of a tale is done when its work is: nobody waits to pay for it, D.2)
+        q["state"] = "finished"
+        from realmwalker.game import story
+
+        story.on_quest_end(game, q, True)
 
 
 def reveal(game, q) -> None:
@@ -1282,8 +1287,8 @@ def on_arrive_dungeon(game, lm) -> None:
             reveal(game, q)
         if tpl == "investigate" and not t.get("found"):
             found_cult(game, q)
-        if not deepest(lm):
-            continue
+        if not (int(lm.meta.get("level", 0)) == int(t["level"]) if t.get("level") else deepest(lm)):
+            continue  # (a tale's captive or thing lies on its own level: Expansion 6 D.2)
         if tpl in ("retrieve", "apprenticeship") and not t.get("placed"):
             t["placed"] = place_in_room(game, lm, {"kind": "chest", "locked": 0, "treasure": 2, "quest": q["id"]},
                                         "chest")
@@ -1340,7 +1345,7 @@ def quest_item(game, q) -> Item:
         it = past.artifact_item(game, t["artifact"])
     else:
         it = Item(uid=0, def_id=t.get("base", "gold_ring"), qty=1, made_at=w.time, name=t["item"])
-    it.tags = list(it.tags) + [f"quest:{q['id']}"]
+    it.tags = list(it.tags) + [f"quest:{q['id']}"] + ([t["tag"]] if t.get("tag") else [])  # (a tale's thing: D.2)
     return it
 
 
