@@ -361,10 +361,39 @@ def _check_adventures(game, fail) -> None:
         fail(f"a beat waits that does not exist ({d['pending']['beat']})")
     _check_part_d(game, fail)
     _check_villains(game, fail)
+    _check_lieutenants(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
             fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_lieutenants(game, fail) -> None:
+    """Expansion 6 E.3: a lieutenant has a name, a trait the data knows, a fate the game knows and a grudge in bounds;
+    a tale's band led by one points at a record of its threat; a nemesis hunts one hero or is done."""
+    from realmwalker.game import story
+    from realmwalker.game.story import lieutenants
+    from realmwalker.world import threats
+
+    sp = lieutenants.spec(game)
+    if not sp:
+        return
+    fates = ("unmet", "met", "escaped", "spared", "turned", "turncoat", "slain", "taken", "promoted")
+    top = int(sp["grudge"]["max"])
+    for tid, t in threats.records(game.world).items():
+        for rec in t.get("lieutenants", []):
+            where = f"threat {tid}, lieutenant {rec.get('name')}"
+            if not rec.get("name") or rec.get("trait") not in sp["traits"] or rec.get("fate") not in fates:
+                fail(f"{where}: no name, an unknown trait or an unknown fate ({rec})")
+            if not 0 <= int(rec.get("grudge", 0)) <= top or len(rec.get("scars", [])) > len(sp["scars"]):
+                fail(f"{where}: grudge {rec.get('grudge')} or scars {rec.get('scars')} out of bounds")
+    for adv in story.active(game):
+        for role, entry in adv["cast"].items():
+            if "lt" in entry and lieutenants.of(game, adv, role) is None:
+                fail(f"tale {adv['id']}: the {role}'s lieutenant {entry['lt']} is not on its threat")
+    for i, n in enumerate(game.world.politics.get("nemeses", [])):
+        if n.get("state") not in ("hunting", "slain", "taken") or not n.get("life") or                 n.get("band") not in game.tables.creatures.encounters:
+            fail(f"nemesis {i}: a state, a hero or a band missing ({n.get('state')}, {n.get('band')})")
 
 
 def _check_villains(game, fail) -> None:

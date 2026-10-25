@@ -46,7 +46,42 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
-### Session, 2026-10-25 (afternoon): Adventures & Events Part E, task E.2 — the villain's schemes, shown — branch `dlc/06-adventures-events`
+### Session, 2026-10-25 (afternoon, later): Adventures & Events Part E, task E.3 — lieutenants who remember — branch `dlc/06-adventures-events`
+
+- The villain's bands now have named heads. In the Risen's tale the cultists who woke the dead are led by someone
+  like "Wessel the grave-robber"; the outlaw captain has a right hand at the head of the raiders and a lookout
+  watching the road. Each has a look, a trait (cruel, vain, devout, cowardly, loyal, greedy, bitter) and a weakness,
+  and the journal lists those you have met under "Its hands" (the weakness once you have met them twice, or held
+  them).
+- **They remember.** Hurt badly, a lieutenant tries to get away: with nobody beside them they are gone at once (a
+  horse waiting, smoke, a ditch they knew); with one of you at their side, or held, they must run for it, and you can
+  cut them down. One who gets away comes back with a grudge and a scar you gave them ("a notched ear", "a burn down
+  one cheek"), and better armed each time: harder to hit, more hit points, a better blade.
+- **Mercy matters.** Spare or rob one you have beaten and they may come over to you (the cowardly and the greedy
+  most often, the loyal and the cruel hardly ever): they tell you what they know (the Risen's waker points to the
+  anchor, the right hand knows the back way into the hideout, the lookout names the inside man). Some of those who
+  turn are lying: they give you nothing, and you meet them again at the end, at the villain's side. One who will not
+  turn goes straight back to the villain, angrier.
+- **One slain is mourned or avenged**: the villain grieves (the proud and the grieving) or rages (the rest), its eye
+  on you jumps, and its wrath follows. Every lieutenant still free stands beside the villain in the finale; the ones
+  you dealt with are not there.
+- **What became of them**: each lieutenant has a page in the epilogue, with a picture (on the road, or a fresh grave,
+  or the gallows). And when the villain falls, the one with the greatest grudge who is still free takes up what is
+  left of its company and swears to find you: weeks later they step into the road at the head of a band, and keep
+  coming every few weeks until you kill or take them.
+- Try it: take on the outlaw tale and meet the raiders on the road; let the right hand get away (stand back from
+  them when they are hurt), then meet them again the next day.
+
+Decisions (Anton may want to change): the traits' numbers (flee at 25-50% of their hit points, the devout never; a
+spared one turns 10-60% of the time, robbed half that; 15-60% of those who turn are lying); each grudge +1 armour (at
+most +2), +25% hit points and a better blade (1d4, then 1d6 extra damage); at most three grudges; a nemesis comes
+10-30 days after the tale and again every 20-45 days while beaten off; a lieutenant's weakness is words for now (the
+finale's keys of E.5 may use it). The outlaw tale has two lieutenants (the raiders' right hand and the lookout), the
+Risen one (the waker); the Beast has none.
+
+Fixed on the way: in a held place, each creature of a wave you killed counted as a lieutenant slain (the villain's eye
+jumped by two for each); waves and ambushes now count as its servants.
+
 
 - The villain's night visit is now seen. At camp, the fire burns low and the villain stands beyond it at the edge of
   the light, dark against the dark, until it has said its piece. In a room at an inn (a night's room from the
