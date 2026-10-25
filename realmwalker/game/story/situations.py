@@ -644,7 +644,7 @@ def _weight(game, root: dict, pid: str, sid: int) -> float:
     troubles before (the variety)."""
     life = _life(game)
     allsits = list(records(game.world).values())
-    met = [s for s in allsits if s.get("life") == life]
+    met = [s for s in allsits if s.get("life") == life or s["state"] == "latent"]  # (and those still waiting)
     same = sum(1 for s in met if s["predicament"] == pid)
     kind = sum(1 for s in met if s["root"].get("kind") == root["kind"])
     here = sum(1 for s in allsits if s.get("town") == sid and s["predicament"] == pid)
@@ -818,7 +818,10 @@ def _meeting(game, sit: dict, spec: dict, rng) -> dict | None:
         ok.append(kind)
     if not ok:
         return None
-    fresh = [k for k in ok if k not in seen] or ok
+    twin = {s["meeting"]["kind"] for s in records(game.world).values() if s.get("meeting") and s is not sit
+            and s["predicament"] == sit["predicament"] and s["root"].get("kind") == sit["root"].get("kind")
+            and (s.get("life") == life or s["state"] == "latent")}  # (never two alike in root, shape and meeting)
+    fresh = [k for k in ok if k not in seen and k not in twin] or [k for k in ok if k not in twin] or         [k for k in ok if k not in seen] or ok
     return {"kind": rng.choice(fresh), "state": "waiting"}
 
 
@@ -1616,6 +1619,9 @@ def _o_money(game, sit, amount):
     """The hero is paid (from the asker's purse as far as it goes, the rest from what they can scrape together)."""
     from realmwalker.rules.items import money_text
 
+    a = asker(game, sit)
+    if a is not None:
+        a.purse = max(0, int(getattr(a, "purse", 0) or 0) - int(amount))
     game.leader.money += int(amount)
     return [f"<loot>You are given {money_text(int(amount))}.</>"]
 

@@ -512,7 +512,7 @@
           "id": "used",
           "when": "used",
           "tone": "bitter",
-          "ops": [["xp_story", "small"]],
+          "ops": [["disposition", "asker", -20], ["xp_story", "small"]],
           "line": [
             "You used it. {asker} pays, and hates you, and will go on paying.",
             "Used: {asker}'s secret is yours now, and so is a little of {asker}'s coin.",
@@ -944,7 +944,7 @@
           "id": "avenged",
           "when": "avenged",
           "tone": "bitter",
-          "ops": [["xp_story", "small"]],
+          "ops": [["grave", "culprit"], ["xp_story", "small"]],
           "line": [
             "Avenged outside the law: {culprit} is dead, and {lord} will not forget it.",
             "{culprit} is dead. Nobody calls it justice. Nobody calls it murder, either, where {lord} can hear.",
@@ -1050,7 +1050,7 @@
           "id": "done",
           "when": "done",
           "tone": "mixed",
-          "ops": [["money", 2000], ["xp_story", "small"]],
+          "ops": [["money", 2000], ["grave", "enemy"], ["xp_story", "small"]],
           "line": [
             "Done: {enemy} is dead, and {asker} paid what was promised, and cannot look at you.",
             "{enemy} is dead. {asker} thought it would feel like more.",
@@ -1404,7 +1404,7 @@
       ],
       "lapse": {
         "tone": "mixed",
-        "ops": [],
+        "ops": [["disposition", "asker", -10]],
         "line": [
           "Lived with: {asker} hangs iron over the door and does not speak of it.",
           "{asker} has learned to live with it. The house is cold, and they are used to the cold.",
@@ -1973,7 +1973,7 @@
           "id": "let_go",
           "when": "let_go",
           "tone": "mixed",
-          "ops": [["xp_story", "small"]],
+          "ops": [["npc_fate", "stranger", "gone"], ["xp_story", "small"]],
           "line": [
             "Let go: {stranger} left before dawn, and nobody in {town} will ever know who {stranger_they} was.",
             "{stranger} slipped away in the dark with a word of thanks and no name. {asker} will never learn who it was.",

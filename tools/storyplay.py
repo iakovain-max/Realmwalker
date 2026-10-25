@@ -241,6 +241,36 @@ class Player:
         self.note(f"talked with {who.name} ({choice_id})")
         return True
 
+    def situation(self, st: dict) -> bool:
+        """A step that became a situation (C.10): go to its people, hear them, take it on, and try its ways - the
+        talk first, then the price - with whoever they are with; else wait a day for its clock. True when it moved."""
+        from realmwalker.game.story import situations
+
+        g = self.game
+        sit = situations.of_step(g, st)
+        if sit is None:
+            return False
+        if self.town(int(sit["town"])) is None:
+            return False
+        before = (sit["state"], len(sit["used"]), g.world.time)
+        folk = [situations._npc(g, sit, r) for r in sit["roles"]]
+        for who in [n for n in folk if n is not None and n.alive]:
+            for _ in range(4):
+                if sit["state"] not in situations.LIVE:
+                    break
+                conv = Conversation(g, who)
+                menu = [c for c in conv.menu() if c.id in ("sit_ask", "sit_take", "sit_act") and c.enabled
+                        and c.data.get("sit") == sit["id"]]
+                if not menu:
+                    break
+                menu.sort(key=lambda c: (c.id != "sit_ask", c.id != "sit_take", "(" in c.label))
+                conv.choose(menu[0])
+                self.note(f"{who.name}: {menu[0].label}")
+        if sit["state"] in situations.LIVE and (sit["state"], len(sit["used"])) == before[:2]:
+            g.pass_time(24 * 60, "rest")  # (nothing more to try today: tomorrow, or its clock)
+        self.moment()
+        return True
+
     # ------------------------------------------------------------------ the steps
     def act(self, adv: dict, st: dict) -> None:
         g = self.game
@@ -252,6 +282,8 @@ class Player:
                 if st["state"] == "open" and kind == "search":
                     story.after_beat(g)
                     self.settle()
+        elif st.get("inside") and self.situation(st):
+            pass  # (the step became a situation: C.10)
         elif kind == "witness":
             if not self.talk(t.get("who") or adv["cast"].get(t["role"], {}), "story_witness", st["id"]):
                 self.run.why = "the witness could not be found"
@@ -657,6 +689,149 @@ def income_report(results: list[Earnings], write: bool) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------- the variety and rarity measures (§9)
+MEET = 30  # (the situations a scripted hero meets in one world)
+MEET_DAYS = 420
+MEET_REACH = 30
+
+
+@dataclass
+class Met:
+    world: str = ""
+    sits: list = field(default_factory=list)  # (the first thirty met, in order)
+    days: list = field(default_factory=list)  # (the day each was met)
+    rarity: list = field(default_factory=list)  # (every breach of the rarity rules seen)
+    longest: int = 0  # (the longest wait between two meetings, in days)
+
+
+def parts(game, sit: dict) -> dict:
+    """What two situations may have in common (the likeness score, §9): root kind, predicament, turn, meeting, the
+    kinds of their obstacles, the jobs of the one in trouble and of the one who asks."""
+    from realmwalker.game.story import situations
+
+    spec = situations.spec_of(game, sit)
+    asks = spec.get("asks", "asker")
+    trouble = next((r for r in sit["roles"] if r != asks), asks)
+
+    def job(role):
+        rec = sit["roles"].get(role) or {}
+        return rec.get("job") or rec.get("kind") or ("band" if rec.get("band") is not None else "?")
+
+    return {"root": sit["root"].get("kind"), "predicament": sit["predicament"],
+            "turn": (sit.get("turn") or {}).get("id"), "meeting": (sit.get("meeting") or {}).get("kind"),
+            "obstacles": tuple(sorted(ob["kind"] for ob in sit["obstacles"])), "trouble": job(trouble),
+            "asker": job(asks)}
+
+
+def likeness(game, sits: list[dict]) -> float:
+    """The mean, over every pair, of the share of parts they have in common."""
+    ps = [parts(game, s) for s in sits]
+    pairs = [(a, b) for i, a in enumerate(ps) for b in ps[i + 1:]]
+    if not pairs:
+        return 0.0
+    return statistics.mean(sum(a[k] == b[k] for k in a) / len(a) for a, b in pairs)
+
+
+def twins(game, sits: list[dict]) -> list[tuple[str, str]]:
+    """Pairs that share root, predicament, turn and meeting all at once (the variety rule)."""
+    key = [tuple(parts(game, s)[k] for k in ("root", "predicament", "turn", "meeting")) for s in sits]
+    return [(sits[i]["id"], sits[j]["id"]) for i in range(len(sits)) for j in range(i + 1, len(sits))
+            if key[i] == key[j]]
+
+
+def meet_once(tables, made, label: str, verbose: bool = False) -> Met:
+    """A scripted hero wanders a world's peopled towns near where it began, a town a day (it steps from one to the
+    next, as autoplay does), and meets every trouble shown to it, as the meeting's scene would; it takes none on, so
+    each runs to its end in the world's own time. Every day the rarity rules are looked at."""
+    from realmwalker.game.story import situations
+
+    w = copy.deepcopy(made)
+    out = Met(world=label)
+    start = sorted((s for s in w.settlements if s.kind in ("town", "village")), key=lambda s: s.id)[0]
+    game = new_game(w, tables, start_settlement=start.id)
+    game.survival = False
+    towns = [s for s in w.settlements if s.population > 0 and s.kind in ("village", "town", "city")
+             and max(abs(s.x - start.x), abs(s.y - start.y)) <= MEET_REACH]
+    seen_at: dict[int, int] = {}
+    ended: dict[int, int] = {}  # (town -> the day its last own trouble ended)
+    last_met = 0
+    for day in range(MEET_DAYS):
+        if len(out.sits) >= MEET:
+            break
+        s = min(towns, key=lambda s: (seen_at.get(s.id, -99), abs(s.x - game.player.x) + abs(s.y - game.player.y)))
+        seen_at[s.id] = day
+        game.player.x, game.player.y = s.x, s.y
+        prepare_town(game, s)
+        situations.on_enter_town(game, s)
+        for sit in situations.own(situations.live_in(game, s.id)):
+            if sit["state"] == "latent" and len(out.sits) < MEET:
+                situations.met(game, sit)
+                out.sits.append(sit)
+                out.days.append(day)
+                out.longest = max(out.longest, day - last_met)
+                last_met = day
+                if verbose:
+                    print(f"day {day:3d}: {sit['id']} {sit['predicament']} in {s.name} ({sit['meeting']['kind']})")
+        game.pass_time(24 * 60, "rest")
+        today = int(game.moment.total_days)
+        r = situations._rarity(game)
+        for t in towns:
+            mine = situations.own(situations.live_in(game, t.id))
+            cap = r["per_great"] if getattr(t, "great", False) else r["per_town"]
+            if len(mine) > cap:
+                out.rarity.append(f"day {day}: {t.name} shows {len(mine)} live")
+        if any(x.get("made") == today and not x.get("adventure") for x in situations.records(w).values()):
+            near = situations.own(situations.live_near(game))  # (the rule is the forging's: walking on brings more)
+            if len(near) > r["near"]:
+                out.rarity.append(f"day {day}: {len(near)} live within reach when one was forged")
+        for sit in situations.records(w).values():
+            if sit.get("adventure"):
+                continue
+            if sit.get("ended") is not None:
+                ended[sit["town"]] = max(ended.get(sit["town"], -99), int(sit["ended"]))
+        for sit in situations.records(w).values():
+            if sit.get("adventure") or sit.get("made") != today:
+                continue
+            prev = [int(x["ended"]) for x in situations.records(w).values() if x is not sit
+                    and x.get("town") == sit["town"] and x.get("ended") is not None and not x.get("adventure")]
+            if prev and today - max(prev) < int(r["gap"][0]):
+                out.rarity.append(f"day {day}: {sit['id']} came {today - max(prev)} days after the last in its town")
+    return out
+
+
+def meet(verbose: bool = False, tables=None) -> list[Met]:
+    from tests.worlds import cached_world
+    from tools.balance import load_tables
+
+    tables = tables or load_tables()
+    out = []
+    for wo in WORLDS:
+        m = meet_once(tables, cached_world(WorldOptions(*wo), tables), wo[0], verbose)
+        out.append(m)
+    return out
+
+
+def meet_report(results: list[Met], tables=None) -> int:
+    from tools.balance import load_tables
+
+    tables = tables or load_tables()
+    bad = 0
+    for m in results:
+        game = type("G", (), {"tables": tables})()
+        ps = [parts(game, s) for s in m.sits]
+        preds = len({p["predicament"] for p in ps})
+        meets = len({p["meeting"] for p in ps})
+        like = likeness(game, m.sits)
+        tw = twins(game, m.sits)
+        ok = len(m.sits) >= MEET and preds >= 12 and meets >= 12 and like < 0.25 and not tw and not m.rarity \
+            and m.longest <= 20
+        bad += not ok
+        print(f"{m.world:<10} met {len(m.sits)} in {m.days[-1] if m.days else 0} days; {preds} predicaments, "
+              f"{meets} meetings; likeness {like:.3f}; twins {tw}; longest wait {m.longest} days; "
+              f"rarity breaches {len(m.rarity)} {m.rarity[:3]}  {'ok' if ok else 'FAILS'}")
+    return 1 if bad else 0
+
+
 def make_party(game, level: int, seed: int) -> None:
     from tools.balance import make_hero
 
@@ -758,7 +933,10 @@ def main() -> int:
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--income", action="store_true", help="the income measure: thirty days of honest work")
     ap.add_argument("--write", action="store_true", help="with --income: keep the result as the reference")
+    ap.add_argument("--meet", action="store_true", help="the variety and rarity measures: thirty situations met")
     a = ap.parse_args()
+    if a.meet:
+        return meet_report(meet(a.verbose))
     if a.income:
         return income_report(income(a.runs, a.verbose), a.write)
     results = play(a.runs, a.verbose)
