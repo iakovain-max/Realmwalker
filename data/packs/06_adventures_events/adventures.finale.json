@@ -16,6 +16,12 @@
       "Out of nowhere {who} are there at your side, just as they swore they would be.",
       "A roar from behind, and {who} hit the enemy's flank like a falling wall."
     ],
+    "minions_gone": [
+      "Fewer of them than there would have been: {n} not here, kept away by what you did.",
+      "The hall is thinner than it should be. {n} of them are elsewhere tonight, thanks to you.",
+      "You count the shapes in the gloom and come up {n} short. Your work on the way has paid.",
+      "Gaps in their ranks where {n} more should stand. They will not be coming."
+    ],
     "ally_with": [
       "{who} is with you, as they swore they would be.",
       "{who} steps up beside you and says nothing. Nothing needs saying now.",

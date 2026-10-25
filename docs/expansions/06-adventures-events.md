@@ -354,7 +354,7 @@ ADVENTURES.md §5.4, §5.5, §5.8.
   falls), telegraphed great attacks, boss entrances, boss templates for tiers 3–4, a "command its minions" legendary
   action (a kernel handler), every key of ADVENTURES.md §8.6, the retreat rule, defeat as content
   (`story.on_defeat` in `fight.finish_battle`'s defeat branch: taken alive, an escape chapter).
-- [ ] E.6 The fairness measure (`tests/test_story_balance.py`, slow): every key ≥80% wins, no key ≤45%, the retreat
+- [x] E.6 The fairness measure (`tests/test_story_balance.py`, slow): every key ≥80% wins, no key ≤45%, the retreat
   works; the careful player's deaths measured before and after (`tools/balance.py`).
 - [ ] E.7 Words for every move and temper *(parallel; floors of §9)*; pictures (villain silhouettes for the journal,
   the letter's seals, the hall); sounds (`villain`); FORMAT_VERSION +1; verify; Part E to `main`.

@@ -375,7 +375,7 @@ def _minions(battle, game, adv, boss, percent: str = "-50") -> str:
     gone = (others[0::2] + others[1::2])[:n]  # (every other one, strongest first: half of each kind, E.6)
     for f in gone:
         f.state = "fled"
-    return f"<good>Fewer of them than there would have been: {len(gone)} not here.</>" if gone else ""
+    return f"<good>{_say(game, adv, 'minions_gone', n=len(gone))}</>" if gone else ""
 
 
 @key("no_phase_two")

@@ -224,6 +224,16 @@ def problems(tables) -> list[str]:
         if boss.get("phase", {}).get("creature") and boss["phase"]["creature"] not in tables.creatures:
             out.append(f"villains.json: boss {tid}: there is no creature '{boss['phase']['creature']}' to come at its "
                        f"second phase.")
+    strength = tables.adventures.get("strength") or {}  # (E.6: the finale's guards and the ally, by tier)
+    for kind, tiers in (strength.get("guards") or {}).items():
+        for tier, ids in tiers.items():
+            for cid in ids:
+                if creatures is not None and cid not in creatures:
+                    out.append(f"adventures.finale.json: strength guards for {kind} at tier {tier}: there is no "
+                               f"creature '{cid}'.")
+    for cid in strength.get("ally") or ():
+        if creatures is not None and cid not in creatures:
+            out.append(f"adventures.finale.json: strength ally: there is no creature '{cid}'.")
     from realmwalker.rules.combat import MORALE_HP, FEARLESS
 
     for trait, tr in (tables.villains.get("lieutenants") or {}).get("traits", {}).items():

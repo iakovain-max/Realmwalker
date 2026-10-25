@@ -567,13 +567,30 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.6 (*the fairness measure:
-`tests/test_story_balance.py` (slow): every key ≥80% wins, no key ≤45%, the retreat works; the careful player's deaths
-measured before and after (`tools/balance.py`)*), on branch `dlc/06-adventures-events`. Read
-docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.8 (fairness rules) and §9, game/story/finale.py,
-game/story/defeat.py, game/story/arenas.py and rules/engine/handlers/bosses.py (docstrings), tools/storyplay.py, and
-the E.5 note below. The finale's numbers to tune there: villains*.json bosses (hp, resistances, actions, great dc and
-damage by tier, by_tier), adventures.finale.json retreat/defeat.
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.7 (*words for every move and temper
+(parallel; the floors of ADVENTURES.md §9); pictures (villain silhouettes for the journal, the letter's seals, the
+hall); sounds (`villain`); FORMAT_VERSION +1; verify; Part E to `main`*), on branch `dlc/06-adventures-events`. Read
+docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §9 (floors per family) and §5.4-5.5, the E.6, E.5
+and E.1-E.2 notes below, tests/test_text_variety.py, and game/story/villain.py's docstring.
+E.6 (2026-10-25, realmwalker-b): the fairness measure. `tools/storyplay.py --finale all|half|none --kind K` (Finalist,
+finale_once, finales): a tale forged and taken straight to its finale (chapter set to the last, adv["keys"] set,
+"means" with a weakness and the party carrying the best of its means), a party of four at the target level, rested,
+on Auto, falling back (RETREAT_DOWN 2 down or one dead while the boss is above RETREAT_BOSS 35%) through
+tactics.flee; reports won (boss dead, or taken: asleep/yielding), retreat_ok (fled, tale active, finale open), worth
+(foes over the party's High budget). tests/test_story_balance.py (slow, 6 tests, 30 lives each, ~70 s): every key
+>=80%, none <=45%, most retreats get away. The finale's strength: `finale.strengthen` (from dungeon.populate's story
+villain band, after tag_band) adds adventures.finale.json `strength` guards by kind and tier to the band up to `share`
+of a party of max(4, n) at the target level's `difficulty` budget, `most` bodies (then a guard replaces the weakest
+minion); `by_kind` overrides (outlaw 0.7, 6); picked evenly from the list (duplicates weight). Boss template `might`
+(base and by_tier): ac, hit (attack bonus and DCs), damage (an extra die of the blow's type), multiattack, and floors
+min_hp/min_ac/min_hit/min_attacks (finale._might; min_hp in make_boss). Frenzy phase `damage`, `attacks`. Strength
+`ally` by tier (finale._ally_fights; words ally_with). The minions key sends away every other one by xp, strongest
+first, never a lieutenant. A finale boss `holds_ground` (Battle.can_leave false; tactics.flee -> _hold_back) unless
+its phase is an escape/breaks_off; no_escape sets it. A finale field is lit (arena.FINALE_LIGHT at the boss and
+halfway; the arena record only when an arena was laid). The Auto throws damaging flasks (tactics._throw_flask, THROW_BAR
+1.3 times the blows' worth). Data changed: the beast blueprint's weakness key + no_phase_two, the risen's name key
+frightened(2). Measures (48 lives): beast all 88% / none 38%, outlaw 88/38, risen 98/29; tiers 3-4 not measured (no
+test world has them). TALES. balance.py unchanged.
 E.5 (2026-10-25, realmwalker-a; one session for both halves): arenas `game/story/arenas.py` (ARENAS lay on the terrain
 before the Field is made: game/arena._finale_arena for a dungeon finale's band, via story.finale_band; CHANGES run at
 the second phase as a battle `phase_hooks` hook from bosses.after_damage; choice once in adv["finale"]["arena"] by the

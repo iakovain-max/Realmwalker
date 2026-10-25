@@ -46,6 +46,45 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (evening, later): Adventures & Events Part E, task E.6 — the fairness measure — branch `dlc/06-adventures-events`
+
+- **What you found on the way now decides the last fight.** Until now a party of the tale's level beat every finale
+  whether it had found anything or not. Measured over 48 lives each: walk in prepared, with every key the tale hides
+  (its weakness learned and the means carried, the back way, the inside man, the true name, the anchor, the ally),
+  and a careful party wins about nine times in ten (the Beast 88%, the outlaw captain 88%, the Risen king 98%); walk
+  in with nothing, and it wins about one time in three (38%, 38%, 29%) — the rest of the time it has to fall back.
+- **The boss's den is set by the tale's tier, not by your level or the land.** Its band fills out with guards fit for
+  the tier (the dead king's barrow-wights and walking dead; the captain's berserkers, lieutenants and, from tier 2, a
+  hired mage) until it is a real fight for four heroes of the tier's level. Bosses also have *might* by tier: the least
+  hit points, armour, aim and blows a boss of that tier has. For beasts at every tier, so a giant spider at the heart
+  of a tale is as much a foe as a troll (tier 1: 130 hit points, armour 14, two blows; tier 2: 270, armour 16, three
+  blows); for the outlaw captain from tier 2 (140, armour 15, two blows), for the dead king from tier 3 (below that
+  his barrow and its wights are the danger).
+- A boss that cannot get farther from the cleric who turned it turns and fights.
+- **Each key does more.** "Fewer of them" now sends away half of each kind of its guards, the strongest first (it used
+  to send away the cheap ones and leave the wights). A beast whose weakness you learned never reaches its frenzy (and
+  its frenzy is now worse: harder blows and one more of them). The dead king's true name holds him in fear for two
+  rounds, not one. The ally you recruited fights like a seasoned warrior.
+- **A finale is never fought blind.** The boss's end of the hall is lit (candles, braziers, the glow of what it keeps)
+  and the way to it: before, a party in a dark barrow was fighting things that could see it and it could not see.
+- **A boss stands its ground in its own den.** Turned by a cleric or frightened, it backs away but never runs off the
+  field (before, Turn Undead could send the Risen king off the edge of the map and leave the tale hanging; holding
+  his crown now really means he cannot get away). A boss put to sleep or yielding at the end is taken, and counts as
+  beaten.
+- **Your companions throw flasks.** On Auto they throw alchemist's fire, burning oil or holy water where it does
+  clearly more than their blows (in any fight, not only finales): fire at a troll, holy water at the dead.
+- Try it: take the Beast's tale, learn what it fears and carry it (alchemist's fire for a troll), find the bait or the
+  quiet way, bring the hunter; then try the same den without them.
+
+Decisions (Anton may want to change): the den's band is filled to the High budget of four heroes at the tier's level
+(outlaws: 70% of it, at most six of them; others at most eight); the might numbers above (tier 3: 320 hit points,
+armour 17); the frenzy +2d6 and one more blow; the ally a berserker at every tier; a careful party falls back when two
+of it are down (or one dead) while the boss still has more than a third of its hit points. Higher-tier numbers
+(3 and 4) are set but not yet measured: no world in the tests has a tale of those tiers yet.
+
+Measured: the fairness measure (`tools/storyplay.py --finale all|half|none --kind beast|risen|outlaw`, new) as above;
+TALES. Ordinary fights unchanged (`tools/balance.py --runs 60`: identical before and after).
+
 ### Session, 2026-10-25 (evening): Adventures & Events Part E, task E.5 — the finale in full — branch `dlc/06-adventures-events`
 
 - **The last fight has a place.** Where the villain waits at the bottom of its den, the ground is dressed for the end,

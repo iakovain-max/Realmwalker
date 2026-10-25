@@ -879,7 +879,9 @@ def flee(b: Battle, f: Fighter) -> None:
         b.do_leave(f)
         return
     if (f.cdef or {}).get("holds_ground"):  # (a boss in its own den runs from what turned it, but never off the field)
-        _hold_back(b, f)
+        if not _hold_back(b, f) and b.current is f and b.outcome is None:
+            f.state = "fighting"  # (cornered in its own den, it turns and fights)
+            take_turn(b, f)
         return
     if f.has_trait("nimble_escape") and f.bonus > 0:
         b.do_disengage(f, bonus=True)
@@ -898,22 +900,23 @@ def flee(b: Battle, f: Fighter) -> None:
         b.do_leave(f)
 
 
-def _hold_back(b: Battle, f: Fighter) -> None:
+def _hold_back(b: Battle, f: Fighter) -> bool:
     """Fleeing where it will not leave (a boss at its finale, E.6): a Dash to the square farthest from its foes it can
-    reach, then it cowers there."""
+    reach. False when it is cornered (nowhere farther, a foe at its side): then it turns and fights."""
     foes = [e for e in b.enemies_of(f) if e.standing]
-    if f.action > 0 and foes and f.speed > 0:
+    if not foes or f.speed <= 0 or f.action <= 0:
+        return False
+    tree = b.move_tree(f, budget=f.move_left * 2, risk=0.5)
+    occ = b.occupied_by_others(f)
+    spots = [sq for sq in tree if sq == (f.x, f.y) or grid.can_stop(sq, f.sq, occ)]
+    far = lambda sq: min(grid.gap((sq[0], sq[1], f.sq), e.space) for e in foes)  # noqa: E731
+    goal = max(spots, key=lambda sq: (far(sq), -tree[sq].cost), default=(f.x, f.y))
+    if goal == (f.x, f.y) or far(goal) <= far((f.x, f.y)) or far(goal) <= 1:
+        return False
+    if tree[goal].cost > f.move_left:
         b.do_dash(f)
-        tree = b.move_tree(f, budget=f.move_left, risk=0.5)
-        occ = b.occupied_by_others(f)
-        spots = [sq for sq in tree if sq == (f.x, f.y) or grid.can_stop(sq, f.sq, occ)]
-        if spots:
-            far = lambda sq: min(grid.gap((sq[0], sq[1], f.sq), e.space) for e in foes)  # noqa: E731
-            goal = max(spots, key=lambda sq: (far(sq), -tree[sq].cost))
-            if goal != (f.x, f.y) and far(goal) > far((f.x, f.y)):
-                _walk_budget(b, f, grid.route(tree, goal), tree)
-    elif f.action > 0:
-        b.do_dodge(f)
+    _walk_budget(b, f, grid.route(tree, goal), tree)
+    return True
 
 
 def _creature_magic(b: Battle, f: Fighter) -> None:
