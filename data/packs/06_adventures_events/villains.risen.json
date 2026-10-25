@@ -95,8 +95,9 @@
       },
       "by_tier": {
         "2": {"menu": ["move", "strike", "command"]},
-        "3": {"resistances": 3, "actions": 3},
-        "4": {"hp": 2.0}
+        "3": {"resistances": 3, "actions": 3,
+              "might": {"min_hp": 300, "min_ac": 17, "min_hit": 10, "min_attacks": 3, "damage": "2d6"}},
+        "4": {"hp": 2.0, "might": {"min_hp": 450, "min_ac": 19, "min_hit": 12, "min_attacks": 4, "damage": "3d6"}}
       },
       "phase": {
         "at": 0.5,

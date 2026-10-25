@@ -335,7 +335,8 @@
         "arenas": ["bridge", "ritual_circle"],
         "keys": {
           "weakness": [
-            "weakness"
+            "weakness",
+            "no_phase_two"
           ],
           "bait": [
             "surprise"

@@ -192,13 +192,17 @@ def command(battle, f, left: int) -> bool:
 
 @phase("frenzy")
 def _frenzy(battle, f, spec) -> None:
-    """Cornered, it goes mad: no more flight, and it strikes harder (a beast's second phase)."""
+    """Cornered, it goes mad: no more flight, and it strikes harder (a beast's second phase; the phase's `damage`, a
+    die more on each blow, and `attacks`, more blows: E.6)."""
     line = battle.rng.choice(spec["lines"])
     battle.say(line, "danger")
     d = dict(f.cdef)
     d["morale"] = "fanatic"
+    if spec.get("attacks"):
+        d["multiattack"] = max(1, int(d.get("multiattack", 1) or 1)) + int(spec["attacks"])
     f.cdef = d
-    f.buffs.append({"id": "frenzy", "name": "frenzy", "attack_die": "1d4", "damage_die": "1d6", "rounds": -1})
+    f.buffs.append({"id": "frenzy", "name": "frenzy", "attack_die": "1d4", "damage_die": spec.get("damage") or "1d6",
+                    "rounds": -1})
     battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "frenzy", "name": f.name, "line": line})
 
 

@@ -83,7 +83,7 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
     template = at_tier(template, tier)
     d = dict(f.cdef)
     mult = float(template["hp"]) * (1.0 + 0.15 * (int(tier) - int(template["tiers"][0])))
-    hp = max(f.max_hp, int(round(f.max_hp * mult)))
+    hp = max(f.max_hp, int(round(f.max_hp * mult)), int((template.get("might") or {}).get("min_hp", 0)))
     if f.creature is not None and not f.creature.uses.get("boss_hp"):
         f.creature.max_hp = hp  # (once: a boss met again keeps the hit points it has left)
         f.creature.hp = hp
@@ -112,24 +112,26 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
 def _might(d: dict, might: dict) -> None:
     """The template's might at its tier (E.6): harder to hit (`ac`), surer with its attacks and harder to resist
     (`hit`: their bonus and save DCs), each blow heavier (`damage`: a die more of the blow's own type), more blows
-    (`multiattack`). The creature stands for the tier's foe, not for what it was in the book."""
+    (`multiattack`); and the least a boss of the tier has (`min_hp` in make_boss, `min_ac`, `min_hit`,
+    `min_attacks`): a giant spider and a troll alike stand for the tier's foe, not for what they were in the book."""
     if not might:
         return
-    d["ac"] = int(d["ac"]) + int(might.get("ac", 0))
-    hit, more = int(might.get("hit", 0)), might.get("damage")
+    d["ac"] = max(int(d["ac"]) + int(might.get("ac", 0)), int(might.get("min_ac", 0)))
+    hit, more, least = int(might.get("hit", 0)), might.get("damage"), int(might.get("min_hit", 0))
     attacks = []
     for a in d.get("attacks", ()):
         a = dict(a)
         if a.get("kind") in ("melee", "ranged") and not a.get("single_save"):
-            a["bonus"] = int(a.get("bonus", 0)) + hit
+            a["bonus"] = max(int(a.get("bonus", 0)) + hit, least)
             if more and a.get("damage"):
                 a["extra"] = list(a.get("extra") or ()) + [{"damage": more, "type": a.get("damage_type", "bludgeoning")}]
         if a.get("dc"):
             a["dc"] = int(a["dc"]) + hit
         attacks.append(a)
     d["attacks"] = attacks
-    if might.get("multiattack"):
-        d["multiattack"] = max(1, int(d.get("multiattack", 1) or 1)) + int(might["multiattack"])
+    if might.get("multiattack") or might.get("min_attacks"):
+        d["multiattack"] = max(max(1, int(d.get("multiattack", 1) or 1)) + int(might.get("multiattack", 0)),
+                               int(might.get("min_attacks", 0)))
 
 
 def strength(tables) -> dict:
@@ -140,14 +142,16 @@ def strengthen(game, adv: dict, creatures: list, rng) -> None:
     """Fairness rule 1 (§5.8): the finale's band is set by its threat's tier, never by the hero's level or the land.
     Its guards for the tier (adventures.finale.json strength: by threat kind) join the boss's own band until the band
     is worth `share` of the High budget of a party of four (or more, if the party is bigger) at the tier's target
-    level, `most` of them at the most. With no keys it is beyond High (the boss's template is not counted); its
+    level, `most` of them at the most (then a guard takes the place of the weakest of the rank and file). With no keys it is beyond High (the boss's template is not counted); its
     keys thin it (minions), surprise it, bring allies."""
     from realmwalker.rules import encounter
     from realmwalker.rules.creatures import spawn
 
-    spec = strength(game.tables)
     t = _story().threat_of(game, adv)
-    guards = [g for g in ((spec.get("guards") or {}).get(t["kind"] if t else "", {}).get(str(adv["tier"])) or ())
+    kind = t["kind"] if t else ""
+    spec = dict(strength(game.tables))
+    spec.update((spec.get("by_kind") or {}).get(kind) or {})  # (a kind's own share and size)
+    guards = [g for g in ((spec.get("guards") or {}).get(kind, {}).get(str(adv["tier"])) or ())
               if g in game.tables.creatures]
     if not spec or not guards or not creatures:
         return
@@ -157,11 +161,22 @@ def strengthen(game, adv: dict, creatures: list, rng) -> None:
     worth = encounter.xp_of(game.tables, [c.def_id for c in creatures])
     uid = max(int(c.uid) for c in creatures) + 1
     xp = {g: int(game.tables.creatures[g]["xp"]) for g in guards}
-    while len(creatures) < int(spec.get("most", 8)) and worth < goal:
-        fits = sorted((g for g in guards if worth + xp[g] <= goal), key=lambda g: -xp[g])[:2]  # (the strongest)
+    most = int(spec.get("most", 8))
+    while worth < goal:
+        weak = None
+        if len(creatures) >= most:  # (full: a guard takes the place of the weakest of its rank and file)
+            plain = [c for c in creatures[1:] if (c.story or {}).get("role", "minion") == "minion"]
+            weak = min(plain, key=lambda c: int(game.tables.creatures[c.def_id]["xp"]), default=None)
+            if weak is None or int(game.tables.creatures[weak.def_id]["xp"]) >= min(xp.values()):
+                break
+        room = goal - worth + (int(game.tables.creatures[weak.def_id]["xp"]) if weak is not None else 0)
+        fits = [g for g in guards if xp[g] <= room]  # (as often as the list names it)
         g = rng.choice(fits or [min(guards, key=xp.get)])
         c = spawn(game.tables, g, rng.child(f"guard{uid}"), uid, now=game.world.time)
         c.story = {"adv": adv["id"], "role": "minion"}
+        if weak is not None:
+            worth -= int(game.tables.creatures[weak.def_id]["xp"])
+            creatures.remove(weak)
         creatures.append(c)
         worth += xp[g]
         uid += 1
@@ -386,7 +401,8 @@ def _no_escape(battle, game, adv, boss, *args) -> str:
 
 @key("ally_fights")
 def _ally_fights(battle, game, adv, boss, *args) -> str:
-    """The ally who came with you fights beside you (as a hunter with a bow: the game's scout)."""
+    """The ally who came with you fights beside you (as the creature of its tale's tier: adventures.finale.json
+    strength "ally"; a hunter with a bow at the first)."""
     from realmwalker.game.story import cast
     from realmwalker.rules.combat import PARTY
     from realmwalker.rules.creatures import spawn
@@ -395,11 +411,13 @@ def _ally_fights(battle, game, adv, boss, *args) -> str:
     leader = next((f for f in battle.side(PARTY) if f.char is not None), None)
     if who is None or not getattr(who, "alive", True) or leader is None:
         return ""
-    kind = "scout" if "scout" in game.tables.creatures else "guard"
+    kinds = strength(game.tables).get("ally") or ["scout"]  # (by its tale's tier: E.6)
+    kind = kinds[max(0, min(len(kinds) - 1, int(adv["tier"]) - 1))]
+    kind = kind if kind in game.tables.creatures else "guard"
     c = spawn(game.tables, kind, battle.rng.child("story-ally"), 1)
     c.name, c.named = who.name, True
     battle.add_ally(c, leader, "story_ally")
-    return f"<good>{who.name} is with you, bow strung.</>"
+    return f"<good>{_say(game, adv, 'ally_with', who=who.name)}</>"
 
 
 RIVAL_KIND = "scout"  # who comes when no rival band is cast: hunters of the land with bows

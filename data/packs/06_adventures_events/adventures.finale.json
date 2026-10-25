@@ -2,17 +2,25 @@
   "_comment": "The finale's retreat and defeat (Expansion 6 E.5, game/story/defeat.py): what a retreat from the last fight costs, the tempers of villains who take the beaten alive and the lock on the chest their things go into, and the words.",
   "retreat": {"attention": 1, "ally_lost": 0.34},
   "defeat": {"tempers": ["cruel", "proud", "cunning"], "lock": 12},
-  "strength": {"difficulty": "high", "share": 1.0, "most": 8, "guards": {
-    "risen": {"1": ["skeleton", "zombie", "ghoul"], "2": ["zombie", "skeleton", "wight"], "3": ["ghoul", "wight", "mummy"],
+  "strength": {"difficulty": "high", "share": 1.0, "most": 8, "ally": ["berserker", "berserker", "berserker", "berserker"],
+    "by_kind": {"outlaw": {"share": 0.7, "most": 6}},
+    "guards": {
+    "risen": {"1": ["skeleton", "zombie", "ghoul"], "2": ["wight", "skeleton", "zombie"], "3": ["ghoul", "wight", "mummy"],
               "4": ["wight", "mummy"]},
-    "outlaw": {"1": ["bandit", "bandit_archer", "thug"], "2": ["thug", "berserker", "bandit_captain"],
-               "3": ["berserker", "bandit_captain"], "4": ["berserker", "assassin"]}}},
+    "outlaw": {"1": ["bandit", "bandit_archer", "thug"], "2": ["berserker", "bandit_captain", "berserker", "bandit_captain", "mage"],
+               "3": ["berserker", "mage", "assassin"], "4": ["mage", "assassin"]}}},
   "words": {
     "rival_comes": [
       "With a shout, {who} come running onto the field to stand with you!",
       "Horns behind you, and boots: {who} have come after all, blades out.",
       "Out of nowhere {who} are there at your side, just as they swore they would be.",
       "A roar from behind, and {who} hit the enemy's flank like a falling wall."
+    ],
+    "ally_with": [
+      "{who} is with you, as they swore they would be.",
+      "{who} steps up beside you and says nothing. Nothing needs saying now.",
+      "{who} came down with you. Whatever waits, you will not meet it alone.",
+      "At your shoulder, {who} checks their weapon one last time."
     ],
     "rival_promised": [
       "{who} said they would come. Hold until they do.",

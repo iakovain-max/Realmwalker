@@ -1562,9 +1562,14 @@ ADVENTURES = Obj({
     "retreat": Obj({"attention": Int(min=0, max=5), "ally_lost": Float(min=0, max=1)}, optional=True),
     "defeat": Obj({"tempers": List(Str(max_len=30)), "lock": Int(min=0, max=30)}, optional=True),
     # (E.6) fairness rule 1: the finale's band set by its tier (story/finale.strengthen): guards by threat kind and
-    # tier join the boss's band until it is worth `share` of a party's `difficulty` budget at the target level
+    # tier join the boss's band until it is worth `share` of a party's `difficulty` budget at the target level; the
+    # creature the recruited ally fights as, by tier (finale._ally_fights); a kind's own share and size (`by_kind`)
     "strength": Obj({"difficulty": Str(choices=["low", "moderate", "high"]), "share": Float(min=0, max=5),
-                     "most": Int(min=1, max=16), "guards": Map(Map(List(Str(max_len=40))))}, optional=True),
+                     "most": Int(min=1, max=16), "guards": Map(Map(List(Str(max_len=40)))),
+                     "ally": List(Str(max_len=40), min_items=1, max_items=4, optional=True),
+                     "by_kind": Map(Obj({"share": Float(min=0, max=5, optional=True),
+                                         "most": Int(min=1, max=16, optional=True)}), optional=True)},
+                 optional=True),
 })
 
 GREAT_ATTACK = Obj({
@@ -1580,9 +1585,12 @@ GREAT_ATTACK = Obj({
     "go": word_list(3, 300),  # said as it falls ({name})
 }, optional=True)
 # (E.6) a boss template's might at its tier (story/finale._might): AC, its attacks' bonus and DCs, a die more on each
-# blow, more blows
+# blow, more blows; and the least a boss of the tier has (hit points, AC, attack bonus, blows)
 MIGHT = Obj({"ac": Int(min=0, max=10, optional=True), "hit": Int(min=0, max=10, optional=True),
-             "damage": Str(max_len=20, optional=True), "multiattack": Int(min=0, max=4, optional=True)}, optional=True)
+             "damage": Str(max_len=20, optional=True), "multiattack": Int(min=0, max=4, optional=True),
+             "min_hp": Int(min=1, max=2000, optional=True), "min_ac": Int(min=5, max=30, optional=True),
+             "min_hit": Int(min=0, max=20, optional=True), "min_attacks": Int(min=1, max=6, optional=True)},
+            optional=True)
 BOSS = Obj({
     "tiers": TIER_BAND,
     "roles": List(Str(max_len=30), min_items=1),  # what it makes a boss of (a beast, a dead king, a captain...)
@@ -1591,8 +1599,9 @@ BOSS = Obj({
     "actions": Int(min=0, max=5),  # legendary actions a round
     "menu": List(Str(max_len=30), min_items=1),  # what those actions may be (story/finale.LEGENDARY)
     "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300),
-                  "creature": Str(max_len=40, optional=True), "count": Int(min=1, max=6, optional=True)},
-                 optional=True),  # (kind "raise": `count` of the `creature` come to its side)
+                  "creature": Str(max_len=40, optional=True), "count": Int(min=1, max=6, optional=True),
+                  "damage": Str(max_len=20, optional=True), "attacks": Int(min=1, max=3, optional=True)},
+                 optional=True),  # (kind "raise": `count` of the `creature` come to its side; "frenzy": `damage` a blow)
     # met before its finale it fights as itself, and does this when it falls to `at` of its hit points (breaks off)
     "before": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
                   optional=True),

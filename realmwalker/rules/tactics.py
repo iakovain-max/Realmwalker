@@ -1289,6 +1289,10 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         if b.current is f and b.outcome is None and f.move_left >= 5:
             _keep_safe(b, f)
         return
+    if f.action > 0 and _throw_flask(b, f):
+        if b.current is f and b.outcome is None and f.move_left >= 5:
+            _keep_safe(b, f)
+        return
     if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)
             or _item_charges(c)) and f.action > 0:
         if _cast_something(b, f):
@@ -1457,6 +1461,36 @@ def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
         for opt, a in _abilities(b, f, "lunge"):
             b.do_ability(f, opt.value)
             return
+
+
+THROW_BAR = 1.3  # (a flask is coin in the pack: thrown only where it does clearly more than the turn's blows)
+
+
+def _throw_flask(b: Battle, f: Fighter) -> bool:
+    """A flask that hurts (alchemist's fire, burning oil, holy water: an item spell with damage) thrown at a foe's
+    square when it is worth clearly more than a turn of blows - a fire flask at a troll, holy water at the dead
+    (Expansion 6 E.6: a weakness learned is a weakness used). Never where it would catch a friend."""
+    from realmwalker.rules.combat import spell_id
+
+    if not any(e.standing for e in b.enemies_of(f)):
+        return False
+    throws = [o for o in actions.options(b, f, only=("item",)) if o.kind == "item" and o.available
+              and str(o.value).startswith("throw:") and o.cost == "action"
+              and spellrules.main_type(b.t.spells[spell_id(o.value)])]
+    if not throws:
+        return False
+    best = None
+    with estimates.thinking():
+        bar = _best_attack_worth(b, f) * THROW_BAR + 1.0
+        foes = {(e.x, e.y) for e in b.enemies_of(f) if e.standing}
+        for o in throws:
+            for point in sorted(foes & set(o.points or ())):
+                w = estimates.spell_value(b, f, o.value, point=point)
+                if w.friendly > 0 or w.total(care=4.0) <= bar:
+                    continue
+                if best is None or w.total(care=4.0) > best[0]:
+                    best = (w.total(care=4.0), o.value, point)
+    return best is not None and bool(b.do_cast(f, best[1], None, point=best[2]))
 
 
 def _coat_blade(b: Battle, f: Fighter, opts) -> bool:

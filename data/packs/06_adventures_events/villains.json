@@ -343,12 +343,17 @@
           "{name} throws itself round in a great sweep, smashing at everything in reach."
         ]
       },
+      "might": {"min_hp": 130, "min_ac": 14, "min_hit": 6, "min_attacks": 2},
       "by_tier": {
-        "3": {"resistances": 2, "actions": 3}
+        "2": {"might": {"min_hp": 270, "min_ac": 16, "min_hit": 9, "min_attacks": 3, "damage": "1d6"}},
+        "3": {"resistances": 2, "actions": 3,
+              "might": {"min_hp": 320, "min_ac": 17, "min_hit": 10, "min_attacks": 3, "damage": "2d8"}}
       },
       "phase": {
         "at": 0.5,
         "kind": "frenzy",
+        "damage": "2d6",
+        "attacks": 1,
         "lines": [
           "Cornered and bleeding, it stops being careful.",
           "It howls, and when it comes again it comes like a landslide.",

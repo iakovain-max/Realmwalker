@@ -1308,6 +1308,13 @@ def finale_once(tables, made, label: str, i: int, kind: str, keys: str, verbose:
     adv["chapter"] = len(adv["chapters"]) - 1  # (straight to the end: the steps before it are not played)
     adv["keys"] = finale_keys(adv, keys, RNG(5000 + i, "storyplay/keys"))
     run.keys = list(adv["keys"])
+    if "means" in adv["keys"]:  # (what it fears, carried: a careful party bought it when it learned the weakness)
+        wid = adv["hidden"].get("weakness", {}).get("weakness")
+        weak = next((x for lst in tables.villains.get("weaknesses", {}).values() for x in lst if x["id"] == wid), None)
+        means = [m for m in (weak or {}).get("means", ()) if m in tables.items]
+        best = max(means, key=lambda m: int(tables.items.get(m).get("value", 0) or 0)) if means else None
+        for c in game.party if best else ():  # (the best of the means: a flask of fire, not a torch)
+            add_item(c, tables.items, best, 2)
     p = Finalist(game, run, verbose)
     p.retreats = retreats
     st = next((s for ch in adv["chapters"] for s in ch["steps"] if s["kind"] == "finale" and s["state"] == "open"),
