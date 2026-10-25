@@ -578,7 +578,7 @@ per Part D kind: `delve` goes down a site level by level, climbs out to a long r
 `wait_a_day` after a refusal; `hold` waits at the place an hour at a time; `battle` questions a story captive and
 keeps a hold's next wave) and `--openings` (`open_once`: new_game as the game begins a life, the town's clock ticked
 two hours for a staged scene; `Opened.begun`); `play_tale` is the shared step loop. Measures (20 each): outlaw 19/20,
-risen RISEN_RESULT, openings 19/20 begun, all finished (no crisis drawn in 20: the start towns tried lie outside their
+risen 20/20 (16 before the fixes), openings 19/20 begun, all finished (no crisis drawn in 20: the start towns tried lie outside their
 threats' reach). Game fixes: `fight._at_home` (a finale band that beats you, robs you or leaves you for dead stays
 on its level; one that flees in a won fight keeps its fled creatures as the actor, alert); `Battle._knock_out`
 defaults "yes" for a creature whose `story["alive"]` (deeds.band sets it on a capture step's quarry); selector
@@ -591,7 +591,10 @@ pictures "hideout". Sounds (tools/build_sounds.py `part_d_sounds`, seed 609; the
 Autoplay: `_part_d_move` (a tale's Part D step: talk choices story_recruit/rally/confront/escort, else arrive at its
 place) and `_check_part_d` (step quests, held nights, bound bands, the opening's record, "alive" only on captures).
 Floors: test_text_variety `test_part_d_has_enough_ways_to_be_told`. Tests: tests/test_part_d_shown.py (5),
-test_storyplay (+3, slow: six lives each). FORMAT_VERSION 22.
+test_storyplay (+3, slow: six lives each). FORMAT_VERSION 22. The fresh review's fixes: a parley with a master at home
+leaves the band too; finish_battle tested for a fled master and a lost finale; storyplay's finale rests an hour after
+a master falls back (else the stuck test fired: no time passed). Checks: full suite (only the known timing tests
+missed, beside the other checks; they pass alone), autoplay OK, smoke OK.
 D.4 (2026-10-25, realmwalker-a): the first hour, `game/story/opening.py` (docstring has the API). `story.begin` picks
 the threat as before (now up to twice `start.tiles` away when nothing is nearer) and `opening.begin` records
 `politics["director"]["opening"]` {kind, threat, town, day, state} instead of the day-0 scheduled hook. Kinds and

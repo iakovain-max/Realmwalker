@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-C on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; Parts D-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-D on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; Parts E-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,38 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.5 — the Risen and the Outlaw Lord shown, heard and played through — **Part D merged into `main`**
+
+- **Pictures.** When the Risen king's dead come to your camp by night, you now see them: pale figures standing in a
+  ring at the edge of the firelight, swaying a little, until you break camp. A beat met at an outlaw gang's hideout
+  shows their camp under the pines (bedrolls, barrels, a weapon rack, the horse post, their fire at dusk); one met
+  under a barrow shows its halls (sarcophagi, bones, candles, a mist along the floor) instead of the heath above. The
+  first hour as the gang's captive opens on their camp too.
+- **Sounds.** A war horn as each wave comes out of the dark on the night you hold a place; a long cold breath over a
+  low hum when the dead stand at the camp's edge; a wax seal cracking and the paper opened whenever you read a letter
+  for the first time.
+- **Fixes found by playing the tales through** (a careful party, on Auto, many times over):
+  - If the Risen king or the outlaw captain beat you in their own den (you are robbed and left, or left for dead),
+    they are still there when you come back. Before, they vanished from the level and the tale could never end.
+  - If the Risen king is turned by a cleric (or otherwise driven off the field) in his barrow, or a captain is talked
+    down in his den, he stays there and waits for you, wounds and all. Before, the fight counted as won, he was gone, and the tale stalled.
+  - When a tale wants its quarry alive (the outlaws' man on the road), your party now knocks them out instead of
+    killing them, also on Auto (you were always asked; Auto used to kill).
+  - A town with no road near it could not have the Risen's tale (nowhere for the held ford): the open country near
+    the town now serves (the battlefield lays its own road across a ford).
+- **Measured** (tools/storyplay.py, 20 lives each): the Outlaw Lord finished 19 of 20 (one party died); the Risen
+  finished all 20 (before the fixes 16); a new life's opening began a tale in 19 of 20 lives and every one of those tales was finished. The
+  autoplay bot now also takes up the new kinds of step (talks people round, rallies towns, goes where a rescue, a
+  fetch, a band, a held night or a rite waits) and checks their records.
+- **Saves: format 22.** Old saves are refused with the friendly message; start a new world.
+- Try it: start a new character and walk into your start town (or wake in the ropes); take a Risen tale and camp near
+  the barrow at night; hold the ford when the night comes.
+
+Decisions (Anton may want to change): a tale's master stays in their den after beating you, keeping their wounds;
+the party knocks out only the one a tale wants alive (the rest are fought as before); the dead at the camp are four
+figures (zombies, a skeleton, a wight); the horn, breath and seal were made in code and set by measure (their
+loudness like the other effects), not yet heard by Anton.
 
 ### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.4 — the first hour — branch `dlc/06-adventures-events`
 
