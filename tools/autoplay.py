@@ -359,10 +359,48 @@ def _check_adventures(game, fail) -> None:
     d = w.politics.get("director") or {}
     if d.get("pending") and d["pending"]["beat"] not in game.tables.beats:
         fail(f"a beat waits that does not exist ({d['pending']['beat']})")
+    _check_part_d(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
             fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_part_d(game, fail) -> None:
+    """Expansion 6 D.5: a live tale's Part D steps hold together - a rescue's or fetch's step quest exists and is its
+    own, a held night has its day, a band bound under a site has its record; the first hour's record is one of its
+    kinds on a real threat; only a capture's quarry is wanted alive."""
+    from realmwalker.game import quests
+    from realmwalker.game import story
+    from realmwalker.game.story import opening
+    from realmwalker.world import threats
+
+    w = game.world
+    sites = w.politics.get("story_sites") or {}
+    for adv in story.active(game):
+        for st in story.open_steps(adv):
+            t, where = st["target"], f"tale {adv['id']} step {st['id']} ({st['kind']})"
+            if st["kind"] in ("rescue", "fetch") and st.get("set"):
+                q = quests.by_id(game, st.get("quest"))
+                if q is None or q.get("adventure") != adv["id"] or q.get("step") != st["id"]:
+                    fail(f"{where}: its step quest is missing or someone else's")
+            if st["kind"] == "hold" and st.get("set") and not isinstance(t.get("night"), int):
+                fail(f"{where}: a held night with no day")
+            if st["kind"] in ("defeat", "capture") and st.get("set") and t.get("level") and not any(
+                    r.get("adv") == adv["id"] and r.get("step") == st["id"] for r in sites.get(t["level"], [])):
+                fail(f"{where}: its band under {t['level']} has no record")
+    rec = (w.politics.get("director") or {}).get("opening")
+    if rec is not None and (rec.get("kind") not in opening.KINDS or rec.get("threat") not in threats.records(w)
+                            or rec.get("state") not in ("waiting", "played", "lost")):
+        fail(f"the first hour's record is broken: {rec}")
+    lm = game.local
+    for a in (lm.actors if lm is not None else []):
+        for c in a.creatures:
+            tag = getattr(c, "story", None) or {}
+            if tag.get("alive"):
+                st = story.find_step(game, tag.get("adv"), tag.get("step"))
+                if st is not None and st["kind"] != "capture":
+                    fail(f"{c.name} is wanted alive by a step that is no capture")
 
 
 def _check_threats(game, fail) -> None:
@@ -1132,6 +1170,9 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
                 game.talk_to = npc.id
             report.talks += 1
         return
+    if roll < 0.34 and _part_d_move(game, rng):
+        report.deeds = getattr(report, "deeds", 0) + 1
+        return
     if roll < 0.38 and game.quests:
         # Go where the work is: arrivals, raids, escorts and beasts all happen on the spot.
         from realmwalker.game import quests
@@ -1181,6 +1222,53 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
     group = rng.choice(sorted(app.tables.creatures.encounters))
     game.encounter = make_encounter(game, group, game.world.rng.child(f"autoplay/{game.world.time}/{group}"))
     report.fights += 1
+
+
+def _part_d_move(game, rng: random.Random) -> bool:
+    """A tale's Part D step taken up where it happens (Expansion 6 D.5): the one to recruit, confront or set out with
+    talked to, a town called to arms, or the party at the place of a rescue, a fetch, a band, a held night or a
+    rite. True when it did something."""
+    from realmwalker.game import story
+    from realmwalker.game.dialogue import Conversation
+    from realmwalker.game.people import npcs_in, prepare_town
+    from realmwalker.game.story import cast, deeds, places
+
+    steps = [(adv, st) for adv in story.active(game) for st in story.open_steps(adv) if st["kind"] in deeds.KINDS]
+    if not steps:
+        return False
+    adv, st = rng.choice(steps)
+    t = st["target"]
+    w = game.world
+    game.player.local_key = None
+    game.sneaking = False
+    if st["kind"] in ("recruit", "confront", "escort", "rally"):
+        sid = (t.get("place") or {}).get("settlement") if st["kind"] == "rally" else (t.get("who") or {}).get(
+            "settlement")
+        if sid is None or not 0 <= int(sid) < len(w.settlements):
+            return False
+        s = w.settlements[int(sid)]
+        game.player.x, game.player.y = s.x, s.y
+        prepare_town(game, s)
+        who = cast.person(w, t.get("who")) if st["kind"] != "rally" else None
+        folk = [who] if who is not None else [n for n in npcs_in(w, s.id) if n.alive and n.present]
+        for npc in folk:
+            if npc is None or not getattr(npc, "alive", False) or not hasattr(npc, "settlement"):
+                continue
+            conv = Conversation(game, npc)
+            ch = next((c for c in conv.menu() if c.id == f"story_{st['kind']}" and c.enabled), None)
+            if ch is not None:
+                conv.choose(ch)
+                conv.close()
+                return True
+        return False
+    place = t.get("place")
+    if not place or not places.exists(w, place):
+        return False
+    game.player.x, game.player.y = places.xy(w, place)
+    game._arrive(None)
+    if not game.busy:
+        story.on_arrive(game)
+    return True
 
 
 def run_autoplay(*, turns: int = 3000, seed: int = 1, home: Path | None = None) -> AutoplayReport:

@@ -82,3 +82,26 @@ def test_the_master_who_beats_you_is_still_at_home(made, tables):
     if other is not None:
         assert not fight._at_home(game, other)
     assert places.here(game, adv["places"]["home"])
+
+
+def test_the_autoplay_bot_takes_part_d_steps_and_checks_them(made, tables):
+    """The bot's Part D move (tools/autoplay._part_d_move) and invariants (_check_part_d) on a live tale: each kind of
+    step it meets is gone to or talked through, and nothing it does breaks the records."""
+    import random
+
+    from tools import autoplay
+
+    for kind in ("risen", "outlaw"):
+        game, adv, t = _tale(made, tables, kind)
+        rng = random.Random(1)
+        faults, moved = [], 0
+        for n in range(len(adv["chapters"])):
+            _open_chapter(game, adv, n)
+            for _ in range(6):
+                if game.busy:
+                    game.encounter = game.battle = None
+                    beats.director(game.world)["pending"] = None
+                moved += bool(autoplay._part_d_move(game, rng))
+                autoplay._check_part_d(game, faults.append)
+        assert not faults, faults
+        assert moved >= 4, f"the bot found its {kind} steps ({moved} moves)"
