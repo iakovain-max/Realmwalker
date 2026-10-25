@@ -599,7 +599,13 @@ line). situations.allies.json: ally_unburied, ally_doubts (inside recruit, risen
 with the "fire" sound and the "rest" music (BeatScreen by family). `stakes.won_over` (join, deeds.setup) finishes an
 open recruit step whose role's key is already held (the risen's story_learn ally route gives "ally" before binds.4).
 Found by storyplay and fixed: a lieutenant with `flee_at` escaped every fight, so a defeat step could loop for a month
-(the risen's waker): `lieutenants.ESCAPES` 2, counted in `rec["escapes"]`; after that it is cornered. Not in F.1: the
+(the risen's waker): `lieutenants.ESCAPES` 2, counted in `rec["escapes"]`; after that it is cornered.
+The fresh review's fixes: stakes' `mine` (first-person, index-matched with `stake`: words {mine}); own stakes weighted
+(`OWN_WEIGHT`); at_finale for a party ally standing or fallen; `_page` (sworn, farewell, `_settle`); fate_due re-checked
+at the fire (fallen, carried or gone: `_settle`); breaks/home only from LIVE; kidnap keeps adv["reprisal"]; an ally
+already a companion is tagged (companion["adv"]), never doubled in `to_battle`; condition `ally_loyal`
+(oath_loyalty; riding: disposition >= 0); the ally_note skips a joined ally. Checks: full suite (only the known
+timing tests under load), autoplay OK, smoke OK. No save format change in F.1 (F.5 bumps it). Not in F.1: the
 Outlaw's tale has no ally (F.5's full forms), the Reading's named ally whom the villain targets (F.4), a traitor among
 the cast (F.3); an ally riding with the patron is a fresh character each fight (wounds are not kept).
 E.7 (2026-10-25, realmwalker-a): a beat's `tempers` {temper: [first-page variants]} replace its text[0] when its tale's

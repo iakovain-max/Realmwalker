@@ -79,7 +79,11 @@ Decisions (Anton may want to change): the ally fights at the hero's level as the
 comes at most once, on a night once the second chapter has begun (half the nights); one who rides with the patron
 tells you their reason only at the inn of their own town; at the end of a won tale the oath is asked at the next
 night's fire and needs a place in the company; a lost or abandoned tale sends the ally home; the Outlaw Lord's tale
-has no ally yet (its full form, F.5, may give it one).
+has no ally yet (its full form, F.5, may give it one); the oath needs the ally to think well of you.
+
+Checks: full suite (only the known timing tests missed under load: enemy casters' slowest turn 453 ms of 400; they
+pass alone), autoplay OK, smoke OK; the Risen and the Outlaw played through by the bot as before (four in six or
+better, every miss a death).
 
 ### Session, 2026-10-25 (night): Adventures & Events Part E, task E.7 — every villain in its own voice — **Part E merged into `main`**
 
