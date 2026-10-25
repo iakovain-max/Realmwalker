@@ -523,7 +523,7 @@ def _show_tale(game, town) -> bool:
         if ch is None or ch["id"] != "den" or "ally" not in adv["keys"] or adv.get("ally_note") is not None:
             continue
         ally = cast.person(game.world, adv["cast"].get("ally"))
-        if ally is None or not getattr(ally, "alive", True) or getattr(ally, "settlement", None) == town.id:
+        if ally is None or not getattr(ally, "alive", True) or getattr(ally, "settlement", None) == town.id or                 (adv.get("ally") or {}).get("state") == "joined":  # (one in your company needs send no note: F.1)
             continue  # (in the hunter's own town, the hunter would simply come)
         words.update(sender=f"{ally.first_name}, {ally.title}", hand_of=getattr(ally, "job", "plain"))
         if stage.start(game, "ally_note", words=words) is not None:

@@ -139,6 +139,8 @@ def _why(game, cond: str, value) -> str:
         return f"needs {money_text(int(value))}"
     if cond == "party_room":
         return "your company is full"
+    if cond == "ally_loyal":
+        return "they do not think well enough of you"
     return "not now"
 
 

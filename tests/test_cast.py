@@ -224,3 +224,47 @@ def test_the_ally_data_passes_the_start_up_check(tables):
         assert len(s["stake"]) >= 3 and len(s["confidence"]) >= 3, sid
     for fate in ("fell_well", "fell", "broke", "home", "sworn"):
         assert len(sp["fates"][fate]) >= 3, fate
+
+
+def test_the_oath_is_only_offered_to_one_who_thinks_well_of_you_and_written_in_the_epilogue(made, tables):
+    game, adv, ally = _risen(made, tables)
+    rec = _won(game, adv)
+    assert _no_words_left(rec["words"]["mine"]) and rec["words"]["mine"] != rec["words"]["stake"]
+    c = stakes.companion_of(game, adv)
+    c.companion["loyalty"] = 10.0
+    adv["boss_dead"] = True
+    endings.finish(game, adv)
+    game.epilogue = None
+    assert story.on_night(game, "camp")
+    pend = beats.pending(game)
+    oath = beats.choices(game, pend)[0]
+    assert not oath["ok"] and "well enough" in oath["why"]
+    c.companion["loyalty"] = 90.0
+    assert beats.choices(game, pend)[0]["ok"]
+    _play(game, 0)
+    page = next(p for p in adv["epilogue"] if p["about"] == "ally")
+    assert rec["fate"] == "sworn" and _no_words_left(page["text"]) and ally.first_name in page["text"]
+
+
+def test_an_ally_who_dies_before_the_fire_is_not_asked(made, tables):
+    game, adv, ally = _risen(made, tables)
+    rec = _won(game, adv)
+    adv["boss_dead"] = True
+    endings.finish(game, adv)
+    c = stakes.companion_of(game, adv)
+    game.party.remove(c)
+    companions.died(game, c)
+    game.epilogue = None
+    assert not story.on_night(game, "camp") or beats.pending(game)["beat"] != "ally_fate"
+    assert not rec.get("fate_due") and rec["fate"] == "fell"
+
+
+def test_the_ally_who_was_already_in_your_company_is_not_doubled(made, tables):
+    game, adv, ally = _risen(made, tables)
+    from realmwalker.game import companions as comp
+
+    char = stakes._character(game, ally, game.world.rng.child("hired"))
+    comp.enlist(game, ally, char, "restless")
+    n = len(game.party)
+    rec = _won(game, adv)
+    assert rec["state"] == "joined" and len(game.party) == n and stakes.companion_of(game, adv) is char

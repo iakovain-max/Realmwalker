@@ -29,6 +29,7 @@ from realmwalker.core.textgen import escape_markup as esc
 from realmwalker.game.story.beats import condition, op
 
 LIVE = ("joined", "riding", "taken")
+OWN_WEIGHT = 2  # a stake written for the tale is drawn this many times more often than one for any tale
 CRISES = {"revenge": "ally_crisis_revenge", "doubt": "ally_crisis_doubt", "taken": "ally_crisis_taken"}
 
 
@@ -76,8 +77,16 @@ def join(game, adv: dict) -> list[str]:
     adv["ally"] = rec
     words = _words(game, adv)
     tables = game.tables.adventures.get("words", {})
-    rec["words"] = {"stake": textgen.fill(rng.choice(stake["stake"]), rng, tables, words)}
+    i = rng.randint(0, min(len(stake["stake"]), len(stake["mine"])) - 1)  # (the same stake, told and said)
+    rec["words"] = {"stake": textgen.fill(stake["stake"][i], rng, tables, words),
+                    "mine": textgen.fill(stake["mine"][i], rng, tables, words)}
     rec["words"]["confidence"] = textgen.fill(rng.choice(stake["confidence"]), rng, tables, _words(game, adv))
+    had = next((c for c in list(game.party[1:]) + list(getattr(game, "waiting", []))
+                if c.companion and c.companion.get("npc") == who.id), None)
+    if had is not None:  # (already in your company, for other reasons: now for this one too)
+        had.companion.update(adv=adv["id"], stake=rec["words"]["stake"])
+        rec["state"] = "joined"
+        return []
     if companions.room(game) and not who.flags.get("companion"):
         char = _character(game, who, rng.child("build"))
         lines = companions.enlist(game, who, char, "oath", values=list(stake["values"]), want=stake["want"],
@@ -101,12 +110,12 @@ def won_over(game, adv: dict) -> None:
 
 
 def _pick_stake(game, adv: dict, npc, rng) -> str:
-    """A stake written for this tale comes first, then one for any tale; the ally's trade may narrow it."""
+    """A stake for this tale (weighted up: `OWN_WEIGHT`) or for any tale; the ally's trade may narrow it."""
     stakes = spec(game)["stakes"]
     fits = [k for k, s in sorted(stakes.items()) if adv["blueprint"] in s.get("blueprints", [adv["blueprint"]])
             and npc.job in s.get("jobs", [npc.job])]
     own = [k for k in fits if adv["blueprint"] in stakes[k].get("blueprints", ())]
-    return rng.choice(own or fits or sorted(stakes))
+    return rng.choice(fits + own * OWN_WEIGHT if fits else sorted(stakes))
 
 
 def _character(game, npc, rng):
@@ -182,9 +191,19 @@ def on_night(game, where: str) -> bool:
         return _offer(game, adv, CRISES[rec["crisis"]], where)
     for adv in sorted(story.adventures(game.world).values(), key=lambda a: a["id"]):
         rec = adv.get("ally")
-        if rec and rec.get("fate_due") and adv["hero"]["life"] == _life(game):
+        if not rec or not rec.get("fate_due") or adv["hero"]["life"] != _life(game):
+            continue
+        _refresh(game, adv, rec)
+        npc = npc_of(game, adv)
+        carried = any((b["char"].companion or {}).get("adv") == adv["id"] for b in getattr(game, "fallen", None) or ())
+        if rec["state"] not in ("joined", "riding") or npc is None or not npc.alive or carried or (
+                rec["state"] == "joined" and companion_of(game, adv) is None):
+            rec["fate_due"] = False  # (fallen, carried or gone since the end: nobody to ask)
+            _settle(game, adv, rec)
+            continue
+        if _offer(game, adv, "ally_fate", where):
             rec["fate_due"] = False
-            return _offer(game, adv, "ally_fate", where)
+            return True
     return False
 
 
@@ -224,6 +243,20 @@ def _party_room(game, rec, value) -> bool:
     return (have or companions.room(game)) == bool(value)
 
 
+@condition("ally_loyal")
+def _ally_loyal(game, rec, value) -> bool:
+    """The ally thinks well enough of you to swear to you (their loyalty at the arc's `oath_loyalty`; one who rode
+    with the patron has not soured on you)."""
+    adv = _story().adventures(game.world).get((rec or {}).get("adv") or "")
+    c = companion_of(game, adv) if adv is not None else None
+    if c is not None:
+        ok = float(c.companion.get("loyalty", 0)) >= float(spec(game)["arc"]["oath_loyalty"])
+    else:
+        npc = npc_of(game, adv) if adv is not None else None
+        ok = npc is not None and int(getattr(npc, "disposition", 0)) >= 0
+    return ok == bool(value)
+
+
 @op("ally")
 def _ally_op(game, rec, what: str, n: int = 0):
     """The ally's arc moves: told (the confidence; loyalty n), held / held_hard (the crisis weathered; loyalty n),
@@ -247,6 +280,8 @@ def _ally_op(game, rec, what: str, n: int = 0):
 
             change_disposition(npc, int(n))
     elif what in ("breaks", "home"):
+        if ally["state"] not in LIVE:
+            return []  # (fallen, sworn or gone already: nothing more to lose)
         ally["state"] = "broke" if what == "breaks" else "home"
         if c is not None:
             out += [esc(x) for x in companions.dismiss(game, c)]
@@ -258,8 +293,10 @@ def _ally_op(game, rec, what: str, n: int = 0):
     elif what == "taken":
         from realmwalker.game.story import villain
 
+        kept = adv.get("reprisal")
         adv["reprisal"] = int(ally["npc"])
         name = villain.kidnap(game, adv)
+        adv["reprisal"] = kept  # (whoever it already meant to punish, it still does)
         if name:
             ally["state"] = "taken"
             out.append(f"<warn>{esc(name)} is held in {esc(_words(game, adv).get('home', 'its hall'))}.</>")
@@ -277,12 +314,14 @@ def _ally_op(game, rec, what: str, n: int = 0):
             npc.flags.pop("story", None)
         _story().journal(adv, esc(f"{npc.name if npc else 'Your ally'} swore to you when it was over."),
                          _today(game))
+        _page(game, adv, ally)
     elif what == "farewell":
         ally["state"] = ally["fate"] = "home"
         if c is not None:
             out += [esc(x) for x in companions.dismiss(game, c)]
         if npc is not None:
             npc.flags.pop("story", None)
+        _page(game, adv, ally)
     game.dirty = True
     return out
 
@@ -311,7 +350,7 @@ def to_battle(battle, game, advs: dict) -> list[str]:
             continue
         _refresh(game, adv, rec)
         npc = npc_of(game, adv)
-        if rec["state"] != "riding" or npc is None:
+        if rec["state"] != "riding" or npc is None or npc.flags.get("companion"):
             continue
         char = _character(game, npc, game.world.rng.child(f"ally/{aid}/build"))
         f = battle.add_ally(None, leader, "story_ally", char=char)
@@ -371,8 +410,9 @@ def on_battle(game, result) -> None:
                 npc.alive = False
                 npc.present = False
             rec["state"] = "fell"
-    if finale in advs and advs[finale].get("ally") and companion_of(game, advs[finale], waiting=False) is not None:
-        advs[finale]["ally"]["at_finale"] = True
+    if finale in advs and advs[finale].get("ally"):  # (one of the party who stood there, standing or fallen)
+        if any(f.char is not None and (f.char.companion or {}).get("adv") == finale for f in battle.fighters):
+            advs[finale]["ally"]["at_finale"] = True
 
 
 # ---------------------------------------------------------------------------- the party
@@ -402,8 +442,6 @@ def died(game, c) -> None:
 def after_tale(game, adv: dict) -> None:
     """The tale is over (endings.finish): the ally's fate, and their page in the epilogue. One who lives through a
     won tale is asked at the next night's fire (the beat "ally_fate"); otherwise they go home."""
-    from realmwalker.game import companions
-
     rec = adv.get("ally")
     sp = spec(game)
     if not rec or not sp:
@@ -424,11 +462,29 @@ def after_tale(game, adv: dict) -> None:
         rec["fate_due"] = True  # (their oath or home: asked at the fire)
         return
     else:
+        _settle(game, adv, rec)
+        return
+    _page(game, adv, rec)
+
+
+def _settle(game, adv: dict, rec: dict) -> None:
+    """Nobody to ask: a living ally goes home (out of the company), and the epilogue says what became of them."""
+    from realmwalker.game import companions
+
+    _refresh(game, adv, rec)
+    if rec["state"] == "fell":
+        rec["fate"] = "fell_well" if rec.get("at_finale") else "fell"
+    else:
         c = companion_of(game, adv)
         if c is not None:
             companions.dismiss(game, c)
-        rec["state"] = "home"
-        rec["fate"] = "home"
+        rec["state"] = rec["fate"] = "home"
+    _page(game, adv, rec)
+
+
+def _page(game, adv: dict, rec: dict) -> None:
+    """The ally's page in the epilogue: the line of their fate, in place of the tale's own page about them."""
+    sp = spec(game)
     rng = game.world.rng.child(f"ally-fate/{adv['id']}")
     text = _say(game, adv, sp["fates"].get(rec["fate"], sp["fates"]["home"]), rng)
     pages = adv.setdefault("epilogue", [])

@@ -68,6 +68,10 @@ the expansion programme (the first entries below).
   heart sends them home.
 - **Winning them over may be a story of its own.** The Risen's old soldier may not leave a parent unburied (pay the
   priest, say the rite yourself, or talk the reeve into a grave on the hill), or may doubt you can win at all.
+- **A lieutenant who has come over to you** stands on your side at the finale.
+- **Fixed:** a villain's lieutenant who could run away (the Risen's grave-robber) ran from every fight, so the task
+  of beating them could go on for a month; after getting away twice they are cornered and fight to the end. A tale
+  no longer asks you to win over an ally who has already joined you.
 - Try it: take the Beast or the Risen, win the ally, camp a couple of nights, and open the Journal (j) and the
   party screen.
 
