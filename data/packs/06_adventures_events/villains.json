@@ -331,7 +331,7 @@
         "damage": ["2d10", "4d10", "6d10"],
         "type": "bludgeoning",
         "every": 3,
-        "first": 2,
+        "first": 3,
         "warn": [
           "{name} drops low and gathers itself, every muscle bunching. Whatever is near it when it moves will be under it.",
           "{name} goes still and coils, head down, tail lashing. It is about to throw its whole weight round.",

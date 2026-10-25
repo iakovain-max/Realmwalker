@@ -205,7 +205,12 @@ class Player:
         for c in g.party:
             if c.alive:
                 equip_everything_sensible(c, g.tables.items)
-        self.recover()
+        self.go((g.player.x, g.player.y))  # (out, and a night's rest or two before going back: a careful party)
+        for _ in range(3):
+            if g.over is not None or not any(c.alive and c.hp < c.max_hp for c in g.party):
+                break
+            fight.rest(g, "long")
+            self.settle()
 
     def shed(self) -> None:
         """Nobody walks laden: the heaviest things nobody wears or the tale needs are left behind."""

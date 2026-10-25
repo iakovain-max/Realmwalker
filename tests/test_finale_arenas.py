@@ -204,7 +204,7 @@ def test_the_entrance_and_the_templates_at_tiers_three_and_four(made, tables):
 
 
 def test_the_captain_commands_its_men(made, tables):
-    game, adv, band = _den(made, tables, "outlaw", arena="")
+    game, adv, band = _den(made, tables, "outlaw", arena="", tier=2)
     b, boss = _fight(game, adv, band)
     assert any(a.get("command") for a in boss.cdef["legendary"]["actions"])
     men = [f for f in b.side(FOE) if f is not boss and f.active]

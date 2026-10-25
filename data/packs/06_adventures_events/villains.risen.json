@@ -81,7 +81,7 @@
         "damage": ["2d10", "4d10", "6d10", "8d10"],
         "type": "necrotic",
         "every": 3,
-        "first": 2,
+        "first": 3,
         "warn": [
           "{name} points, and frost creeps out across the floor in a ring. The air there grows thick and grey. Something is coming to that place.",
           "The crown on {name} burns cold, and a circle of rime spreads on the ground, white and widening. Do not be standing in it.",

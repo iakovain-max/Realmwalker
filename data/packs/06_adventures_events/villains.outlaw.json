@@ -66,7 +66,7 @@
       "hp": 1.6,
       "resistances": 1,
       "actions": 1,
-      "menu": ["move", "strike", "command"],
+      "menu": ["move", "strike"],
       "entrance": [
         "{name} kicks back the chair and stands, and every hand in the room goes to a hilt.",
         "{name} comes forward into the light, easy, smiling, and the gang spreads out on either side without being told.",
@@ -80,7 +80,7 @@
         "damage": ["2d8", "4d8", "6d8"],
         "type": "piercing",
         "every": 3,
-        "first": 2,
+        "first": 3,
         "warn": [
           "{name} raises a hand and points. In the dark behind, bowstrings creak as they are drawn. They are aiming at that patch of ground.",
           "\"There!\" {name} shouts, pointing, and somewhere unseen the archers nock and draw.",
@@ -93,7 +93,7 @@
         ]
       },
       "by_tier": {
-        "2": {"actions": 2},
+        "2": {"actions": 2, "menu": ["move", "strike", "command"]},
         "3": {"resistances": 2, "actions": 3}
       },
       "phase": {

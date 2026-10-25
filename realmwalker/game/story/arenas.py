@@ -221,9 +221,17 @@ def _throne_hall_change(battle, boss, spec, marks) -> None:
     raised = [f for f in battle.fighters if f.bond is not None and f.bond.get("kind") == "raised" and
               f.bond.get("owner") == boss.id and f.state == "fighting"]
     coffins = [tuple(c) for c in marks.get("sarcophagi", ())]
-    if raised and coffins:
+    party = [f for f in battle.fighters if f.team != boss.team and f.active]
+
+    def near_party(c):
+        return min((max(abs(c[0] - f.x), abs(c[1] - f.y)) for f in party), default=99)
+
+    # (the dead rise from the coffins on its side of the hall, never at the party's backs: law 5, no ambush)
+    ours = sorted((c for c in coffins if near_party(c) > max(abs(c[0] - boss.x), abs(c[1] - boss.y))),
+                  key=lambda c: max(abs(c[0] - boss.x), abs(c[1] - boss.y)))
+    if raised and ours:
         taken = {c for x in battle.on_field() for c in x.cells}
-        for f, c in zip(raised, sorted(coffins, key=lambda c: battle.rng.random())):
+        for f, c in zip(raised, ours):
             if fld.in_bounds(*c):
                 fld.set_terrain(c[0], c[1], "grave")
                 spot = battle._free_near(c, f.sq, taken - set(f.cells))
