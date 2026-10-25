@@ -227,6 +227,30 @@ def _road_tile_near(forge, ref, lo, hi):
     return [{"tile": [x, y]} for d, x, y in out]
 
 
+@selector("open_tile_near")
+def _open_tile_near(forge, ref, lo, hi):
+    """Open country in the band round `ref`, road or none (the last choice for a set piece where no road runs: its
+    battlefield lays out its own, D.5); by a river first, as a ford would be."""
+    from realmwalker.game.story import places
+
+    w = forge.world
+    x0, y0 = places.xy(w, ref)
+    out = []
+    for dx in range(-int(hi), int(hi) + 1):
+        for dy in range(-int(hi), int(hi) + 1):
+            x, y = x0 + dx, y0 + dy
+            d = (dx * dx + dy * dy) ** 0.5
+            if not lo <= d <= hi or not w.in_bounds(x, y):
+                continue
+            if w.settlement_at(x, y) is not None or w.site_at(x, y) is not None:
+                continue
+            if not forge.game.biome_def(x, y)["passable"]:
+                continue
+            out.append((not w.river[x, y], d, x, y))
+    out.sort()
+    return [{"tile": [x, y]} for _, d, x, y in out]
+
+
 @selector("site_style")
 def _site_style(forge, words, lo, hi):
     from realmwalker.game.story import places
@@ -271,7 +295,87 @@ def _nature(forge, at):
     return [{"how": "check", "skill": "nature", "at": at}]
 
 
+@selector("skill")
+def _skill(forge, words, at):
+    """A check of that skill at the place where the signs are (`skill(history, field)`: the field of the dead read for
+    who fell there; `skill(insight, town)`: watching who comes and goes at the loading)."""
+    skill = words[0] if isinstance(words, list) else words
+    return [{"how": "check", "skill": str(skill), "at": at}] if isinstance(at, dict) else []
+
+
+@selector("tail")
+def _tail(forge, who):
+    """Following someone of the cast through their town's streets by night, to where they go (the stage's tail)."""
+    return [{"how": "tail", "who": who}] if who else []
+
+
 @selector("divine")
 def _divine(forge):
     """Divination: Augury, Commune, Legend Lore and the rest are told the truth (game/divining.questions)."""
     return [{"how": "divine"}]
+
+
+# ---------------------------------------------------------------------------- the places and bands of Part D
+def _figure_of(forge, ref):
+    fid = ref.get("figure") if isinstance(ref, dict) else None
+    return forge.world.figures.get(int(fid)) if fid is not None else None
+
+
+def _site_ref(world, ref) -> int | None:
+    """A figure's place ref ("X12": a site) as a site index, if it is one."""
+    if isinstance(ref, str) and ref.startswith("X") and ref[1:].isdigit() and int(ref[1:]) < len(world.sites):
+        return int(ref[1:])
+    return None
+
+
+@selector("site_of_figure")
+def _site_of_figure(forge, who):
+    """Where a figure of the history lies (buried), died (died_at) or lived (home), when that is a site."""
+    fig = _figure_of(forge, who)
+    if fig is None:
+        return []
+    out = []
+    for ref in (getattr(fig, "buried", ""), getattr(fig, "died_at", ""), getattr(fig, "home", "")):
+        sid = _site_ref(forge.world, ref)
+        if sid is not None and {"site": sid} not in out:
+            out.append({"site": sid})
+    return out
+
+
+@selector("scar_of")
+def _scar_of(forge, who):
+    """The field of the dead that belongs to a figure's tale: the one the threat remembers (the risen's), else the
+    nearest field within 30 tiles of where the figure died or lies."""
+    from realmwalker.game.story import places
+
+    w = forge.world
+    scars = w.politics.get("scars") or []
+    i = forge.threat.get("source", {}).get("scar")
+    if i is not None and 0 <= int(i) < len(scars):
+        return [{"tile": [int(scars[int(i)]["x"]), int(scars[int(i)]["y"])]}]
+    near = _site_of_figure(forge, who) or [dict(forge.home)]
+    x, y = places.xy(w, near[0])
+    found = sorted((((sc["x"] - x) ** 2 + (sc["y"] - y) ** 2) ** 0.5, n) for n, sc in enumerate(scars))
+    return [{"tile": [int(scars[n]["x"]), int(scars[n]["y"])]} for d, n in found if d <= 30]
+
+
+@selector("hideout_of")
+def _hideout_of(forge, who):
+    """The outlaw lord's hideout (his band's site), or the site of the gang a figure leads."""
+    from realmwalker.world import factions as fx
+
+    w = forge.world
+    gid = forge.threat.get("source", {}).get("faction")
+    gang = w.factions.get(gid) if gid is not None else None
+    fig = _figure_of(forge, who)
+    if gang is None and fig is not None:
+        gang = next((g for g in fx.active_factions(w, "bandit_gang") if g.leader == fig.id), None)
+    return [{"site": int(gang.site)}] if gang is not None and 0 <= gang.site < len(w.sites) else []
+
+
+@selector("band")
+def _band_of(forge, words):
+    """A band of creatures as a role (a lieutenant with no name of its own: the waker's cultists, the right hand's
+    riders): {"band": group}, for a defeat or capture step to meet."""
+    group = words[0] if isinstance(words, list) else words
+    return [{"band": group}] if group in forge.tables.creatures.encounters else []

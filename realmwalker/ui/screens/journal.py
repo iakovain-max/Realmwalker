@@ -28,8 +28,25 @@ STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left
               "witness": "Find {who}, who saw it, and hear it from them.", "read": "Read {what}.",
               "learn": "Learn what {villain} fears: {routes}.", "prepare": "Get the means: {means}.",
               "choose": "Decide how to bring it to you.", "slay": "Face {villain}.",
-              "finale": "Finish it at {place}."}
-ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic"}
+              "finale": "Finish it at {place}.",
+              "rescue": "Bring {who} out of {place}.", "fetch": "Bring {what} out of {place}.",
+              "defeat": "Overcome {who}, at {place}.", "capture": "Take {who} alive, at {place}.",
+              "recruit": "Win {who} to your side.", "rally": "Raise the people of {place} to stand.",
+              "hold": "Hold {place} on the night of {night}.", "rite": "Perform the rite at {place}.",
+              "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know."}
+ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic",
+               "tail": "follow someone by night"}
+CHECK_WORDS = {"nature": "study its kill", "history": "read the place's past", "religion": "read the signs of the dead",
+               "insight": "watch the people", "investigation": "search the place"}
+
+
+def _thing(game, adv, st) -> str:
+    """The thing a read or fetch step is about, in words (a fetch's name filled from the tale's words)."""
+    tg = st["target"]
+    if st["kind"] != "fetch":
+        return tg.get("item", "it")
+    q = quests.by_id(game, st.get("quest"))
+    return q["target"]["item"] if q is not None else "what the tale needs"
 
 
 def trouble_lines(game, sit) -> str:
@@ -60,14 +77,17 @@ def tale_lines(game, adv) -> str:
         lines += ["", f"<title>Now</> {esc(ch['goal'])}"]
         for st in ch["steps"]:
             tg = st["target"]
-            routes = ", ".join(ROUTE_WORDS.get(r.get("how", ""), r.get("how", "")) for r in tg.get("routes", []))
+            routes = ", ".join(CHECK_WORDS.get(r.get("skill", ""), ROUTE_WORDS["check"]) if r.get("how") == "check"
+                               else ROUTE_WORDS.get(r.get("how", ""), r.get("how", "")) for r in tg.get("routes", []))
             means = ", ".join(game.tables.items.get(m)["name"] for m in tg.get("means", []) if game.tables.items.get(m))
-            text = STEP_WORDS.get(st["kind"], st["kind"]).format(
+            text = st["note"] + (f" ({routes})" if routes else "") if st.get("note") else \
+                STEP_WORDS.get(st["kind"], st["kind"]).format(
                 place=places.name(w, tg["place"]) if tg.get("place") else "the place",
                 who=cast.describe(game, adv, tg["role"]) if tg.get("role") else "them",
                 villain=words.get("villain", "it"), routes=routes, means=means or "something",
-                what=tg.get("item", "it"))
-            mark = "<good>[x]</>" if st["state"] == "done" else "<faint>(if you like)</>" if st["optional"] else "-"
+                what=_thing(game, adv, st), to=places.name(w, tg["to"]) if tg.get("to") else "the place",
+                night=quests.when_text(game, int(tg["night"])) if tg.get("night") is not None else "a night to come")
+            mark = "<good>[x]</>" if st["state"] == "done" else "<warn>[lost]</>" if st["state"] == "failed" else                 "<faint>(if you like)</>" if st["optional"] else "-"
             lines.append(f"  {mark} {esc(text)}")
     known = [r for r in ("patron", "ally", "witness") if r in adv["cast"]]
     if known:

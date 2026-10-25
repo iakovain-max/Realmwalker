@@ -181,6 +181,37 @@
       ],
       "moments": ["An old man stops at the memorial stone and takes off his hat.", "Someone has left fresh flowers at the foot of the memorial.", "A child traces the names cut in the memorial with one finger."],
       "description": ["A memorial in its square names those it lost."]
+    },
+    "haunted": {
+      "form": "record", "label": "haunted", "colour": "danger", "lasts": [80, 110],
+      "dress": {"props": [["torch_post", 4]], "props_near": "square"},
+      "troubles": [
+        "<danger>The dead come to {town} at night{by_part}.</> Fires burn at every gate till dawn, and nobody sleeps much.",
+        "<danger>{town} is haunted{by_part}.</> Iron hangs over the doors, and the shutters are nailed at dusk.",
+        "<danger>The people of {town} keep vigil every night{by_part}.</> The dead stood at the fence again, they say, and did not go till cockcrow."
+      ],
+      "moments": ["An old man nails a horseshoe over a door that already has three.", "A woman scatters salt along her threshold, muttering a prayer with every handful.", "Men stack wood for the night fires at the gate, and do not talk about why."],
+      "description": ["The dead walk near it, and it keeps its fires lit all night against them."]
+    },
+    "bled": {
+      "form": "record", "label": "robbed roads", "colour": "warn",
+      "troubles": [
+        "<warn>Few wagons reach {town} now{by_part}.</> The stalls are half empty, and what is on them is dear.",
+        "<warn>{town}'s roads are bled by outlaws{by_part}.</> Carters come in armed and in company, or not at all.",
+        "<warn>The market of {town} is thin{by_part}.</> Salt and iron are worth their weight, and everyone blames the gang."
+      ],
+      "moments": ["A carter shows anyone who will listen the cut ropes where his load used to be.", "Two merchants argue over whether to hire guards or simply pay the toll.", "A stall-keeper chalks a new, higher price over the old one, and shrugs at the look she gets."],
+      "description": ["Outlaws bleed its roads, and its market is thin and dear for it."]
+    },
+    "extorted": {
+      "form": "record", "label": "pays outlaws", "colour": "danger", "lasts": [150, 210],
+      "troubles": [
+        "<danger>{town} pays tribute to {by}.</> A gang's rider sits outside the inn as if he owned it, and perhaps he does.",
+        "<danger>{town} belongs to {by} now, in all but name.</> A tenth of everything goes up the road each month.",
+        "<danger>{by} takes its cut from {town}.</> Nobody here says the gang's name aloud, and everyone pays."
+      ],
+      "moments": ["A cart piled with sacks and a tied calf goes out of the gate towards the hills, a gang's rider beside it.", "Two of the gang's men drink in the doorway of the inn, and nobody asks them to pay.", "The headman counts coins into a bag at the well, while a stranger with a crossbow watches."],
+      "description": ["It pays tribute to outlaws, and their riders come and go as they like."]
     }
   }
 }

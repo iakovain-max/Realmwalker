@@ -193,6 +193,10 @@ class Forge:
                       "optional": bool(spec.get("optional", False)), "gives": list(spec.get("gives", []))}
                 if "beat" in spec:
                     st["beat"] = spec["beat"]
+                if "fails_to" in spec:
+                    st["fails_to"] = spec["fails_to"]
+                if "note" in spec:
+                    st["note"] = spec["note"]  # (its journal line, written with the tale's words below)
                 steps.append(st)
             self._content_rule(ch["id"], steps)
             chapters.append({"id": ch["id"], "state": "open" if ci == 0 else "locked", "need": ch["need"],
@@ -249,6 +253,9 @@ class Forge:
         for ch in chapters:
             for k in ("title", "goal", "opening", "reveal"):
                 ch[k] = textgen.fill(ch[k], rng, tables, words)
+            for st in ch["steps"]:
+                if st.get("note"):
+                    st["note"] = textgen.fill(st["note"], rng, tables, words)
         for ch in chapters:  # (steps that name a role see whoever was bound to it)
             for st in ch["steps"]:
                 if "role" in st["target"]:
@@ -273,6 +280,8 @@ def life_of(game) -> str:
 
 def fitting(game, threat: dict) -> list[str]:
     bps = game.tables.adventures.get("blueprints", {})
+    if not threat.get("stakes"):
+        return []  # (no town in its reach: nobody to ask, nothing at stake, no tale - the six rules' fifth)
     kind = game.tables.threats["kinds"].get(threat["kind"], {})
     return [b for b in kind.get("blueprints", []) if b in bps and threat["kind"] in bps[b]["from"]
             and bps[b]["tiers"][0] <= int(threat["tier"]) <= bps[b]["tiers"][1]]

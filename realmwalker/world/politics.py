@@ -787,6 +787,9 @@ class Politics:
                 fx.set_relation(w, fid, other.id, v + self.rng.gauss(0, 8))
         self.say("gang_new", {"gang": gang.name, "place": land}, where=(site.x, site.y), importance=2,
                  factions=[gang])
+        from realmwalker.world import threats
+
+        threats.seed_from(self, "outlaw", figure=leader, faction=gang)  # (an outlaw lord in the making: Expansion 6)
 
 
 # ---------------------------------------------------------------------------- the live world

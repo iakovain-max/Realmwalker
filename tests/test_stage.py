@@ -9,12 +9,16 @@ import pytest
 
 from realmwalker.game import townlife
 from realmwalker.game.people import npcs_in, town_of
-from realmwalker.game.state import new_game
+from realmwalker.game.state import new_game as _new_game
 from realmwalker.game.story import beats, stage
 from realmwalker.world.generator import WorldOptions
 from realmwalker.world.tables import Tables
 from tests.test_townlife import at_hour, check_nobody_overlaps, go_to
-from tests.worlds import cached_world
+from tests.worlds import cached_world, quiet_start
+
+
+def new_game(*a, **k):
+    return quiet_start(_new_game(*a, **k))  # (the first hour's opening has its own tests)
 
 EVERY_CUE = {"id": "every_cue", "cues": [
     {"cue": "pick", "role": "a", "jobs": ["child", "labourer", "farmer", "porter"], "any": True},

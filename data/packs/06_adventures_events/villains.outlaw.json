@@ -1,0 +1,92 @@
+{
+  "_comment": "The Outlaw Lord's villain (Expansion 6 D.3, docs/ADVENTURES.md §6.2): the gang's captain, cunning or cruel; his moves (an omen, a warning nailed to your door, a test on the road) and his boss template (met before his hideout he breaks off; in it, phase two: his men come running).",
+  "tempers": {
+    "cunning": {
+      "speaks": true,
+      "moves": {"outlaw_omen": 3, "outlaw_warning": 3, "outlaw_test": 2},
+      "first_words": [
+        "\"I wondered when you'd come,\" says {villain}, and does not get up. \"Sit. We can do this the clever way, or the other way.\"",
+        "\"Do come in,\" says {villain}, pouring two cups. \"Drink. We have been expecting you since the ford, and there is no hurry.\"",
+        "\"You are clever,\" says {villain}. \"I like that. Clever people can be reasoned with, and the others must be killed.\" {His} blade lies on the table within reach, and {he} has not touched it.",
+        "\"{town} pays you, I suppose,\" says {villain_short}. \"{town} pays me more. Set your sword down and let us count the difference.\"",
+        "\"Ah,\" says {villain}. \"The stranger. I have heard a good deal about you, and not all of it was flattering. Stay your hand. I will name my price before you name yours.\"",
+        "\"You went to a great deal of trouble to come here,\" says {villain_short}, and smiles. \"I should like to know it was worth it. Tell me what you want of me.\"",
+        "{villain_short} does not rise. \"{gang} has fed on this country for years because I am patient, friend. I am patient now. Speak, and then we shall see how the evening goes.\""
+      ],
+      "omens": [
+        "A rag in the gang's colour is tied round the milestone here, fresh, knotted the way the carters say means you have been seen.",
+        "A new toll-board stands at the ford, neatly lettered: one tenth of the load, and safe passage. Nobody has dared tear it down.",
+        "A purse hangs from a branch at the roadside, tied with a ribbon, and it is empty. Whoever left it wanted you to find it empty.",
+        "Pennies are pressed into the mud of the road, one for every wagon that passed this morning. Not one of the wagons was touched.",
+        "A tally is scored on the gatepost with a knife: rows of strokes grouped in fives, a cross beside every fifth. It is in a neat hand.",
+        "A clean white cloth lies folded on the milestone with a stone upon it, like a table laid for guests.",
+        "Somebody has raked the road smooth here. In the middle of it a single set of footprints leads away into the trees.",
+        "A tin cup hangs from a stake at the wayside, and in it a coin, and a scrap of paper: for the stranger's trouble.",
+        "A feather in the gang's colour is stuck in the bark of the roadside oak at the height of a rider's eye, fresh, as if put there while you watched.",
+        "A line of stones crosses the road, a cart's width apart, each with a pebble set on top. A count, or a game. The carters will not step over it."
+      ]
+    },
+    "cruel": {
+      "speaks": true,
+      "moves": {"outlaw_omen": 2, "outlaw_warning": 3, "outlaw_test": 3},
+      "first_words": [
+        "\"You've cost me men,\" says {villain}. \"I'm going to take it out of you slowly.\"",
+        "\"I hear you hurt my people,\" says {villain}. \"I will hurt yours. I have not yet decided which of them first.\"",
+        "\"I have a rope for you,\" says {villain_short}, \"and a branch picked out.\"",
+        "\"You walked in at my door,\" says {villain}. \"It will be the last thing you do on your own feet.\"",
+        "{villain_short} laughs, short and ugly. \"Another who thinks {gang} can be stopped. They all die just the same.\"",
+        "\"I took {town}'s wagons, and I took {town}'s sleep,\" says {villain}. \"Now I will take your head, and send it down the road in a sack.\"",
+        "\"No bargains,\" says {villain_short}, and draws. \"You have counted my men. Now I will count yours, one at a time.\""
+      ],
+      "omens": [
+        "A carter hangs from the oak at the crossroads, a board round his neck: HE DID NOT PAY.",
+        "A burned wagon sits in the ditch, the axle charred through, the ox still yoked to it. The crows have had the best of the ox.",
+        "A hand is nailed to the milestone, palm out, with a ring on the third finger. The flies are thick on it.",
+        "Stakes are driven along the verge, and a head sits on each of the first three, hats still on. The fourth stake waits.",
+        "A mule lies dead in the road with its throat opened, and a board hung round its neck: THIS ONE PAID LATE.",
+        "The ground by the ford is trampled to red mud. There is a child's shoe in it, and nothing else, and nobody left to ask.",
+        "A signpost is hung with strips of coloured cloth, torn from the coats of those who did not pay. The wind makes them dance.",
+        "Hoofprints lead off the road to a drover's cottage. The door is broken in and the thatch burned, and a dog lies dead in the yard.",
+        "Carters' whips are nailed in a row to a gate, handles out, each with a name cut in the leather. One of the cuts is still wet.",
+        "A broken wheel is lashed upright at the roadside, a shirt tied to the spokes, stiff with something dark. The gang's mark is cut in the hub."
+      ]
+    }
+  },
+  "moves": {
+    "outlaw_omen": {"beat": "outlaw_omen", "attention": [0, 9]},
+    "outlaw_warning": {"beat": "outlaw_warning", "attention": [1, 9]},
+    "outlaw_test": {"beat": "outlaw_test_road", "attention": [2, 9]}
+  },
+  "bosses": {
+    "outlaw": {
+      "tiers": [1, 3],
+      "roles": ["captain"],
+      "hp": 1.6,
+      "resistances": 1,
+      "actions": 1,
+      "menu": ["move", "strike"],
+      "phase": {
+        "at": 0.5,
+        "kind": "raise",
+        "creature": "bandit",
+        "count": 2,
+        "lines": [
+          "\"To me! To me, you dogs!\" the captain roars, and two more of the gang come running out of the dark with blades out.",
+          "The captain puts two fingers to the mouth and whistles, shrill and long, and from the dark come two more blades.",
+          "\"Up! Up, all of you!\" the captain shouts, and from the passage behind two of the gang come running, still pulling on boots.",
+          "A horn sounds close behind the captain, and two of the gang drop out of the shadows with steel drawn, answering the call."
+        ]
+      },
+      "before": {
+        "at": 0.5,
+        "kind": "breaks_off",
+        "lines": [
+          "The captain has seen enough. A whistle, and the whole band melts into the trees as if it had never been.",
+          "The captain lifts a hand, and the gang is gone: a rustle in the bracken, a scatter of hooves, and nothing. The captain goes with it.",
+          "A short high whistle from the captain, and the whole band slips away through the undergrowth. By the time you move, you are alone.",
+          "The captain weighs you, and weighs the odds, and takes the band off into the dusk with a wave of the hand. Not yet, the wave says."
+        ]
+      }
+    }
+  }
+}

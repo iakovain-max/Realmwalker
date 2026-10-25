@@ -54,3 +54,21 @@ def _breaks_off(battle, f, spec) -> None:
     battle._event("leave", who=f.id)
     battle._release(f)
     battle._check_end()
+
+
+@phase("raise")
+def _raise(battle, f, spec) -> None:
+    """Its second phase brings more of its own onto the field beside it (the barrow wakes and its sarcophagi open;
+    the captain's men come running): `count` of the `creature`, fighting on its side from its next turn."""
+    from realmwalker.rules.creatures import spawn
+
+    cid = spec.get("creature", "skeleton")
+    if cid not in battle.t.creatures or f.state != "fighting":
+        f.phased = False  # (not now: it comes when the boss stands and fights again)
+        return
+    line = battle.rng.choice(spec["lines"])
+    battle.say(line, "danger")
+    battle.events.append({"kind": "phase", "who": f.id, "by": f.id, "phase": "raise", "name": f.name, "line": line})
+    for i in range(int(spec.get("count", 2))):
+        c = spawn(battle.t, cid, battle.rng.child(f"raise/{f.id}/{i}"), 9000 + i, now=int(battle.now or 0))
+        battle.add_ally(c, f, "raised")

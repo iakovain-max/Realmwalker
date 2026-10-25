@@ -193,6 +193,27 @@
       "clue": ["\"The missing? ... They say there's lights at night out {where}, at {site}. I never said that.\""],
       "done": ["You know where the missing went: {site}, and {cult}. Tell {giver}, or finish it yourself first."],
       "failed": ["More have gone missing, and {giver} no longer asks you about it."]
+    },
+    "story_rescue": {
+      "title": ["Bring back {captive}", "The taken of {site}", "{captive}, in {site}"],
+      "pitch": ["{captive} is held in {site}, {where}, and will not be held much longer.", "They took {captive} down into {site}, {where}. Somebody has to go down after them."],
+      "journal": ["{captive} is held somewhere in {site} ({where}), above the hall of whatever rules there. Find them and bring them out."],
+      "done": ["{captive} is free, and out of {site}."],
+      "failed": ["Nobody will come out of {site} now. {captive} waited too long."]
+    },
+    "story_retrieve": {
+      "title": ["{item}", "What lies in {site}", "Into {site} for {item}"],
+      "pitch": ["{item} lies in {site}, {where}, and the tale cannot go on without it.", "Somewhere in {site}, {where}, is {item}. It must be brought out."],
+      "journal": ["{item} lies somewhere in {site} ({where}). Find it and carry it out."],
+      "done": ["You have {item}."],
+      "failed": ["{item} is beyond your reach now."]
+    },
+    "story_escort": {
+      "title": ["Take {traveller} to {dest}", "The road to {dest}", "With {traveller} to {dest}"],
+      "pitch": ["{traveller} must reach {dest}, and the road is watched.", "Walk with {traveller} to {dest}. Whoever watches the road will be watching for you."],
+      "journal": ["{traveller} walks with you to {dest} ({where}). If you are beaten on the road, they will not live through it."],
+      "done": ["{traveller} is safe in {dest}."],
+      "failed": ["{traveller} will not reach {dest} now."]
     }
   },
   "rewards_text": ["{giver} counts out {reward}.", "{giver} pays you {reward}, and does not look sorry to see it go.",

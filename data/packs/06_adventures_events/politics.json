@@ -1,5 +1,5 @@
 {
-  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a place emptied by a doom, a place filling again.",
+  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold.",
   "text": {
     "threat_hunted": [
       "{hero} brought {beast} down at last, in its lair at {home}, and came home with its head.",
@@ -18,6 +18,18 @@
       "Settlers are coming to {place}, some of them its own folk, some strangers, all of them hopeful.",
       "{place} is filling again. The first harvest since the bad years is in, and the inn has opened its shutters.",
       "The empty houses of {place} have people in them again: a smith's fire, washing on the lines, children in the lane."
+    ],
+    "threat_laid": [
+      "The priests of {place} went up to {home} with bell and candle, and {villain} lies still again. The dead have stopped walking.",
+      "{villain} is at rest. Pilgrims from {place} sealed {home} with prayers and stone, and the nights in {area} are quiet.",
+      "A hermit went into {home} alone, and came out at dawn grey-haired. Since then the dead of {villain} have not been seen.",
+      "Word from {area}: {home} is shut again. Whoever woke {villain} could not keep him awake, and the dogs of {place} have stopped howling."
+    ],
+    "threat_gang_grows": [
+      "{gang} has doubled its numbers: deserters, runaways and worse have gone up to {home} to ride with {villain}.",
+      "{villain}'s men rode through {area} forty strong. {gang} is no longer a band of robbers but a little army.",
+      "Recruits keep coming to {gang} at {home}. {villain} pays in silver taken off the roads.",
+      "There are more of {gang} every week. {villain} turns nobody away who can hold a blade."
     ]
   }
 }

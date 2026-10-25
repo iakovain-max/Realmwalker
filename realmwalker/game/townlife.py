@@ -463,6 +463,10 @@ def tick(game, lm, s) -> None:
 
         stage.tick(game, lm)
         situations.on_tick(game, lm, s)  # (a trouble here may be met: C.6)
+        if stage.current(game) is None:
+            from realmwalker.game import story
+
+            story.on_town_tick(game, lm, s)  # (the inside man slips out at midnight: D.3)
     if lm.meta.get("fire") or "burning" in s.status:
         from realmwalker.game import fire
 

@@ -70,4 +70,5 @@ def mark_read(game, lid: str) -> bool:
     if rec is None or rec["read"]:
         return False
     rec["read"] = True
+    game.cue("seal")  # (the seal broken, the page opened out: Expansion 6 D.5)
     return True

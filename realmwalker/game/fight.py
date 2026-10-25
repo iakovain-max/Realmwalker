@@ -295,8 +295,14 @@ def finish_battle(game) -> Aftermath:
         after.text = template.replace("{dead}", dead_text).replace("{ground}", battle.env.ground).replace(
             "{weather}", "dark" if battle.env.light < 0.5 else "grey light").replace("{survivors}", survivors).replace(
             "{lie}", "lies" if one else "lie").replace("{are}", "is" if one else "are").strip()
+        fled = {id(c) for c in result.fled}
         if actor is not None and lm is not None and actor in lm.actors:
-            lm.actors.remove(actor)
+            if _at_home(game, actor) and any(id(c) in fled for c in actor.creatures):
+                actor.creatures = [c for c in actor.creatures if id(c) in fled]  # (a tale's master, turned or
+                # driven off, falls back into the dark of their own den: met again there, the tale not lost)
+                actor.alert = True
+            else:
+                lm.actors.remove(actor)
     elif result.outcome in ("defeat", "surrendered"):
         foes = [f for f in battle.side(FOE) if f.active and f.bond is None]
         merciful = any(f.morale_type in MERCIFUL for f in foes) or result.outcome == "surrendered"
@@ -312,17 +318,17 @@ def finish_battle(game) -> Aftermath:
                     c.hp = max(1, c.hp)
             if result.outcome == "defeat":
                 after.notes.append(lie_senseless(game, dice.roll("1d4", rng).total))
-            if actor is not None and lm is not None and actor in lm.actors:
+            if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
                 lm.actors.remove(actor)
         elif any(f.char is not None and f.char.alive and f.buff_value("feigning") for f in battle.side(PARTY)):
             _feigned(game, battle, rng, after)
-            if actor is not None and lm is not None and actor in lm.actors:
+            if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
                 lm.actors.remove(actor)  # (they take you all for dead, and go)
         else:
             beasts = bool(foes) and all(f.kind == "beast" for f in foes)
             if beasts and any(c.alive for c in game.party):
                 _left_for_dead(game, battle, rng, after, len(foes))
-                if actor is not None and lm is not None and actor in lm.actors:
+                if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
                     lm.actors.remove(actor)  # they have had what they came for, and gone
             if after.outcome != "mauled" or not game.party[0].alive:
                 for c in game.party:
@@ -340,8 +346,8 @@ def finish_battle(game) -> Aftermath:
     elif result.outcome == "parley":
         after.text = rng.choice(game.tables.combat_text["aftermath"]["parley"])
         after.xp = result.xp
-        if actor is not None and lm is not None and actor in lm.actors:
-            lm.actors.remove(actor)
+        if actor is not None and lm is not None and actor in lm.actors and not _at_home(game, actor):
+            lm.actors.remove(actor)  # (a tale's master talked down is still at home: their tale ends its own way)
     from realmwalker.game import gear
 
     after.notes += gear.wear_from_battle(game, battle)  # blows given and taken wear blades and armour
@@ -897,6 +903,13 @@ CAPTIVE_FATES = {
 }
 
 
+def _at_home(game, actor) -> bool:
+    """A tale's master and their band, beaten you, stay where they live (the tale waits for you to come back)."""
+    from realmwalker.game import story
+
+    return story.finale_band(game, actor) is not None
+
+
 def decide_captive(game, creature: Creature, fate: str) -> str:
     after: Aftermath = game.aftermath
     leader = game.leader
@@ -904,6 +917,19 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
     name = creature.name if creature.named else f"the {creature.name}"
     cname = name[:1].upper() + name[1:]
     text = ""
+    if getattr(creature, "story", None) and fate in ("capture", "interrogate"):
+        from realmwalker.game import story
+
+        told = story.on_fate(game, creature, fate)  # (a tale's foe taken alive: Expansion 6 D.2)
+        if told is not None or fate == "capture":
+            text = told or f"You bind {name} and take them along; those who wait on this tale will want to see them."
+            after.fates[creature.uid] = fate
+            game.say(text, "info")
+            game.dirty = True
+            from realmwalker.game.story import goals
+
+            goals.notify(game, "captive", "talk" if fate == "interrogate" else "fight", creature=creature, fate=fate)
+            return text
     if fate == "capture":
         reward = int(game.tables.law["rewards"].get(creature.def_id, 0))
         if reward <= 0:
@@ -976,7 +1002,11 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
 
 def _fate_heard(game, creature: Creature, fate: str) -> None:
     """A captive's fate settles a story's band and may reach a goal (Expansion 6 C.5): by blood or by word."""
+    from realmwalker.game import story
     from realmwalker.game.story import goals
+
+    if getattr(creature, "story", None):
+        story.on_fate(game, creature, fate)  # (a tale's foe spared, robbed or put to death: D.2)
 
     goals.notify(game, "captive", "talk" if fate in ("spare", "interrogate") else "fight", creature=creature, fate=fate)
 

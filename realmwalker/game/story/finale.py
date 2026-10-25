@@ -85,6 +85,7 @@ def prepare(battle, game) -> list[str]:
 
     out: list[str] = []
     advs = game.world.politics.get("adventures", {})
+    out += _militia(battle, game, advs)
     for f in battle.side(FOE):
         tag = story_of(f.creature) if f.creature is not None else None
         if not tag or tag.get("role") != "villain":
@@ -113,6 +114,28 @@ def prepare(battle, game) -> list[str]:
                 if line:
                     out.append(line)
     return out
+
+
+MILITIA = 2  # the townsfolk who stand with you at a held place when you raised them (the key "militia")
+
+
+def _militia(battle, game, advs: dict) -> list[str]:
+    """A hold's wave (D.3): the people you raised stand with you (spears and pitchforks: the game's guards)."""
+    from realmwalker.rules.combat import FOE, PARTY
+    from realmwalker.rules.creatures import spawn
+
+    tags = [story_of(f.creature) for f in battle.side(FOE) if f.creature is not None]
+    adv = next((advs.get(t["adv"]) for t in tags if t and t.get("role") == "wave" and advs.get(t.get("adv"))), None)
+    leader = next((f for f in battle.side(PARTY) if f.char is not None), None)
+    if adv is None or "militia" not in adv["keys"] or leader is None or "guard" not in game.tables.creatures:
+        return []
+    for i in range(MILITIA):
+        c = spawn(game.tables, "guard", battle.rng.child(f"militia/{i}"), 9100 + i, now=int(battle.now or 0))
+        if not c.named:
+            c.name = "militiaman" if i % 2 == 0 else "militiawoman"
+        f = battle.add_ally(c, leader, "story_ally")
+        f.auto = True  # (townsfolk fight as they can: you need not give them orders)
+    return ["<good>The people you raised are here with you, spears and pitchforks and torches.</>"]
 
 
 def _is_finale(adv: dict) -> bool:

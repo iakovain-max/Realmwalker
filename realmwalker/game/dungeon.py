@@ -756,7 +756,7 @@ def populate(game, lm) -> None:
     hidden = set(meta.get("hidden", []))
     open_rooms = [i for i in range(len(rooms)) if i not in hidden]
     last = open_rooms[-1] if open_rooms else len(rooms) - 1
-    has_boss = level == depth and boss in game.tables.creatures.encounters and last >= 1
+    has_boss = (level == depth or story_band is not None) and boss in game.tables.creatures.encounters and last >= 1
     if has_boss:
         groups.append((last, boss))
     others = [i for i in open_rooms[1:] if not (groups and i == last)]
@@ -792,7 +792,8 @@ def populate(game, lm) -> None:
             for c in creatures:
                 c.culture = c.culture or (fig.culture if fig is not None else "")
         elif story_band is not None and has_boss and n == 0 and creatures:
-            story.tag_band(creatures, story_band["adv"], story_band["name"])
+            story.tag_band(creatures, story_band["adv"], story_band["name"], story_band.get("role", "villain"),
+                           story_band.get("step"))
         elif boss_name and has_boss and n == 0 and creatures:
             creatures[0].name = boss_name  # the troll the old songs are about; the king who was laid here
             creatures[0].named = True

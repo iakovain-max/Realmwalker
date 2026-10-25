@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part D (the Risen, the Outlaw Lord, and the opening) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part E (villains who act; the finale in full) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -25,7 +25,9 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   tailing, live fire, signs on the world map, the Beast shown; saves format 20) · Part C (2026-10-25: the weekly job
   board retired; contracts and bounties; lives of townsfolk; situations met in scenes and ended however you end them;
   favours and contacts; experience from stories; twenty vignettes; the Beast's witness and hunter as situations;
-  saves format 21)
+  saves format 21) · Part D (2026-10-25: the Risen and the Outlaw Lord from hook to epilogue, ten new kinds of step,
+  the first hour of every new life; the dead at the camp's edge, the hideout and the barrow's halls shown; saves
+  format 22)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -565,11 +567,138 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part D, task D.1 (*threat kinds risen and outlaw lord*:
-from `tombs` and `scars` (the barrow at least two levels deep) and from active gangs, with schemes, signs as marks and
-scenes, bounded dooms and the world's own endings), on branch `dlc/06-adventures-events`. Read
-docs/expansions/06-adventures-events.md Part D and ADVENTURES.md §5.1, §5.12, §6.2 first. Part D's steps (D.2) can
-carry a situation the way C.10's witness and hunter do (`situations.for_step`, predicaments with `inside`).
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.1 (*attention in full and the whole
+move set with tempers' weights, spies that steal tokens and tailored next moves, wrath after a setback; the limits
+(one move in two days; beasts never write). Tests: `tests/test_villain.py`*), on branch `dlc/06-adventures-events`.
+Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.4, §5.5, §5.8, game/story/villain.py, and
+the D.5 note below.
+D.5 (2026-10-25, realmwalker-b; Part D merged into main): `tools/storyplay.py --kind risen|outlaw` (Player methods
+per Part D kind: `delve` goes down a site level by level, climbs out to a long rest when pressed and comes back;
+`shed` drops the heaviest loose things when laden - a party once stood still for 60 days under barrow loot;
+`wait_a_day` after a refusal; `hold` waits at the place an hour at a time; `battle` questions a story captive and
+keeps a hold's next wave) and `--openings` (`open_once`: new_game as the game begins a life, the town's clock ticked
+two hours for a staged scene; `Opened.begun`); `play_tale` is the shared step loop. Measures (20 each): outlaw 19/20,
+risen 20/20 (16 before the fixes), openings 19/20 begun, all finished (no crisis drawn in 20: the start towns tried lie outside their
+threats' reach). Game fixes: `fight._at_home` (a finale band that beats you, robs you or leaves you for dead stays
+on its level; one that flees in a won fight keeps its fled creatures as the actor, alert); `Battle._knock_out`
+defaults "yes" for a creature whose `story["alive"]` (deeds.band sets it on a capture step's quarry); selector
+`open_tile_near(ref, lo, hi)` (river tiles first) as the last alternative of the Risen's field/ford/camp and the
+outlaws' road. Pictures: vignette BACKDROPS "hideout" and "barrow_hall" (`vignette.is_hideout(world, site)`: an
+active bandit_gang's site; `for_place` gives hideout for it; beat "here" under ground is hideout or barrow_hall);
+story.LEFT has "dead" (beat risen_at_camp `leaves`; scenes.camp draws four undead at the light's edge); opening_captive
+pictures "hideout". Sounds (tools/build_sounds.py `part_d_sounds`, seed 609; the rest byte-identical): horn
+(`deeds._wave`), dead (story.on_night when the dead are left), seal (`letters.mark_read`, the first reading).
+Autoplay: `_part_d_move` (a tale's Part D step: talk choices story_recruit/rally/confront/escort, else arrive at its
+place) and `_check_part_d` (step quests, held nights, bound bands, the opening's record, "alive" only on captures).
+Floors: test_text_variety `test_part_d_has_enough_ways_to_be_told`. Tests: tests/test_part_d_shown.py (5),
+test_storyplay (+3, slow: six lives each). FORMAT_VERSION 22. The fresh review's fixes: a parley with a master at home
+leaves the band too; finish_battle tested for a fled master and a lost finale; storyplay's finale rests an hour after
+a master falls back (else the stuck test fired: no time passed). Checks: full suite (only the known timing tests
+missed, beside the other checks; they pass alone), autoplay OK, smoke OK.
+D.4 (2026-10-25, realmwalker-a): the first hour, `game/story/opening.py` (docstring has the API). `story.begin` picks
+the threat as before (now up to twice `start.tiles` away when nothing is nearer) and `opening.begin` records
+`politics["director"]["opening"]` {kind, threat, town, day, state} instead of the day-0 scheduled hook. Kinds and
+weights in adventures.opening.json "openings" (schema ADVENTURES "openings"): crisis (`near`: the start town in the
+threat's reach or stakes), summons (only when a stake other than the start town exists: `_asking`), terror (`kinds` ["outlaw"]); extra weight by background. Crisis and summons are
+staged when the start town's map is entered (`opening.on_enter_town` from story.on_enter_town, before `_show_tale`;
+scenes.opening.json opening_gate / opening_summons, `force=True`), else told as their beat by `opening.on_travel`
+(story.on_travel, once off the start tile) or `opening.daily` (after the first day, not while busy); a crisis told
+off its town's map is the beat `opening_crisis_word` (`opening.TOLD`). Terror plays at once: beat
+`opening_captive` (beats.opening.json, picture "camp"), op `opening_escape` quiet/loud (registered in opening.py,
+in HANDLER_MODULES): take_hook, the party onto the nearest open tile outside town, an encounter of "bandits" tagged
+minion with `spotted_first` = quiet and `field` "captors" (arena.FIELDS: fire, bedrolls, a horse_post as the stake).
+`adv["opening"]` = the kind (story.take_hook). Beats opening_crisis / opening_summons / opening_captive (family
+"hook"; words threat, opening, start, gang, town, hook). Outside tests marked `story`, conftest `_quiet_tales` makes
+`opening.begin` a no-op (as it already did offer_hook); `tests/worlds.quiet_start` clears it by hand (test_stage, test_app_ui's start_small_world, a_life in test_first_hour);
+test_story_hooks' `_start_near_a_beast` clears the opening and offers the hook directly; test_app_ui's creation flow
+accepts the opening's beat over the game screen. tests/test_first_hour.py (+7). The fresh review's fixes are in (the summons' {town}, the road
+word, adv["opening"] only when played). Not yet: storyplay and autoplay
+moves for the captive's beat (the bot picks a choice like any beat) - D.5's measure. No save format change.
+D.3 (2026-10-25, realmwalker-b): the blueprints `risen` and `outlaw` as pack fragments (adventures.risen.json,
+adventures.outlaw.json; their beats beats.risen/outlaw.json; tempers proud/grieving and cunning/cruel, moves and boss
+templates in villains.risen/outlaw.json; scene midnight_tail in scenes.outlaw.json; Part D's step words, three a key,
+in adventures.deeds.json - deeds.DEFAULT_WORDS are now only fallbacks). Words of both by two sonnet helpers. Engine:
+threats.json kind `ask`/`learn_ask`/`band` (`story.asking`, `villain_group`); learn `answer` (`story.truth_told`, also
+for divination and talk) and any step's `note` (its journal line, filled at forging); selectors `skill(<skill>,
+<place>)` (a check route) and `tail(<role>)` (`story.on_town_tick` from townlife.tick: 23:00-03:00 on the person's
+town map, once a night, starts midnight_tail with `then` {adv, step, finishes}; stage._learn calls
+`story.learned_by_following`); beat condition `key`, ops `letter` (words table, hand; the page opens, kept in the pack)
+and `finish` (ends the tale with no finale: the rite, the parley); ending condition `boss_taken` (a living person
+villain taken alive ends the tale: story.on_battle), consequences risen_laid / risen_destroyed (`politics["laid"]`, the
+scar laid, history, threats.settle), outlaw_broken (past.den_leader_slain or hanged when taken, past.den_falls),
+outlaw_pardoned (Politics.fall, history, the realm's standing); WON has destroyed_for_now and taken; boss phase `raise`
+(`creature`, `count`: add_ally on the boss's side, kind "raised"); the hold's `field` -> PendingEncounter.field ->
+arena.FIELDS["ford"] (road, a shallow river with a ford, four carts across the road, fires; fire.on_battle_start
+lights a field's `fires`); finale._militia (two guards beside you in a hold's wave with the key militia); words
+slayer, died_year, gang, he/him/his/He/His/king/man; KEY_WORDS anchor, name, militia, ford, backway, inside;
+situations' inside `blueprints` (the hunter who will not hunt is the beast's); first words filled. forge.fitting:
+no stakes, no tale; the risen's reach 16 -> 30 (barrows lie 20-33 tiles from towns: none had stakes). Storybook:
+Part D steps printed, a tale checked only against its own word tables (another blueprint's prefix skipped), band
+roles. test_story_hooks ends the other kinds' threats (the beast's hooks were the only ones). tests/test_risen_outlaw.py
+(15). The fresh review's fixes: a villain taken alive waits for the aftermath (`adv["boss_taken"]`, `taken_day`;
+`story.on_fate` ends the tale by the fate: spare/rob -> ending "spared", the captain lives; execute -> "broken";
+capture/interrogate -> "taken", hanged; story.daily ends one never judged); `{slayer}` falls back to "those who
+wanted him/her dead" and `{died_year}` is a phrase ("in 812", "340 years before the Reckoning"), the data reworded
+(no "{slayer}'s", no "in {died_year}"); the letter is written only when its seal is broken (risen_letter's second
+choice); `asking` and `_lay` fill the villain's pronouns; bond kinds "story_ally" and "raised" (combat.FLESH_BONDS)
+die as anything dies and say his, not its; the militia are on Auto; one chronicle entry per ending (the
+consequences write it); a raise phase that could not happen is not spent. Not yet: storyplay and the autoplay bot have no moves for Part D's steps (D.5's measure needs them); no
+pictures for the new beats beyond "here"/"place"/"camp_night" (D.5); the dead left at the camp is a beat, not a
+picture (story.LEFT has only the carcass). No save format change. Checks: full suite, autoplay clean, smoke ok.
+D.2 (2026-10-25, realmwalker-a): Part D's step kinds in steps.py (bind; `Step.goal(st)`: a goal-language test that
+finishes a step however it was made true, for rescue free(who) when an npc, fetch holds(you, tag), escort at(who,
+to)) and their game side in the new `game/story/deeds.py` (docstring has the API): `setup(game, adv)` when a
+chapter opens (story.take_hook, `_chapter_check`, and daily as a catch-up; `st["set"]`): rescue and fetch become
+step quests (`deeds._quest`: quests.base_quest with `adventure`, `step`, reward 0, 60 days, `text_key`
+story_rescue/story_retrieve/story_escort in data/quests.json; `quests.mark_done` of an adventure quest sets it
+"finished" and calls story.on_quest_end at once; `quests.on_arrive_dungeon` places a target with `level` on that level
+instead of the deepest; `quest_item` adds the target's story `tag`); defeat/capture under a site add a story_sites
+record with `role`/`step`/`group` (`story.boss_for` returns it while its step is open; `dungeon.populate` places a
+story band on any level and `story.tag_band(..., role, step)` tags it; `deeds.on_descend` adds it to a level filled
+before), on the land they meet you on arrival (once a day); hold sets `target["night"]` (today + `days`) and its
+waves are encounters tagged role "wave" (`deeds.on_battle`: a victory brings the next at once, a loss or the night
+passed fails it); rite on arrival with `needs` (key:/flag:/clue:/item:) and a camp.check or its beat; escort starts
+from talk (`story_escort`) as an escort step quest, `deeds.on_travel` springs its `ambush` once, 3+ tiles out;
+capture is finished by `story.on_fate` (fight.decide_captive: a story foe can always be captured; interrogate tells
+`captive_talks`; `_fate_heard` reports spare/rob/execute too; flags `<role>_<fate>`); defeat sets `<role>_slain` or
+`<role>_taken`; recruit (key `<role>`, or `price`), rally (key "militia"), confront (yield with the step's `clue`
+known or a check, else their `group` attacks; flag `<role>_yielded`) are talk choices (STORY_CHOICES), each first
+offered to `situations.for_step` (no `inside` predicaments for them yet: D.3 may add some). `deeds.step_failed`
+leaves `fails_to` (forge now copies it) and `_chapter_check` counts failed steps as resolved (law 6). goals.notify
+calls `deeds.on_goal` first (even with no situations). Words: adventures.json "words" keys recruit_ask/yes/no,
+rally_*, confront_*, escort_*, hold_set/wave/won/lost/missed, rite_done/fail/needs, captive_talks, ambush, band_here
+fall back to `deeds.DEFAULT_WORDS` (one line each: D.3 writes the real ones, three at least). Selectors:
+site_of_figure(path), scar_of(path) (the threat's `source.scar` first), hideout_of(path), band(group) (a role that
+is a band: {"band": group}; cast.describe says "the <creature> and the rest"); people veteran_of, captain_of,
+merchant_of, carter_of, suspect_of. check.BUILT_PARTS has "D"; a fetch's `what` is words, not a selector; `to` is
+checked as one. Journal STEP_WORDS for every kind ({night}, {to}; a failed step shows [lost]); map marks include an
+escort's end. Not yet: storyplay and the autoplay bot have no moves for the new kinds (no tale uses them before
+D.3; D.5's storyplay measure needs them). No save format change. Checks: quick suite green, autoplay clean.
+D.1 (2026-10-25, realmwalker-a): threats.json kinds `risen` (from "tombs": `threats.risen_sources`, barrows with
+`dungeon.depth_for` >= 2 not in `politics["laid"]`; `source.scar` = `nearest_scar` within twice the reach or None;
+kind `creature` "wight", so always tier >= 2) and `outlaw` (from "gangs": `gang_sources`, active bandit_gang with a
+living leader and a site; `source.faction`; `gang_of(world, t)`; creature "bandit_captain"); both have `tempers: []`
+and `blueprints: []` until D.3 (so `forge.fitting` is empty, `_can_take` false: no hooks offered; `story.notices`
+now checks `_can_take` too). Stages: risen omens / walking (status haunted, roads restless_dead by night) / emptying
+(emptied "hamlet", danger 1) / march (doom: emptied "village" + haunted, danger 1); outlaw tolls / bleeding (status
+bled) / bold (op gang grow, danger 1, roads bandit_gang) / tribute (doom: op mark extorted, gang grow). New stage ops
+`mark` (a lasting mark, `by` = the gang's faction id, remembered in history) and `gang` ("grow": military, wealth, news
+threat_gang_grows); `emptied` takes which "nearest"/"hamlet"/"village" and passes over places already emptied. A
+stage's `roads` {group, night, boost, intro} (schema THREAT_STAGE) is read by `threats.on_the_road`/`road_words` from
+`encounters.roll_encounter` (chance x boost; the added share, 1 - 1/boost, is the threat's band with its words). A
+kind's `ends` {chance, outcome, text} is the world's own ending (`_ends_alone`, handlers in `threats.ENDINGS`: risen
+`_laid_by_others` writes `politics["laid"]`; news politics.json threat_laid). `villain_lives` (public now): risen while
+the tomb holds him and he is not laid; outlaw while his band is active (`_new_captain` hands the threat to a new
+leader); `gone_outcome` (laid, fallen, slain); `threats.settle(world, day)` ends them at once (called at the end of
+`past.on_battle`). `_recover` lifts `extorted` when its band falls. `Politics.new_gang` calls `seed_from(self,
+"outlaw", figure=, faction=)`. marks.json: haunted, bled, extorted (no world-map sign yet: D.5's pictures).
+story/check reports an unknown road band, kind creature, or an `ends` without handler or news. Autoplay
+`_check_threats` uses `villain_lives` and checks a risen's tomb and an outlaw's band. Tests: tests/test_threat_kinds.py
+(eight); test_threats' beast tests stir a beast when the shared budget left none stirring. For D.3: the talk choice
+"I hear something is killing your people." (story.talk_choices) is the beast's words - give each kind its own
+(a threats.json `ask` line); `story.villain_group` returns None for non-beasts (the risen's group is barrow_wight,
+the outlaw's bandit_hideout); the stages' `flavour` words (every kind's) are still not shown anywhere. No save
+format change in D.1 (D.5 bumps it for the part). Checks: quick suite green, autoplay clean.
 C.10 (2026-10-25, realmwalker-b): situations inside adventures: a predicament with `inside` {step, route, chance}
 (data situations.inside.json, meetings sit_turned_away / sit_hunter_yard in scenes.inside.json) is made only by
 `situations.for_step(game, adv, st, npc, route=)` (from story._show_tale for the witness step, `_hunter_situation`

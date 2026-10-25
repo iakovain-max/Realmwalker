@@ -1,0 +1,171 @@
+{
+  "_comment": "The Outlaw Lord's beats (Expansion 6 D.3): his moves (an omen, a warning nailed to your door, a test on the road) and the steps' own (watching the loading for the man who sells the days, the choice between a parley and breaking the gang, the hideout's door with its parley).",
+  "beats": {
+    "outlaw_omen": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp"],
+      "when": {"villain.kind": "outlaw", "adventure": {"at_large": true}},
+      "text": [
+        [
+          "{omen}",
+          "The road bends, and there it is. {omen}",
+          "You stop the party with a raised hand. {omen}"
+        ],
+        [
+          "{gang} knows you are on the road. It wants you to know it knows.",
+          "Somebody has watched you from the ridge since morning. {gang} wants you to see that it has.",
+          "Whoever left this left it for you, and is not far away."
+        ]
+      ]
+    },
+    "outlaw_warning": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["inn", "camp"],
+      "time": ["dawn", "day"],
+      "when": {"villain.kind": "outlaw", "adventure": {"at_large": true}},
+      "text": [
+        [
+          "In the morning there is a knife in your door, driven into the wood to the hilt, and a paper under it. Nobody in the place heard a thing, or nobody will say.",
+          "You wake to find a knife driven into the post by your bed, to the hilt, with a paper folded round the blade. Whoever did it came and went without a sound.",
+          "There is a knife in the wood within reach of where you slept, and a paper under it. It was done in the night, and nobody will own to hearing it."
+        ]
+      ],
+      "ops": [["letter", "outlaw_warning", "dark"]],
+      "choices": [
+        {"label": ["Pull the knife out and keep it."], "ops": [["item", "dagger"], ["flag", "kept_the_knife"]],
+         "result": [
+           "It is a good knife, better than a robber should own. Somebody is being paid well.",
+           "The knife comes out with a little work. It is oiled and balanced, and not at all what a common robber carries."
+         ]},
+        {"label": ["Ask who came in the night."], "check": {"skill": "insight", "dc": 12},
+         "success": [["clue", "inside"]], "failure": [["time", 30]],
+         "result": [
+           "The pot-boy will not meet your eye, and then he does. \"A man from town,\" he whispers. \"Not one of them. One of us.\"",
+           "In the end somebody tells you, without being asked twice: whoever it was knew the place, and the dog never barked. \"That was no road-thief,\" they say. \"That was one of ours.\""
+         ],
+         "fail_result": [
+           "Nobody saw anything. Nobody ever does.",
+           "You ask, and are told what they would tell anyone: nothing. A door shuts."
+         ]}
+      ]
+    },
+    "outlaw_test_road": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild"],
+      "when": {"villain.kind": "outlaw", "adventure": {"at_large": true}},
+      "text": [
+        [
+          "Four of {gang} step out on the road ahead, not hurrying. \"{villain_short} wants to see what you're made of,\" one says. \"Pay the toll, or show us.\"",
+          "The road narrows, and four of {gang} are across it, easy and armed. \"The captain sends greetings,\" one says. \"Toll is paid in silver, or in teeth.\"",
+          "A whistle from the trees, and four step out: {gang}, in no hurry. \"You're the one who's been asking,\" says one. \"{villain_short} would like a look at you. Pay up, or show us.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Show them."], "ops": [["fight", "bandits"], ["attention", 1]],
+         "result": [
+           "\"That's what I hoped you'd say,\" the man says, and draws.",
+           "\"Good,\" says one of them. \"I was hoping.\" Steel comes out on all sides."
+         ]},
+        {"label": ["Pay the toll, and remember their faces."], "requires": {"money": 500},
+         "ops": [["money", -500], ["flag", "paid_the_toll"]],
+         "result": [
+           "They take your silver and stand aside, grinning. You will know them again.",
+           "The silver goes into a bag, and the bag goes out of sight. They let you through with a nod, and you note the scar, the limp, the missing finger."
+         ]},
+        {"label": ["Talk your way past them."], "check": {"skill": "persuasion", "dc": 13},
+         "success": [["attention", 1]], "failure": [["fight", "bandits"]],
+         "result": [
+           "\"Tell your captain,\" you say, \"that I'll be paying my toll at {home}.\" They laugh, but they let you by.",
+           "\"Let the captain name the price at {home},\" you say. One of them laughs, and then does not, and they stand aside."
+         ],
+         "fail_result": [
+           "\"Funny,\" the man says. \"Let's see you laugh with your teeth out.\"",
+           "\"Clever,\" says one of them, and the smile goes. \"Let's see how clever you are lying in the road.\""
+         ]}
+      ]
+    },
+    "outlaw_watch_loading": {
+      "family": "step",
+      "picture": "place",
+      "where": ["town"],
+      "text": [
+        [
+          "You spend the morning in the yard where the wagons are loaded for the road, and watch who comes to look.",
+          "The loading yard smells of tar and mule. You sit on a barrel with a heel of bread and watch the faces, not the wagons.",
+          "You pick a corner from which you can see the weighing-post and the gate, and watch who counts the loads, and who counts the counters."
+        ]
+      ],
+      "choices": [
+        {"label": ["Watch who takes too much interest."], "check": {"skill": "insight", "dc": 13},
+         "success": [["clue", "inside"], ["step_done"]], "failure": [["time", 120]],
+         "result": [
+           "{outlaw_inside}",
+           "It takes the whole morning, and then it is plain. {outlaw_inside}"
+         ],
+         "fail_result": [
+           "Everyone in {town} takes an interest in the wagons. You learn nothing but the price of salt.",
+           "The yard is busy and nobody is out of place. You leave with a sore back and the price of tar."
+         ]}
+      ]
+    },
+    "outlaw_parley_or_break": {
+      "family": "step",
+      "picture": "place",
+      "text": [
+        [
+          "Word comes up from {home} by a boy with a white rag on a stick: {villain} will talk, if you come alone and come soon. {patron} says it is a trap. It may be.",
+          "At dusk a boy leaves a message at your door and runs: {villain} will hear your terms at {home}. {patron} says it is a trap. It may well be.",
+          "{patron} puts a hand flat on the table. \"A word has come down from {home}. {villain_short} will parley. The lord might pardon the gang, if the right person asked. Or you could go up with steel instead. Which is it to be?\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Send word back: you will parley."], "ops": [["flag", "parley"]],
+         "result": [
+           "The boy runs off with your answer. You will go up to {home} with your hands open, and your sword loose in its scabbard.",
+           "The boy nods and is gone. You have said it now, and a word like that does not come back."
+         ]},
+        {"label": ["Send the boy back with nothing. You are coming to break them."], "ops": [["flag", "break"]],
+         "result": [
+           "The boy goes back with no answer, which is an answer. {gang} will be waiting.",
+           "You give the boy nothing, not even a look, and watch him go. Whatever you bring up to {home} will not be a message."
+         ]}
+      ]
+    },
+    "outlaw_the_hideout": {
+      "family": "step",
+      "picture": "place",
+      "text": [
+        [
+          "{home} is quiet. A thread of smoke goes up from somewhere inside, and a man on the wall watches you come and does not raise the alarm.",
+          "{home} is quiet, and quiet is wrong. A thread of smoke, a horse stamping, and nobody in the way to say stop.",
+          "The track to {home} is rutted deep by wagons that were never paid for. At the end of it a lookout leans in a gap and watches you come, and does not call out."
+        ]
+      ],
+      "choices": [
+        {"label": ["Walk in with your hands open, and talk."], "requires": {"flag": "parley"}, "check": {"skill": "persuasion", "dc": 14},
+         "success": [["flag", "pardoned"], ["finish"]], "failure": [["flag", "parley_failed"]],
+         "result": [
+           "You talk for an hour by their fire: of the lord's pardon, of the gallows, of what the roads will be in a year. In the end {villain_short} spits in the fire and says, \"Done.\"",
+           "You talk until the fire is low: of the lord's pardon, of what a rope costs, of what a clean road is worth. At last {villain_short} says, \"Write it, then,\" and holds out a hand."
+         ],
+         "fail_result": [
+           "\"No,\" says {villain_short}, at last, and stands. \"I don't think so.\"",
+           "{villain_short} hears you out to the end, politely. Then: \"A good speech. You may keep it.\" The room is very still."
+         ]},
+        {"label": ["Go in by the back way the prisoner told you of."], "requires": {"key": "backway"}, "ops": [["flag", "back_way"]],
+         "result": [
+           "The back way is a goat-path and a gap in the wall, and nobody is watching it.",
+           "The prisoner told true: a steep path, a loose stone, a way in that nobody watches."
+         ]},
+        {"label": ["Go in with steel."], "ops": [["flag", "no_quarter"]],
+         "result": [
+           "You draw, and go in.",
+           "You do not wait to be asked. Steel is out before the gate is open, and the lookout has barely time to shout."
+         ]}
+      ]
+    }
+  }
+}

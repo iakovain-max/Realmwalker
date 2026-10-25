@@ -1,0 +1,115 @@
+{
+  "_comment": "The words of Part D's steps in play (game/story/deeds.py say(); their one-line fallbacks are deeds.DEFAULT_WORDS): asking someone to stand with you, raising a town, confronting a traitor, setting out with someone in your care, a night to be held, a rite, a captive who talks, an ambush, a band waiting. {villain}, {villain_short}, {town}, {home} as in every tale; {who}, {place}, {night}, {to} where the step gives them.",
+  "words": {
+    "recruit_ask": [
+      "Will you stand with us against {villain}?",
+      "I can't do this alone. Will you come?",
+      "When we go against {villain_short}, I want you beside me."
+    ],
+    "recruit_yes": [
+      "\"Yes. Yes, I will. Somebody has to.\"",
+      "\"I've been waiting for someone to ask me that.\" A hand, rough and hard. \"I'm with you.\"",
+      "\"I'll come. Don't thank me. Just don't make me sorry.\""
+    ],
+    "recruit_no": [
+      "\"Not yet. Ask me again when I have slept on it.\"",
+      "\"I have children. Give me a day to think of them, and then ask me again.\"",
+      "\"No. Not today.\" They will not look at you. \"Maybe tomorrow.\""
+    ],
+    "rally_ask": [
+      "Call your people together. {villain_short} will not be stopped by one blade.",
+      "Every one of {town} who can hold a spear. That is what it will take.",
+      "You can stand behind your doors and wait, or you can stand with me."
+    ],
+    "rally_yes": [
+      "\"Every one who can hold a spear will be there. You have my word.\"",
+      "The bell rings, and they come: farmers, smiths, the miller's sons, old soldiers with rust on their helmets. Not many. Enough.",
+      "\"We've been afraid long enough,\" someone at the back says, and they all start talking at once."
+    ],
+    "rally_no": [
+      "\"They are frightened. Give me a day, and ask me again.\"",
+      "Nobody steps forward. Nobody looks at you. \"Tomorrow,\" the headman says. \"Ask tomorrow.\"",
+      "\"Fight? With what? Come back when they've had time to think on it.\""
+    ],
+    "confront_ask": [
+      "I know what you have done, {who}.",
+      "I know who you talk to at night, {who}.",
+      "It was you, {who}. Wasn't it."
+    ],
+    "confront_yield": [
+      "\"...All right. All right. I'll tell you everything. Just keep them off me.\"",
+      "The colour goes out of their face. \"They said they'd burn my house with my children in it,\" they whisper. \"What was I to do?\"",
+      "For a long moment nothing. Then they sit down, very suddenly, as if their legs had been cut. \"Ask, then.\""
+    ],
+    "confront_fight": [
+      "\"You should have kept your mouth shut.\" There are men behind you now.",
+      "\"Clever,\" they say, and whistle, and the door behind you opens.",
+      "They do not answer. They step back, and the men who were drinking in the corner stand up."
+    ],
+    "escort_ask": [
+      "We set out now, for {to}. Are you ready?",
+      "The road to {to}. Stay close to me, and we'll get there.",
+      "If we're going to {to}, it's now or not at all."
+    ],
+    "escort_set_out": [
+      "\"I'm ready. Let's not stop until we're there.\"",
+      "\"Gods keep us,\" they mutter, and take up the reins.",
+      "\"I'll go where you go. Just don't leave me on the road.\""
+    ],
+    "hold_set": [
+      "They will come to {place} on the night of {night}. Be there.",
+      "On the night of {night}, at {place}. That is when it will be decided.",
+      "{place}, the night of {night}. Whatever is coming, it is coming then."
+    ],
+    "hold_wave": [
+      "They come again, out of the dark, before you have caught your breath.",
+      "No rest. Another line of them comes up out of the night.",
+      "You have hardly wiped your blade before the next of them are on you."
+    ],
+    "hold_won": [
+      "The last of them falls back into the dark, and the night is quiet. {place} still stands.",
+      "Dawn comes grey over {place}, and nothing is left standing but you and yours.",
+      "It is over. You held {place}. Somebody starts to laugh, and cannot stop."
+    ],
+    "hold_lost": [
+      "{place} could not be held.",
+      "You fall back from {place}, and it is theirs.",
+      "There were too many. {place} is lost."
+    ],
+    "hold_missed": [
+      "You were not at {place} on the night they came.",
+      "The night came and went at {place}, and you were somewhere else.",
+      "They came to {place} that night, and nobody stood in their way."
+    ],
+    "rite_done": [
+      "It is done. The air itself seems to lighten.",
+      "The last word goes out of you, and something that was holding its breath lets it go.",
+      "It is finished. The cold goes out of the stones."
+    ],
+    "rite_fail": [
+      "The words will not come right. You will have to try again tomorrow.",
+      "Something stops your tongue. Not today.",
+      "It does not take. Rest, and come back to it."
+    ],
+    "rite_needs": [
+      "You do not have what the rite needs.",
+      "Not yet: the rite needs what you have not found.",
+      "Without what binds it, the words are only words."
+    ],
+    "captive_talks": [
+      "{who} talks, as the taken often do, and it is worth hearing.",
+      "{who} holds out longer than you would think, and then tells you everything.",
+      "{who} spits, and swears, and then talks fast, as if the words were burning."
+    ],
+    "ambush": [
+      "They were waiting for you on the road, as if they knew you would come this way.",
+      "Out of the ditch, out of the trees, all at once: an ambush, and a good one.",
+      "A rope comes up across the road, and then they are everywhere."
+    ],
+    "band_here": [
+      "{who} is here, waiting for you.",
+      "{who}. They have been expecting you.",
+      "There they are: {who}, and they have seen you."
+    ]
+  }
+}

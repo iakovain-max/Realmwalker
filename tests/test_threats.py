@@ -39,6 +39,17 @@ def _weeks(world, tables, n, seed=1):
         _politics(world, tables, seed + i).advance(7.0)
 
 
+def _a_beast_stirring(world, tables) -> list:
+    """The stirring beasts, stirring one if none is (the world's budget may have gone to the other kinds)."""
+    live = [t for t in threats.live(world) if t["kind"] == "beast"]
+    if not live:
+        dormant = [t for t in threats.records(world).values() if t["kind"] == "beast" and t["state"] == "dormant"]
+        if dormant:
+            threats.stir(world, tables, dormant[0], RNG(1), day=news.now_days(world))
+            live = [dormant[0]]
+    return live
+
+
 def test_threats_are_seeded_from_the_history_s_beasts(made, tables):
     recs = threats.records(made)
     beasts = {int(k) for k, hid in made.politics.get("lairs", {}).items()
@@ -62,9 +73,9 @@ def test_the_same_seed_makes_the_same_threats(made, tables):
 
 
 def test_signs_come_before_effects_and_an_ignored_threat_reaches_its_doom(world, tables):
-    live = threats.live(world)
+    live = _a_beast_stirring(world, tables)  # (the risen and the outlaw: test_threat_kinds)
     if not live:
-        pytest.skip("nothing stirring")
+        pytest.skip("no beast")
     t = live[0]
     t["scheme"]["applied"] = False
     first = list(t["signs"])
@@ -141,9 +152,9 @@ def test_a_beast_that_comes_down_wakes_its_threat(world, tables):
 
 
 def test_the_history_s_hunters_may_end_a_threat(world, tables, monkeypatch):
-    live = [t for t in threats.live(world) if t["kind"] == "beast"]
+    live = _a_beast_stirring(world, tables)
     if not live:
-        pytest.skip("nothing stirring")
+        pytest.skip("no beast")
     t = live[0]
     hx, hy = threats.home_xy(world, t)
     hero = next((f for f in world.figures.values() if f.alive and f.role == "hero" and f.kind == "person"), None)

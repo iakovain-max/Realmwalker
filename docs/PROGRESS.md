@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-C on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; Parts D-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-D on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; Parts E-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,145 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.5 — the Risen and the Outlaw Lord shown, heard and played through — **Part D merged into `main`**
+
+- **Pictures.** When the Risen king's dead come to your camp by night, you now see them: pale figures standing in a
+  ring at the edge of the firelight, swaying a little, until you break camp. A beat met at an outlaw gang's hideout
+  shows their camp under the pines (bedrolls, barrels, a weapon rack, the horse post, their fire at dusk); one met
+  under a barrow shows its halls (sarcophagi, bones, candles, a mist along the floor) instead of the heath above. The
+  first hour as the gang's captive opens on their camp too.
+- **Sounds.** A war horn as each wave comes out of the dark on the night you hold a place; a long cold breath over a
+  low hum when the dead stand at the camp's edge; a wax seal cracking and the paper opened whenever you read a letter
+  for the first time.
+- **Fixes found by playing the tales through** (a careful party, on Auto, many times over):
+  - If the Risen king or the outlaw captain beat you in their own den (you are robbed and left, or left for dead),
+    they are still there when you come back. Before, they vanished from the level and the tale could never end.
+  - If the Risen king is turned by a cleric (or otherwise driven off the field) in his barrow, or a captain is talked
+    down in his den, he stays there and waits for you, wounds and all. Before, the fight counted as won, he was gone, and the tale stalled.
+  - When a tale wants its quarry alive (the outlaws' man on the road), your party now knocks them out instead of
+    killing them, also on Auto (you were always asked; Auto used to kill).
+  - A town with no road near it could not have the Risen's tale (nowhere for the held ford): the open country near
+    the town now serves (the battlefield lays its own road across a ford).
+- **Measured** (tools/storyplay.py, 20 lives each): the Outlaw Lord finished 19 of 20 (one party died); the Risen
+  finished all 20 (before the fixes 16); a new life's opening began a tale in 19 of 20 lives and every one of those tales was finished. The
+  autoplay bot now also takes up the new kinds of step (talks people round, rallies towns, goes where a rescue, a
+  fetch, a band, a held night or a rite waits) and checks their records.
+- **Saves: format 22.** Old saves are refused with the friendly message; start a new world.
+- Try it: start a new character and walk into your start town (or wake in the ropes); take a Risen tale and camp near
+  the barrow at night; hold the ford when the night comes.
+
+Decisions (Anton may want to change): a tale's master stays in their den after beating you, keeping their wounds;
+the party knocks out only the one a tale wants alive (the rest are fought as before); the dead at the camp are four
+figures (zombies, a skeleton, a wight); the horn, breath and seal were made in code and set by measure (their
+loudness like the other effects), not yet heard by Anton.
+
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.4 — the first hour — branch `dlc/06-adventures-events`
+
+- A new life no longer starts on a quiet road. The game picks a trouble near your start town and opens your life with
+  it, in one of three ways:
+  - **Arriving into a crisis.** You walk into your start town as the bell starts ringing; someone shouts for the gate
+    to be barred behind you, a crowd gathers in the street round one of the townsfolk, who turns and asks you for
+    help. Only when the trouble is close enough to the town to have it shut its gates.
+  - **A summons.** A child or a porter runs up to you through the street with a sealed letter from another town
+    the trouble threatens (it opens as a page, and you keep it), asking you to come.
+  - **Waking as the gang's captive** (only where an outlaw gang bleeds the roads). The game begins with you tied to a
+    stake at the outlaws' fire. Work the knots loose (Sleight of Hand), tear the stake out (Athletics) or talk the
+    youngest guard round (Deception). Quietly done, you find the guards with their backs to you; botched, they are on
+    their feet with blades out. Fight them by their fire, or slip away into the dark. Their captain's tale is yours
+    from that moment.
+- The kind depends on the trouble, on how close it is, and on your background (a criminal is likelier to wake in the
+  ropes, a noble or a priest to be sent for, a farmer or a guard to walk into a town shut tight).
+- If you walk away from the start town without going in, or the first day passes, the crisis or the letter finds you
+  wherever you are (the bell rings behind you, and people on the road tell you the gate has been barred). Either way the tale is offered on your first day; say "not now", and the town may ask again.
+- Try it: start a new character (any world) and walk into your start town.
+
+Decisions (Anton may want to change): a captive's tale begins whatever is chosen (being their prisoner makes it your
+business); the guards are an ordinary road band of bandits cut to your level, and your gear lies by their fire, so
+you fight with it; their camp is the nearest open tile outside the start town; the opening's trouble may be up to
+twice the usual distance away when nothing is nearer (so every life gets one where the map allows); the checks are
+DC 12 (knots) and 13 (stake, talk).
+
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.3 — the Risen and the Outlaw Lord — branch `dlc/06-adventures-events`
+
+- Two new tales a town may ask you to take on, besides the Beast:
+  - **The Risen.** A dead king (or queen) of the history walks out of a barrow, and the dead of the country walk for
+    them. You hear it from someone who saw their own dead go by, read the old battlefield where the graves are open
+    from below, and bring the one who was taken back out of the barrow's upper hall. Then you learn who the king was
+    and their true name (from the temple's priest, the old soldier who stands with you, the chronicle of the field,
+    or the gods), fetch the crown that binds them from a crypt, deal with the cultists who woke them, and decide
+    whether the town hears the truth about the one who killed the king long ago. Last, you raise the town and hold
+    the ford on the night the dead come: wave after wave in the dark, with the carts burning across the road, the
+    grass catching, and the townsfolk you raised fighting beside you. Then either you lay the king to rest at the
+    barrow's door with the crown (no fight at all), or you go down and fight them in their hall, where at half their
+    strength the sarcophagi open and more of the dead climb out.
+  - **The Outlaw Lord.** A gang's captain bleeds the roads out of a town, and someone in the town sells them the
+    caravans' days. You walk a carter's wagon to the next town as bait, hear it from someone robbed, and take one of
+    the gang alive (who tells you the hideout's back way). Then you find the man in town: follow him at midnight
+    through the streets without being seen (creep with z), or watch the loading yard, or ask, or pray; face him with
+    it; and choose: parley or break them. At the hideout's door a parley can end it without a drop of blood (the gang
+    is pardoned through the lord), or you go in - by the back way, if you know it - and fight the captain, whose men
+    come running when the captain is hurt.
+- The villains answer you: the dead king writes to you in an old, proud hand (a letter you keep and can read again),
+  stands their dead at the edge of your firelight at night, and tests you on the road; the gang knifes a warning to
+  your door at the inn and stops you for a toll.
+- Each tale ends several ways: the king laid to rest, destroyed with their crown (gone for good), or destroyed
+  without it (back in a month or two); the gang pardoned, broken, or its captain hanged; or the villain wins.
+- In conversation you now ask each kind of trouble in its own words ("I hear the dead are walking here.").
+
+Decisions (Anton may want to change): the dead king's reach is 30 miles-of-map (barrows lie far from towns, and at 16
+their doom touched nobody); a threat with no town near it offers no tale; the rite needs the crown and a Religion
+check (DC 13), and a failed rite means the fight; the parley needs Persuasion DC 14; two of the militia fight beside
+you at the ford; the toll on the road is 5 gold; the hunter's story of the Beast stays the Beast's.
+
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.2 — ten new kinds of step for tales — branch `dlc/06-adventures-events`
+
+- Tales can now ask ten new things of you, all played with what the game already has: **rescue** someone held on an
+  upper level of a barrow or hideout (the captive in chains, never in the master's own hall); **fetch** a thing of
+  the story from where it lies (a chest on its level: the dead king's crown, a ledger); **defeat** one of the
+  villain's people, slain or taken alive (their band waits on its dungeon level, or on the road); **capture** one
+  alive and judge them in the aftermath (questioned, they talk); **recruit** someone to stand with you (talked round,
+  or paid); **rally** a town's people (the militia); **hold** a place on a set night, written in the journal - the
+  enemy comes in waves, one fight straight after another with no rest between; perform a **rite** at a place, with
+  what it needs; **escort** someone to another town while the gang watches the road (an ambush on the way); and
+  **confront** someone with what you know (if you know enough they break, if not they call their men).
+- A step that can no longer be done (the night missed, the one to be taken alive killed) fails and leaves its mark
+  on the tale, and the tale goes on.
+- The journal says each of them in plain words, and the map marks where they are.
+- No tale uses them yet: the Risen and the Outlaw Lord, written in D.3, are the first.
+
+Decisions (Anton may want to change): the step jobs a tale gives (rescue, fetch, escort) pay nothing and last 60
+days; a hold's night is "in N days" (the calendar has no moon), and missing it by more than a day loses the place; a
+recruit or rally refused can be asked again the next day; a foe of the tale taken alive can always be bound and kept
+(no reward is needed for it); the bands of steps are made for the land's danger at the high difficulty.
+
+### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.1 — the risen and the outlaw lord as threats — branch `dlc/06-adventures-events`
+
+- Two new dangers live in the world beside the named beasts. **The risen**: a king or chieftain of the history
+  buried in a barrow deep enough for two levels wakes. Graves are found opened from below and dogs howl at the barrow;
+  then **the dead walk the roads at night** within a day or two of it (you meet them in the dark, with their own
+  words), the nearest village is **haunted** (fires at every gate, iron over the doors); then a hamlet **empties** as
+  its sleepers walk out to the barrow; and if nobody stops it, the dead march: a village is emptied and held by them,
+  and the country round grows more dangerous. **The outlaw lord**: every gang with a living captain is one. His men
+  take tolls on the roads (you meet them at the ford or behind a rope across the way), the nearest town's roads are
+  **bled** (a thin, dear market), the band grows bold and recruits, and at the end a town **pays the gang tribute**,
+  until the gang falls.
+- The world fights back: priests or a hermit may lay a risen king to rest on their own, the lords still hang gangs
+  (which ends their outlaw lord and lifts the tribute), and when a captain dies his band's new captain carries on his
+  scheme. Putting the barrow king down yourself, or breaking a gang, ends its threat at once.
+- New gangs that take to the roads while you play become outlaw lords too.
+- Their tales (chapters, the patron, the finale) come in D.2 and D.3: until then these threats move and end in the
+  world, but nobody yet asks you to take them on.
+
+Decisions (Anton may want to change): only barrows two levels deep make risen kings (so that the taken can be held
+above the king's hall, as the design wants), which means a risen threat is always tier 2 or more (a wight is too
+strong for a first-level band); the nearest battlefield within 32 tiles is remembered with the threat for the tale
+to use; the dead on the roads come only by night until the last stage; in a threat's reach there are two to three
+times as many meetings on the land at night (risen) or one and a half to two times as many (outlaw), the extra ones
+its bands; the gang's doom is a town paying tribute and a
+bigger band (a second hideout waits for Part G, which adds places); the world's own laying to rest is a 0.8% weekly
+chance. Because the world's budget of stirring threats is now shared by three kinds, fewer beasts stir at the start
+and notice boards show fewer beast pleas until D.3 gives the other two their tales (the first-day hook still comes).
 
 ### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.10 — situations inside adventures, and the proof — **Part C merged into `main`**
 

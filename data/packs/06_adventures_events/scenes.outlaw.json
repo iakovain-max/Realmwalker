@@ -1,0 +1,32 @@
+{
+  "_comment": "The Outlaw Lord's scene (Expansion 6 D.3): the inside man followed through the streets at midnight (story.on_town_tick starts it; the tail cue's `knows` finishes the learn step through the scene's `then`).",
+  "scenes": {
+    "midnight_tail": {
+      "about": "At midnight the one who sells the gang the caravans' days slips out of their house and makes for the gate, looking back now and then; follow without being seen (z to creep), and see who meets them there.",
+      "cast": ["suspect"],
+      "cues": [
+        {"cue": "focus", "at": "suspect"},
+        {"cue": "say", "who": "suspect", "key": "mutter", "ticks": 2},
+        {"cue": "tail", "who": "suspect", "to": "gate", "knows": "inside_followed", "seen": "run", "seen_key": "seen"},
+        {"cue": "say", "who": "suspect", "key": "meet", "ticks": 3}
+      ],
+      "words": {
+        "mutter": [
+          "Quiet now. Quiet.",
+          "Nobody about. Good.",
+          "Just this once more, and then no more."
+        ],
+        "seen": [
+          "Who's there?",
+          "Who's that? Show yourself!",
+          "I know someone's there!"
+        ],
+        "meet": [
+          "Two wagons, Thursday. Salt and cloth.",
+          "The silver goes out at first light, on the east road.",
+          "Tell the captain: the big wagon, the day after next."
+        ]
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 """Storyplay (Expansion 6 A.11, docs/ADVENTURES.md §9): a careful party plays the Beast through on real roads, from
-its hook to its epilogue; Part A's measure is that it finishes in at least 90% of 20 runs."""
+its hook to its epilogue; Part A's measure is that it finishes in at least 90% of 20 runs. Part D's (D.5): the Risen
+and the Outlaw Lord the same, and a new life's opening begins a tale (`tools/storyplay.py --kind risen|outlaw`,
+`--openings`, 20 runs each; here six of each, the slow suite's share)."""
 
 import pytest
 
@@ -15,6 +17,22 @@ def test_the_beast_is_finished_nine_times_in_ten(data):
     assert len(done) >= 18, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
     assert all(r.ending == "slain" for r in done)
     assert sum(1 for r in done if r.fights >= 2) >= len(done) // 2, "most hunts reach the den and its finale"
+
+
+@pytest.mark.parametrize("kind", ["risen", "outlaw"])
+def test_part_ds_tales_are_finished(data, kind):
+    runs = storyplay.play(6, tables=Tables(data), kind=kind)
+    done = [r for r in runs if r.finished]
+    assert len(done) >= 5, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert all(r.ending not in ("doom", "abandoned") for r in done), [r.ending for r in done]
+    assert all(r.fights >= 2 for r in done), "every tale is fought for"
+
+
+def test_a_new_life_opens_with_a_tale(data):
+    runs = storyplay.openings(6, tables=Tables(data))
+    assert sum(r.begun for r in runs) >= 5, "\n".join(f"{r.world} {r.kind}: {r.why}" for r in runs if not r.begun)
+    assert len({r.kind for r in runs}) >= 2, "more than one kind of first hour"
+    assert sum(r.finished for r in runs) >= 4, "\n".join(f"{r.world} {r.kind}: {r.why or r.ending}" for r in runs)
 
 
 def test_the_income_reference_is_kept():

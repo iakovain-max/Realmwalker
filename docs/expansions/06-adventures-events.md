@@ -320,21 +320,21 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
 ### Part D – The Risen, the Outlaw Lord, and the opening
 *Done when*: both blueprints play end to end in their first forms, shown as well as told, and every new life starts
 with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
-- [ ] D.1 Threat kinds *risen* (from `tombs` and `scars`; the barrow at least two levels deep) and *outlaw lord* (from
+- [x] D.1 Threat kinds *risen* (from `tombs` and `scars`; the barrow at least two levels deep) and *outlaw lord* (from
   active gangs), with schemes, signs (as marks and scenes where they can be: the emptied hamlet, the dead on the road
   at night), bounded dooms and the world's own endings (politics already hangs gangs).
-- [ ] D.2 Step kinds rescue, fetch, defeat, capture (through `story.on_fate` from `fight.decide_captive`), recruit,
+- [x] D.2 Step kinds rescue, fetch, defeat, capture (through `story.on_fate` from `fight.decide_captive`), recruit,
   rally, hold (waves as successive battles with no rest, at a settlement or a road tile laid by `game/arena.build`, on
   a set night: the calendar's new moon if it has one, else "in N days"), rite, escort, confront – written on Part C's
   goal predicates where they fit, and able to carry a situation (§8.10); the Part D selectors.
-- [ ] D.3 The Risen and the Outlaw Lord, first forms, with all their words *(parallel)*; their scenes (the dead at
+- [x] D.3 The Risen and the Outlaw Lord, first forms, with all their words *(parallel)*; their scenes (the dead at
   the camp's edge by night; a warning nailed to your door; the inside man followed through the streets at midnight);
   their arenas (the ford at night with burning carts across the road, fire on the field; the hideout); their
   villains' minimal reactions (a letter in an old hand, as a page; a test on the road).
-- [ ] D.4 The opening (ADVENTURES.md §5.12): arriving into a crisis (the gate shut and a crowd at the mill), a summons
+- [x] D.4 The opening (ADVENTURES.md §5.12): arriving into a crisis (the gate shut and a crowd at the mill), a summons
   (a letter), present terror (waking as the gang's captive), built on the threats near the start town and staged;
   `story.begin` offers it. Tests: `tests/test_first_hour.py`.
-- [ ] D.5 Pictures (barrow and hideout backdrops for the vignettes), sounds; floors; storyplay: each blueprint finishes
+- [x] D.5 Pictures (barrow and hideout backdrops for the vignettes), sounds; floors; storyplay: each blueprint finishes
   in at least 90% of runs; FORMAT_VERSION +1; verify; Part D to `main`.
 
 ### Part E – Villains who act; the finale in full

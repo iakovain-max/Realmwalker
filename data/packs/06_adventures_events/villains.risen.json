@@ -1,0 +1,83 @@
+{
+  "_comment": "The Risen's villain (Expansion 6 D.3, docs/ADVENTURES.md §6.2): the dead king, proud or grieving; his moves (an omen, a letter in an old hand, his dead at the camp's edge by night, a test on the road) and his boss template (phase two: the barrow wakes).",
+  "tempers": {
+    "proud": {
+      "speaks": true,
+      "moves": {"risen_omen": 3, "risen_letter": 3, "risen_at_camp": 2, "risen_test": 2},
+      "first_words": [
+        "\"Kneel,\" says {villain}, in a voice like a door in a tomb. \"I was a king before your grandfathers' grandfathers were born.\"",
+        "\"Do you know what you stand on?\" says {villain}. \"My hall. My floor. You are here by my leave, and my leave is withdrawn.\"",
+        "\"You smell of the field and the road,\" says {villain_short}. \"Of labour. Cattle always do. Come, then, and be driven.\"",
+        "\"I gave this country its law,\" says {villain}. \"What have your kind given it? Mud, and a grave to be dug.\"",
+        "\"A flesh thing with a blade,\" says {villain_short}, and almost smiles. \"My hounds would have done better. Come, then.\"",
+        "\"Bend the knee, and I will have you buried with honour,\" says {villain}. \"Refuse, and I will have you buried.\"",
+        "\"I have been dead longer than {town} has had a name,\" says {villain_short}. \"Do not suppose you are the first to try.\""
+      ],
+      "omens": [
+        "A crown of twisted grass lies in the road, set down with care, as if for someone to find.",
+        "A line of old iron spearheads stands upright in the verge, each driven to the socket, all pointing towards the hill.",
+        "Every bird on the road has stopped singing. A single raven sits on a milestone with its head turned to the barrow.",
+        "The frost in the ruts has made a pattern like a crown, and the sun has been on it for an hour and has not touched it.",
+        "A cairn has been built at the roadside overnight, the biggest stone set at the top, and a bone hand lies on it, palm up, as if asking for tribute.",
+        "A banner of rotted purple hangs from a dead tree. There is no wind, and still it stirs.",
+        "The milestones along the road have been turned in the night, so that their faces look towards the hill.",
+        "An old coin stamped with a face no one living remembers has been laid on every gatepost for a mile.",
+        "Hoofprints run up the road, a whole troop's worth, and end in the middle of a field. There are no horses anywhere.",
+        "A ring of bones kneels in the long grass, all of them facing the barrow, all with their heads bowed."
+      ]
+    },
+    "grieving": {
+      "speaks": true,
+      "moves": {"risen_omen": 3, "risen_letter": 2, "risen_at_camp": 3, "risen_test": 1},
+      "first_words": [
+        "\"They buried me under the hill and forgot my name,\" says {villain}. \"You will remember it.\"",
+        "\"It was so quiet in the hill,\" says {villain_short}. \"So long. Nobody came. Why did nobody come?\"",
+        "\"My hall is a barrow,\" says {villain}, \"and my people are bones in a field. You will forgive me if I do not welcome you.\"",
+        "\"I was betrayed at my own table,\" says {villain_short}, \"by one I loved. I have had a great many years to think of it.\"",
+        "\"Do not pity me,\" says {villain}. \"I would take it as an insult, and I have little left but my insults.\"",
+        "\"I only wanted to see my country once more,\" says {villain_short}. \"And you would take even that from me.\"",
+        "\"Everything I knew is gone,\" says {villain}. \"{town} is built on the road where my riders went. You live on my grave.\""
+      ],
+      "omens": [
+        "Someone has set a ring of white stones round an old grave by the road, and the grass inside it is dead.",
+        "A bunch of dried flowers lies on a cairn at the crossroads. Every petal is the colour of ash, and the stems are bound with black thread.",
+        "The lip of the old well is wet, though no one has drawn water in days, and the cold coming up from it is a grave's cold.",
+        "A child's shoe sits on a milestone, set there carefully, as though someone were expected to come back for it.",
+        "The dead grass lies flat along a stretch of the road as though someone knelt there for a very long time, and at the end of it is the print of a single knee.",
+        "A moth-eaten cloak hangs on a thorn, folded neatly over the branch, and on the cloth is a stain that might be wine or might be blood.",
+        "A low sound comes over the fields at dusk, like singing without words, and the animals will not go forward until it stops.",
+        "The dust of the road has been written in with a finger: one name, over and over, that no one on the road can read.",
+        "A wooden toy horse lies in the middle of the road with its face turned to the barrow.",
+        "The hedge along the barrow road is white with frost in high summer, and the frost lies in the shape of hands pressing out."
+      ]
+    }
+  },
+  "moves": {
+    "risen_omen": {"beat": "risen_omen", "attention": [0, 9]},
+    "risen_letter": {"beat": "risen_letter", "attention": [1, 9]},
+    "risen_at_camp": {"beat": "risen_at_camp", "attention": [1, 9]},
+    "risen_test": {"beat": "risen_test_road", "attention": [2, 9]}
+  },
+  "bosses": {
+    "risen": {
+      "tiers": [1, 4],
+      "roles": ["dead_king"],
+      "hp": 1.7,
+      "resistances": 2,
+      "actions": 2,
+      "menu": ["move", "strike"],
+      "phase": {
+        "at": 0.5,
+        "kind": "raise",
+        "creature": "skeleton",
+        "count": 2,
+        "lines": [
+          "A cold hand lifts, and all round the hall the lids of the sarcophagi grind and slide. The barrow is waking.",
+          "Stone lids crack along the walls, and from every coffin in the hall a pale hand reaches up. The dead are answering the call.",
+          "A voice that is not a voice rings through the hall, and the sarcophagi shudder and open. The guard of the dead rises to defend the throne.",
+          "Dust sifts from the roof. All along the hall old bones draw themselves together and stand, and the cold in the air turns sharp as a knife."
+        ]
+      }
+    }
+  }
+}

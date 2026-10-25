@@ -189,3 +189,32 @@ def test_every_situation_has_enough_ways_to_be_told(data):
             if isinstance(lines, list) and len(lines) < 3:
                 short.append(f"scene {sid} {k}: {len(lines)} lines")
     assert not short, "\n".join(short)
+
+
+def test_part_d_has_enough_ways_to_be_told(data):
+    """Expansion 6 D.5: every line a Part D step says (recruit, rally, confront, escort, hold, rite, a captive's talk,
+    an ambush, a band waiting) has >=3 ways in adventures.json "words", every letter a beat hands you >=3 hands of it,
+    and each opening's beat >=3 intros (the first hour is read once a life, and many lives are lived)."""
+    from realmwalker.game.story import deeds, opening
+
+    adventures, beats = _pack(data, "adventures"), _pack(data, "beats")
+    words = adventures.get("words", {})
+    short = [f"words {k}: {len(words.get(k, []))}" for k in deeds.DEFAULT_WORDS if len(words.get(k, [])) < 3]
+
+    def letters(node):
+        if isinstance(node, list):
+            if len(node) > 1 and node[0] == "letter":
+                yield node[1]
+            for x in node:
+                yield from letters(x)
+        elif isinstance(node, dict):
+            for x in node.values():
+                yield from letters(x)
+
+    short += [f"letter {k}: {len(words.get(k, []))}" for k in set(letters(beats)) if len(words.get(k, [])) < 3]
+    for kind in opening.KINDS:
+        for bid in (opening.BEATS[kind], opening.TOLD.get(kind)):
+            if bid is not None and len(beats[bid]["text"][0]) < 3:
+                short.append(f"opening beat {bid}: {len(beats[bid]['text'][0])} intros")
+    assert set(letters(beats)), "the Risen's letter and the outlaws' warning are beats' letters"
+    assert not short, "\n".join(short)

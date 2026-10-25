@@ -45,6 +45,7 @@ WOUND_HP_FLOOR = 14  # hit points a character's body counts as having, at least,
 MORALE_HP = {"beast": 0.4, "bandit": 0.35, "coward": 0.6, "soldier": 0.3, "warrior": 0.15}
 FEARLESS = {"fanatic", "mindless"}
 MERCIFUL = {"bandit", "coward", "soldier"}  # these rob a beaten party and leave it alive
+FLESH_BONDS = ("story_ally", "raised")  # bonded creatures that are flesh: a tale's people, a boss's men (Expansion 6)
 DEFAULT_RANGE = query.DEFAULT_RANGE
 ACTIVITY = ("move", "attack", "damage", "cast", "push", "teleport", "heal", "dart", "token_strike")
 QUIET_ROUNDS = 3  # rounds in which nobody can get at anybody before a fight breaks off
@@ -305,7 +306,8 @@ class Fighter:
     def possessive(self) -> str:
         if self.char:
             return "his" if self.char.sex == "male" else "her"
-        return "its" if self.cdef["kind"] in ("beast", "undead") or self.bond is not None else "his"
+        bonded = self.bond is not None and self.bond.get("kind") not in FLESH_BONDS
+        return "its" if self.cdef["kind"] in ("beast", "undead") or bonded else "his"
 
     @property
     def sheet(self) -> Sheet | None:
@@ -3424,13 +3426,15 @@ class Battle:
 
     def _knock_out(self, source: Fighter | None, target: Fighter) -> bool:
         """Knocking a creature out (PHB 2024): a melee blow that would drop it to 0 may leave it senseless instead.
-        A party member's blow on someone who can be taken alive asks (the Auto, and the enemy, kill)."""
+        A party member's blow on someone who can be taken alive asks (the Auto, and the enemy, kill - unless a tale
+        wants them alive: Expansion 6's capture)."""
         if source is None or source.side != PARTY or not self._melee_blow or target.creature is None \
                 or target.kind != "humanoid" or not target.active:
             return False
+        wanted = bool((getattr(target.creature, "story", None) or {}).get("alive"))
         if not reactions.yes(self, Decision(source, "knock_out", f"{target.the_name} is beaten. Knock them out "
                                             f"instead of killing? (taken alive, a prisoner)", [("yes", "Knock out"), ("no", "Kill")],
-                                            default="no")):
+                                            default="yes" if wanted else "no")):
             return False
         target.hp = 0
         target.state = "surrendered"  # taken alive: a prisoner when the fight is over
@@ -3512,6 +3516,11 @@ class Battle:
             f.creature.alive = False  # (the raised dead fall, and this time they stay down: Expansion 3 F.4)
             self._clear_bonded(f)
             self.say(f"{f.the_name[:1].upper() + f.the_name[1:]} falls apart, and nothing moves it again.", "danger")
+        elif f.creature and f.bond is not None and f.bond.get("kind") in FLESH_BONDS:
+            f.creature.alive = False  # (a story's people, or what a boss raised: they die as anything dies, D.3)
+            self._clear_bonded(f)
+            self.say(self._fill(self.rng.choice(self.t.combat_text["dead"]), killer, f), "danger" if f.side == PARTY
+                     else "good")
         elif f.creature and f.bond is not None:
             f.creature.alive = False  # (it disappears at 0 hit points, leaving nothing: PHB 2024)
             self._clear_bonded(f)

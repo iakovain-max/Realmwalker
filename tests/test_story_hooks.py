@@ -39,10 +39,14 @@ def _start_near_a_beast(made, tables):
     if not beasts:
         pytest.skip("no beast")
     t = beasts[0]
+    for other in threats.records(w).values():
+        if other["kind"] != "beast":
+            other["state"] = "ended"  # (the risen and the outlaws have their own tales: tests/test_risen_outlaw.py)
     town = min((s for s in w.settlements if s.kind in ("town", "village")),
                key=lambda s: threats.distance(w, t, s.x, s.y))
     g = new_game(w, tables, start_settlement=town.id)
     g.survival = False
+    beats.director(g.world)["opening"] = None  # (the first hour has its own tests: tests/test_first_hour.py)
     return g, threats.records(g.world)[t["id"]]
 
 
@@ -66,17 +70,19 @@ def _stand(game, place):
 
 def test_a_new_life_is_offered_a_tale_on_its_first_day(made, tables):
     game, t = _start_near_a_beast(made, tables)
+    story.begin(game)
     d = beats.director(game.world)
-    assert any(item.get("hook") for item in d.get("scheduled", [])), "a hook is waiting for the first day"
+    assert d.get("opening") and d["opening"]["state"] == "waiting", "an opening waits for the first day"
+    d["opening"]["day"] = int(game.moment.total_days) - 1  # (a day gone by without its streets: told as a beat)
     story.daily(game)
     rec = beats.pending(game)
-    assert rec is not None and rec["beat"] == "story_hook" and game.busy
+    assert rec is not None and game.tables.beats[rec["beat"]]["family"] == "hook" and game.busy
     assert rec["words"]["threat"] in threats.records(game.world)
 
 
 def test_the_beast_from_its_hook_to_its_ending(made, tables, monkeypatch):
-    game, _ = _start_near_a_beast(made, tables)
-    story.daily(game)
+    game, t0 = _start_near_a_beast(made, tables)
+    story.offer_hook(game, t0)  # (its hook as a plain beat; the first hour's openings: tests/test_first_hour.py)
     tid = beats.pending(game)["words"]["threat"]
     t = threats.records(game.world)[tid]
     _play(game, _choice(game, "hunt it"))
@@ -203,8 +209,8 @@ def test_a_tale_and_its_foes_are_saved_and_come_back_the_same(made, tables, tmp_
 
 
 def _take_the_tale(made, tables):
-    game, _ = _start_near_a_beast(made, tables)
-    story.daily(game)
+    game, t0 = _start_near_a_beast(made, tables)
+    story.offer_hook(game, t0)  # (its hook as a plain beat; the first hour's openings: tests/test_first_hour.py)
     _play(game, _choice(game, "hunt it"))
     adv = story.active(game)[0]
     beats.director(game.world)["card"] = None

@@ -1,0 +1,101 @@
+{
+  "_comment": "The first hour (Expansion 6 D.4, game/story/opening.py): what the start town's people do as a new hero walks in. opening_gate: the bell, the gate barred behind you, a crowd, one of them speaks; opening_summons: a runner with a sealed letter from the threat's own town.",
+  "scenes": {
+    "opening_gate": {
+      "about": "As you come in, the bell goes and the gate is barred behind you; the town's people gather in the street round one who speaks for them, and the opening's beat follows.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "bell", "always": true},
+        {"cue": "pick", "role": "warden", "jobs": ["guard", "soldier", "labourer", "porter"], "within": 30},
+        {"cue": "shout", "who": "warden", "key": "bar", "ticks": 2},
+        {"cue": "pick", "role": "speaker", "jobs": ["elder", "headman", "priest", "preacher", "baker", "farmer", "innkeeper", "smith"], "within": 45},
+        {"cue": "crowd", "at": "speaker", "count": 8, "radius": 2, "key": "murmur", "ticks": 14},
+        {"cue": "focus", "at": "speaker"},
+        {"cue": "say", "who": "speaker", "key": "tell", "ticks": 3},
+        {"cue": "walk", "who": "speaker", "to": "you"},
+        {"cue": "say", "who": "speaker", "key": "ask", "ticks": 3},
+        {"cue": "beat", "always": true},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "speaker", "to": "home"}
+      ],
+      "words": {
+        "bar": [
+          "Bar the gate! Bar it!",
+          "Shut it! Nobody else in or out!",
+          "Get that gate shut, damn you!",
+          "Gate! Now!",
+          "Drop the bar - it's coming!"
+        ],
+        "murmur": [
+          "Is it true, then?",
+          "My sister's lad went that way this morning.",
+          "Where's the watch? Where's the lord?",
+          "Who's that come in?",
+          "Quiet, she's speaking.",
+          "I told you. I told you all.",
+          "They've a sword, look."
+        ],
+        "tell": [
+          "Listen to me! Everybody listen!",
+          "Hush now. Hush. We have to think.",
+          "It's no use shouting. Shouting won't help.",
+          "We knew this was coming. We all knew.",
+          "Stay inside tonight, all of you."
+        ],
+        "ask": [
+          "You. You've come from outside. Will you hear us?",
+          "Stranger - a word, if you've a moment for frightened people.",
+          "You've the look of someone who can use that. Please.",
+          "Don't go yet. You'll want to hear this.",
+          "We need somebody. You'll do, if you'll do it."
+        ]
+      }
+    },
+    "opening_summons": {
+      "about": "A child or a serving hand runs up to you as you come in and presses a sealed letter into your hand from the town that needs you; its page opens, then the opening's beat.",
+      "cues": [
+        {"cue": "pick", "role": "runner", "jobs": ["child", "serving_hand", "porter", "labourer"], "within": 40, "holding": "letter"},
+        {"cue": "hold"},
+        {"cue": "shout", "who": "runner", "key": "call", "ticks": 1},
+        {"cue": "focus", "at": "runner"},
+        {"cue": "run", "who": "runner", "to": "you"},
+        {"cue": "say", "who": "runner", "key": "breath", "ticks": 3},
+        {"cue": "give", "who": "runner", "letter": "letter"},
+        {"cue": "say", "who": "runner", "key": "plea", "ticks": 3},
+        {"cue": "read"},
+        {"cue": "beat", "always": true},
+        {"cue": "walk", "who": "runner", "to": "home"}
+      ],
+      "words": {
+        "call": [
+          "You! Are you the one?",
+          "Wait! There's a letter for you!",
+          "Stranger! Hold on!",
+          "You there - with the pack!",
+          "Wait! Please!"
+        ],
+        "breath": [
+          "A rider left it at the inn. Said give it to whoever came armed.",
+          "It came this morning. Nobody else would take it.",
+          "They said you'd be on the road from the west. I watched all day.",
+          "It's got a seal on. A proper one.",
+          "I'm to wait while you read it, they said."
+        ],
+        "plea": [
+          "It's from {town}. That's all I know.",
+          "The rider looked half dead. Read it, go on.",
+          "I didn't open it. I swear.",
+          "Is it bad? It's bad, isn't it.",
+          "They paid me a penny to give it you. Read it."
+        ],
+        "letter": [
+          "To any who can bear arms, and will,\n\n{hook}\n\nWe are sending this by every road. If it finds you, come {where} to {town}, and come soon.\n\nThere will be bread and a bed, and what coin we can find.",
+          "Whoever reads this,\n\nWe have no right to ask it of you, and we ask it anyway. {hook}\n\nThe lord's men will not come. Our own have tried.\n\nCome to {town}.",
+          "To the bearer of a sword,\n\n{hook}\n\nThis is the third letter we have sent. Perhaps this time someone will come.\n\nAsk for us in {town}. Anyone will tell you where.",
+          "Friend,\n\nForgive a stranger's hand. {hook}\n\nWe are plain people and frightened. We will pay what we have.\n\nCome {where}, to {town}. Do not wait long.",
+          "To you, whoever you are,\n\n{hook}\n\nThey say a letter with a seal on it is always answered. We have put the best seal we have on this one.\n\n{town} waits for you."
+        ]
+      }
+    }
+  }
+}

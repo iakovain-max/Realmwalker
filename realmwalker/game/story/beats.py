@@ -434,3 +434,47 @@ def _companions(game, rec, *tags):
 
         react(game, *tags)
     return []
+
+
+# ---------------------------------------------------------------------------- the Risen and the Outlaw Lord (D.3)
+@condition("key")
+def _has_key(game, rec, value) -> bool:
+    adv = adventure(game, rec)
+    have = set(adv["keys"]) if adv else set()
+    return all(k in have for k in (value if isinstance(value, list) else [value]))
+
+
+@op("letter")
+def _letter(game, rec, key: str, hand: str = "dark"):
+    """A letter put in your hand (the villain's in an old hand, a warning nailed to your door): its words are the
+    adventures.json words table `key` (paragraphs split by a blank line), signed by the villain; its page opens
+    (game/letters.py), and it is kept in the pack to be read again."""
+    from realmwalker.game import letters
+
+    lines = game.tables.adventures.get("words", {}).get(key)
+    if not lines:
+        return []
+    rng = rng_for(game, rec).child(f"letter/{key}")
+    words = {k: str(v) for k, v in words_for(game, rec).items()}
+    tables = game.tables.adventures.get("words", {})
+    paragraphs = [tidy(textgen.fill(p, rng, tables, words)) for p in rng.choice(list(lines)).split("\n\n")]
+    sender = words.get("villain", "someone who does not sign")
+    lid = letters.write(game, sender=sender, lines=paragraphs, hand=letters.hand_for(hand))
+    letters.give(game, lid)
+    letters.show(game, lid)
+    return ["<loot>You keep the letter.</>"]
+
+
+@op("finish")
+def _finish(game, rec, *args):
+    """The tale ends here, without its last fight (the rite done, the parley won): its ending and epilogue."""
+    from realmwalker.game import story
+    from realmwalker.game.story import endings
+
+    adv = adventure(game, rec)
+    if adv is None or adv["state"] != "active":
+        return []
+    for st in story.open_steps(adv):
+        if st["kind"] in ("finale", "slay"):
+            st["state"] = "done"
+    return endings.finish(game, adv)

@@ -625,6 +625,7 @@ def test_the_story_s_pictures_draw(pictured):
     render(app)
     if other is not None and other.get("signs"):
         game.renown.heard.add(other["signs"][0])
+        game.player.explored[threats.home_xy(game.world, other)] = True  # (a den never seen is not given away)
     marks = story.map_signs(game)
     assert any(k == "story" for _, _, k in marks)
     if other is not None and other.get("signs"):

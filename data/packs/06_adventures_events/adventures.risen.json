@@ -1,0 +1,338 @@
+{
+  "_comment": "The Risen (Expansion 6 D.3, docs/ADVENTURES.md §6.2), first form: a dead king walks out of his barrow. I the dead do not rest (witness, search the field of the dead, rescue the taken from the barrow's upper level); II what binds him (learn who he was, fetch what binds him, defeat the waker, recruit the ally, a choice); III the night of the dead (rally the town, hold the ford on its night, the rite at the barrow or the finale in his hall). Words: the tables below ({risen_witness}...), with the tale's own ({villain}, {villain_short}, {home}, {town}, {field}, {ford}, {crypt}, {lore}, {area}, {patron}, {witness}, {taken}, {ally}, {slayer}, {died_year}, {he}/{him}/{his}/{He}/{His}, {king}, {man}).",
+  "words": {
+    "risen_witness": [
+      "\"It was my brother,\" {witness} says. \"Dead since harvest, and I saw him walk past the window with the others, towards {home}. He did not look in. That was the worst of it.\"",
+      "{witness} keeps one hand flat on the table to stop it shaking. \"Old Mattias from the mill, and we put him in the ground at the turn of the year. They went up the lane by moonlight, all going the one way. All going to {home}.\"",
+      "\"I thought it was a procession,\" says {witness}. \"Then I saw my mother's shawl. We buried her in it. She walked with her head down, and the frost went before her up the hill to {home}.\"",
+      "\"I counted forty and stopped,\" {witness} says. \"Some I knew. Some were in clothes I never saw, wrapped in rotted cloth with their jaws tied up. Not one looked round. They were walking to {home}, and none of them hurried.\"",
+      "{witness} will only tell it by day, with the door open. \"My boy. Three winters in the ground. He passed the gate at midnight, and the dogs lay down with their noses under their paws. I said his name, and he did not stop.\""
+    ],
+    "risen_past": [
+      "{villain} died {died_year}, killed by {slayer}, and was laid in {home} with {his} crown and {his} guard round {him}. The old songs say {he} swore to come back for what {he} lost. Someone has opened the barrow, and {he} has kept {his} word. {His} true name is cut on the stone under {his} feet; say it, and {he} will remember {he} is dead.",
+      "{villain} was brought down {died_year} by {slayer}, and the people of {area} raised {home} over {him} and swore {his} name should be forgotten. It was scraped out of the records, but not off the stone. Two things hold {him}: the crown that went into the dark on {his} brow, and {his} true name, which only the stone remembers.",
+      "{villain} was the last of {his} line. {He} was killed {died_year} by {slayer}, and the dead {king} was laid in {home} with the crown still on and a guard set to keep the door. {His} true name was cut on the stone so that a priest could call {him} to rest; that name is the key to {him}, and the crown is the chain.",
+      "The songs of {area} agree on little, but they agree that {villain} died {died_year} at the hand of {slayer}, and was put into {home} still wearing {his} crown. The crown ties {him} to the world. {His} true name, which only the oldest stones remember, is what a priest would use to untie {him}."
+    ],
+    "risen_letter": [
+      "To the one who meddles,\n\nI was a {king} in this country when your people were herding goats in the hills. I have slept, and now I am awake, and I have not forgotten what was taken from me.\n\nGo home. This is not your quarrel, and you are only flesh.\n\n{villain}",
+      "To the one who walks in my country,\n\nI know your step. I have heard it on the road above my hall, and in the town where my people once knelt. You are looking for the thing that holds me. You will not find it.\n\nThe hill was mine before it was a grave. Let me keep what is left of it.\n\n{villain}",
+      "To the stranger with the lamp,\n\nThey sealed me in the dark and gave my name to no one. I do not forgive it. I waited while three of my houses fell and the grass grew over my road.\n\nI have no quarrel with you. Stand aside, and I shall take only what was mine.\n\n{villain}",
+      "To the living,\n\nYou have found my name. Good. Say it wherever you like, I shall hear. I was a ruler, and the dead I have raised are my people still. They were never yours.\n\nLeave the crown where it lies. Leave the ford. Go home before the dark nights come.\n\n{villain}"
+    ]
+  },
+  "epithets": {
+    "risen": [
+      "Gravewarden",
+      "who Laid the King",
+      "the Unafraid",
+      "Bane of {villain_short}",
+      "of the Long Night",
+      "the Barrow-Breaker"
+    ]
+  },
+  "blueprints": {
+    "risen": {
+      "name": "The Risen",
+      "tiers": [1, 4],
+      "from": ["risen"],
+      "flavours": ["ghost", "gothic"],
+      "title": [
+        "The {king} Under {home}",
+        "{villain_short} Wakes",
+        "The Night of the Dead at {town}",
+        "The Dead Walk from {home}",
+        "Iron on the Doors of {town}"
+      ],
+      "hook": [
+        "{patron} has not slept. \"The dead are walking out of {home},\" they say. \"Our own dead, some of them. {villain} is awake under the hill, and somebody woke {him}. Will you go up there?\"",
+        "\"My grandmother's grave is open,\" {patron} says, with no greeting. \"It was dug out from the inside. They say it is {villain} out of {home}, and that {he} is calling the rest. I cannot order you to go there. I am asking.\"",
+        "{patron} has hung iron nails across every door in {town}, and it has not helped. \"{villain} is awake, and {his} dead walk at night. If you have any skill with the dead, we need it. We will pay what we can.\"",
+        "Nobody in {town} will say the name aloud. It is {patron} who says it to you at last, low, at the back of the hall: \"{villain}. {He} is out of {home}. Our own people are among those who walk. Will you stop it?\""
+      ],
+      "premise": [
+        "{villain} has risen in {home} and the dead of {area} walk for {him}: find who woke {him}, learn what binds {him} to the world, and lay {him} down again before {he} takes {town}.",
+        "A dead {king} walks out of {home} with the dead of {area} at {his} back: learn who {he} was, take from the dark the thing that holds {him} to the world, and put {him} down before {town} falls.",
+        "Someone woke {villain}, and the graves round {home} are opening. Find the one who did it, win allies in {town}, hold the ford on the night of the dead, and lay {him} to rest."
+      ],
+      "places": {
+        "home": "threat.home",
+        "town": "settlement_near(home, 2, 18) | settlement_near(home, 0, 40)",
+        "field": "scar_of(villain) | road_tile_near(home, 2, 10) | road_tile_near(town, 1, 14) | open_tile_near(town, 2, 10)",
+        "ford": "road_tile_near(town, 2, 8) | road_tile_near(home, 2, 16) | road_tile_near(town, 1, 20) | open_tile_near(town, 2, 8)",
+        "camp": "road_tile_near(home, 2, 9) | road_tile_near(town, 2, 12) | road_tile_near(home, 1, 20) | open_tile_near(home, 2, 9)",
+        "crypt": "site_style(crypt|temple, 4, 30) | home",
+        "lore": "settlement_with(temple, 0, 40) | town"
+      },
+      "cast": {
+        "patron": {"pick": ["priest_of(town)", "headman_of(town)", "notable_of(town)"]},
+        "witness": {"pick": ["kin_of_victim(town)", "survivor_of(town)"]},
+        "taken": {"pick": ["survivor_of(town)", "kin_of_victim(town)"]},
+        "ally": {"pick": ["veteran_of(town)", "hunter_of(town)"]},
+        "waker": {"pick": ["band(cultists)"]},
+        "innocent": {"pick": ["settlement(town)"]}
+      },
+      "hidden": {},
+      "chapters": [
+        {
+          "id": "dead",
+          "need": "all",
+          "title": ["The Dead Do Not Rest", "What Walks at Night", "Empty Graves"],
+          "goal": [
+            "Hear it from someone who saw the dead walk, read the field of the dead, and bring the taken back out of {home}.",
+            "Find someone who saw the dead walk, search the old field of the dead, and bring {taken} out of {home}."
+          ],
+          "opening": [
+            "In {town} they bar the doors at dusk and hang iron over them. Somebody saw the dead go by, and somebody else was taken.",
+            "Frost lies on the doors in {town}, and it is the wrong season for it. The shutters stay closed, and nobody will tell you what they heard last night.",
+            "Graves are open round {town}, and the people will not go near them. Some who went missing in the night left bare footprints leading uphill.",
+            "A bell rings in {town} at dusk, not for any service, but for warning. The living are to be indoors before the last of the light."
+          ],
+          "reveal": [
+            "Now you know the name they would not say in {town}: {villain}, who died {died_year}, and someone has opened {his} barrow and woken {him} on purpose.",
+            "Someone came with a spade and a book and opened the way, and the dead have been walking out of {home} ever since. The name they walk for is {villain}.",
+            "The nights have a shape now. Someone opened {home} from outside, and {villain} was waiting on the other side. {He} died {died_year}, and {he} has not forgotten how.",
+            "It is clear in your head now: a living hand, an old anger, and a long dead name. {villain} wants {town}, and the dead of the field are {his} first soldiers."
+          ],
+          "steps": [
+            {"kind": "witness", "who": "witness", "words": "risen_witness", "gives": ["clue:waker"]},
+            {"kind": "search", "at": "field", "beat": "risen_search_field", "skill": "religion", "dc": 12,
+             "gives": ["clue:name"]},
+            {"kind": "rescue", "who": "taken", "at": "home.level(1)", "gives": ["flag:taken_freed"]}
+          ]
+        },
+        {
+          "id": "binds",
+          "need": "all",
+          "title": ["What Binds Him", "The Crown and the Name", "Who {villain_short} Was"],
+          "goal": [
+            "Learn who {villain_short} was and what holds {him} in the world, take it from where it lies, deal with the one who woke {him}, and find someone who will stand with you.",
+            "Find out who {villain_short} was and what holds {him} here, fetch it from the crypt, put down whoever opened the barrow, and gather someone to stand beside you."
+          ],
+          "opening": [
+            "The dead do not walk for nothing. Something holds {villain_short} to the world, and someone opened the barrow to set {him} loose.",
+            "The dead walk with a purpose. A chain holds {villain_short} to the world, and a crown or a name is a link of it. Find the links.",
+            "Someone paid for the opening of {home}. Learn who {villain_short} was, and what was buried with {him}, and the way to lay {him} down will show.",
+            "No {king} of the old songs is easily put down. {villain_short} has a name that calls {him} to rest and a token that binds {him} to the world. You will need both."
+          ],
+          "reveal": [
+            "You have what binds {him}, and the one who woke {him} will wake nothing more. {villain_short} knows it. On the next dark night {he} will come for {town}.",
+            "The crown is in your hands, and the one who opened the barrow is done with. {villain_short} will feel it. Soon {he} will come out, and the dead will come before {him}.",
+            "You know who {villain_short} was, and what keeps {him} here. What is left is to make {town} ready, because {he} knows that you know.",
+            "The work is done and the road is quiet. It will not stay so. {villain_short} has felt the crown taken, and {his} anger lies on {town} like a cold weight."
+          ],
+          "steps": [
+            {"kind": "learn", "about": "villain", "answer": "risen_past", "beat": "risen_lore_at_field",
+             "note": "Learn who {villain_short} was, and {his} true name",
+             "routes": ["sage(lore)", "ask(ally)", "skill(history, field)", "divine()"], "gives": ["key:name"]},
+            {"kind": "fetch", "what": "the crown of {villain_short}", "base": "jade_circlet", "at": "crypt.level(1)",
+             "gives": ["key:anchor"]},
+            {"kind": "defeat", "who": "waker", "at": "camp", "gives": ["clue:waker"]},
+            {"kind": "recruit", "who": "ally", "check": ["persuasion", 12]},
+            {"kind": "choose", "beat": "risen_truth_or_keep", "note": "Decide what {town} should be told of {slayer}"}
+          ]
+        },
+        {
+          "id": "night",
+          "need": "all",
+          "title": ["The Night of the Dead", "The Ford", "Dark Night at the Ford"],
+          "goal": [
+            "Raise {town} to stand, hold {ford} on the night {he} comes, and then go down to {home} and end it.",
+            "Make {town} ready, stand at {ford} against the dead on the night, then go into {home} and finish it."
+          ],
+          "opening": [
+            "{villain_short} will come out of the hill on a dark night, and {his} dead before {him}, and {town} is the first thing in {his} way.",
+            "The dark of the moon is coming, and {villain_short} has waited long enough. {town} has a few days to find its courage.",
+            "The frost comes down earlier each evening. When it reaches {ford}, the dead will cross, and behind them {villain_short}.",
+            "Every night the dead walk a little closer to {town}. The old ford is where they will cross, and where they must be stopped."
+          ],
+          "reveal": [
+            "It is over. Under {home} there is only dust and the dark.",
+            "The barrow is empty of everything but dust. {town} will wake to an ordinary morning, and not know yet what to do with it.",
+            "The cold has gone out of the ground. In {town} the children have started to play in the street again.",
+            "It is finished. The dead lie where they were laid, and {home} is only a hill."
+          ],
+          "steps": [
+            {"kind": "rally", "at": "town", "check": ["persuasion", 13]},
+            {"kind": "hold", "at": "ford", "group": "restless_dead", "field": "ford", "days": [3, 6],
+             "gives": ["key:ford"], "fails_to": "ford_fell"},
+            {"kind": "go", "at": "home", "beat": "risen_the_barrow"},
+            {"kind": "rite", "at": "home", "needs": ["key:anchor"], "optional": true, "beat": "risen_the_rite",
+             "note": "With what binds {him} in your hands, lay {villain_short} to rest at {home}"},
+            {"kind": "finale", "at": "home.deepest"}
+          ]
+        }
+      ],
+      "finale": {
+        "boss": "villain",
+        "template": "risen",
+        "at": "home.deepest",
+        "keys": {
+          "anchor": ["no_legendary_resistance"],
+          "name": ["frightened(1)"],
+          "ally": ["ally_fights"],
+          "ford": ["minions(-50)"]
+        },
+        "words": {
+          "warning": [
+            "The air goes cold enough to ache in the teeth. Ahead, in the dark of the hall, something sits on a stone seat and waits, as it has waited for a very long time.",
+            "The stair ends, and the barrow opens into a long hall with a stone seat at the far end and closed stone coffins down both sides. It is very cold and very still, and something in the hall is listening.",
+            "Your breath hangs in front of you and does not clear. At the far end of the dark there is a faint grey light, the colour of old bone, and a seated shape in it.",
+            "The torches shrink to blue points. Along the walls the coffin lids sit a little crooked, as if lifted and set back. On the seat at the end, something waits."
+          ],
+          "first": [
+            "A crowned head lifts from its breast, and the eyes in it are two points of cold light.",
+            "The shape on the seat stands, slowly, and the crown on its brow catches what little light there is. It looks at you for a long moment, deciding whether you are worth the trouble.",
+            "Dust falls from the roof as the figure rises, and the sound of it is old leather and dry stone. It does not hurry. It has never had to.",
+            "A chain of old gold shifts on a breastbone. The head lifts, the empty sockets find you, and the cold in the hall folds in."
+          ]
+        }
+      },
+      "endings": [
+        {
+          "id": "laid_to_rest",
+          "if": ["flag:laid"],
+          "ops": [["risen_laid"], ["danger", "home", -1], ["fame", 3]],
+          "pages": {
+            "place": [
+              "{town} took the iron down from its doors at midsummer. The children go up past {home} to the berry bushes again, and nothing watches them.",
+              "In {town} they put out the lanterns that had burned all night in the windows. The bell in the square rang once, for the dead, and nobody was afraid of the sound.",
+              "The frost left {town} within a week. By the end of the month the fields were ploughed again, and the old men were talking about the weather.",
+              "{town} held a burying for those of the walking dead who could be named, and put them in the graveyard, not in the field. Nobody stayed away."
+            ],
+            "patron": [
+              "{patron} said the old words over the barrow every year after, so that {villain_short} would know {he} was remembered, and would not need to come back to make sure.",
+              "{patron} walked up to {home} on the first anniversary, alone, and said the name aloud. Nothing answered. {patron} took that to be the right answer.",
+              "{patron} had your name cut small on the lintel of the hall, under the iron nails that no longer needed to be there.",
+              "{patron} sat with you a long time at the end and said little. \"They are quiet now,\" {patron} said at last. \"That is more than I hoped.\""
+            ],
+            "ally": [
+              "{ally} went up to {home} alone, once, afterwards, and left a cup of ale on the stone. \"For the old {king},\" {ally} said. \"{He} was one of us, once.\"",
+              "{ally} stood watch at the ford every dark night that winter, with no one asking. Nothing came. {ally} stood there all the same.",
+              "{ally} slept badly for a month after seeing the dead walk, and then slept well. \"You get used to anything,\" {ally} said, \"even peace.\"",
+              "{ally} set a plain stone at {ford} to mark where the dead were stopped. There are fresh flowers on it every week, and nobody owns to leaving them."
+            ],
+            "taken": [
+              "{taken} does not remember the barrow. {taken} remembers the light, and your hand, and that is enough.",
+              "{taken} still wakes some nights with a hand held out in front, feeling for the walls. It passes. It passes sooner each time.",
+              "{taken} came home to find the door unbarred and the hearth swept. {taken} stood on the step a long while before going in.",
+              "{taken} will not go near the old hill, and nobody asks it of them. The rest of life {taken} takes up as before."
+            ],
+            "hero": [
+              "You laid a {king} to rest. Not many can say it, and fewer would want to.",
+              "You came up out of {home} with the cold still on you, and it took a week of fires to get it out. The {king} is at rest, and the country knows it.",
+              "You carry the dead {king}'s name now, whether you want to or not. It is a heavy thing to know, and you keep it close.",
+              "You did what the priests could not, and the old words held. Remember that {he} was a person once."
+            ]
+          }
+        },
+        {
+          "id": "destroyed",
+          "if": ["boss_dead", "key:anchor"],
+          "ops": [["risen_destroyed"], ["clear_site", "home"], ["danger", "home", -1], ["fame", 3]],
+          "pages": {
+            "place": [
+              "{town} burned what was left of {villain_short} on the green, and broke the crown with a smith's hammer, and threw the pieces in the river. Nobody sleeps badly in {town} now.",
+              "{town} swept the ash from the green and sowed it with grass. In a year nobody could say where the fire had been.",
+              "The smiths of {town} each took a piece of the broken crown and drew it out into a nail. The nails were driven into the doorposts of the meeting-hall, in a row.",
+              "The iron came down from the doors of {town} and was beaten into ploughshares. The field of the dead was blessed again, and the graves closed."
+            ],
+            "patron": [
+              "{patron} rang the bell for a whole day when you came down from {home}, and would not stop for anyone.",
+              "{patron} paid you in full, and then again out of {patron}'s own purse, and would not take it back.",
+              "{patron} said nothing for a long while. Then {patron} gripped your arm hard enough to hurt, and let go, and went to see to the dead.",
+              "{patron} had the bones of the dead who walked buried with all the rites, one by one, and read each name from the roll."
+            ],
+            "ally": [
+              "{ally} keeps a shard of the crown on a string, and says it is the only thing {ally} has ever been given that was worth having.",
+              "{ally} walked the ford each morning for a month, looking for tracks. There were none. After that {ally} stopped looking, and slept.",
+              "{ally} spoke of the barrow only once, and only to say that {ally} had been afraid, and would not be again.",
+              "{ally} bought you a drink in {town}, and then another, and said nothing about it at all."
+            ],
+            "taken": [
+              "{taken} sleeps with the candle lit still. But {taken} sleeps.",
+              "{taken} still counts the doors in a room before sitting down. Everyone in {town} understands.",
+              "{taken} planted a rowan by the door the first spring. It is a thin tree, but it lives.",
+              "{taken} thanks you each time you meet, without being asked, and each time it costs a little less."
+            ],
+            "hero": [
+              "{villain} is gone, and what bound {him} to the world is broken with {him}. There is nothing left of {him} to come back.",
+              "The crown is in pieces, and {villain} is in pieces too, and no hand will put either together now. You went down to {home}, and the dark let you up again.",
+              "You broke what bound {him}, and then you broke {him}. It was a hard night's work, and a hard morning after.",
+              "There is dust in the hall of {home} now, and a few scraps of rotten cloth, and nothing that moves. You have no wish to see it again."
+            ]
+          }
+        },
+        {
+          "id": "destroyed_for_now",
+          "if": ["boss_dead"],
+          "ops": [["sequel", "returns", 28, 56], ["fame", 2], ["history", "risen_destroyed", 2]],
+          "pages": {
+            "place": [
+              "{town} cheered you in the square. The old women did not cheer. They went on hanging iron over the doors.",
+              "{town} held a feast in the square that night. The dogs barked at nothing in the dark, and the feast ended early.",
+              "The iron stayed on the doors of {town}. Someone said it was thrift. Nobody believed it.",
+              "The dead lay still in the fields round {town} for a season. The living did not trust it, and kept their lamps lit."
+            ],
+            "patron": [
+              "{patron} paid what was promised, and asked, very quietly, whether you had found what bound {him}. You had not.",
+              "{patron} counted out the coin with care, and asked again whether the crown was found. \"The old people always said it is the crown that matters,\" {patron} said.",
+              "{patron} thanked you, and meant it, and went home and checked the bolts twice. Then {patron} checked them again.",
+              "{patron} said the bells would be rung for you, and then did not ring them. The old women had asked them to wait."
+            ],
+            "hero": [
+              "You cut {villain} down in {his} own hall. But {his} crown is still somewhere in the world, and the dead do not stay down while it is.",
+              "{villain} is down, but what binds {him} is not broken, and what is bound does not stay broken. In a season or two {he} will get up.",
+              "You did what could be done in the hall, and it was not enough, and part of you knows it. The dead are slow, but they do not forget.",
+              "{villain} lies still in {his} own hall. But the crown has not been found, and the old tales say that is not the end of it."
+            ]
+          }
+        },
+        {
+          "id": "doom",
+          "if": ["scheme_done"],
+          "ops": [["fame", -1]],
+          "pages": {
+            "place": [
+              "{town} is empty. The dead walk its street at night, in their old ranks, and {villain} sits in the hall as if it were {his} own.",
+              "The doors of {town} hang open. Frost lies in the rooms, the hearths are cold, and in the street the dead stand in their old ranks, waiting.",
+              "Nobody in {town} is left to bar the doors. The dead walk its streets at night, and by day they stand in the doorways and watch the road.",
+              "{town} was the first, but it will not be the last. The road from {home} is trodden bare now, and every footprint on it points outward."
+            ],
+            "patron": [
+              "{patron} went with the last of the carts, and did not look back at you.",
+              "{patron} sent word from the next valley, once. It said only that you were not blamed. It was meant kindly, and it was no comfort.",
+              "{patron} stayed to ring the bell at dusk until there was no one left to hear it.",
+              "{patron} said, at the last, that it was no one's fault. Nobody who heard it believed it."
+            ],
+            "hero": [
+              "{villain} has the country now, and the living have left it to {him}.",
+              "You failed. The ford fell, and {villain} walks where {he} will, and the living have given up {area} to the dead.",
+              "You stood in the empty street as the cold came in. There was nothing more to do for {town}, and no one left to ask.",
+              "{villain} has the country, and the road is open to every town beyond. You have a long time to think about the ford."
+            ]
+          }
+        },
+        {
+          "id": "abandoned",
+          "ops": [["threat_free"]],
+          "pages": {
+            "place": [
+              "{town} still bars its doors at dusk, and waits for someone else.",
+              "The nights in {town} are quiet only because nobody goes out in them. The graves in the field stay open.",
+              "{town} has stopped asking for heroes. It hangs more iron on the doors each winter, and waits.",
+              "The people of {town} have learned to live behind barred doors. It is not the same as living."
+            ],
+            "hero": [
+              "You left {villain} to someone else. The dead are patient.",
+              "You turned away from {villain}, and the dead noticed. They are patient, and they know which way you went.",
+              "You left the hill, the ford and the barred doors behind you. The cold did not follow. Not yet.",
+              "Someone else will have to do it, or no one will. {villain} can wait."
+            ]
+          }
+        }
+      ],
+      "epithets": ["risen"]
+    }
+  }
+}

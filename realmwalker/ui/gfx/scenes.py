@@ -84,7 +84,16 @@ def camp(canvas, game, rect, now: float) -> None:
         canvas.under(Sprite("feature/campfire_0", fx - size / 2, fy - size * 0.8, size, size, (90, 80, 80, 255)))
     from realmwalker.game import story
 
-    if story.left_at_camp(game) == "carcass":  # (the beast's "letter", laid at the camp's edge: Expansion 6)
+    left = story.left_at_camp(game)
+    if left == "dead":  # (the Risen's dead, standing in a ring at the edge of the light, very still: Expansion 6 D.5)
+        dw = size * 1.15
+        pale = int(70 + 110 * k)
+        for i, (sx, kind) in enumerate(((0.05, "creature/zombie"), (0.2, "creature/skeleton"),
+                                        (0.8, "creature/wight"), (0.92, "creature/zombie"))):
+            sway = math.sin(now * 0.7 + i * 1.9) * size * 0.03 if ambient else 0.0
+            canvas.under(Sprite(kind, x + w * sx - dw / 2 + sway, fy - size * 0.55 - dw * 0.9, dw, dw,
+                                (pale, int(pale * 1.05), min(255, int(pale * 1.2)), 200)))
+    if left == "carcass":  # (the beast's "letter", laid at the camp's edge: Expansion 6)
         cw = size * 1.5
         cx, cy = x + w * 0.16, fy - size * 0.1
         dim = int(90 + 120 * k)

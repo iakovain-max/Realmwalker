@@ -1431,6 +1431,9 @@ THREAT_STAGE = Obj({
     "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail
     "effects": ops_list(optional=True),  # world/threats.STAGE_OPS
     "doom": Bool(optional=True),
+    # while its effects hold, its bands are met more often on the land in its reach (game/encounters.py)
+    "roads": Obj({"group": Str(max_len=40), "night": Bool(optional=True), "boost": Float(min=1, max=10),
+                  "intro": word_list(1, 300)}, optional=True),
 })
 THREAT_KIND = Obj({
     "name": Str(max_len=40),
@@ -1439,7 +1442,13 @@ THREAT_KIND = Obj({
     # (a kind may live in the world before its tales are written: its threats still move, and end without the hero)
     "tempers": List(Str(max_len=30)),
     "blueprints": List(Str(max_len=40)),
+    "ask": Str(max_len=120, optional=True),  # what you say to a town's notable about it (the talk's hook choice)
+    "learn_ask": Str(max_len=120, optional=True),  # asking someone who knows its secret ({villain})
+    "band": Str(max_len=40, optional=True),  # its villain's band when the figure is no beast (story.villain_group)
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
+    "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
+    # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
+    "ends": Obj({"chance": Float(min=0, max=1), "outcome": Str(max_len=30), "text": Str(max_len=40)}, optional=True),
     "stages": List(THREAT_STAGE, min_items=3, max_items=7),
     "hooks": word_list(3, 300),  # a notice board's line or a patron's plea ({villain}, {home}, {town}, {where})
 })
@@ -1529,6 +1538,11 @@ ADVENTURES = Obj({
     "words": Map(word_list(1, 400), optional=True),  # nested tables for the story's text (story/words.py)
     "epithets": Map(word_list(3, 40), optional=True),  # by tag
     "blueprints": Map(BLUEPRINT),
+    # the first hour (story/opening.py, D.4): crisis, summons, terror; `kinds` of threat it fits (none: any), `near`
+    # (the start town within the threat's reach or among its stakes), and extra weight by the hero's background
+    "openings": Map(Obj({"weight": Int(min=0, max=20), "kinds": List(Str(max_len=30), optional=True),
+                         "near": Bool(optional=True), "backgrounds": Map(Int(min=0, max=20), optional=True)}),
+                    optional=True),
 })
 
 BOSS = Obj({
@@ -1538,8 +1552,9 @@ BOSS = Obj({
     "resistances": Int(min=0, max=5),  # Legendary Resistances a day
     "actions": Int(min=0, max=5),  # legendary actions a round
     "menu": List(Str(max_len=30), min_items=1),  # what those actions may be (story/finale.LEGENDARY)
-    "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
-                 optional=True),
+    "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300),
+                  "creature": Str(max_len=40, optional=True), "count": Int(min=1, max=6, optional=True)},
+                 optional=True),  # (kind "raise": `count` of the `creature` come to its side)
     # met before its finale it fights as itself, and does this when it falls to `at` of its hit points (breaks off)
     "before": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
                   optional=True),
@@ -1672,7 +1687,8 @@ SITUATIONS = Obj({  # situations (game/story/situations.py, C.6)
         "name": Str(max_len=80), "asks": Str(max_len=30, optional=True),
         "vignette": Obj({"needs": Str(max_len=30), "weight": Float(min=0, max=10, optional=True)}, optional=True),
         "inside": Obj({"step": Str(max_len=20), "route": Str(max_len=20, optional=True),  # (an adventure step's, C.10)
-                       "chance": Float(min=0, max=1)}, optional=True),
+                       "chance": Float(min=0, max=1),
+                       "blueprints": List(Str(max_len=40), optional=True)}, optional=True),  # (only these tales: D.3)
         "roles": Map(Obj({"bind": Str(max_len=20)}, strict=False), min_items=1),
         "parts": Map(Str(max_len=30), optional=True), "base": Str(max_len=40, optional=True),
         "forge": List(List(Any_(), min_items=1), optional=True),

@@ -23,6 +23,22 @@ def for_adventure(game, adv: dict | None) -> dict:
         victim = _victim(w, fig)
         out["victim"] = victim[0]
         out["victim_year"] = victim[1]
+        if fig is not None and fig.kind != "beast":  # (the dead king's death, the captain's gang: D.3)
+            from realmwalker.game.past import year_text
+
+            she = getattr(fig, "sex", "male") == "female"
+            slayer = w.figures.get(fig.slayer) if getattr(fig, "slayer", -1) >= 0 else None
+            out["slayer"] = slayer.full_name() if slayer is not None else \
+                f"those who wanted {'her' if she else 'him'} dead"  # (the history named no one)
+            # (a phrase that follows a verb: "died in 812", "died 340 years before the Reckoning", "died long ago")
+            year = year_text(fig.died) if fig.died is not None else "long ago"
+            out["died_year"] = f"in {year}" if year.lstrip("-").isdigit() else year
+            out.update({"he": "she" if she else "he", "him": "her" if she else "him", "his": "her" if she else "his",
+                        "He": "She" if she else "He", "His": "Her" if she else "His", "king": "queen" if she else
+                        "king", "man": "woman" if she else "man"})
+        gang = threats.gang_of(w, t) if t["kind"] == "outlaw" else None
+        if gang is not None:
+            out["gang"] = gang.name
         temper = game.tables.villains.get("tempers", {}).get(t["villain"].get("temper") or "", {})
         if temper.get("omens"):
             rng = w.rng.child(f"omen/{adv['id']}/{game.moment.total_days}")
@@ -77,7 +93,11 @@ def _victim(world, fig) -> tuple[str, str]:
 
 
 KEY_WORDS = {"weakness": "what it fears", "means": "the means to use it", "bait": "the bait it could not pass by",
-             "quiet": "it does not know you have come", "ally": "{ally} at your side"}
+             "quiet": "it does not know you have come", "ally": "{ally} at your side",
+             "anchor": "what binds {villain_short} to the world, in your hands", "name": "{his} true name",
+             "militia": "the people of {town}, ready to stand", "ford": "the ford held against {his} dead",
+             "backway": "the hideout's back way, that the gang does not watch",
+             "inside": "the man in {town} who sold the caravans' days, turned"}
 
 
 def key_text(game, adv: dict, k: str) -> str:

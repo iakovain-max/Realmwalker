@@ -14,7 +14,7 @@ from realmwalker.game.story import beats as beatlang
 from realmwalker.game.story import endings, finale, selectors, steps
 from realmwalker.world import threats
 
-BUILT_PARTS = {"A"}  # the parts of Expansion 6 whose content may be used (from_part)
+BUILT_PARTS = {"A", "D"}  # the parts of Expansion 6 whose content may be used (from_part)
 
 
 def _ensure_loaded() -> None:
@@ -69,12 +69,25 @@ def problems(tables) -> list[str]:
     skills = set(tables.rules.get("skills", {}))
     beats = tables.beats
     bosses = tables.villains.get("bosses", {})
+    creatures = getattr(tables, "creatures", None)
+    news_words = (getattr(tables, "politics", None) or {}).get("text")  # (None: tables without them, in tests)
     for kid, kind in tables.threats.get("kinds", {}).items():
         if kid.startswith("_"):
             continue
         for stage in kind["stages"]:
             _ops(f"threats.json: {kid}, stage {stage['id']}", stage.get("effects"), threats.STAGE_OPS, out,
                  "stage effect")
+            group = (stage.get("roads") or {}).get("group")
+            if group and creatures is not None and group not in creatures.encounters:
+                out.append(f"threats.json: {kid}, stage {stage['id']}: the road band '{group}' is not an encounter.")
+        if kind.get("creature") and creatures is not None and kind["creature"] not in creatures:
+            out.append(f"threats.json: {kid}: the creature '{kind['creature']}' is not one the game has.")
+        if kind.get("band") and creatures is not None and kind["band"] not in creatures.encounters:
+            out.append(f"threats.json: {kid}: its villain's band '{kind['band']}' is not an encounter.")
+        ends = kind.get("ends")
+        if ends and (kid not in threats.ENDINGS or (news_words is not None and ends["text"] not in news_words)):
+            out.append(f"threats.json: {kid}: its own ending needs a handler in world/threats.ENDINGS and news "
+                       f"'{ends['text']}' in politics.json.")
     for bid, bp in tables.adventures.get("blueprints", {}).items():
         if bid.startswith("_"):
             continue
@@ -104,7 +117,12 @@ def problems(tables) -> list[str]:
                     out.append(f"{sw}: a {st['kind']} step does not take {', '.join(sorted(extra))}.")
                 if "beat" in st and st["beat"] not in beats:
                     out.append(f"{sw}: there is no beat called '{st['beat']}'.")
-                for field in ("at", "who", "about", "what"):
+                for wk in ("answer", "words"):
+                    if st.get(wk) and st[wk] not in tables.adventures.get("words", {}):
+                        out.append(f"{sw}: there are no words called '{st[wk]}' in adventures.json.")
+                for field in ("at", "who", "about", "what", "to"):
+                    if field == "what" and st["kind"] == "fetch":
+                        continue  # (a thing's name in words: "the crown of {villain_short}")
                     if isinstance(st.get(field), str):
                         _selector(f"{sw}, {field}", st[field], bound, out)
                 for route in st.get("routes", []):
@@ -134,10 +152,17 @@ def problems(tables) -> list[str]:
         _ops(where, beat.get("ops"), beatlang.OPS, out, "op")
         if beat.get("leaves") and beat["leaves"] not in LEFT:
             out.append(f"{where}: it leaves '{beat['leaves']}', which the camp's picture cannot draw.")
+        words = tables.adventures.get("words") or None  # (tables with no words at all: a test's, nothing to check)
+        for op in (beat.get("ops") or []) if words is not None else []:
+            if op and op[0] == "letter" and (len(op) < 2 or op[1] not in words):
+                out.append(f"{where}: its letter has no words in adventures.json ('{op[1:2]}').")
         for i, ch in enumerate(beat.get("choices", [])):
             cw = f"{where}, choice {i + 1}"
             for part in ("ops", "success", "failure"):
                 _ops(cw, ch.get(part), beatlang.OPS, out, "op")
+                for op in ch.get(part) or []:
+                    if words is not None and op and op[0] == "letter" and (len(op) < 2 or op[1] not in words):
+                        out.append(f"{cw}: its letter has no words in adventures.json ('{op[1:2]}').")
             for cond in ch.get("requires", {}):
                 if cond not in beatlang.CONDITIONS:
                     out.append(f"{cw}: the requirement '{cond}' is not one the game knows.")
@@ -157,6 +182,9 @@ def problems(tables) -> list[str]:
         if "phase" in boss and boss["phase"]["kind"] not in finale.PHASES:
             out.append(f"villains.json: boss {tid}: the second phase '{boss['phase']['kind']}' is not one the game "
                        f"knows.")
+        if boss.get("phase", {}).get("creature") and boss["phase"]["creature"] not in tables.creatures:
+            out.append(f"villains.json: boss {tid}: there is no creature '{boss['phase']['creature']}' to come at its "
+                       f"second phase.")
     for mid, move in tables.villains.get("moves", {}).items():
         if move["beat"] not in beats:
             out.append(f"villains.json: move {mid}: there is no beat called '{move['beat']}'.")

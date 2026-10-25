@@ -1,6 +1,7 @@
 """Marks on places (Expansion 6 B.3, docs/ADVENTURES.md §5.19, §8.13): what a settlement is going through - besieged,
 sacked, burning, burned, rebuilding, emptied, plague, famine, raided, tribute, a beast at its door, a festival, a
-memorial. Not to be confused with rules/engine/marks.py (the marks spells leave on creatures).
+memorial, haunted by the risen dead, its roads bled or its people paying an outlaw lord (`extorted`, lifted by
+world/threats.py when the band falls). Not to be confused with rules/engine/marks.py (the marks spells leave on creatures).
 
 Marks live in `Settlement.status` (saved with the world), in the forms politics has always written: `sacked` and
 `burned` a day number, `tribute` a name, the rest records ({since, until, by...}); `since` reads either. Every place
