@@ -30,10 +30,10 @@
               "unless": ["knows:night"],
               "then": [["learn", "night"]],
               "say": [
-                "They rang it to call the men in from the fields, the night {ruin_fall}. They rang it too long. It brought them straight to us. After, the ones who lived threw it in the water so it could never call anyone again.",
-                "It rang the whole night, child. Rang and rang, and nobody came, and then the wrong ones came. We drowned it after, for shame. And now it rings by itself."
+                "My grandmother had it from hers. They rang it to call the men in from the fields, the night {ruin_fall}. They rang it too long. It brought them straight to us. After, the ones who lived threw it in the water so it could never call anyone again.",
+                "The old ones said it rang the whole night. Rang and rang, and nobody came, and then the wrong ones came. We drowned it after, for shame. And now it rings by itself."
               ],
-              "fail_say": ["It was a long time ago. I was small. I remember the sound, that's all. Only the sound."],
+              "fail_say": ["It was a long time ago. All anyone ever told me was the sound. Only the sound."],
               "pass": false,
               "retry": true
             },
@@ -104,8 +104,8 @@
         "title": ["The drowned bell", "The bell under {water}", "What rings under {water}"],
         "stakes": ["the bell of {ruin_was}, and the peace of {keeper}", "{keeper}'s last wish, and the drowned bell"],
         "plea": [
-          "You heard it. Don't tell me you didn't. That's the bell of {ruin_was}, {ruin_years} under the water, and it rings for us who are left. I am the last. Bring it up. Bring it out of the crypt at {ruin} and let it be hung where it can be seen, before it rings for me.",
-          "Every still night since the spring. The bell of {ruin}. I was born under it. They threw it in the water the year {ruin_fall}, and I thought it was done with us. Raise it. Please. I want to hear it once in the light."
+          "You heard it. Don't tell me you didn't. That's the bell of {ruin_was}, {ruin_years} under the water, and it rings for us who are left. I am the last of them. Bring it up. Bring it out of the crypt at {ruin} and let it be hung where it can be seen, before it rings for me.",
+          "Every still night since the spring. The bell of {ruin}. My people were born under it, and buried under it. They threw it in the water the year {ruin_fall}, and I thought it was done with us. Raise it. Please. I want to hear it once in the light."
         ],
         "first": [
           "On still nights a bell rings under {water}: the bell of {ruin_was}, drowned {ruin_years} ago. {keeper} wants it raised from the crypt under {ruin}.",
