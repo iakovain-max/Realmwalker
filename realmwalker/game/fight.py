@@ -380,6 +380,10 @@ def finish_battle(game) -> Aftermath:
         cause = getattr(game.party[0], "death_cause", None) if game.party else None
         game.over = {"cause": cause or "died of wounds after a fight", "place": battle.env.ground}
         after.outcome = "death"
+    from realmwalker.game.story import experience
+
+    if not experience.fights_count(game):
+        after.xp = 0  # (the Experience setting "Stories only": fights give none, C.8)
     if after.xp and game.over is None:
         living = [c for c in game.party if c.alive]
         share = after.xp // max(1, len(living))

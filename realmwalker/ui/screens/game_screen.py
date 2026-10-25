@@ -650,6 +650,7 @@ class GameScreen(Screen):
         game = self.game
         game.show_dice = self.app.settings.show_dice
         game.verbosity = self.app.settings.verbosity
+        game.experience = self.app.settings.experience  # (fights and stories, or stories only: Expansion 6 C.8)
         game.animations = self.app.settings.animations
         game.auto_supplies = self.app.settings.auto_supplies
         from realmwalker.game.story import stage

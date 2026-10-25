@@ -76,6 +76,10 @@ def finish(game, adv: dict) -> list[str]:
     for op in e["ops"]:
         lines += OPS[op[0]](game, adv, *op[1:]) or []
     adv["state"] = "won" if e["id"] in WON else "abandoned" if e["id"] == "abandoned" else "lost"
+    if adv["state"] == "won":
+        from realmwalker.game.story import experience
+
+        lines += experience.award(game, "finale", f"finale/{adv['id']}")  # (on top of the finale fight's own: C.8)
     adv["ended"] = float(news.now_days(game.world))
     rng = game.world.rng.child(f"epilogue/{adv['id']}")
     words = wordsmod.for_adventure(game, adv)

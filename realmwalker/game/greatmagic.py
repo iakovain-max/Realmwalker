@@ -380,7 +380,9 @@ def imprison(game) -> list[str]:
     enc.creatures.remove(target)
     out.append(f"<good>{name.capitalize()} {words}.</> <dim>The statuette takes its likeness and is gone with it.</>")
     out += _bound_in_the_world(game, target)
-    xp = int(cdef.get("xp", 0))
+    from realmwalker.game.story import experience
+
+    xp = int(cdef.get("xp", 0)) if experience.fights_count(game) else 0  # (a foe beaten: "Stories only" gives none)
     living = [m for m in game.party if m.alive]
     if xp and living:
         share = xp // len(living)

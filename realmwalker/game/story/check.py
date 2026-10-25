@@ -178,6 +178,9 @@ def problems(tables) -> list[str]:
     from realmwalker.game.story import favours
 
     out.extend(favours.problems(tables))
+    from realmwalker.game.story import experience
+
+    out.extend(experience.problems(tables))
     return out
 
 

@@ -305,7 +305,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
   Adventures tab, in the hero's own notes. Tests: `tests/test_situations.py`.
 - [x] C.7 **Favours and contacts** (`game/story/favours.py`): favours spent as ways through; contacts who send word by
   runner, deal at night and warn of the law; both in the People tab.
-- [ ] C.8 **Experience from stories**: the `xp_story` op by encounter budgets; the *Experience* setting (fights and
+- [x] C.8 **Experience from stories**: the `xp_story` op by encounter budgets; the *Experience* setting (fights and
   stories, or stories only) in the Settings screen, copied onto `game.experience` as `verbosity` is, and read by
   `fight.finish_battle`.
 - [ ] C.9 **Vignettes**: the first twenty hand-made (§6.11) with their scenes *(parallel words)*.
