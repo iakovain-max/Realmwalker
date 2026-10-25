@@ -556,10 +556,115 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.1 (*the reference*: storyplay's careful
-player's income over thirty days on the build before Part C, kept in tests/data/income_ref.json), on branch
-`dlc/06-adventures-events` (Part B merged into main 2026-10-25). Read docs/expansions/06-adventures-events.md Part C and
-ADVENTURES.md §5.15-5.16, §6.7-6.11, §7, §8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.6 (*situations*:
+`game/story/situations.py`, `situations.json` + fragments: forged in peopled towns from roots, the first twenty
+predicaments of §6.7, roles bound to real people, obstacles and ways, turns, meetings as scenes, endings with the people
+ops, `lapsed`, the rarity rules, story people replacing generated ones, latent again when the hero dies, Troubles in the
+journal; tests/test_situations.py), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md
+Part C and ADVENTURES.md §6.7-§6.10 and §8.10 first.
+C.5 (2026-10-25, realmwalker-b): `game/story/goals.py`. A test is a list `[name, *args]` with "all"/"any"/"not";
+`PREDICATES` (Pred fn, args kinds who/place/thing/word/faction/op/int/law/day, `listens`): alive, dead, at, with_party,
+free, holds, gone, married, owes, knows, law_state, standing, status, cleared, faction_active, flag, day. Who: "you", a
+role name of `sit["roles"]` ({npc}/{figure}/{band}/{faction}/{place}) or a record; a place: a role with {place}, a place
+record ({settlement[, building|spot|part "inn"]}, {site}, {tile}) or `home_of(r)`/`work_of(r)`/`town_of(r)` (a spot:
+the building holding it). State read: band role `state` (dead/taken/fled/gone, set by notify from creature tags
+`c.story = {"situation", "role"}` in battle and captive fates), npc.flags captive / law (accused, jailed, pardoned,
+hanged: C.6's people ops write it) / gone / moved_on / knows / with_party, life ties (husband/wife, creditor), the
+hero's `renown.flags["truths"]` and `["debts"]`, sit `flags` (+ its adventure's), sit `clock.due` ("clock" in day).
+`goals.notify(game, kind, way=None, **refs)` (kinds `EVENTS`: talk, battle, captive, law, item, town, building, party,
+magic, day; ways `WAYS`; `DEFAULT_WAY`, `CRIME_WAYS`) tests the live (latent/met/taken) situations within lives.json
+`reach` whose `listens` (computed once into the record) hold the kind; a reached goal gets `reached` (day) and `way`
+and a `sit["ways"]` entry {goal, way, day, by}; `REACTIONS` (fn(game, sit, gid, way)) is where C.6 hangs what follows;
+`way_used(sit, way, goal=None)` for endings' `way:<kind>`; `learn(game, who, truth, way)`. Callers:
+`Conversation.close` (the dialogue screen's finish; `talk_way`: pay after a bribe `conv.paid`, magic when charmed or
+enthralled), `fight.finish_battle` (after story.on_battle), `fight._fate_heard` (decide_captive), `law.commit`,
+economy.buy/sell (pay), `Conversation.give_item` (talk), `law.steal_from_shop` and law_talk pickpocketing (steal),
+`fight.take_loot` (fight), GameState overworld arrival and `leave_local` and `story.on_enter_town` (town), entering or
+leaving a building in `_move_local` (wait, sneak while sneaking), `dungeon.unlock` (sneak picked / force),
+`magic.cast_on_road` (magic), companions.hire/dismiss (party), `quests.free_captive` (a feature's `npc`: freed and
+`with_party`; force), `story.daily` (day: wait). Start-up: `check.problems` runs `goals.self_problems` and
+`goals.data_problems` (situations.json predicaments' `roles`/`places` and `goals` [{id, test}]). No save format change.
+Review fixes: a band role is "dead" only when every tagged member in the fight died (else taken/gone/fled, nothing
+while some still stand; `notify("battle", result=, battle=)` runs after the battle is closed); `listens` is worked out
+at each notify (a turn's new goal hears); one `with_party` is `at` wherever the hero is (a freed captive led home);
+a locked door's notice comes from `dungeon.bump` after it opens (sneak picked / force); `GameState.pick_up` notifies
+"item" (wait, or sneak). Open for C.6: `flags["with_party"]` of a freed captive is never cleared (clear it when they
+are home), `renown.flags["debts"]`/`["pardoned"]` and npc `gone`/`law` have no writers yet, no favour/companion ways.
+C.4 (2026-10-25, realmwalker-a): a life is `npc.flags["life"]` {ties [{kind (husband/wife/son/daughter/father/mother/
+brother/sister or lover/rival/creditor/patron/enemy), name, npc id|None, figure id|None, state alive/dead/levied,
+age?}], want, fear (ids in lives.json), secrets [{kind, to?, faction?, known}], things [{kind, words, state
+kept/stolen}], events [{day, kind, seed?, used?, ...}]}, made by `lives.ensure(game, sid)` (people.populate_town after
+cast.place_people, and story.on_enter_town) for the notables and `others` (12) more; households (same `home`) are kin
+by id (`_kin`), a figure brings its history family (`_figure_kin`); `write_profile` writes profile want/fear/secret
+(a grudge want is kept). `lives.daily` (from story.daily) puts away shows and runs `week` every 7 days: towns with
+people within 30 tiles, at most 3 events a town, an event kind not again for one person within REST_DAYS (42); events
+are `EVENTS` (can -> factor, do -> record) for death_of_age (self through alive=False + quests.on_npc_death +
+townlife.forget_person, or a parent who is a name), sickness, debt_due, levy (realm at war; only kin who are names),
+marriage, birth, theft, quarrel, love_found_out; `happen` records with `seed` by the data's chance (`lives.seeds(game,
+sid)` for C.6). Shows: `flags["dress"]="mourning"` + `mourning_until` (dolls.npc, sprites outfits "mourning"),
+`closed_until` (`lives.sign`: services' trade disabled, `GameState._walk_in` says the sign), `home_until`
+(townlife.activity "home"), `life_show` {kind, until} (`lives.bark` in townlife._words_for, `lives.note` and
+`family_line` in Conversation.who), a fresh grave (remains._grave_spot, lm.meta["graves"]) and
+`Town.flags["life_gathering"]` {kind, spot, ids, from, until, murmur} made the town's gathering by `lives.gather`
+(townlife.tick and settle) in its hours (funeral 9-11 the next day at the grave; wedding 11-13 / christening 10-12 at
+the temple door). Start-up check `lives.problems` (via story/check). Autoplay checks lives. No save format change.
+Only the keeper shuts the house (`keeps_shop`; a shut keeper sells no services either); `_may_die` spares figures,
+story people, companions, escorts, guards who stay, visitors and a town's only one of a trade; words are rewritten
+after every event (`write_profile`). C.4's checks: full suite green twice but for the turn-time tests (enemy casters,
+tactics coverage: each passed alone, as before); autoplay clean twice (seeds 1 and 5); smoke clean; a fresh review's
+points fixed (bb3f524).
+C.3 (2026-10-25, realmwalker-b): contracts are `world.politics["contracts"]` {sid: [record]} (`work.contracts(game,
+s)` renews: `_stale` drops expired/dead-giver/dead-traveller ones, `renew` fills `slots(s)` (2 for a city or great
+city) from work.json `contracts.kinds` caravan/papers/pilgrims/raiders, then looks again only after `renew` days
+when a slot stays empty: `politics["contract_day"]`). A record: {id "K<n>", kind, giver, until (14-28 days; a
+raiders one ends the day before they come), taken, danger, terms {pay, days, route}, quest}; the quest (built by
+`quests.make`, so base_quest pays) carries `contract`, `text_key` (quests.json contract_caravan/_pilgrims/_papers),
+`hidden` None and, for escort/deliver, `danger` {kind threat|gang|lair|wild, group, at [x, y] on the tcod route
+`_route`, name, words, met}. `danger_on` takes the real danger nearest the route (within `near` 8 tiles, the middle
+half of the road), not deadly first, threat > gang > lair, else what `choose_encounter` gives for the land there;
+`on_the_road` (state.py, before roll_encounter) makes the fight within 2 tiles of `at`, once. Taken: the record stays
+`taken` until its time is up (one at a time). Shown: `work.label` (the giver's own choice, contracts.kinds choice),
+`terms_note` in the offer and the journal, `work.notices` (HIRING) on the board; `quests.danger_note` reads
+`q["danger"]`. Board bounties also post the two nearest living beasts of the history within 30 tiles (hunt_beast,
+the watch pays; gangs' posters first; a threat's villain's opens its tale through story.on_job_taken). "A threat's
+servants" is read as the threat villain's own encounter group (threats have no lieutenants yet). The Earner's
+careful check reads `q["danger"]`. test_storyplay asks jobs >= 1 again; test_first_hour asserts a contract in every
+first town. Autoplay checks contract slots, kinds and dangers. No save format change. The board posts only beasts
+below DEADLY_RATIO (so test_work's board test skips where none fits). C.3's checks: full suite green twice but for
+the turn-time tests (enemy casters, tactics coverage: each passed alone, as before); autoplay clean; smoke clean;
+a fresh review's points fixed (bd10f2c).
+C.2 (2026-10-25, realmwalker-a): the weekly offers are gone (`offer_for`, `offers_in`, the "work" choice,
+`_offer_work`, `GameScreen._think_of_work`, `shadows.guild_work`, `Town.flags["offers"/"offer_day"]`). quests.py:
+each kind is `_<kind>_pick(game, npc, rng, town)` -> target ids (or None) and `_<kind>(game, npc, target, rng, town)`
+(KINDS, PICKERS, MAKERS); public `pick(game, kind, giver, rng, town=None)` -> {"kind", "town", ...},
+`make(game, giver, target, rng)` (giver None = the town's watch; calls allow_the_walk), `build` = pick + make,
+`make_offer` (today's choice for a person; companions' personal work, debug console, tests). The conversation
+handler for debts is `_press_debt` now (it shadowed the maker). `game/story/work.py` + pack work.json (schema WORK,
+`tables.work`, cross-checked in registry `_check_quest_refs`): `waiting(game)` (commissions + pleas; quests.
+_all_quests reads it), `held_by(game, npc)`, `offers_here(game, settlement)` -> [(npc or None, q)] incl. board
+bounties (the bot, the Earner, the smoke tour, tests), `taken` (from quests.accept), `daily` (from story.daily:
+commissions in `renown.flags["commissions"]` {fid: q} and `["commission_day"]`, from `kinds_for(f)` (goal words ->
+kinds, `by_kind`), given by `member(game, npc, f)` in a peopled town within `reach`, `mark_trial`), `plea_of`
+(`Town.flags["pleas"]`/`["plea_day"]`; needs sickness/dragon/always/grudge), `choices`/`offer` ("own_work" ->
+quest_offer mode, then the old work_accept/work_decline). **C.3 must**: put contracts in `work.offers_here` and
+`held_by` (so the bot, the Earner and the first-hour tests find them), restore `jobs >= 1` in
+tests/test_storyplay.py, and drop the xfail in tests/test_first_hour.py `waiting`. Autoplay checks no town has
+weekly offers and waiting work is not in the journal; it now and then joins a faction.
+C.2's checks: full suite green but for the turn-time and fire-step timing tests (each passed alone, as
+before); autoplay clean twice (3000 turns, and 6000 with seed 7); smoke test clean.
+C.1 (2026-10-25, realmwalker-b): `tools/storyplay.py --income [--write]`: the income measure's careful player
+`Earner` (a Player: level 3, four, survival off; asks every giver of the town it is in through the Conversation's
+"work" choice, takes the best HONEST offer for the walk within REACH 20 tiles, refuses beast/raid groups above
+CAREFUL_RATIO 1.0, slips past road bands >= DEADLY_RATIO and abandons a place whose band is; `clear` goes down every
+level fighting each band, opens chests and frees captives; long rests when hurt, short underground; road events
+answered without paying; `keeps_things = False`: coin and quest-tagged things only). Pay is counted by wrapping
+`quests.reward` in `earn_once`; totals beyond 30 days are scaled to thirty days' rate. tests/data/income_ref.json:
+24 runs (`income(24)`, WORLDS x 8 start towns): mean_total 81683 cp, mean_work 37505 cp, 6 jobs, 5 died. The loot
+share is noisy (per run 3.7k-215k); the work share is steadier: C.10 compares mean_total as ADVENTURES.md §9 says,
+and should look at mean_work too. **C.2 must move the Earner** from offers to contracts and situations (its
+`ask_for_work`, `do`, `turn_in` read the offers and the conversation choices "work", "work_accept",
+"quest_turn_in", "deliver_letter"); the reference itself is never rewritten. tests/test_storyplay.py checks the file
+and runs the Earner for 8 days. Fixed: storyplay's `go` never climbed out of a dungeon's first level.
 B.9 (2026-10-25, realmwalker-a): scenes.json "survivor" (the witness tells it to a crowd in their street, then
 comes to you: story._show_tale from on_enter_town; step "shown") and "ally_note" (den chapter + key ally: a boy brings
 the hunter's note; stage._letter honours scene words sender/hand_of; adv["ally_note"]); beats.json `leaves`

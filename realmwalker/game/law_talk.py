@@ -342,6 +342,9 @@ def pickpocket(conv) -> None:
 
                 for line in quests.on_pickpocket(game, npc):
                     conv.note(line)
+            from realmwalker.game.story import goals
+
+            goals.notify(game, "item", "steal", npc=npc)  # (C.5)
             return
         conv.npc_says("\"What - ?\"")
         conv.note("They slap at their belt and look round; nobody is near enough to blame.")
@@ -359,6 +362,9 @@ def pickpocket(conv) -> None:
 
             for line in quests.on_pickpocket(game, npc):
                 conv.note(line)
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "item", "steal", npc=npc)  # (C.5)
         from realmwalker.game import glamour
 
         others = [n for n in law.witnesses_here(game, exclude=[npc])

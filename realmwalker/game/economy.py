@@ -302,6 +302,9 @@ def buy(game, npc: NPC, item_id: str, used_index: int | None = None) -> str:
 
             fill_containers(leader, items, "clean")
     game.dirty = True
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "item", "pay", npc=npc)  # (a situation's goals: C.5)
     return f"You buy {items.name(got, with_qty=False)} for {money_text(price)}."
 
 
@@ -342,6 +345,9 @@ def sell(game, npc: NPC, char, uid: int, qty: int = 1) -> str:
     else:
         shop["used"].append(entry)
     game.dirty = True
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "item", "pay", npc=npc)  # (a situation's goals: C.5)
     return f"You sell {items.name(sold)} for {money_text(total)}."
 
 

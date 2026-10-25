@@ -889,7 +889,7 @@ def _wren_step(conv, r, step) -> str | None:
         r["join"] = True
         return talk_line(game, "wren", "guild")
     if step == "cargo":
-        q = quests._smuggle(game, npc, game.world.rng.child(f"wren-cargo/{game.moment.total_days}"))
+        q = quests.build(game, npc, "smuggle", game.world.rng.child(f"wren-cargo/{game.moment.total_days}"))
         if q is None:  # no walled town anywhere near: she takes you on trust
             r["join"] = True
             return talk_line(game, "wren", "done")

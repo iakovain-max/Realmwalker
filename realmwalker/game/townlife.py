@@ -186,6 +186,8 @@ def activity(game, npc) -> str:
     """What this person's day has them doing now (their hours move a little each way from the book's)."""
     if npc.flags.get("stays"):  # a gate guard, a wayfarer at the inn: where they were put
         return "post"
+    if npc.flags.get("home_until", 0) > game.world.time:  # sick, or keeping to the house in mourning (story/lives)
+        return "home"
     shift = int(npc.flags.get("shift", 0))
     minute = (game.world.time + shift) % 1440
     hour = minute / 60
@@ -371,6 +373,10 @@ def settle(game, lm) -> None:
     fire.settle(game, lm)  # (the fire moved on for the time that passed)
     town = _town(game, lm)
     town.paths.clear()
+    if "life_gathering" in _flags(game, s):
+        from realmwalker.game.story import lives
+
+        lives.gather(game, _flags(game, s))
     town.gathering = _flags(game, s).get("gathering")
     taken = {_you(game, lm)} | {(a.x, a.y) for a in lm.actors}
     for npc in sorted(_people(game, s), key=lambda n: n.id):
@@ -464,6 +470,10 @@ def tick(game, lm, s) -> None:
     town = _town(game, lm)
     town.ticks += 1
     flags = _flags(game, s)
+    if "life_gathering" in flags:
+        from realmwalker.game.story import lives
+
+        lives.gather(game, flags)  # (a funeral, a wedding, a christening when its hours come)
     town.gathering = flags.get("gathering")
     people = _people(game, s)
     if not people:
@@ -658,6 +668,12 @@ def _call_out(game, lm, town: _Town, people) -> None:
 
 def _words_for(game, npc, roll: int) -> str | None:
     barks = game.tables.people.get("barks", {})
+    if "life_show" in npc.flags:  # (what has happened in their life: game/story/lives.py)
+        from realmwalker.game.story import lives
+
+        words = lives.bark(game, npc, roll)
+        if words:
+            return words
     if npc.job == "crier" and roll % 3 == 0:  # the news, cried
         from realmwalker.game.news import heard_items
 

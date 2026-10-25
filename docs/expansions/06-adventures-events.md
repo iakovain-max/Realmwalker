@@ -267,9 +267,9 @@ ways through that the game recognises however they are done and endings that lea
 bounties pay as jobs did; favours and contacts are kept and used; `storybook` prints situations, and the variety,
 rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7, §8.10.
 
-- [ ] C.1 **The reference** (before anything changes): the income of storyplay's careful player over thirty days on
+- [x] C.1 **The reference** (before anything changes): the income of storyplay's careful player over thirty days on
   the build before Part C (the same player the income measure uses later), kept in `tests/data/income_ref.json`.
-- [ ] C.2 **The end of the weekly offers**: `quests.offer_for` rolls no more offers; `offers_in` and
+- [x] C.2 **The end of the weekly offers**: `quests.offer_for` rolls no more offers; `offers_in` and
   `GameScreen._think_of_work` go; "Is there any work?" goes; people with a contract, a commission or a role in a
   situation have their own choice. **The builders are split** into a picker (today's choice of target) and
   `make(game, giver, target, rng)`, so that situations, contracts and steps give the target; the listeners stay.
@@ -279,17 +279,17 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
   empty Work tab (`journal.py`) are rewritten. Tests: `tests/test_quests.py` (no offers rolled; every builder's
   `make` builds for a given target), and the tests that look for work today (`test_first_hour.py`, `test_app_ui.py`,
   `test_followers.py`) look for situations and contracts instead.
-- [ ] C.3 **Paid work** (`game/story/work.py`): one contract a town (two in a city or a great city), from its trade and
+- [x] C.3 **Paid work** (`game/story/work.py`): one contract a town (two in a city or a great city), from its trade and
   roads, its faiths and its known raiders, renewed every 14–28 days, each naming a real danger on its way (a threat's
   servants, a gang, a lair's beasts) so it can turn into a situation; built through `make` for `escort`, `deliver` and
   `defend`, paid by `base_quest`; bounties on real gangs, beasts with lairs and threats' servants; the Work tab shows
   terms. The muster and the levy wait for Under the Banner (K.3). Tests: `tests/test_work.py`.
-- [ ] C.4 **Lives** (`game/story/lives.py`, `lives.json`): `npc.flags["life"]` made by `lives.ensure` when a town near
+- [x] C.4 **Lives** (`game/story/lives.py`, `lives.json`): `npc.flags["life"]` made by `lives.ensure` when a town near
   the hero is populated (notables and up to twelve others); ties (kin are names first), wants, fears, secrets (the
   cults' hidden members among them), things of note; `npc.profile` written from the life; weekly life events within
   30 tiles (at most three a town) that show by themselves (mourning at the well, a shop shut with a sign, a new grave,
   a christening crowd). Tests: `tests/test_lives.py`.
-- [ ] C.5 **The goal language** (`game/story/goals.py`): the predicates of ADVENTURES.md §8.10 with `all`, `any` and
+- [x] C.5 **The goal language** (`game/story/goals.py`): the predicates of ADVENTURES.md §8.10 with `all`, `any` and
   `not`, checked at start-up; `goals.notify` from a conversation's end, battles, captives' fates, the law, items
   changing hands, entering and leaving towns and buildings, and the day; ways through recorded by kind. Tests:
   `tests/test_goals.py` (each predicate made true by each way the game has).

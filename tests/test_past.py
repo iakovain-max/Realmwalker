@@ -141,7 +141,7 @@ def test_a_town_pays_to_be_rid_of_the_beast_that_killed_its_people(game):
         prepare_town(game, s)
         for npc in npcs_in(w, s.id)[:8]:
             for i in range(8):
-                q = quests._clear_lair(game, npc, RNG(i, "lair"))
+                q = quests.build(game, npc, "clear_lair", RNG(i, "lair"))
                 if q and q.get("text_key") == "clear_lair_beast":
                     beast = w.figures[q["target"]["beast"]]
                     assert q["words"]["beast"] == past.beast_title(beast)
@@ -410,8 +410,9 @@ def test_hunting_work_prefers_a_real_beast_of_the_history(game, monkeypatch):
     monkeypatch.setattr(quests, "beast_ratio", lambda game, group: 0.1)
     npc = SimpleNamespace(settlement=town.id, id=-1, name="Someone", flags={})
     monkeypatch.setattr(quests, "base_quest", lambda game, npc, tpl, rng, **kw: {"template": tpl, "words": {},
+                                                                                  "town": town.id, "days": 10,
                                                                                   "target": {}})
-    q = quests._hunt_beast(game, npc, RNG(5))
+    q = quests.build(game, npc, "hunt_beast", RNG(5))
     assert q is not None and q["target"].get("beast") is not None
     fig = w.figures[q["target"]["beast"]]
     assert fig.alive and fig.kind == "beast" and q["words"]["beast"] == past.beast_title(fig)

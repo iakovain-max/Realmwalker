@@ -624,22 +624,6 @@ class GameScreen(Screen):
                    tooltip="Click (or press j) for the journal.")
         return used + 1
 
-    def _think_of_work(self) -> None:
-        """The work people in this town might offer, thought of before anyone asks (once a day)."""
-        game = self.game
-        if not game.in_local or game.busy:
-            return
-        here = game.world.settlement_at(game.player.x, game.player.y)
-        if here is None:
-            return
-        from realmwalker.game import quests
-
-        # Think of the work these people have before anyone asks (it can mean making a town far away ready).
-        stamp = (here.id, game.moment.total_days)
-        if getattr(self, "_offers_stamp", None) != stamp:
-            self._offers_stamp = stamp
-            self._offers = quests.offers_in(game, here)
-
     def water(self) -> None:
         from realmwalker.game.survival import fill_skins
 
@@ -671,7 +655,6 @@ class GameScreen(Screen):
             return
         if game.narration:
             self._narrate()
-        self._think_of_work()
         if game.travel is not None:
             now = self.app.clock()
             if now - self._last_travel_step >= TRAVEL_STEP_SECONDS or self.app.headless:

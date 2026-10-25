@@ -46,6 +46,115 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.5 — the goal language — branch `dlc/06-adventures-events` (not yet on main)
+
+Nothing new to see yet: this is the machinery the coming troubles (C.6) are judged by.
+- **What a story can ask of the world**: that someone is alive or dead, somewhere (a town, a house, a site), with
+  you, free (not in chains, not in the cells), holding a thing, gone from the town, married, owing someone, knowing
+  something; how the law stands with someone; your standing with a faction; a town's state (plague, siege...); a
+  place cleared; a faction still standing; a word remembered; a day reached. These combine with "all", "any" and
+  "not", and the game checks every one the data names when it starts.
+- **How it is noticed**: whenever something happens that could change one of these – a conversation ends, a fight
+  ends, you decide a prisoner's fate, you break the law, something changes hands (bought, sold, given, stolen,
+  looted), you walk into or out of a town or a house, you cast a spell on the road, someone joins or leaves you, a
+  day passes – the troubles near you look again.
+- **How you did it counts**: the game keeps the way each goal was reached – by talk, by coin, unseen, by theft, by
+  force, by the sword, by magic, by the law, or by waiting – so the same end reached by words or by blood can end
+  differently.
+- Choices made without Anton: walking somewhere openly counts as "waiting" (time and feet, nothing done to anyone);
+  a lock picked counts as unseen, a lock broken as force; a bribe taken in a conversation makes it "by coin", a
+  charmed listener "by magic"; you count as "at" a town while you stand on its square of the map; a goal once
+  reached stays reached. A chained captive in a dungeon may now be a town's own person, freed and walking with you.
+- How to try: nothing to try by hand yet; tests/test_goals.py makes each one true through the game's own code.
+
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.4 — lives — branch `dlc/06-adventures-events` (not yet on main)
+
+The people of the towns near you now have lives of their own, and the weeks change them.
+- **Who they are.** The notables of a town and a dozen others carry a family (those under one roof are husband and
+  wife, parents and children; others are names: a son in the city, a mother long dead; a figure of the old history
+  brings the family the history gave them), and often a rival, a creditor, a patron, a lover or an enemy among the
+  neighbours. Each has something they want, something they fear, now and then a secret (the cults' and thieves'
+  hidden members hide theirs), and perhaps a thing of note: an heirloom, a deed, a good grey mare.
+- **What they tell you.** Ask someone about themselves and they say who they have ("She has a husband, Odo, and
+  three children...") and, when it is fresh, what has just happened to them. What they want, fear and hide is
+  written from their life, so the old words and the new agree.
+- **The weeks.** Once a week, in the towns within thirty miles' reach of you, up to three people a town live
+  something: an old one dies, a fever, a debt comes due, the levy takes a son in wartime, a wedding, a birth, a
+  theft, a quarrel, a love found out.
+- **It shows by itself**: the family in black (a new mourning dress on their figures), keeping to the house the
+  first days; the shop shut with a sign on the door ("Closed. A death in the house.") when you walk in, and no
+  trading; a fresh grave in the graveyard; the next morning a crowd round the grave, or at the temple door for a
+  wedding or a christening, murmuring; and what they say in passing ("I keep setting the table for two.").
+- Some of these are marked as the seed of a story, for the situations that come next (C.6).
+- How to try: stay near a town for a few weeks (rest at the inn), then walk its streets; ask people about
+  themselves.
+- Choices made without Anton: kin who are only names never share a first name with a neighbour; the same kind of
+  thing does not happen to the same person twice in six weeks; the levy takes only kin who are names, not a son
+  living in town; an old one's death goes through the same door as any townsperson's (their work ends with them).
+
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.3 — paid work — branch `dlc/06-adventures-events` (not yet on main)
+
+Every town with people in it has paid work again: honest, small and few.
+- **Contracts.** A town has one at a time (a city or a great city two), and a new one every two to four weeks
+  whether or not you took the last. What it is comes from what the town has: a merchant wants a guard for the carts
+  to the nearest market town, or someone to carry sealed papers to a partner there; a priest wants the pilgrims
+  walked to a temple town; a village that knows its raiders hires swords for the day they come.
+- **Each road has a real danger on it**, and the one hiring tells you: a gang whose hideout is near the road, the
+  beasts that run with a beast of the old songs, a threat's brood, or — when the road is quiet of those — what its
+  land breeds (wolves out of the forest, footpads). You meet it there, on the road, once. Walk round it and you may
+  slip past.
+- **The terms are always shown**: pay, days, from where to where and how many miles, and what is on the road (with
+  how it measures up against your party) — when they ask you, in the journal, and on the town's notice board, which
+  now says who is hiring.
+- **Board bounties** now also name the beasts of the history that lair within reach (the two nearest), paid by the
+  watch; one that is a threat's villain opens its tale when you take it.
+- How to try: walk into any town, read the notice board (the HIRING line names who to ask), talk to them and pick
+  their own line ("About the carts to ..."), accept, and walk the road.
+- Checked: the careful player of the income measure takes a job again in its short run; every first town of the
+  test worlds has a contract.
+- Choices made without Anton: "a threat's servants" is the threat's own beast-kind for now (threats have no
+  lieutenants yet); a contract taken keeps the town's slot until its time is up; paid work has no hidden sides.
+
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.2 — the end of the weekly offers — branch `dlc/06-adventures-events` (not yet on main)
+
+The job board is gone. Nobody thinks of a new job every week any more, and "Is there any work?" is no longer
+something you can ask. Work now waits with the person who really has it, and they have their own line in the
+conversation:
+- **Commissions.** Join a faction (a realm, a church, a guild, an order) and now and then (every ten to twenty days,
+  while none of its work is in hand) it sends word: who to see, and in which town near you. The work comes from what
+  that faction wants — land, trade, rooting out heresy, lost lore — and a thieves' guild's fences give its knives and
+  light fingers. When the faction is ready to raise you a rank, its commission is the trial.
+- **Pleas.** People with a real need ask you themselves: the healer of a town with the plague wants herbs, a lord
+  whose town pays a dragon its tribute (or has burned) wants it dead, a mage may take an apprentice who brings back a
+  lost grimoire, someone whose kin were killed in the old days knows where the killer sits. The plea lasts while the
+  need does.
+- **The notice board** still has its bounties on real gangs, and its pleas against the threats that trouble the land.
+- For the coming parts, every kind of work can now be built for a target chosen elsewhere (a contract's road, a
+  situation's people, a step of an adventure).
+- The first-day hint, the help (F1) and the empty journal now say how work is found. The game no longer quietly
+  builds far-away towns every day while you stand in one.
+- **Known gap until the next task (C.3, contracts):** with the weekly offers gone and contracts not yet come, there
+  is much less paid work about; a town may have nothing waiting. The careful player of the income measure took no
+  job in its short test run.
+- Choices made without Anton: commissions come only from factions you have joined (work.json's goals map the
+  faction's goal words to kinds of work); pleas are the four needs above (others become situations in C.6); a refused
+  plea stays while the need lasts, and a person asks again at most every 14 days.
+
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.1 — the income reference — branch `dlc/06-adventures-events` (not yet on main)
+
+Nothing changes in play yet. Part C replaces the weekly "Is there any work?" offers with situations, contracts and
+bounties, and promises that a careful player's purse does not suffer for it. Before anything changes, the yardstick
+is kept: a scripted careful party of four at level 3 lives thirty days by its work (asking in each town, taking the
+honest jobs it can walk to, turning down beasts and raids that would likely kill it, clearing places, carrying
+letters and travellers, standing by villages, coming back for the pay, resting when hurt). Over 24 such months on the
+three test worlds it took in about 817 silver on average, some 375 of it pay for work and the rest coin found in
+fights and chests (`tools/storyplay.py --income`; kept in `tests/data/income_ref.json`). At the end of Part C the
+same player must earn between 0.7 and 1.3 times as much.
+- Noticed while measuring: even this careful party died in 5 of the 24 months (mostly in raids and dungeon fights it
+  judged no worse than "hard"). Nothing was changed for it; it is a number to keep an eye on.
+- Fixed in the story-playing tool: its party never climbed out of a dungeon's first level and "travelled" while the
+  game still had it underground (the Beast's own measure still passes).
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part B, task B.9 — the Beast, shown — Part B merged into `main`
 
 **What is different when you play**

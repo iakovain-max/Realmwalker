@@ -467,6 +467,7 @@
       "adventurer": {"body": ["shirt_long@undyed"], "over": ["leather@leather", "studded@dark_leather", "chain_shirt@steel"], "legs": ["pants@brown"], "feet": ["boots@dark_leather"], "belt": ["belt@leather"], "cloak": ["brown", "forest", "grey", ""], "head": ["", "hood@grey", "kettle@iron"], "held": ["longsword@steel", "shortsword@steel", "handaxe@steel", "shortbow"], "shield": ["", "round@brown@none@"]},
       "wayfarer": {"body": ["tunic@forest", "tunic@brown"], "legs": ["pants@brown"], "feet": ["boots@dark_leather"], "cloak": ["brown", "grey"], "head": ["hood@brown", ""], "held": ["quarterstaff"]},
       "miner": {"body": ["shirt@grey", "tunic@black"], "over": ["leather@dark_leather", ""], "legs": ["pants@black"], "feet": ["boots@dark_leather"], "head": ["cap@grey", ""], "held": ["pickaxe@iron"]},
+      "mourning": {"body": ["robe@black", "shirt_long@black", "tunic@black"], "legs": ["pants@black"], "feet": ["boots@dark_leather"], "over": [""], "belt": [""], "tabard": [""], "cloak": ["black", ""], "head": ["hood@black", ""], "held": [""]},
       "_": {"body": ["tunic@brown", "tunic@undyed", "shirt_long@linen", "tunic@russet"], "legs": ["pants@brown"], "feet": ["shoes@leather"]}
     },
     "creatures": {

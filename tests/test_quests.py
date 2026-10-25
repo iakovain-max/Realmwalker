@@ -79,13 +79,17 @@ def go_down(game, site, level=None):
     return game.local
 
 
-# ---------------------------------------------------------------------------- offers
-def test_offers_are_tied_to_real_things(game):
+# ---------------------------------------------------------------------------- where work comes from (Expansion 6 C.2)
+def test_work_is_tied_to_real_things(game):
     w = game.world
     seen = set()
     for s in [s for s in w.settlements if s.kind in ("town", "city")][:5]:
-        visit(game, s)
-        for q in quests.offers_in(game, s):
+        for npc in visit(game, s):
+            if not npc.notable or npc.job not in quests.giver_jobs(game):
+                continue
+            q = quests.make_offer(game, npc, w.rng.child(f"real/{npc.id}"))
+            if q is None:
+                continue
             seen.add(q["template"])
             t = q["target"]
             assert q["giver"] in w.npcs and q["reward"] > 0 and q["days"] > 0
@@ -104,41 +108,163 @@ def test_offers_are_tied_to_real_things(game):
     assert len(seen) >= 5, seen
 
 
-def test_one_offer_a_week_and_it_waits(game):
+def test_no_weekly_offers_and_nobody_asks_for_work(game):
+    """The job board is gone: weeks pass in a town and nobody has thought of a job; "Is there any work?" is no
+    choice anyone has; none of the old machinery is left to call."""
+    assert not hasattr(quests, "offer_for") and not hasattr(quests, "offers_in")
     s = a_town(game)
     folk = visit(game, s)
-    npc = next(n for n in folk if n.notable and n.job in quests.giver_jobs(game))
+    for _ in range(3):
+        game.pass_time(7 * 1440, "rest")
     town = game.world.towns[s.id]
-    town.flags.setdefault("offer_day", {})[str(npc.id)] = -100
-    for i in range(20):  # sooner or later they think of something
-        town.flags["offer_day"][str(npc.id)] = -100
-        q = quests.offer_for(game, npc)
+    assert "offers" not in town.flags and "offer_day" not in town.flags
+    for npc in folk[:40]:
+        labels = [c.label for c in Conversation(game, npc).menu()]
+        assert not any("any work" in lab.lower() for lab in labels), (npc.job, labels)
+
+
+def test_every_builder_makes_for_a_given_target(game):
+    """Each kind of work is a picker and a maker: whatever chose the target (a situation, a contract, a step), make
+    builds the same work on it, with the words filled in and the target kept."""
+    from realmwalker.core.rng import RNG
+
+    w = game.world
+    assert set(quests.PICKERS) == set(quests.MAKERS) == set(game.tables.quests["templates"])
+    for c in game.party:
+        c.level = 6  # (a dragon is not given to beginners)
+    for s in w.settlements:
+        s.status.setdefault("plague", {"until": 10**9})  # (so 'cure' has a need somewhere)
+    made = {}
+    for s in w.settlements:
+        if len(made) == len(quests.KINDS):
+            break
+        folk = npcs_in(w, s.id) or (prepare_town(game, s) and npcs_in(w, s.id))
+        for npc in folk:
+            for kind in set(quests.KINDS) - set(made):
+                target = quests.pick(game, kind, npc, RNG(npc.id, kind))
+                if target is None:
+                    continue
+                assert target["kind"] == kind and target["town"] == npc.settlement
+                one = quests.make(game, npc, dict(target), RNG(1, kind))
+                two = quests.make(game, npc, dict(target), RNG(2, kind))
+                keep = {k: v for k, v in one["target"].items() if k not in ("captive", "sex")}
+                assert keep == {k: v for k, v in two["target"].items() if k in keep}, kind
+                assert one["template"] == kind and one["giver"] == npc.id and one["town"] == npc.settlement
+                for what in ("title", "pitch", "journal", "done", "failed"):
+                    text = quests.fill(game, one, what)
+                    assert text and "{" not in text, (kind, what, text)
+                for hidden in game.tables.quests["templates"][kind].get("hidden", {}):
+                    text = quests.fill(game, one, "hidden", hidden)
+                    assert text and "{" not in text, (kind, hidden, text)
+                made[kind] = one
+    assert not set(quests.KINDS) - set(made) - {"slay_dragon"}, set(quests.KINDS) - set(made)
+    # A target chosen by something else: the watch's bounty on a named gang, set from a town with no giver.
+    gang = next((f for f in fx.active_factions(w, "bandit_gang") if 0 <= f.site < len(w.sites)), None)
+    if gang is not None:
+        town = w.settlements[0]
+        q = quests.make(game, None, {"kind": "bounty", "gang": gang.id, "town": town.id}, RNG(3, "b"))
+        assert q["target"]["gang"] == gang.id and q["giver"] == -1 and q["town"] == town.id
+        assert w.sites[gang.site].name in quests.fill(game, q, "pitch")
+
+
+def test_a_commission_from_a_faction_you_serve(game):
+    """A faction you have joined sends word of work from its goals, given by one of its people in a town near you;
+    that person has their own choice for it; taken, it is in the journal and the next waits its turn."""
+    from realmwalker.game.story import work
+
+    w = game.world
+    f = None
+    for s in [s for s in w.settlements if s.kind in ("town", "city")]:
+        visit(game, s)
+        for cand in fx.active_factions(w, *fx.REALM_KINDS, "temple", "merchant_guild", "healers_guild"):
+            if game.tables.law["join"].get(cand.kind) and work.kinds_for(game, cand) and \
+                    any(n.notable and work.member(game, n, cand) for n in npcs_in(w, s.id)):
+                f = cand
+                break
+        if f is not None:
+            break
+        game.leave_local()
+    if f is None:
+        pytest.skip("no faction with people of standing in these towns")
+    game.renown.members[f.id] = 0
+    q = None
+    for _ in range(20):
+        work.daily(game)
+        q = game.renown.flags.get("commissions", {}).get(str(f.id))
         if q is not None:
             break
-        game.world.time += 1440 * 8
-    assert q is not None
-    assert quests.offer_for(game, npc) is q  # the same job until taken or stale
-    quests.accept(game, q)
-    assert quests.offer_for(game, npc) is None  # one job at a time
-
-
-def test_asking_for_work_in_conversation(game):
-    q, npc = offer(game, "clear_lair")
-    town = game.world.towns[npc.settlement]
-    town.flags.setdefault("offers", {})[str(npc.id)] = q
-    s = game.world.settlements[npc.settlement]
+        game.renown.flags["commission_day"] = {}
+        game.world.time += 1440
+    assert q is not None, f.kind
+    assert q["commission"] == f.id and q["template"] in work.kinds_for(game, f)
+    giver = w.npcs[q["giver"]]
+    assert work.member(game, giver, f)
+    s = w.settlements[giver.settlement]
     game.player.x, game.player.y = s.x, s.y
-    conv = Conversation(game, npc)
-    work = next(c for c in conv.menu() if c.id == "work")
-    conv.choose(work)
-    assert conv.mode == "quest_offer"
-    assert any(quests.pitch(game, q) in text for _, text in conv.lines)
-    yes = next(c for c in conv.menu() if c.id == "work_accept")
-    conv.choose(yes)
-    assert conv.mode == "main" and q in game.quests and q["state"] == "active"
-    site = game.world.sites[q["target"]["site"]]
-    assert game.player.explored[site.x, site.y]
-    assert str(npc.id) not in town.flags["offers"]
+    conv = Conversation(game, giver)
+    own = next(c for c in conv.menu() if c.id == "own_work")
+    conv.choose(own)
+    assert conv.mode == "quest_offer" and any(quests.pitch(game, q) in text for _, text in conv.lines)
+    conv.choose(next(c for c in conv.menu() if c.id == "work_accept"))
+    assert q in game.quests and q["state"] == "active"
+    assert str(f.id) not in game.renown.flags["commissions"]
+    game.world.time += 1440 * 30
+    game.renown.flags["commission_day"] = {}
+    if q["state"] == "active":
+        work.daily(game)
+        assert str(f.id) not in game.renown.flags["commissions"]  # (one piece of their work at a time)
+
+
+def test_a_commission_is_the_rank_trial(game, monkeypatch):
+    from realmwalker.game import reputation
+    from realmwalker.game.story import work
+
+    f = next(f for f in fx.active_factions(game.world, *fx.REALM_KINDS))
+    game.renown.members[f.id] = 0
+    monkeypatch.setattr(reputation, "needs_trial", lambda g, fid: fid == f.id)
+    q = {"reward": 1000}
+    work.mark_trial(game, f, q)
+    assert q["trial"] == f.id and q["reward"] == 1200
+    assert f.name in quests.trial_note(game, q)
+
+
+def test_a_plea_from_a_sick_town(game):
+    """The healer of a town with the plague asks you for herbs themselves: their own choice, kept while the
+    sickness lasts and gone with it."""
+    from realmwalker.game.story import work
+
+    w = game.world
+    healer = None
+    for s in [s for s in w.settlements if s.kind in ("town", "city", "village")]:
+        folk = visit(game, s)
+        healer = next((n for n in folk if n.alive and n.job in ("healer", "priest", "headman")), None)
+        if healer is not None:
+            break
+        game.leave_local()
+    if healer is None:
+        pytest.skip("no healer anywhere")
+    s.status.pop("plague", None)
+    assert work.plea_of(game, healer) is None or work.plea_of(game, healer)["template"] != "cure"
+    w.towns[s.id].flags.pop("plea_day", None)
+    w.towns[s.id].flags.pop("pleas", None)
+    s.status["plague"] = {"until": 10**9}
+    conv = Conversation(game, healer)
+    own = next(c for c in conv.menu() if c.id == "own_work")
+    q = work.plea_of(game, healer)
+    assert q["template"] == "cure" and q["plea"] == "sickness" and own.label
+    assert work.plea_of(game, healer) is q  # (the same plea, asked again)
+    s.status.pop("plague")
+    assert work.plea_of(game, healer) is None and not [x for x in work.held_by(game, healer) if x.get("plea")]
+
+
+def test_work_json_names_real_kinds(game):
+    sp = game.tables.work
+    kinds = set(quests.KINDS)
+    for g in sp["commissions"]["goals"].values():
+        assert set(g["kinds"]) <= kinds
+    for v in sp["commissions"]["by_kind"].values():
+        assert set(v) <= kinds
+    assert {p["kind"] for p in sp["pleas"]} <= kinds
 
 
 # ---------------------------------------------------------------------------- doing the work
@@ -547,36 +673,6 @@ def test_the_village_burns_if_you_are_not_there(game):
     assert q["state"] == "failed"
     assert town.status.get("raided")
     assert any(town.name in n["text"] for n in game.world.news)
-
-
-def test_every_kind_of_work_can_be_worded(game):
-    """Each template must have words and a title that fill in: a missing one is a crash."""
-    kinds = set(game.tables.quests["templates"])
-    assert kinds == set(quests.BUILDERS)
-    made = {}
-    for s in game.world.settlements:
-        if len(made) == len(kinds):
-            break
-        folk = npcs_in(game.world, s.id) or (prepare_town(game, s) and npcs_in(game.world, s.id))
-        s.status.setdefault("plague", {"until": 10**9})  # so 'cure' can be offered somewhere
-        for npc in folk:
-            for kind in kinds - set(made):
-                if npc.job not in game.tables.quests["templates"][kind]["givers"]:
-                    continue
-                for c in game.party:
-                    c.level = 6  # a dragon is not offered to beginners
-                q = quests.make_offer(game, npc, game.world.rng.child(f"all/{npc.id}/{kind}"), kind)
-                if q is not None:
-                    made[kind] = q
-    missing = kinds - set(made)
-    assert not missing - {"slay_dragon"}, missing  # every kind but the dragon should be findable here
-    for kind, q in made.items():
-        for what in ("title", "pitch", "journal", "done", "failed"):
-            text = quests.fill(game, q, what)
-            assert text and "{" not in text, (kind, what, text)
-        for hidden in game.tables.quests["templates"][kind].get("hidden", {}):
-            text = quests.fill(game, q, "hidden", hidden)
-            assert text and "{" not in text, (kind, hidden, text)
 
 
 def test_smuggling_past_the_gate(game, monkeypatch):

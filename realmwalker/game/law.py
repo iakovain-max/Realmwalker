@@ -167,6 +167,9 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
         rec["unseen"] = True
         game.say("<dim>No one saw.</>", "dim")
     game.dirty = True
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "law", goals.CRIME_WAYS.get(cid, "law"), crime=rec)  # (a situation's goals: C.5)
     return rec
 
 
@@ -889,6 +892,9 @@ def steal_from_shop(game, npc, item_id: str) -> tuple[bool, str]:
         if shop["stock"][item_id] <= 0:
             del shop["stock"][item_id]
         add_item(game.leader, game.tables.items, item_id, 1, made_at=game.world.time, tags=["stolen"])
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "item", "steal", npc=npc)  # (C.5)
         seen_by = [n for n in witnesses_here(game, exclude=[npc])
                    if dice.d20(rng).natural + 1 - glamour.watcher_minus(game, n) >= roll]
         if unseen is not None:

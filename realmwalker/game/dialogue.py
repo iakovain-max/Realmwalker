@@ -66,6 +66,7 @@ class Conversation:
         self.mode = "main"
         self.pending_offer: dict | None = None  # work being offered, waiting for a yes or no (game.quests)
         self.ended = False
+        self.paid = False  # a bribe was taken (goals.talk_way)
         self.minutes = 0
         self.rng = game.world.rng.child(f"talk/{npc.id}/{game.world.time}")
         self.settlement = game.world.settlements[npc.settlement]
@@ -258,6 +259,11 @@ class Conversation:
         else:
             self.npc_says(self.fill(self.pick("tell_about_self")))
             self.note(story_note(npc, story))
+        from realmwalker.game.story import lives
+
+        for line in (lives.note(self.game, npc), lives.family_line(self.game, npc)):
+            if line:
+                self.note(line)
         if mood in ("friendly", "warm") and npc.profile.get("want"):
             self.note(f"What {npc.first_name} wants: {npc.profile['want']}.")
 
@@ -423,6 +429,7 @@ class Conversation:
         if appeal >= 12 and "honest" not in npc.traits or appeal >= 40:
             from realmwalker.game.events import pay
 
+            self.paid = True  # (the way a goal was reached: goals.talk_way)
             pay(game, amount)
             npc.purse += amount
             change_disposition(npc, min(35, 8 + int(appeal / 4)))
@@ -438,6 +445,16 @@ class Conversation:
         if not self.hostile:
             self.npc_says(self.pick("goodbye"))
         self.ended = True
+
+    def close(self) -> None:
+        """The conversation is over: its minutes pass, and a situation's goals hear how it went (C.5)."""
+        game = self.game
+        if self.minutes:
+            game.pass_time(self.minutes, "rest")
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "talk", goals.talk_way(self), npc=self.npc)
+        game.dirty = True
 
     def town_has_guards(self) -> bool:
         return any(n.job == "guard" and n.alive for n in npcs_in(self.game.world, self.npc.settlement))
@@ -576,6 +593,10 @@ class Conversation:
             self.note(f"<loot>{npc.first_name} presses {money_text(amount)} into your hand.</>")
         else:
             self.note(f"{npc.first_name} has nothing to give.")
+            return
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "item", "talk", npc=npc)  # (a gift changes hands: C.5)
 
     def start_fight(self) -> None:
         from realmwalker.game.fight import start_battle

@@ -854,10 +854,50 @@ def _check_magic(game, fail) -> None:
 
 
 def _check_quests(game, fail) -> None:
-    """M8: the journal holds real work, tied to things that exist."""
+    """M8: the journal holds real work, tied to things that exist. Expansion 6 C.2: nobody rolls weekly offers, and
+    what waits to be taken (commissions, pleas) is not in the journal too, and is given by a living person."""
+    from realmwalker.game.story import work
+
     w = game.world
     states = ("offered", "active", "return", "finished", "failed", "abandoned")
     seen = set()
+    for sid, town in w.towns.items():
+        if "offers" in town.flags or "offer_day" in town.flags:
+            fail(f"settlement {sid} has weekly offers again")
+    taken = {q["id"] for q in game.quests}
+    for q in work.waiting(game):
+        if q["id"] in taken:
+            fail(f"quest {q['id']} ({q['template']}) waits to be taken and is in the journal")
+        if q.get("giver", -1) not in w.npcs:
+            fail(f"waiting quest {q['id']} ({q['template']}) has no giver")
+        if q.get("state") != "offered":
+            fail(f"waiting quest {q['id']} ({q['template']}) is {q.get('state')!r}")
+    for sid, recs in w.politics.get("contracts", {}).items():  # (paid work, C.3)
+        s = w.settlements[int(sid)]
+        if len(recs) > work.slots(s):
+            fail(f"{s.name} has {len(recs)} contracts at once")
+        for rec in recs:
+            q = rec["quest"]
+            if q["template"] not in ("escort", "deliver", "defend") or q.get("contract") != rec["id"]:
+                fail(f"contract {rec['id']} in {s.name} is not paid work of a known kind")
+            if q["template"] != "defend" and (not q.get("danger") or
+                                              q["danger"].get("group") not in game.tables.creatures.encounters):
+                fail(f"contract {rec['id']} in {s.name} names no real danger on its road")
+    events = game.tables.lives.get("events", {})  # (lives of townsfolk, C.4)
+    for npc in w.npcs.values():
+        lf = npc.flags.get("life")
+        if lf is None:
+            continue
+        for t in lf["ties"]:
+            if t.get("npc") is not None and t["npc"] not in w.npcs:
+                fail(f"{npc.name}'s {t['kind']} {t['name']} is tied to nobody")
+        for ev in lf["events"]:
+            if ev["kind"] not in events:
+                fail(f"{npc.name} lived an unknown event {ev['kind']!r}")
+        if npc.flags.get("dress") == "mourning" and not npc.flags.get("mourning_until"):
+            fail(f"{npc.name} wears black with no end to it")
+        if "{" in npc.profile.get("want", "") + npc.profile.get("secret", "") + npc.profile.get("fear", ""):
+            fail(f"{npc.name}'s words are unfilled")
     for q in game.quests:
         where = f"quest {q.get('id')} ({q.get('template')})"
         if q.get("template") not in game.tables.quests["templates"]:
@@ -931,14 +971,36 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
             game.enter_local()
         people = [n for n in npcs_in(game.world, here.id) if n.alive and n.present]
         if people and rng.random() < 0.6:
-            # Ask someone for work, and take it on (M8).
+            # Take on what waits here (M8; Expansion 6 C.2): a plea or a commission through its giver's own choice
+            # in a conversation, else a bounty from the board.
             from realmwalker.game import quests
+            from realmwalker.game.dialogue import Conversation
+            from realmwalker.game.story import work
 
-            for npc in rng.sample(people, min(4, len(people))):
-                q = quests.offer_for(game, npc)
-                if q is not None:
+            for npc, q in work.offers_here(game, here):
+                if npc is None:
                     quests.accept(game, q)
+                else:
+                    conv = Conversation(game, npc)
+                    own = next((c for c in conv.menu() if c.id == "own_work" and c.data.get("q") == q["id"]), None)
+                    if own is None:
+                        continue
+                    conv.choose(own)
+                    yes = next((c for c in conv.menu() if c.id == "work_accept"), None)
+                    if yes is None:
+                        continue
+                    conv.choose(yes)
+                if q in game.quests:
                     report.quests += 1
+                    return
+        if people and rng.random() < 0.1 and game.world.factions:
+            # Now and then the bot joins a faction of someone here, so that commissions come (Expansion 6 C.2).
+            from realmwalker.game import reputation
+            from realmwalker.game.people import npc_factions
+
+            for f in npc_factions(game, rng.choice(people)):
+                if reputation.join_problem(game, f) is None:
+                    reputation.join(game, f)
                     return
         hires = [n for n in people if n.flags.get("recruit") and not n.flags.get("companion")]
         if hires and rng.random() < 0.5 and len(game.party) < 3:

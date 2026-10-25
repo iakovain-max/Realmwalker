@@ -607,8 +607,9 @@ class GameState:
                 self.say(ashore, "warn")
         if self.encounter is None and self.battle is None:
             from realmwalker.game.encounters import roll_encounter
+            from realmwalker.game.story import work
 
-            enc = roll_encounter(self, minutes)
+            enc = work.on_the_road(self) or roll_encounter(self, minutes)  # (a contract's danger, where it was said)
             if enc is not None:
                 self.encounter = enc
                 self.travel = None
@@ -829,6 +830,9 @@ class GameState:
             from realmwalker.game import quests
 
             quests.on_arrive(self)
+        from realmwalker.game.story import goals
+
+        goals.notify(self, "town")  # (into a town or a place, or out of one: a situation's goals, C.5)
         if self.encounter is None and self.battle is None:
             from realmwalker.game import story
 
@@ -1076,6 +1080,10 @@ class GameState:
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
         self.dirty = True
+        if here is not None:
+            from realmwalker.game.story import goals
+
+            goals.notify(self, "town")  # (out of its streets: C.5)
 
     def _move_local(self, dx: int, dy: int) -> bool:
         lm = self.local
@@ -1181,6 +1189,10 @@ class GameState:
 
                 law.trespass_check(self, lm.buildings.index(now_building))
             self._walk_in(lm, now_building)
+        if now_building is not before_building:
+            from realmwalker.game.story import goals
+
+            goals.notify(self, "building", "sneak" if self.sneaking else "wait")  # (in or out of a house: C.5)
         creep = 2.0 if self.sneaking else 1.0
         self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace * creep), "walk")
         here = lm.items.get((nx, ny))
@@ -1207,7 +1219,13 @@ class GameState:
         return True
 
     def _walk_in(self, lm, building) -> None:
-        """Stepping into the common room of an inn: what the place is like, once per inn."""
+        """Stepping into the common room of an inn: what the place is like, once per inn. A shut shop's sign."""
+        if lm.kind == "settlement" and building.kind != "house":
+            from realmwalker.game.story import lives
+
+            shut = lives.walk_in(self, lm, building)
+            if shut:
+                self.say(shut, "story")
         if lm.kind != "settlement" or building.kind != "inn" or self.busy or not self.flavour():
             return
         s = self.world.settlement_at(self.player.x, self.player.y)
@@ -1348,6 +1366,9 @@ class GameState:
         self.cue("pickup")
         self.pass_seconds(LOCAL_STEP_SECONDS)
         self.dirty = True
+        from realmwalker.game.story import goals
+
+        goals.notify(self, "item", "sneak" if self.sneaking else "wait")  # (taken up from the ground or a chest: C.5)
         return len(pile)
 
     def drop(self, uid: int, qty: int | None = None) -> bool:
@@ -1545,6 +1566,6 @@ def new_game(world: World, tables: Tables, character: Character | None = None,
     game.say("Press <loot>F1</> for help. Arrow keys, the number pad or a click walk; <loot>Enter</> goes into the land "
              "around you. Every action is also a button along the bottom, and a right click on the map says what "
              "you can do there.", "system")
-    game.say("Walk into a town, talk to the people in it, and ask <loot>\"Is there any work?\"</> — that is how you "
-             "start. <loot>j</> is your journal.", "system")
+    game.say("Walk into a town: read its notice board, watch its streets and talk to its people — those with a real "
+             "need will ask you themselves. <loot>j</> is your journal.", "system")
     return game

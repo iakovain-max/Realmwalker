@@ -492,11 +492,15 @@ def bump(game, x: int, y: int) -> bool:
             f["ward_seen"] = True
             game.say("A sigil glows on the lock as you touch it: the tower's master has sealed it with a ward "
                      "(harder to pick or force; Knock opens it).", "magic")
+        picked = has_tools(game)
         ok, text = unlock(game, lm, x, y, int(f.get("dc", 13)))
         game.say(text, "info" if ok else "warn")
         if ok:
             set_terrain(lm, x, y, "door_open")
             lm.features.pop((x, y), None)
+            from realmwalker.game.story import goals
+
+            goals.notify(game, "building", "sneak" if picked else "force")  # (a door open: C.5)
         return True
     if tid == "bookcase" and (lm.features.get((x, y)) or {}).get("kind") == "library":
         search_library(game, lm, x, y)

@@ -5,8 +5,9 @@
   is contraband (`law.contraband_for`: found at the gate, taken), the honest shops will not sell it, and it is bought
   under the counter from a thieves' guild member who knows you as one of their own: the black market
   (`black_market_choice`; a shop of kind "black_market", data/economy.json, at its markup).
-- **The guilds' work**: a guild member gives its own members the killing and thieving work (`quests.make_offer` reads
-  `guild_work`): the assassins' trade is the thieves' guilds' darker side; there is no separate assassins' faction.
+- **The guilds' work**: a thieves' guild's commissions to its own are the killing and thieving work (game/story/work.py,
+  work.json `by_kind`, given by its fences): the assassins' trade is the thieves' guilds' darker side; there is no
+  separate assassins' faction.
 - **A poisoned cup**: in a conversation where drink is poured (a town), an ingested poison carried by the party can be
   slipped into the other's cup (`cup_choices`, `slip`): Sleight of Hand against their watchfulness (caught: an assault,
   with witnesses), then their Constitution save against the poison. A lethal dose kills them before the night is out
@@ -71,13 +72,6 @@ def open_black_market(conv) -> str:
     conv.you_say("What do you have that the shops don't sell?")
     conv.npc_says("A slow look round first. \"Not here. Round the back, and keep your voice down.\"")
     return "trade"
-
-
-def guild_work(game, npc) -> list[str]:
-    """The work a thieves' guild gives its own: a killing, a theft."""
-    from realmwalker.game import law
-
-    return ["assassinate", "steal"] if law.is_fence(game, npc) else []
 
 
 def choices(conv) -> list:
@@ -248,7 +242,9 @@ def tell_truth(conv) -> None:
     if npc.profile.get("want"):
         conv.note(f"What {escape(npc.first_name)} wants: {npc.profile['want']}.")
         said = True
-    offer = quests.offer_for(game, npc) if game.quests is not None else None
+    from realmwalker.game.story import work
+
+    offer = next(iter(work.held_by(game, npc)), None) if game.quests is not None else None
     if offer is not None and offer.get("hidden") and not offer.get("revealed"):
         conv.npc_says("\"About the work I offered you... there is more to it.\"")
         quests.reveal(game, offer)

@@ -407,6 +407,9 @@ def finish_battle(game) -> Aftermath:
     game.battle_actor = None
     game.aftermath = after
     game.dirty = True
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "battle", result=result, battle=battle)  # (a situation's goals: C.5)
     return after
 
 
@@ -862,6 +865,10 @@ def take_loot(game, items: list[Item] | None = None, money: bool = True) -> list
             react(game, "loot", quiet=True)
         after.money = 0
     game.dirty = True
+    if taken:
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "item", "fight")  # (the spoils of a fight change hands: C.5)
     return taken
 
 
@@ -916,6 +923,7 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
         after.fates[creature.uid] = fate
         game.say(text, "info")
         game.dirty = True
+        _fate_heard(game, creature, fate)
         return text
     if fate == "spare":
         text = f"{cname} stares at you, then goes, fast, without looking back."
@@ -958,7 +966,15 @@ def decide_captive(game, creature: Creature, fate: str) -> str:
         react(game, *{"spare": ("mercy",), "rob": ("robbing_surrendered",), "execute": ("execution", "cruelty"),
                       "interrogate": ()}.get(fate, ()))
     game.dirty = True
+    _fate_heard(game, creature, fate)
     return text
+
+
+def _fate_heard(game, creature: Creature, fate: str) -> None:
+    """A captive's fate settles a story's band and may reach a goal (Expansion 6 C.5): by blood or by word."""
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "captive", "talk" if fate in ("spare", "interrogate") else "fight", creature=creature, fate=fate)
 
 
 def _nearest_unknown_site(game):

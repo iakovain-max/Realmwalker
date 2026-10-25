@@ -35,7 +35,12 @@ def choices(conv) -> list:
     game = conv.game
     out = []
     spec = economy.shop_spec(game, npc)
-    if spec is not None:
+    from realmwalker.game.story import lives
+
+    shut = lives.sign(game, npc) if spec is not None else None
+    if shut:
+        out.append(Choice("trade", f"Let me see your {spec['name']}.", False, "the shop is shut today"))
+    elif spec is not None:
         out.append(Choice("trade", f"Let me see your {spec['name']}."))
         shop = economy.shop_state(game, npc)
         if shop.get("haggle_day") != game.moment.total_days:
@@ -90,7 +95,9 @@ def services_for(game, npc: NPC) -> list[Service]:
     offered = [s for s in occ.get("services", []) if s != "rumours"]
     from realmwalker.game.economy import burnt_out
 
-    if not offered or npc.mood() == "hostile" or burnt_out(game, npc):  # (no trade in a burnt shell)
+    from realmwalker.game.story import lives
+
+    if not offered or npc.mood() == "hostile" or burnt_out(game, npc) or lives.sign(game, npc):  # (burnt, or shut)
         return []
     econ = game.tables.economy["services"]
     c = game.leader

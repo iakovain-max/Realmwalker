@@ -21,6 +21,16 @@ def tables(data):
     return Tables(data)
 
 
+def waiting(game, town):
+    """What waits to be taken in the first town (Expansion 6: the bounties on its board, its people's pleas, and the
+    contract every peopled town has, C.3)."""
+    from realmwalker.game.story import work
+
+    offers = work.offers_here(game, town)
+    assert any(q.get("contract") for _, q in offers), "every peopled town has paid work"
+    return offers
+
+
 def a_life(tables, seed):
     world = cached_world(WorldOptions("Firstland", seed, "small"), tables)
     b = CharacterBuilder(tables, RNG(seed, "hero"))
@@ -48,12 +58,12 @@ def test_the_first_town_has_people_money_and_a_shop(tables, seed):
 @pytest.mark.parametrize("seed", SEEDS)
 def test_there_is_work_in_the_first_town_and_the_map_shows_where(tables, seed):
     game, town = a_life(tables, seed)
-    offers = [(n, quests.offer_for(game, n)) for n in npcs_in(game.world, town.id) if n.alive]
-    offers = [(n, q) for n, q in offers if q is not None]
+    offers = waiting(game, town)
     assert offers, "somebody in the first town wants something doing"
     npc, q = offers[0]
-    labels = [c.label for c in Conversation(game, npc).menu()]
-    assert any("work" in s.lower() for s in labels), f"and you can ask them for it: {labels}"
+    if npc is not None:
+        own = [c for c in Conversation(game, npc).menu() if c.id == "own_work"]
+        assert own, "and they ask you for it themselves"
     quests.accept(game, q)
     assert any(x["id"] == q["id"] for x in game.quests), "taking it puts it in the journal"
     assert quests.title(game, q), "and it has a name"
@@ -65,10 +75,9 @@ def test_you_can_walk_from_the_town_towards_the_work(tables, seed, monkeypatch):
     monkeypatch.setattr("realmwalker.game.encounters.encounter_chance", lambda *a: 0.0)
     monkeypatch.setattr("realmwalker.game.events.event_chance", lambda *a: 0.0)
     game, town = a_life(tables, seed)
-    offers = [q for q in (quests.offer_for(game, n) for n in npcs_in(game.world, town.id) if n.alive)
-              if q is not None]
+    offers = waiting(game, town)
     assert offers
-    quests.accept(game, offers[0])
+    quests.accept(game, offers[0][1])
     game.leave_local()
     spot = quests.map_marks(game)[0]
     was = abs(spot[0] - game.player.x) + abs(spot[1] - game.player.y)

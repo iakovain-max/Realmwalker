@@ -164,14 +164,16 @@ def smoke_script():
         here = game.world.settlement_at(game.player.x, game.player.y)
         if here is None:
             return
-        taken = 0
-        for npc in npcs_in(game.world, here.id):
-            q = quests.offer_for(game, npc)
-            if q is not None:
-                quests.accept(game, q)
-                taken += 1
-                if taken >= 2:
-                    break
+        from realmwalker.game.story import work
+
+        # What waits here (a plea, a bounty on the board); else work as the debug console makes it.
+        offers = [q for _, q in work.offers_here(game, here)][:2]
+        if not offers:
+            rng = game.world.rng.child("smoke/work")
+            offers = [q for q in (quests.make_offer(game, n, rng) for n in npcs_in(game.world, here.id)
+                                  if n.notable) if q is not None][:2]
+        for q in offers:
+            quests.accept(game, q)
 
     steps.append((frame, work))
     frame += 4

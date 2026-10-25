@@ -406,6 +406,24 @@ def _check_quest_refs(files: dict[str, Any]) -> list[str]:
     for name, base in data["heirlooms"]:
         if items and base not in items:
             errors.append(f"data/quests.json: heirlooms names unknown item {base!r}.")
+    work = files.get("work.json") or {}
+    com = work.get("commissions", {})
+    for where, kinds in [(f"goals.{g}", v["kinds"]) for g, v in com.get("goals", {}).items()] + \
+            [(f"by_kind.{k}", v) for k, v in com.get("by_kind", {}).items()] + \
+            [(f"pleas[{i}]", [p["kind"]]) for i, p in enumerate(work.get("pleas", []))]:
+        for kind in kinds:
+            if kind not in QUEST_TEMPLATES:
+                errors.append(f"work.json: commissions.{where} names {kind!r}, which is not a kind of work.")
+    for i, p in enumerate(work.get("pleas", [])):
+        for job in p["jobs"]:
+            if jobs and job not in jobs:
+                errors.append(f"work.json: pleas[{i}] names unknown occupation {job!r}.")
+    for cid, c in work.get("contracts", {}).get("kinds", {}).items():
+        for job in c["givers"] + c.get("travellers", []) + c.get("recipients", []):
+            if jobs and job not in jobs:
+                errors.append(f"work.json: contracts.kinds.{cid} names unknown occupation {job!r}.")
+        if c.get("text") and c["text"] not in data["text"]:
+            errors.append(f"work.json: contracts.kinds.{cid} names words {c['text']!r} that data/quests.json has not.")
     return errors
 
 

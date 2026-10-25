@@ -1590,8 +1590,55 @@ FIRE = Obj({  # live fire on a town's map (game/fire.py)
     "cries": word_list(3, 120),
 }, optional=True)
 MARKS = Obj({"marks": Map(MARK), "fire": FIRE})
+WORK = Obj({  # work that waits to be taken (game/story/work.py; the kinds are data/quests.json templates)
+    "commissions": Obj({
+        "renew": DAY_SPAN,
+        "reach": Int(min=1, max=200),
+        "goals": Map(Obj({"match": word_list(1, 80), "kinds": word_list(1, 30)})),
+        "by_kind": Map(word_list(1, 30)),
+        "choice": word_list(2, 120),  # ({faction})
+        "word": word_list(2, 200),  # ({faction}, {giver}, {title}, {town})
+    }, optional=True),
+    "pleas": List(Obj({"kind": Str(max_len=30), "jobs": List(Str(max_len=30)),
+                       "need": Str(choices=["always", "sickness", "dragon", "grudge"]),
+                       "choice": word_list(2, 120)}), min_items=1, optional=True),
+    "plea_gap": Int(min=1, max=365, optional=True),
+    "contracts": Obj({  # paid work: one a town, two in a city (C.3)
+        "renew": DAY_SPAN,
+        "near": Int(min=1, max=40),  # how far from the road a danger may be
+        "kinds": Map(Obj({"kind": Str(choices=["escort", "deliver", "defend"]),
+                          "from": Str(choices=["trade", "faith", "raiders"]),
+                          "to": Str(choices=["market", "holy"], optional=True),
+                          "text": Str(max_len=40, optional=True),  # a quests.json text variant
+                          "givers": word_list(1, 30),
+                          "travellers": List(Str(max_len=30), min_items=1, optional=True),
+                          "recipients": List(Str(max_len=30), min_items=1, optional=True),
+                          "choice": word_list(2, 120)})),  # ({dest}, {raiders})
+        "danger": Obj({k: word_list(2, 120) for k in ("threat", "lair", "gang", "wild")}),  # ({name}, {site}, {area})
+        "met": Obj({k: word_list(2, 200) for k in ("threat", "lair", "gang", "wild")}),  # (+ {town}, {giver})
+        "terms": Str(max_len=300),
+    }, optional=True),
+}, optional=True)
+_LIFE_PICK = Obj({"words": word_list(1, 160), "jobs": List(Str(max_len=30), optional=True),
+                  "traits": List(Str(max_len=30), optional=True), "needs": Str(max_len=20, optional=True),
+                  "not": Str(max_len=20, optional=True), "social": List(Str(choices=["low", "middle", "high"]), optional=True),
+                  "forced": Bool(optional=True), "short": Str(max_len=40, optional=True)})
+LIVES = Obj({  # townsfolk's lives (game/story/lives.py, C.4)
+    "others": Int(min=0, max=60), "reach": Int(min=1, max=200), "per_town": Int(min=0, max=20), "every": Int(min=1, max=60),
+    "kin": Obj({"spouse": Float(min=0, max=1), "children": List(Int(min=0, max=9), min_items=2, max_items=2),
+                "parent": Float(min=0, max=1), "sibling": Float(min=0, max=1)}),
+    "ties": Map(Float(min=0, max=1)),
+    "wants": Map(_LIFE_PICK), "fears": Map(_LIFE_PICK), "secrets": Map(_LIFE_PICK),
+    "secret_chance": Float(min=0, max=1), "things": Map(_LIFE_PICK),
+    "events": Map(Obj({"chance": Float(min=0, max=1), "seed": Float(min=0, max=1), "days": DAY_SPAN,
+                       "note": word_list(2, 160), "bark": word_list(2, 90),
+                       "sign": List(Str(max_len=90), min_items=2, optional=True),
+                       "murmur": List(Str(max_len=90), min_items=3, optional=True)})),
+}, optional=True)
+DATA_FILES.update({"lives.json": LIVES})
+PACK_ONLY.update({"lives.json": {}})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
-                   "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS})
+                   "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},
                   "villains.json": {"tempers": {}, "moves": {}, "bosses": {}, "weaknesses": {}},
-                  "beats.json": {"beats": {}}, "scenes.json": {"scenes": {}}, "marks.json": {"marks": {}}})
+                  "beats.json": {"beats": {}}, "scenes.json": {"scenes": {}}, "marks.json": {"marks": {}}, "work.json": {}})

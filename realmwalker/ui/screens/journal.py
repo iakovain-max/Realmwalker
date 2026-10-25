@@ -132,6 +132,8 @@ def details(game, q) -> str:
     lines = [f"<title>{esc(quests.title(game, q))}</>", status_markup(game, q), ""]
     if q.get("personal") is not None:
         lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>(who travels with you)</>")
+    elif q["giver_name"].endswith(town.name):  # ("the watch of Bradwich", not "... of Bradwich of Bradwich")
+        lines.append(f"<dim>For</> {esc(q['giver_name'])}")
     else:
         lines.append(f"<dim>For</> {esc(q['giver_name'])} <dim>of</> {esc(town.name)}")
     reward = q["reward"]
@@ -148,6 +150,10 @@ def details(game, q) -> str:
                      f"<dim>({esc(quests.direction(town, w.settlements[t['dest']]))})</>")
     if q["template"] == "hunt_beast":
         lines.append(f"<dim>Where</> {esc(q['words'].get('where', ''))} <dim>(marked on your map)</>")
+    if q.get("contract") is not None:
+        from realmwalker.game.story import work
+
+        lines.append(work.terms_note(game, q))  # (paid work shows its terms)
     if q["state"] in quests.LIVE and not q.get("done"):
         danger = quests.danger_note(game, q)  # how the beast or the raiders measure up against the party now
         if danger:
@@ -304,8 +310,10 @@ class JournalScreen(Screen):
                     canvas.text(3, y, f"{mark} {quests.title(game, q)}"[: list_w - 4], color)
             y += 1
         if not rows:
-            empty = ("<dim>You have taken on no work. Ask people in towns: \"Is there any work?\" "
-                     "The notice board may have bounties.</>" if self.tab == WORK else
+            empty = ("<dim>You have taken on no work. Read the notice boards for bounties and for who is hiring, "
+                     "and listen to people: someone with a real need will ask you. A faction you join sends word of "
+                     "its own work.</>"
+                     if self.tab == WORK else
                      "<dim>You are part of no tale yet. Listen in towns for what troubles them, and read the notice "
                      "boards: someone always needs a hero.</>" if self.tab == ADVENTURES else
                      "<dim>You have spoken to nobody yet. Walk into a town and walk into people.</>")

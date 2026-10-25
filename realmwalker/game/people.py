@@ -411,6 +411,9 @@ def populate_town(game, lm, settlement) -> Town:
     from realmwalker.game.story import cast
 
     cast.place_people(game, town, settlement)  # (the people a story waited for: Expansion 6)
+    from realmwalker.game.story import lives
+
+    lives.ensure(game, settlement.id)  # (their ties, wants, fears and secrets: C.4)
     update_positions(game, lm)
     return town
 

@@ -481,6 +481,16 @@ def _magic_seen(game, caster) -> None:
 
 def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None,
                  hired: bool = False, charge=None) -> list[str]:
+    """See `_cast_on_road`; a spell cast may reach a situation's goal (a charm, Knock, a truth read: C.5)."""
+    out = _cast_on_road(game, caster, spell_id, target, slot_level, scroll, hired, charge)
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "magic")
+    return out
+
+
+def _cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | None = None, scroll=None,
+                  hired: bool = False, charge=None) -> list[str]:
     """Cast a spell outside battle. Healing goes through game/care.py (the worst wound first); a lasting spell is
     kept on whoever it was cast on. `slot_level`: a higher slot, for a spell that does more with one; `scroll`: read
     from that scroll (no slot, no materials; a check first when it is above the reader); `hired`: a townsperson casts
