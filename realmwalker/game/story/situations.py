@@ -271,6 +271,14 @@ def _companion_roots(game, s, rng) -> list[dict]:
     return out
 
 
+@root("vignette")
+def _vignette_roots(game, s, rng) -> list[dict]:
+    """The hand-made stories whose needs hold here (story/vignettes.py): seldom, and each once a world."""
+    from realmwalker.game.story import vignettes
+
+    return vignettes.roots(game, s, rng)
+
+
 def gather_roots(game, s, rng) -> list[dict]:
     out = []
     for fn in ROOTS.values():
@@ -325,6 +333,18 @@ def _bind_root(game, s, sit, spec, rng):
     if spec.get("root_jobs") and n.job not in spec["root_jobs"]:
         return None
     return _entry(n)
+
+
+@bind("given")
+def _bind_given(game, s, sit, spec, rng):
+    """What a vignette's need found for this role (story/vignettes.py): a townsperson, a site, a figure."""
+    entry = (sit["root"].get("roles") or {}).get(spec.get("_role", ""))
+    if entry is None:
+        return None
+    n = game.world.npcs.get(entry["npc"]) if entry.get("npc") is not None else None
+    if entry.get("npc") is not None and (n is None or not _free(game, sit, n, n.job == "child")):
+        return None
+    return dict(entry)
 
 
 @bind("job")
@@ -575,6 +595,8 @@ def _bind_far(game, s, sit, spec, rng):
     w = game.world
     lo, hi = spec.get("within", [6, 30])
     towns = sorted((x for x in w.settlements if x.id != s.id and lo <= dist(x, s) <= hi), key=lambda x: (dist(x, s), x.id))
+    if spec.get("town") == "root":  # (the town the root names: a vignette's shrine)
+        towns = [w.settlements[int(sit["root"]["settlement"])]] if sit["root"].get("settlement") is not None else []
     if not towns:
         return None
     dest = towns[rng.randint(0, min(2, len(towns) - 1))]
@@ -626,6 +648,12 @@ def make(game, sid: int, root: dict | None = None, predicament: str | None = Non
     town = w.towns.get(sid)
     if not preds or town is None or not town.npcs:
         return None
+    if predicament in preds and preds[predicament].get("vignette") and (root or {}).get("vignette") != predicament:
+        from realmwalker.game.story import vignettes
+
+        root = vignettes.find(game, s, predicament)  # (a vignette comes only from what its need finds)
+        if root is None:
+            return None
     n = int(w.politics.get("next_situation", 1))
     qid = f"Q{n}"
     rng = w.rng.child(f"situation/{qid}")
@@ -633,7 +661,7 @@ def make(game, sid: int, root: dict | None = None, predicament: str | None = Non
     table = data(game).get("roots") or {}
     pool = []
     for r in roots:
-        for pid in table.get(r["key"], []):
+        for pid in table.get(r["key"]) or ([r["vignette"]] if r.get("vignette") else []):
             if pid in preds and (predicament is None or pid == predicament):
                 pool.append((r, pid, _weight(game, r, pid, sid)))
     if predicament is not None and not pool and predicament in preds:
@@ -707,6 +735,7 @@ def _cast(game, s, root: dict, pid: str, qid: str, rng) -> dict | None:
         sit["obstacles"].append(dict(copy.deepcopy(ob), id=ob.get("id", f"o{i}"), state="standing"))
     lo, hi = spec.get("clock", [12, 24])
     sit["clock"] = {"due": today + rng.randint(int(lo), int(hi)), "half": False}
+    sit["words"].update(root.get("words") or {})  # (a vignette's own things: the ruin, the dead, the blade)
     sit["meeting"] = _meeting(game, sit, spec, rng)
     if sit["meeting"] is None:
         _undo(game, sit)
@@ -1675,6 +1704,16 @@ def _o_thread(game, sit):
 def _o_clock(game, sit, factor):
     left = int(sit["clock"]["due"]) - _today(game)
     sit["clock"]["due"] = _today(game) + max(1, int(left * float(factor)))
+
+
+@op("lay_scar")
+def _o_lay_scar(game, sit):
+    """The field of the dead the vignette is about is laid (past.restless no longer sends its dead)."""
+    i = sit["root"].get("scar")
+    scars = game.world.politics.get("scars") or []
+    if i is not None and 0 <= int(i) < len(scars) and isinstance(scars[int(i)], dict):
+        scars[int(i)]["laid"] = True
+    return []
 
 
 @op("price", "int")

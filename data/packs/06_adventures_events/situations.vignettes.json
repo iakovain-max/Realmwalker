@@ -1,0 +1,118 @@
+{
+  "_comment": "Vignettes (Expansion 6 C.9, docs/ADVENTURES.md §6.11): hand-made situations, each needing particular things in the world (its vignette.needs, game/story/vignettes.py NEEDS), with its own meetings (v_...) and scenes (scenes.vignettes.json). Roles bound 'given' take what the need found; the need's words are the situation's own ({ruin}, {water}...).",
+  "vignettes": {"share": 0.35, "near": 1},
+  "meetings": {
+    "v_bell_at_night": {"scene": "vig_drowned_bell", "cast": {"asker": "keeper"}}
+  },
+  "predicaments": {
+    "v_drowned_bell": {
+      "name": "The drowned bell",
+      "vignette": {"needs": "ruin_by_water", "weight": 2.0},
+      "asks": "keeper",
+      "roles": {
+        "keeper": {"bind": "given"},
+        "ruin": {"bind": "given"}
+      },
+      "obstacles": [
+        {
+          "id": "crypt",
+          "kind": "danger",
+          "who": "keeper",
+          "note": [
+            "The bell of {ruin_was} lies in the flooded crypt under {ruin}, where {water} came in the night {ruin_fall}.",
+            "Whatever lies in the drowned crypt under {ruin} has had {ruin_years} alone with the bell."
+          ],
+          "acts": [
+            {
+              "id": "night",
+              "label": ["Tell me about the night it fell.", "Why was the bell taken down at all?"],
+              "check": ["history", 12],
+              "unless": ["knows:night"],
+              "then": [["learn", "night"]],
+              "say": [
+                "They rang it to call the men in from the fields, the night {ruin_fall}. They rang it too long. It brought them straight to us. After, the ones who lived threw it in the water so it could never call anyone again.",
+                "It rang the whole night, child. Rang and rang, and nobody came, and then the wrong ones came. We drowned it after, for shame. And now it rings by itself."
+              ],
+              "fail_say": ["It was a long time ago. I was small. I remember the sound, that's all. Only the sound."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "leave",
+              "label": ["Some things are better left under the water."],
+              "unless": ["taken"],
+              "then": [["flag", "left"]],
+              "say": [
+                "...Maybe you're right. Maybe it is ringing for me, and I should just go to it.",
+                "Leave it, then. I'll stop my ears. I've had practice."
+              ]
+            }
+          ]
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "keeper", "site": "ruin", "item": "bell"},
+      "goals": [
+        {"id": "raised", "test": ["flag", "work_done"]},
+        {"id": "left", "test": ["flag", "left"]}
+      ],
+      "endings": [
+        {
+          "id": "raised_known",
+          "when": "raised",
+          "if": ["knows:night"],
+          "tone": "good",
+          "ops": [["disposition", "keeper", 35], ["favour", "keeper", "shelter", 2], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "The bell of {ruin_was} hangs in {town} now, and once a year it is rung for the dead of {ruin}, and only once. {keeper} counts the strokes.",
+            "Raised, and hung, and rung once for every soul of {ruin_was}. Under {water}, nothing rings back."
+          ]
+        },
+        {
+          "id": "raised",
+          "when": "raised",
+          "tone": "mixed",
+          "ops": [["disposition", "keeper", 25], ["xp_story", "fair"]],
+          "line": [
+            "The bell rings over {town} again. On still nights, something in the crypt under {ruin} rings back.",
+            "{keeper} wept to hear it. The fishers say the water by {ruin} has gone cold, and stays cold."
+          ]
+        },
+        {
+          "id": "left",
+          "when": "left",
+          "tone": "bitter",
+          "ops": [["disposition", "keeper", -5], ["xp_story", "small"]],
+          "line": [
+            "The bell stays under {water}. {keeper} sits by the water at night and listens, and does not say what for.",
+            "Left where it lies. The bell of {ruin_was} still rings on still nights, and {keeper} has stopped asking anyone."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "keeper", "dead"], ["news", "news_lapse"]],
+        "line": [
+          "{keeper} was found by {water} at dawn, sitting up, eyes open, facing {ruin}. The bell had rung all night.",
+          "{keeper} went down to the water on a still night and did not come back. The bell has not rung since."
+        ]
+      },
+      "clock": [16, 28],
+      "meetings": ["v_bell_at_night"],
+      "words": {
+        "keep": ["bell"],
+        "bell": ["the bell of {ruin}", "the drowned bell of {ruin}"],
+        "title": ["The drowned bell", "The bell under {water}", "What rings under {water}"],
+        "stakes": ["the bell of {ruin_was}, and the peace of {keeper}", "{keeper}'s last wish, and the drowned bell"],
+        "plea": [
+          "You heard it. Don't tell me you didn't. That's the bell of {ruin_was}, {ruin_years} under the water, and it rings for us who are left. I am the last. Bring it up. Bring it out of the crypt at {ruin} and let it be hung where it can be seen, before it rings for me.",
+          "Every still night since the spring. The bell of {ruin}. I was born under it. They threw it in the water the year {ruin_fall}, and I thought it was done with us. Raise it. Please. I want to hear it once in the light."
+        ],
+        "first": [
+          "On still nights a bell rings under {water}: the bell of {ruin_was}, drowned {ruin_years} ago. {keeper} wants it raised from the crypt under {ruin}.",
+          "{keeper}, the last of {ruin_was}, wants its drowned bell brought up from {ruin}."
+        ],
+        "news_lapse": ["In {town}, the old {keeper_title} {keeper} was found dead by {water}, facing the ruins of {ruin}."]
+      }
+    }
+  }
+}
