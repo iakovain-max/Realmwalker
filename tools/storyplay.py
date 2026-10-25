@@ -41,7 +41,7 @@ PARTY_CLASSES = ("fighter", "cleric", "rogue", "wizard")
 MAX_DAYS = 120
 MAX_ACTIONS = 400
 KINDS = ("beast", "risen", "outlaw")  # (the threats whose tales are written: Parts A and D)
-PART_D = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront")
+PART_D = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront", "endure")
 
 
 @dataclass
@@ -485,6 +485,19 @@ class Player:
                 continue
             g.pass_time(60, "rest")
             self.settle()
+
+    def endure(self, adv: dict, st: dict) -> None:
+        """A set piece (E.4): a night at camp out of town, where its beat finds you once its day has come."""
+        g = self.game
+        if g.world.settlement_at(g.player.x, g.player.y) is not None:
+            home = places.xy(g.world, adv["places"]["home"])
+            self.go(home)
+        for line in fight.rest(g, "long"):
+            pass
+        if beats.pending(g) is None and g.encounter is None:
+            story.on_night(g, "camp")
+        self.settle()
+        self.wait_a_day(st)
 
     def rite(self, adv: dict, st: dict) -> None:
         if self.go(places.xy(self.game.world, st["target"]["place"])):

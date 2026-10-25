@@ -362,6 +362,7 @@ def _check_adventures(game, fail) -> None:
     _check_part_d(game, fail)
     _check_villains(game, fail)
     _check_lieutenants(game, fail)
+    _check_early(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
@@ -394,6 +395,37 @@ def _check_lieutenants(game, fail) -> None:
     for i, n in enumerate(game.world.politics.get("nemeses", [])):
         if n.get("state") not in ("hunting", "slain", "taken") or not n.get("life") or                 n.get("band") not in game.tables.creatures.encounters:
             fail(f"nemesis {i}: a state, a hero or a band missing ({n.get('state')}, {n.get('band')})")
+
+
+def _check_early(game, fail) -> None:
+    """Expansion 6 E.4: a tale with an early end has its villain dead and its short last chapter last, with one step
+    of the kind it should have (succession: a defeat on a lieutenant's band; contingency: an endure); a threat that
+    returns sleeps with a sequel or has stirred, and remembers a hero; a moved anchor lies under its villain's home."""
+    from realmwalker.game import story
+    from realmwalker.game.story import early
+    from realmwalker.world import threats
+
+    for adv in story.active(game):
+        where = f"tale {adv['id']}"
+        rec = adv.get("early")
+        if rec:
+            last = adv["chapters"][-1]
+            want = {"succession": "defeat", "contingency": "endure"}.get(rec.get("kind"))
+            if rec.get("kind") not in early.KINDS or not adv.get("boss_dead") or rec.get("kind") == "cat_away":
+                fail(f"{where}: an early end '{rec.get('kind')}' with the villain not dead, or still going")
+            elif last.get("id") != "early" or int(adv["chapter"]) != len(adv["chapters"]) - 1 or \
+                    [st["kind"] for st in last["steps"]] != [want]:
+                fail(f"{where}: its short last chapter is not last, or not a {want}")
+        for ch in adv["chapters"]:
+            for st in ch["steps"]:
+                if st.get("moved") and int(st["target"]["place"].get("site", -1)) != \
+                        int((adv["places"].get("home") or {}).get("site", -2)):
+                    fail(f"{where}: its anchor was moved, but not under its home")
+    for tid, t in threats.records(game.world).items():
+        r = t.get("returns")
+        if r and (not r.get("life") or int(r.get("times", 0)) < 1 or
+                  (t.get("sequel") and t["state"] == "active" and t.get("adventure"))):
+            fail(f"threat {tid}: a return with no hero, no count, or a sequel taken and not cleared ({r})")
 
 
 def _check_villains(game, fail) -> None:
