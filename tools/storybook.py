@@ -115,6 +115,8 @@ def _route(game, adv: dict, r: dict) -> str:
         return f"{r.get('skill', 'a check')} at {_place(game, r.get('at'))}"
     if how == "divine":
         return "divination (Divination, Commune, Contact Other Plane)"
+    if how == "tail":
+        return f"follow the {r.get('role', 'one')} by night ({castmod.describe(game, {'cast': {'x': r.get('who')}}, 'x')})"
     return str(r)
 
 
@@ -142,6 +144,26 @@ def _step(game, adv: dict, st: dict) -> str:
     elif kind == "finale":
         fin = adv["finale"]
         text = f"FINALE {_place(game, t.get('place'))} ({fin['boss']}, template {fin['template']})"
+    elif kind in ("rescue", "fetch"):
+        what = t.get("role") if kind == "rescue" else t.get("what")
+        text = f"{kind} {what} ({_place(game, t.get('place'))})"
+    elif kind in ("defeat", "capture"):
+        text = f"{kind} the {t.get('role')} ({t.get('group')}, {_place(game, t.get('place'))})"
+    elif kind in ("recruit", "confront"):
+        clue = f"; or the clue {t['clue']}" if t.get("clue") else ""
+        text = f"{kind} the {t.get('role')} ({t.get('skill')} {t.get('dc')}{clue})"
+    elif kind == "rally":
+        text = f"rally {_place(game, t.get('place'))} ({t.get('skill')} {t.get('dc')})"
+    elif kind == "hold":
+        laid = f" (field: {t['field']})" if t.get("field") else ""
+        text = (f"hold {_place(game, t.get('place'))} for {t.get('waves')} waves of {t.get('group')}, in "
+                f"{t['days'][0]}-{t['days'][1]} days, at night{laid}")
+    elif kind == "rite":
+        text = (f"rite at {_place(game, t.get('place'))} (needs {', '.join(t.get('needs', [])) or 'nothing'}; "
+                f"{t.get('skill')} {t.get('dc')})")
+    elif kind == "escort":
+        amb = f" (ambush: {t['ambush']})" if t.get("ambush") else ""
+        text = f"escort the {t.get('role')} to {_place(game, t.get('to'))}{amb}"
     else:
         text = kind
     if st.get("optional"):
@@ -168,10 +190,14 @@ def synopsis(game, adv: dict) -> str:
         lines.extend(" " * 10 + more for more in wrapped[1:])
 
     who = words.get("villain", "?")
-    if fig is not None:
+    if fig is not None and fig.kind == "beast":
         born = getattr(fig, "born", None)
         kills = len(getattr(fig, "kills", []) or [])
         who += f" (the {words.get('beast', 'beast')} of the history, born {born}, {kills} killed; figure {fig.id})"
+    elif fig is not None:
+        life = "alive" if fig.alive else f"d. {words.get('died_year', '?')}, killed by {words.get('slayer', '?')}"
+        gang = f"; captain of {words['gang']}" if words.get("gang") else ""
+        who += f" ({life}; figure {fig.id}{gang})"
     field("Premise", f"{adv['words']['premise']} Villain: {who}. Den: {_place(game, adv['places'].get('home'))}.")
     field("Hook", adv["words"]["hook"])
     for role in adv["cast"]:
@@ -265,7 +291,10 @@ def _templates(game, adv: dict) -> list[tuple[str, str]]:
     wk = wordsmod.weakness(game, adv)
     for line in (wk or {}).get("lore", []):
         out.append(("weakness lore", line))
+    others = {b + "_" for b in tb.adventures.get("blueprints", {}) if b != adv["blueprint"]}
     for family, lines in tb.adventures.get("words", {}).items():  # (witnesses' tales, the patron, nested tables)
+        if any(family.startswith(o) for o in others):
+            continue  # (another tale's own table: the outlaw's witness is not the risen king's)
         for line in lines:
             out.append((f"words {family}", line))
     for tag in bp.get("epithets", []):
@@ -284,7 +313,8 @@ def problems(game, adv: dict) -> list[str]:
         entry = adv["cast"].get(role)
         if not entry and ("chance" not in bp["cast"][role]):
             out.append(f"{aid}: the {role} is not bound")
-        elif entry and not castmod.pending(entry) and castmod.person(w, entry) is None and "settlement" not in entry:
+        elif entry and not castmod.pending(entry) and castmod.person(w, entry) is None and \
+                "settlement" not in entry and "band" not in entry:  # (a band as a role: the waker's cultists)
             out.append(f"{aid}: the {role} is bound to nobody who exists")
     for name, p in adv["places"].items():
         if not places.exists(w, p):
@@ -305,6 +335,8 @@ def problems(game, adv: dict) -> list[str]:
     words = wordsmod.for_adventure(game, adv)
     words.setdefault("hook", adv["words"]["hook"])
     words.setdefault("goal", adv["chapters"][0]["goal"])
+    for k in ("who", "place", "night", "to"):  # (what Part D's steps give their own lines: story/deeds.say)
+        words.setdefault(k, k)
     tables = tb.adventures.get("words", {})
     rng = w.rng.child("storybook")
     for field in ("title",):

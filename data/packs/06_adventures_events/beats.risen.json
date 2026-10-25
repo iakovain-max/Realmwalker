@@ -1,0 +1,244 @@
+{
+  "_comment": "The Risen's beats (Expansion 6 D.3): his moves (an omen, a letter in an old hand, his dead at the camp's edge by night, a test on the road) and the steps' own (the field of the dead searched and read, the choice about the slayer's line, the barrow, the rite).",
+  "beats": {
+    "risen_omen": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp"],
+      "when": {"villain.kind": "risen", "adventure": {"at_large": true}},
+      "text": [
+        ["{omen}", "{omen} A chill runs down your back.", "{omen} Nothing else on the road moves."],
+        ["You go on, and the cold goes with you a long way.", "You go on. The feeling of being watched stays with you till nightfall.", "You pass it quickly, and do not look back, and the cold keeps pace with you for miles."]
+      ]
+    },
+    "risen_letter": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["camp", "inn"],
+      "time": ["dawn", "day"],
+      "when": {"villain.kind": "risen", "adventure": {"chapter": ["binds", "night"], "at_large": true}},
+      "text": [
+        [
+          "In the morning there is a letter where nobody could have left it, folded small and sealed with old black wax. The hand is very old, the letters shaped the way they were shaped three hundred years ago.",
+          "You wake to find a letter lying on your blanket, sealed with black wax gone brittle. Nobody was seen near you in the night. The paper is yellow as a tooth, and the ink is brown.",
+          "A letter has been left for you where you would be sure to find it, and the seal on it is a crown pressed into dull black wax. The writing is a hand you could not read as a child, tall and slanting and very old."
+        ]
+      ],
+      "ops": [["letter", "risen_letter", "dead"]],
+      "choices": [
+        {"label": ["Burn it."], "ops": [["flag", "burned_his_letter"]],
+         "result": [
+           "The wax spits and the paper curls, and for a moment the smoke smells of a tomb. You keep the ash.",
+           "The flame goes green at the edge and then white, and the smell is of old earth. By the time it is ash your hands have stopped shaking."
+         ]},
+        {"label": ["Read it again, and keep it."], "ops": [["flag", "kept_his_letter"], ["clue", "villain"]],
+         "result": [
+           "You read it until you know the shape of {his} hand. It is a proud hand. It is afraid of nothing, except perhaps of being forgotten.",
+           "You read it twice, slowly, and it is as if a cold hand were laid on your shoulder and left there. The pride in it is real, and so is the loneliness under the pride."
+         ]}
+      ]
+    },
+    "risen_at_camp": {
+      "family": "villain",
+      "picture": "camp_night",
+      "where": ["camp"],
+      "time": ["night"],
+      "when": {"villain.kind": "risen", "adventure": {"chapter": ["dead", "binds", "night"], "at_large": true}},
+      "text": [
+        [
+          "In the black hour the fire burns down, and when you look up there are figures standing at the edge of its light, a long way round, very still. Nobody heard them come.",
+          "Sometime after midnight a hush comes down, the kind with something behind it. When you look out past the fire, there are shapes at the limit of the light, standing in a ring, still as posts.",
+          "The night breaks open with a sound like a held breath. At the edge of the firelight pale figures have gathered, shoulder to shoulder, facing in. Nobody saw them come."
+        ],
+        [
+          "They do not come closer. They only watch.",
+          "They keep their distance. The fire holds them off, or something does.",
+          "None of them speaks, and none of them stirs. It is as if they are waiting for something to be decided."
+        ]
+      ],
+      "choices": [
+        {"label": ["Build the fire up and stand watch until the light."], "check": {"skill": "religion", "dc": 12},
+         "success": [["attention", 1]], "failure": [["fatigue", 10], ["attention", 1]],
+         "result": [
+           "You say every prayer you know, and the fire roars, and at cockcrow they are simply not there. The grass where they stood is white with frost.",
+           "You pray yourself hoarse. The fire stands high, and one by one the shapes thin and are gone before the first bird sings. The frost they leave round the camp is thick as moss."
+         ],
+         "fail_result": [
+           "Nobody sleeps. When the light comes they are gone, and you are all of you grey with tiredness.",
+           "You doze on your feet, and wake to find the fire low and the figures nearer than before. By the time you have it lit again they are gone, and you are too cold to sleep."
+         ]},
+        {"label": ["Walk out to the nearest of them, and look it in the face."], "check": {"skill": "religion", "dc": 14},
+         "success": [["clue", "name"], ["attention", 1]], "failure": [["hurt", "1d6"], ["attention", 1]],
+         "result": [
+           "It does not move. Its mouth opens, and very faintly, like wind under a door, it says a name. Then they are all gone.",
+           "The face is one you almost know. It says a name, once, as if offering it, and then the whole ring of them is gone."
+         ],
+         "fail_result": [
+           "Its hand comes up faster than you would think a dead thing could move, and the cold of it goes into your bones. Then they are all gone.",
+           "You step forward, and it is suddenly beside you. The touch on your arm lasts only a moment, and the cold of it will not leave you for hours."
+         ]}
+      ]
+    },
+    "risen_test_road": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild"],
+      "when": {"villain.kind": "risen", "adventure": {"chapter": ["binds", "night"], "at_large": true}},
+      "text": [
+        [
+          "The ground beside the road heaves, and a hand comes out of it, and then another. {villain_short} is testing you.",
+          "The dust in the road lifts, and the earth at the verge splits, and the fingers that come up through it are bone and old rope. {villain_short} wants to see what you do.",
+          "Behind you something knocks on the earth from below, three times, slowly. The turf rolls back and the dead begin to climb out of it. This is a message from {villain_short}."
+        ]
+      ],
+      "choices": [
+        {"label": ["Stand, and put them down again."], "ops": [["fight", "restless_dead"], ["attention", 1]],
+         "result": [
+           "You draw. They come on without a sound.",
+           "You set your feet in the road and wait. They come at you without a word, as if they had been told what to do."
+         ]},
+        {"label": ["Run for it, and do not look back."], "check": {"skill": "athletics", "dc": 12},
+         "success": [["time", 30]], "failure": [["hurt", "1d4"], ["time", 30]],
+         "result": [
+           "You run until the road is your own again. Behind you they stand in a line and watch you go.",
+           "You do not look back, but you feel them. The road behind you is empty when you are at last brave enough to turn."
+         ],
+         "fail_result": [
+           "A hand closes on your ankle as you go, and you tear free and leave skin behind.",
+           "Your foot goes through the rotten ground, and the dead take hold of you before you can get loose. You leave a boot and a good deal of skin behind."
+         ]}
+      ]
+    },
+    "risen_search_field": {
+      "family": "step",
+      "picture": "place",
+      "text": [
+        [
+          "The field of the dead lies quiet under its long grass, but it has been dug: here and there the turf is thrown back, and the graves under it are empty from below.",
+          "You find the field of the dead by the smell of turned earth. The long grass is flattened in lines, and at its edges the open graves stand in rows like unplanted seed.",
+          "Nothing grows on the field of the dead, and the old stones that marked the graves lie on their sides. Under each there is a hole, and the hole is dark and clean."
+        ]
+      ],
+      "choices": [
+        {"label": ["Go over the opened graves, one by one."], "check": {"skill": "religion", "dc": 12},
+         "success": [["clue", "name"], ["clue", "waker"]], "failure": [["clue", "name"], ["time", 120]],
+         "result": [
+           "They did not dig themselves out. Someone came first with a spade and a book, and drew circles in salt, and said the words. The dead only finished the work.",
+           "There is salt in ring after ring, scuffed by a hundred bare feet. Someone with a book was here, and the book was not a priest's. The dead only walked out of what was opened."
+         ],
+         "fail_result": [
+           "It takes you until the light goes, but in the end you are sure: somebody came here first, and opened the way.",
+           "The light is gone before you are done, and your knees are stiff with the cold of the ground. But the marks on the earth say the same thing as the others: a living hand opened these."
+         ]},
+        {"label": ["Close the graves again, and say the words for the dead."], "ops": [["clue", "name"], ["flag", "closed_graves"], ["time", 90]],
+         "result": [
+           "You fill them in by hand. It is slow, and nobody thanks you, and it is the right thing to do.",
+           "You say the old words, and the earth takes the turf back under your hands. It does not make the dead rest, but it makes the place a graveyard again."
+         ]}
+      ]
+    },
+    "risen_lore_at_field": {
+      "family": "step",
+      "picture": "place",
+      "where": ["road", "wild"],
+      "text": [
+        [
+          "You come back to the field of the dead to read it again, now that you know who led them.",
+          "You stand in the long grass at the field of the dead, and the shape of the thing begins to come back. The name of the one who led them is on the tip of your tongue.",
+          "The field is quiet in daylight. You sit on a fallen stone and go over what you know, and what you do not, about the one who walked out of the barrow."
+        ]
+      ],
+      "choices": [
+        {"label": ["Think back on every chronicle and song you know of this country."], "check": {"skill": "history", "dc": 13},
+         "success": [["clue", "villain"], ["step_done"]], "failure": [["time", 120]],
+         "result": [
+           "{risen_past}",
+           "It comes back to you in pieces, and then all at once. {risen_past}"
+         ],
+         "fail_result": [
+           "The names will not come. Someone in {lore} will know, or the one who stands with you.",
+           "You can almost see the page, and cannot read it. The priests at {lore} may have what you lack, or the one who stands with you."
+         ]}
+      ]
+    },
+    "risen_truth_or_keep": {
+      "family": "step",
+      "picture": "place",
+      "text": [
+        [
+          "The chronicle says it plainly: {villain} was killed by {slayer}, and not in a fair fight. {slayer}'s blood still runs in the best families of {town}, and {villain_short} has not forgotten it.",
+          "The roll is plain and the hand that wrote it was not kind: {villain} fell to {slayer} in {died_year} at a feast that was meant for peace. {slayer}'s line still holds land round {town}, and the dead have a long memory for who sat at that table.",
+          "Every record agrees on one thing: {slayer} did not win fairly. The families of {town} are proud of the deed and ashamed of how it was done, and {villain_short} knows both."
+        ]
+      ],
+      "choices": [
+        {"label": ["Tell {town} the truth of it."], "ops": [["flag", "told_the_truth"], ["companions", "honest"]],
+         "result": [
+           "You tell it in the square. Some will not look at you afterwards. But the old women nod, as if they had always known.",
+           "You tell it at the meeting-hall, with the doors open. A man gets up and walks out. An old woman says she always knew. By evening everyone has a different version."
+         ]},
+        {"label": ["Keep it to yourself. The living have enough to bear."], "ops": [["flag", "kept_the_secret"], ["companions", "merciful"]],
+         "result": [
+           "You close the book. {town} has troubles enough without the dead's quarrels.",
+           "You say nothing. The book goes into your pack, and you feel the weight of it for days. It seems neither kind nor cowardly. It just seems quiet."
+         ]}
+      ]
+    },
+    "risen_the_barrow": {
+      "family": "step",
+      "picture": "place",
+      "text": [
+        [
+          "{home} rises out of the turf like the back of something sleeping. The stone at its door has been rolled aside, and the dark beyond it breathes out cold.",
+          "The barrow door gapes in the hillside, the great stone flung back as though it weighed nothing. The air that comes out is dry and old and tastes of cold iron.",
+          "You climb the last of the slope. {home} is a long black hump, scored with the marks of tools. The door is open. Frost lies in the entry, in the shape of feet, all going out."
+        ]
+      ],
+      "choices": [
+        {"label": ["Go down quietly, keeping to the walls."], "check": {"skill": "stealth", "dc": 13},
+         "success": [["flag", "went_quietly"]], "failure": [["flag", "went_quietly"]],
+         "result": [
+           "You go down as quiet as dust settling.",
+           "You keep to the wall and the shadow, and the dark swallows your steps. Somewhere ahead a stone grinds, as if something were listening for you, and then it settles."
+         ],
+         "fail_result": [
+           "Your torch gutters, and somewhere below, something old turns its head.",
+           "A loose stone turns under your foot and rings through the passage like a bell. Far below, a door opens that was shut."
+         ]},
+        {"label": ["Go down with fire and iron, and let {him} know you are coming."], "ops": [["flag", "went_loudly"]],
+         "result": [
+           "You go down singing the oldest hymn you know, loud. Let {him} hear it.",
+           "Your hymn goes down the passage before you, and the dark gives it back changed, in a voice a little too deep. You keep singing."
+         ]}
+      ]
+    },
+    "risen_the_rite": {
+      "family": "step",
+      "picture": "place",
+      "text": [
+        [
+          "You stand at the door of {home} with what binds {villain_short} in your hands. The old books say it can be done here, from the threshold, with the right words and a steady heart: call {him} by {his} true name, give back what was taken, and tell {him} {he} is dead.",
+          "At the threshold of {home}, with the cold coming out over your feet, you take out what binds {villain_short} and prepare to say the true name into the dark. The old books are very exact about the rest.",
+          "There is a way to end this without going down. You have the crown, the name, and the ground at the door of the barrow. The old rite asks only that you do not falter."
+        ]
+      ],
+      "choices": [
+        {"label": ["Speak the words, and give back what binds {him}."], "check": {"skill": "religion", "dc": 13},
+         "success": [["flag", "laid"], ["finish"]], "failure": [["flag", "rite_broken"], ["hurt", "1d6"]],
+         "result": [
+           "The cold goes out of the air like a held breath let go. Deep in the hill, something sighs, and is still.",
+           "The name goes in and does not come out. A long exhalation rises from the hill, grey in the cold, and the stones are only stones."
+         ],
+         "fail_result": [
+           "The words break in your mouth. Below, a voice that is not a voice says no, and the barrow wakes.",
+           "You lose the name for the space of a breath, and the dark takes it. A cold hand closes on the air at your throat, and then lets go."
+         ]},
+        {"label": ["No. Go down and finish {him} with steel."], "ops": [["flag", "no_rite"]],
+         "result": [
+           "You put it away. Some things should be ended by hand.",
+           "You wrap the thing in cloth and put it away. There is a hall below, and a seat, and what sits in it will have to be answered another way."
+         ]}
+      ]
+    }
+  }
+}

@@ -39,6 +39,9 @@ def _start_near_a_beast(made, tables):
     if not beasts:
         pytest.skip("no beast")
     t = beasts[0]
+    for other in threats.records(w).values():
+        if other["kind"] != "beast":
+            other["state"] = "ended"  # (the risen and the outlaws have their own tales: tests/test_risen_outlaw.py)
     town = min((s for s in w.settlements if s.kind in ("town", "village")),
                key=lambda s: threats.distance(w, t, s.x, s.y))
     g = new_game(w, tables, start_settlement=town.id)

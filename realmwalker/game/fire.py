@@ -556,9 +556,18 @@ def on_battle_start(battle, game) -> list[str]:
     catch, and each round the fire spreads (Battle.round_hooks)."""
     lm = game.local
     fld = getattr(battle, "field", None)
+    from realmwalker.rules.combat import Zone
+
+    if fld is not None and fld.__dict__.get("fires"):  # (a story's field laid out burning: the ford's carts, D.3)
+        cells = {tuple(c) for c in fld.__dict__["fires"] if fld.in_bounds(*c)}
+        battle._add_zone(Zone(battle._zone_id(), "fire", cells, owner=None, rounds=-1, save="dex", dc=10,
+                              damage="1d6", damage_type="fire", on_save="none"))
+        _smoke(battle, cells)
+        battle.__dict__.setdefault("walls_burning", {})
+        battle.round_hooks.append(_round)
+        return ["<danger>The carts burn across the road, and the grass is catching.</>"]
     if lm is None or fld is None or getattr(fld, "cut_from", None) != lm.key or not lm.meta.get("fire"):
         return []
-    from realmwalker.rules.combat import Zone
 
     ox, oy = fld.origin
     cells = set()

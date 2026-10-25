@@ -271,6 +271,20 @@ def _nature(forge, at):
     return [{"how": "check", "skill": "nature", "at": at}]
 
 
+@selector("skill")
+def _skill(forge, words, at):
+    """A check of that skill at the place where the signs are (`skill(history, field)`: the field of the dead read for
+    who fell there; `skill(insight, town)`: watching who comes and goes at the loading)."""
+    skill = words[0] if isinstance(words, list) else words
+    return [{"how": "check", "skill": str(skill), "at": at}] if isinstance(at, dict) else []
+
+
+@selector("tail")
+def _tail(forge, who):
+    """Following someone of the cast through their town's streets by night, to where they go (the stage's tail)."""
+    return [{"how": "tail", "who": who}] if who else []
+
+
 @selector("divine")
 def _divine(forge):
     """Divination: Augury, Commune, Legend Lore and the rest are told the truth (game/divining.questions)."""

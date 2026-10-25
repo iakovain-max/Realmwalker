@@ -104,7 +104,7 @@
     },
     "hunter_holds_back": {
       "name": "A hunter who will not hunt",
-      "inside": {"step": "learn", "route": "ally", "chance": 0.65},
+      "inside": {"step": "learn", "route": "ally", "chance": 0.65, "blueprints": ["beast"]},
       "roles": {"asker": {"bind": "given"}},
       "obstacles": [
         {

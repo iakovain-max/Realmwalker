@@ -1442,6 +1442,9 @@ THREAT_KIND = Obj({
     # (a kind may live in the world before its tales are written: its threats still move, and end without the hero)
     "tempers": List(Str(max_len=30)),
     "blueprints": List(Str(max_len=40)),
+    "ask": Str(max_len=120, optional=True),  # what you say to a town's notable about it (the talk's hook choice)
+    "learn_ask": Str(max_len=120, optional=True),  # asking someone who knows its secret ({villain})
+    "band": Str(max_len=40, optional=True),  # its villain's band when the figure is no beast (story.villain_group)
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
     "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
     # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
@@ -1544,8 +1547,9 @@ BOSS = Obj({
     "resistances": Int(min=0, max=5),  # Legendary Resistances a day
     "actions": Int(min=0, max=5),  # legendary actions a round
     "menu": List(Str(max_len=30), min_items=1),  # what those actions may be (story/finale.LEGENDARY)
-    "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
-                 optional=True),
+    "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300),
+                  "creature": Str(max_len=40, optional=True), "count": Int(min=1, max=6, optional=True)},
+                 optional=True),  # (kind "raise": `count` of the `creature` come to its side)
     # met before its finale it fights as itself, and does this when it falls to `at` of its hit points (breaks off)
     "before": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
                   optional=True),
@@ -1678,7 +1682,8 @@ SITUATIONS = Obj({  # situations (game/story/situations.py, C.6)
         "name": Str(max_len=80), "asks": Str(max_len=30, optional=True),
         "vignette": Obj({"needs": Str(max_len=30), "weight": Float(min=0, max=10, optional=True)}, optional=True),
         "inside": Obj({"step": Str(max_len=20), "route": Str(max_len=20, optional=True),  # (an adventure step's, C.10)
-                       "chance": Float(min=0, max=1)}, optional=True),
+                       "chance": Float(min=0, max=1),
+                       "blueprints": List(Str(max_len=40), optional=True)}, optional=True),  # (only these tales: D.3)
         "roles": Map(Obj({"bind": Str(max_len=20)}, strict=False), min_items=1),
         "parts": Map(Str(max_len=30), optional=True), "base": Str(max_len=40, optional=True),
         "forge": List(List(Any_(), min_items=1), optional=True),

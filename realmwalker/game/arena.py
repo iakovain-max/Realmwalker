@@ -204,6 +204,10 @@ def _wild(game, party, creatures, env, rng, *, situation, number):
                     if (xx - ax) ** 2 + (yy - ay) ** 2 <= rad * rad and not tables.terrain.tags[int(terrain[xx, yy])] & {"water"}:
                         terrain[xx, yy] = ids[0]
     lights = []
+    fires: set = set()
+    story_field = getattr(game.encounter, "field", "") if game.encounter is not None else ""
+    if story_field in FIELDS:
+        lights, fires = FIELDS[story_field](terrain, tables, lead, foe_at, nrng)
     if camp:
         fire = (lead[0] + 1, lead[1] + 1)
         terrain[fire] = T["campfire"]
@@ -215,6 +219,8 @@ def _wild(game, party, creatures, env, rng, *, situation, number):
     _connect(terrain, tables, lead, foe_at)
     field = grid.Field(tables, terrain, kind="wilderness", key=f"road/{x},{y}/battle{number}", base_light=env.light,
                        ground=env.ground, lights=lights)
+    if fires:
+        field.__dict__["fires"] = sorted(fires)  # (lit by fire.on_battle_start: the carts burning)
     taken: set = set()
     spots = _place_party(field, party, lead, forward, taken)
     mode = {"ambushed": "surround", "camp": "surround", "unaware": "cluster"}.get(situation, "line")
@@ -224,6 +230,35 @@ def _wild(game, party, creatures, env, rng, *, situation, number):
         mode = "arc"
     _place_foes(game, field, creatures, foe_at, forward, lead, mode, taken, spots, len(party), rng)
     return field, spots
+
+
+def _ford(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
+    """The ford at night (the Risen's hold): the road crossing a shallow river between the two sides, and across the
+    road on your bank the carts drawn up and set alight, a gap left in the middle; the grass beside them catches."""
+    T = tables.terrain.index
+    W, H = terrain.shape
+    mid = H // 2
+    terrain[:, mid - 1:mid + 1] = T["road"]
+    sx = min(W - 3, (lead[0] + foe_at[0]) // 2 + 1)
+    for xx in (sx, sx + 1):
+        col = terrain[xx, :]
+        terrain[xx, :] = np.where(tables.terrain.walk[col], T["shallow_water"], col)
+        terrain[xx, mid - 1:mid + 1] = T["ford"]
+    cx = sx - 1
+    lights, fires = [], set()
+    for yy in (mid - 3, mid - 2, mid + 1, mid + 2):  # (the gap is the road itself: mid-1 and mid)
+        if 0 <= yy < H:
+            terrain[cx, yy] = T["cart"]
+            fires.add((cx, yy))
+            lights.append((cx, yy, 3))
+    for yy in (mid - 4, mid + 3):
+        if 0 <= yy < H and tables.terrain.walk[terrain[cx, yy]]:
+            terrain[cx, yy] = T["grass"]
+            fires.add((cx, yy))
+    return lights, fires
+
+
+FIELDS = {"ford": _ford}  # a story's own battlefields (the hold step's `field`: Expansion 6 D.3)
 
 
 def _robbers(game, creatures) -> bool:

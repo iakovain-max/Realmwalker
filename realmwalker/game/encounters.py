@@ -32,6 +32,7 @@ class PendingEncounter:
     asleep: bool = False  # it came in the night, while the party slept
     attitude: str = "hostile"  # DMG 2024 starting attitude: hostile, indifferent or friendly
     warned: bool = False  # a camp ward or a watcher woke the party before it came (game/spellwork.night_visitors)
+    field: str = ""  # how a story's field is laid out (game/arena.FIELDS: "ford", burning carts across a ford)
 
 
 @dataclass

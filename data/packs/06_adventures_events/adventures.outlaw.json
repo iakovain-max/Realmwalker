@@ -1,0 +1,339 @@
+{
+  "_comment": "The Outlaw Lord (Expansion 6 D.3, docs/ADVENTURES.md §6.2), first form: a gang's captain bleeds the roads. I the bleeding road (walk a carter's wagon through as bait, hear the robbed, take one of the gang alive; a raiding party, if you like); II the man in town (learn who sells the caravans' days - followed at midnight, watched at the loading, told, or divined -, confront him, choose: parley or break); III the hideout (a parley that ends it without blood, or the finale). Words: the tables below, with the tale's own ({villain}, {villain_short}, {gang}, {home}, {town}, {road}, {dest}, {area}, {patron}, {witness}, {carter}, {suspect}, {he}/{him}/{his}/{He}/{His}, {man}).",
+  "words": {
+    "outlaw_witness": [
+      "\"They knew,\" {witness} says. \"That's what I can't get past. They knew which wagon had the silver, and which had only turnips. They didn't even look in the turnips.\"",
+      "{witness} turns a cup over and over in their hands. \"Eleven wagons went out of {town} that month. They took the three that mattered, and let the rest by with a wave. You tell me how a man in the trees knows that.\"",
+      "\"They were waiting at the ford,\" says {witness}, \"not at the bend where they always wait. The river was high, and we changed the road that very morning. We told nobody but the yard.\"",
+      "\"They called me by my name,\" says {witness}, \"and my mule by hers. I had never seen one of them before in my life, and they had my name ready, as if it was written on a list.\"",
+      "{witness} will not sit while they tell it. \"Silver under the sacking, second wagon, and they went straight to it. Nobody knows that but the ones who loaded it, or the ones who counted. Think on that.\""
+    ],
+    "outlaw_inside": [
+      "It is {suspect}. You saw it with your own eyes: {suspect} at the gate in the small hours, and a rider out of the dark to meet them, and a purse going one way and a word the other. That is how {gang} knows every wagon that leaves {town}.",
+      "It is {suspect}. The loads and the hours are written down at the yard, and {suspect} reads them before the wagons leave, and sends a boy out of the gate with the substance of it. By night {gang} has the days, and by morning the wagons are taken.",
+      "You have watched long enough to be sure. {suspect} counts the wagons as they load and what is under the sacking, and makes a small sign to an idler by the wall. Before noon that idler is on the road to {gang}.",
+      "It is {suspect}. A day's coin for a day's word: {suspect} tells {gang} when each wagon leaves {town}, what it carries, and which road it takes. That is all {villain_short} has ever needed."
+    ],
+    "outlaw_warning": [
+      "To the stranger at the inn,\n\nYou have been asking about the roads. Stop asking.\n\nThe next knife goes in you, not the door.\n\nA friend of {gang}",
+      "Stranger,\n\nThe roads of {area} have a keeper already. It is not hiring.\n\nGo home while there is still a home to go to.\n\nA friend of {gang}",
+      "We know where you sleep, and what you eat, and who you talk to.\n\nWe know what you ask in {town}. Ask it no more.\n\nThe road is long, and the nights on it are longer.\n\nFriends of {gang}",
+      "This is a kindness, and there will not be another.\n\nWhatever you were paid to do in {town}, it was too little. Take the silver, take the next road out, and forget what you have heard.\n\nOne who wishes you well, for {gang}"
+    ]
+  },
+  "epithets": {
+    "outlaw": [
+      "Roadwarden",
+      "the Peacemaker",
+      "who Broke {gang}",
+      "the Honest Blade",
+      "of the Open Road",
+      "Bane of {villain_short}"
+    ]
+  },
+  "blueprints": {
+    "outlaw": {
+      "name": "The Outlaw Lord",
+      "tiers": [1, 3],
+      "from": ["outlaw"],
+      "flavours": ["dark_fantasy"],
+      "title": [
+        "The Bleeding Road",
+        "{villain_short}'s Toll",
+        "The Man in {town}",
+        "{villain_short} of {home}",
+        "A Toll on Every Wheel"
+      ],
+      "hook": [
+        "{patron} has a ledger open on the table, and every line of it is a wagon that never came. \"{gang},\" they say. \"{villain}. They have the roads of {area}, and the lord does nothing. Will you?\"",
+        "\"Three wagons this month and two the month before,\" says {patron}. \"{gang} takes them on the road out of {town}, and the lord's riders are never anywhere near. Folk say you do not frighten easily. Does {villain_short}?\"",
+        "{patron} sets a purse on the table and does not push it towards you. \"The carters will not go out any more. {villain} and {gang} have the roads of {area}. Break them, or buy them off, and the purse is yours.\"",
+        "A broken wheel hangs on the wall of the room, and {patron} nods at it. \"That is what is left of the last wagon. {gang} sent it back for us to look at. Somebody has to end this, and the lord will not.\""
+      ],
+      "premise": [
+        "{villain} and {gang} hold the roads out of {town} from {home}, and somebody in {town} is telling them which wagons to take: find who, and then break the gang or bring it to terms.",
+        "The roads out of {town} are bled dry by {gang} under {villain}, and the gang knows too much: find the one in {town} who feeds it, then settle with {villain_short} at {home}, by parley or by force.",
+        "{gang} takes only the wagons worth taking, so someone in {town} must be telling them which: learn who it is, and then deal with {villain_short} one way or the other."
+      ],
+      "places": {
+        "home": "threat.home",
+        "town": "settlement_near(home, 2, 18) | settlement_near(home, 0, 40)",
+        "road": "road_tile_near(town, 2, 7) | road_tile_near(home, 1, 12) | road_tile_near(town, 1, 20)",
+        "dest": "settlement_near(town, 3, 30) | settlement_near(town, 3, 60)"
+      },
+      "cast": {
+        "patron": {"pick": ["merchant_of(town)", "lord_of(town)", "headman_of(town)"]},
+        "witness": {"pick": ["survivor_of(town)", "carter_of(town)"]},
+        "carter": {"pick": ["carter_of(town)", "survivor_of(town)"]},
+        "suspect": {"pick": ["suspect_of(town)", "notable_of(town)"]},
+        "raiders": {"pick": ["band(bandits)"]},
+        "lookout": {"pick": ["band(bandits)"]},
+        "innocent": {"pick": ["settlement(town)"]}
+      },
+      "hidden": {},
+      "chapters": [
+        {
+          "id": "road",
+          "need": "all",
+          "title": ["The Bleeding Road", "Bait", "A Wagon for the Gang"],
+          "goal": [
+            "See a wagon through to {dest} with {gang} watching, hear it from someone they robbed, and take one of them alive.",
+            "Be bait for {gang}: take a wagon to {dest}, listen to those they have robbed, and keep one of the gang alive to talk."
+          ],
+          "opening": [
+            "Nothing gets out of {town} on the roads without {gang} knowing. So you will give them something to come for.",
+            "The carters have stopped talking about the road. That is how you know it is bad. You will do your talking with a wagon instead, and put it where {gang} can see it.",
+            "A gang that takes only the best of the wagons must be watching all of them. Give it a wagon worth taking, and see who comes.",
+            "{carter} has agreed to drive, for a fair price and because there is no other way to the market. The load looks worth the taking, and that is the whole of the trick."
+          ],
+          "reveal": [
+            "The one you took talked, in the end, as they always do: the gang has a man in {town}, who tells them the days.",
+            "It is plain now, from the robbed and from the robber alike: {gang} does not find the wagons. Someone in {town} hands them over.",
+            "Nobody guesses where the silver rides, or when a cart will leave. {gang} was told, by someone who knows the yard in {town}.",
+            "Whoever was robbed and whoever robbed, the tale is the same: there is someone in {town} who sells the days of the caravans, and {villain_short} pays for them."
+          ],
+          "steps": [
+            {"kind": "escort", "who": "carter", "to": "dest", "ambush": "bandits", "gives": ["flag:wagon_through"]},
+            {"kind": "witness", "who": "witness", "words": "outlaw_witness", "gives": ["clue:days"]},
+            {"kind": "capture", "who": "lookout", "at": "road", "gives": ["key:backway"], "fails_to": "no_backway"},
+            {"kind": "defeat", "who": "raiders", "at": "road", "optional": true}
+          ]
+        },
+        {
+          "id": "inside",
+          "need": "all",
+          "title": ["The Man in Town", "Who Sells the Days", "A Word in the Yard"],
+          "goal": [
+            "Find out who in {town} sells {gang} the caravans' days, face them with it, and decide how this ends.",
+            "Learn who in {town} gives {gang} the days, put the proof in their face, and then choose between a bargain and a fight."
+          ],
+          "opening": [
+            "Somebody in {town} drinks with the carters and smiles at the merchants and sells them to {villain_short} a wagon at a time.",
+            "A gang needs a hand in the town as a bird needs a wing. Find the hand in {town}, and {villain_short} cannot fly.",
+            "Somebody in {town} knows each wagon's load and hour before the gate has opened, and is lying to every face they meet.",
+            "The road is only where it ends. It begins in {town}, in a room or a yard, with someone who is paid to talk."
+          ],
+          "reveal": [
+            "{villain_short} has no eyes in {town} now. Whatever happens next happens at {home}.",
+            "With the informer done, {gang} is blind. {villain_short} knows it, and will not wait long at {home}.",
+            "The days are no longer sold. All that remains is {home}, and the choice of how you come to it.",
+            "{town} is quiet, and {gang} has nobody left there to listen at doors. What is left of it waits at {home}."
+          ],
+          "steps": [
+            {"kind": "learn", "about": "suspect", "answer": "outlaw_inside", "beat": "outlaw_watch_loading",
+             "note": "Find out who in {town} sells {gang} the caravans' days",
+             "routes": ["tail(suspect)", "skill(insight, town)", "ask(witness)", "divine()"],
+             "gives": ["clue:inside"]},
+            {"kind": "confront", "who": "suspect", "clue": "inside", "group": "thugs", "check": ["intimidation", 14]},
+            {"kind": "choose", "beat": "outlaw_parley_or_break", "note": "Decide: a parley with {villain_short}, or break {gang}"}
+          ]
+        },
+        {
+          "id": "hideout",
+          "need": "all",
+          "title": ["The Hideout", "{home}", "The Captain's Table"],
+          "goal": [
+            "Go to {home}, and end it: with words, or with steel.",
+            "Go to {home} and finish it, by a bargain or by the sword."
+          ],
+          "opening": [
+            "There is only {home} left, and {villain_short} in it, and every one of {gang} who is still loyal.",
+            "{home} lies ahead. Everything else was only a road to it.",
+            "No more wagons, no more days, no more go-betweens. Only {home}, and what is in it.",
+            "Whatever {villain_short} has left is at {home}, and it has had time to weigh you."
+          ],
+          "reveal": [
+            "It is finished. The roads of {area} belong to whoever walks them.",
+            "{home} is finished, and the roads of {area} are open for the first time in a long while.",
+            "The road to {dest} has no watchers on it now. Nobody waits at the ford.",
+            "Whatever is said of it later, the wagons of {town} roll on with nobody watching them from the trees."
+          ],
+          "steps": [
+            {"kind": "go", "at": "home", "beat": "outlaw_the_hideout"},
+            {"kind": "finale", "at": "home.deepest"}
+          ]
+        }
+      ],
+      "finale": {
+        "boss": "villain",
+        "template": "outlaw",
+        "at": "home.deepest",
+        "keys": {
+          "backway": ["surprise"],
+          "inside": ["minions(-50)"]
+        },
+        "words": {
+          "warning": [
+            "Voices ahead, and the smell of a fire and of horses. The captain's own room is just there, past the last of the guards.",
+            "Torchlight ahead, and a laugh that stops when someone hushes it. The captain's place is beyond the next turn, and the guards have not heard you yet.",
+            "Woodsmoke and horses, and low voices. Whoever is left of the gang is gathered ahead, and the captain is among them.",
+            "The passage opens out ahead onto firelight. Whatever you came for is in the room beyond, and so are the guards you have not yet seen."
+          ],
+          "first": [
+            "The captain is already on {his} feet, blade out, as if you had sent word you were coming.",
+            "The captain stands in the middle of the floor, blade drawn, and does not look surprised.",
+            "Ahead, the captain: waiting, ready, unsmiling. A table is overturned, and the dice are still rolling.",
+            "The captain of {gang} rises from the table as you come in, and draws without hurry."
+          ]
+        }
+      },
+      "endings": [
+        {
+          "id": "pardoned",
+          "if": ["flag:pardoned"],
+          "ops": [["outlaw_pardoned"], ["danger", "home", -1], ["history", "outlaw_parley", 2]],
+          "pages": {
+            "place": [
+              "The wagons go out of {town} with no more guard than a boy and a dog now. Prices have come down by half.",
+              "The carters of {town} still keep their wagons in company out of habit, and by the end of the month a few of them go out alone.",
+              "{town} has a word for the bad years now. It says it in the past tense, which is new.",
+              "The wagons are fuller going out of {town}, and the inn at the crossroads has opened its stable again."
+            ],
+            "patron": [
+              "{patron} grumbled that the gang got off light, and then paid you anyway, and then bought you a drink.",
+              "{patron} said the pardon was a stain on the lord's name, and put the full fee into your hand regardless.",
+              "{patron} counts the wagons that come in, every week, and the number is right every week, and {patron} counts them again.",
+              "\"I wanted them hanged,\" {patron} said. \"I will take them quiet instead. Better the ledger balances than the hangman is paid.\""
+            ],
+            "carter": [
+              "{carter} drives the road to {dest} every week, and whistles.",
+              "{carter} still keeps a knife under the seat. {carter} has not had to draw it since.",
+              "{carter} drove to {dest} and back without seeing a face in the trees, and sat in the yard afterwards doing nothing at all for an hour.",
+              "{carter} says the road to {dest} is shorter than it was, and nobody has contradicted it."
+            ],
+            "suspect": [
+              "{suspect} left {town} the week after, with nothing, and nobody stopped them.",
+              "{suspect} was gone from {town} before the week was out. The house stood empty, and nobody asked where.",
+              "{suspect} went down the road to the coast with a bundle on their back, and nobody turned to look.",
+              "{suspect} sold the house for less than it was worth and left {town} by night."
+            ],
+            "hero": [
+              "You ended {gang} without a grave dug. Some will say you were soft. The roads do not care.",
+              "You ended it at a table, not in a ditch. You will not be sung of, but you are alive, and so are they.",
+              "You made a bargain with a thief and kept it. The lord signed, grudgingly, and the roads opened.",
+              "The pardon holds for as long as {villain_short} chooses to let it. You know that, and you left anyway."
+            ]
+          }
+        },
+        {
+          "id": "broken",
+          "if": ["boss_dead"],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["history", "outlaw_broken", 3]],
+          "pages": {
+            "place": [
+              "{town} hung what was left of {gang}'s rag over the gate, upside down, and the carters spit on it as they pass.",
+              "The gate of {town} has {gang}'s colours nailed to the post, and the children throw stones at them.",
+              "Wagons leave {town} at dawn with a driver and no guard, and come home in the evening, and nobody remarks on it.",
+              "{town} stood the carters drinks for a week, and the inn ran dry on the third night."
+            ],
+            "patron": [
+              "{patron} paid what was promised, and more, and wrote your name in the ledger in red, where the losses used to go.",
+              "{patron} paid in full and stood to see you off, and said nothing useful at all.",
+              "\"I thought it could not be done,\" {patron} said. \"I am glad to have been wrong.\"",
+              "{patron} carried the ledger to the lord and laid it on the table, with your name in red at the foot."
+            ],
+            "carter": [
+              "{carter} tells anyone who will listen how you walked beside the wagon with your hand on your sword.",
+              "{carter} drove the road past the turning to {home} with the reins slack, and sang.",
+              "{carter} keeps a scrap of {gang}'s rag in the wagon, as other folk keep a lucky coin.",
+              "{carter} hired a boy to drive a second wagon. For the first time in a year there is a second wagon."
+            ],
+            "suspect": [
+              "{suspect} was hanged at the crossroads where the gang used to wait. The crows were busy for a week.",
+              "{suspect} ran the night {gang} fell, and was seen on the north road with a pack, and was not seen again.",
+              "{suspect} swung from the crossroads tree with a board round the neck: SOLD THE DAYS.",
+              "{suspect} was taken at the gate with the gang's silver sewn in the coat, and hanged within the week."
+            ],
+            "hero": [
+              "{villain} is dead in {home}, and {gang} is broken. The roads are quieter for it.",
+              "You killed {villain} where {he} stood. The roads are quiet now. They will not stay so for ever.",
+              "{gang} is gone. You did the work with a sword, and nothing about the work was clean.",
+              "The lord will take the credit. The carters know better."
+            ]
+          }
+        },
+        {
+          "id": "taken",
+          "if": ["boss_taken"],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["history", "outlaw_broken", 3]],
+          "pages": {
+            "place": [
+              "{town} turned out to watch {villain} hang. Some cheered. More of them only watched.",
+              "The gallows in {town} was built in a day and used in an hour, and taken down again before the week was out.",
+              "The crowd at the hanging went home quietly, as folk do when a thing is done and they are not sure how they feel.",
+              "Nobody in {town} spoke {villain_short}'s name aloud for a month after the hanging, and then everybody did."
+            ],
+            "patron": [
+              "{patron} said it was better this way: a rope is a lesson, and a sword is only a death.",
+              "{patron} paid in full and went to the hanging, and came back saying little.",
+              "\"A rope has a long memory,\" said {patron}. \"Longer than a sword.\"",
+              "{patron} gave you the lord's thanks, which are not worth much, and {patron}'s own, which are."
+            ],
+            "carter": [
+              "{carter} went to the hanging, and did not cheer, and went home and slept for the first time in a month.",
+              "{carter} stood at the back of the crowd with folded arms, and left before it was over.",
+              "{carter} drove to {dest} the day after the hanging, and found the road as empty as a church on a weekday.",
+              "{carter} put a coin in the box at the temple, and did not say what for."
+            ],
+            "suspect": [
+              "{suspect} hanged beside the captain, and the town said it was only fair.",
+              "{suspect} was dragged from the loading yard in irons and hanged within the week.",
+              "{suspect} tried to flee the night {villain_short} was taken, was brought back from the east road, and was hanged for it.",
+              "{suspect} fled {town} in the dark, leaving a door open and a lamp burning, and the watch did not follow."
+            ],
+            "hero": [
+              "You brought {villain} in alive, and the lord's rope did the rest.",
+              "You took {villain} alive when a blade would have been quicker. The lord's justice is slow, and sure.",
+              "{villain} was led out of {home} in irons, and you walked behind, and none of the gang stopped you.",
+              "You brought the captain of {gang} out alive, and the lord made a lesson of {him}, which a sword could not have done."
+            ]
+          }
+        },
+        {
+          "id": "doom",
+          "if": ["scheme_done"],
+          "ops": [["fame", -1]],
+          "pages": {
+            "place": [
+              "{town} pays now. Every month a cart goes up to {home}, and {gang} lets the rest of the wagons through.",
+              "{town} sends its tribute up to {home} at the full moon. The carts that pay go through; the ones that do not, do not.",
+              "The wagons from {town} carry two loads now, the goods and the toll, and the toll goes first.",
+              "{town} has learned the price of peace, and pays it. The roads are quiet, and the quiet is bought."
+            ],
+            "patron": [
+              "{patron} closed the ledger. There is nothing in it now but tribute.",
+              "{patron} sat with the ledger long into the night, and in the morning wrote the toll in as a line like any other.",
+              "{patron} does not say the name of {villain_short} any more, only \"them\", and looks at the window.",
+              "{patron} has stopped meeting your eye in the street."
+            ],
+            "hero": [
+              "{villain} rules the roads of {area}, and the lord does nothing. Neither, in the end, did you.",
+              "You failed to end {gang}, and {villain_short} fed on the town while you were elsewhere.",
+              "{villain_short}'s toll is a tax in all but name, and nobody will say who allowed it.",
+              "The roads of {area} have an owner. It is not you, and it is not the lord."
+            ]
+          }
+        },
+        {
+          "id": "abandoned",
+          "ops": [["threat_free"]],
+          "pages": {
+            "place": [
+              "The wagons of {town} still ride in company, and still do not all come home.",
+              "{town} still sends its wagons out in company, and prays, and waits for the ones that do not return.",
+              "The carters of {town} take the long road now, and lose a day, and tell themselves it is cheaper.",
+              "The inn at the crossroads has shut its shutters. Nobody comes by, and nobody is asked to."
+            ],
+            "hero": [
+              "You left {gang} to the roads, and the roads to {gang}.",
+              "You left the roads to {gang}, and the carters to their prayers.",
+              "You walked away from {town}, and the wheels that turn there turn slower.",
+              "You turned from {gang}, and it did not turn from you."
+            ]
+          }
+        }
+      ],
+      "epithets": ["outlaw"]
+    }
+  }
+}

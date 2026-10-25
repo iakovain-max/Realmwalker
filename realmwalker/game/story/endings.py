@@ -17,7 +17,8 @@ from realmwalker.core import textgen
 CONDITIONS: dict[str, object] = {}
 PREFIXES: dict[str, object] = {}
 OPS: dict[str, object] = {}
-WON = ("slain", "laid_to_rest", "destroyed", "broken", "pardoned", "redeemed")  # (endings the hero won)
+WON = ("slain", "laid_to_rest", "destroyed", "destroyed_for_now", "broken", "taken", "pardoned",
+       "redeemed")  # (endings the hero won)
 
 
 def ending_if(name: str):
@@ -290,3 +291,122 @@ def _threat_free(game, adv, *args) -> list[str]:
     if t is not None:
         t["adventure"] = None
     return []
+
+
+# ---------------------------------------------------------------------------- the Risen and the Outlaw Lord (D.3)
+@ending_if("boss_taken")
+def _boss_taken(game, adv, arg) -> bool:
+    return bool(adv.get("boss_taken"))
+
+
+def _threat_and_figure(game, adv):
+    from realmwalker.world import threats
+
+    t = threats.records(game.world).get(adv["threat"])
+    return t, (threats.villain_figure(game.world, t) if t is not None else None)
+
+
+def _settle(game) -> None:
+    from realmwalker.world import news, threats
+
+    threats.settle(game.world, news.now_days(game.world))  # (the threat whose villain is gone ends now)
+
+
+def _lay(game, adv, kind: str, said: str) -> list[str]:
+    """The barrow is only a grave again (`politics["laid"]`, as past.on_battle writes it), his field of the dead
+    with it (`scar["laid"]`), and the world remembers who did it."""
+    from realmwalker.core.textgen import escape_markup as esc
+    from realmwalker.world.history import remember
+
+    w = game.world
+    t, fig = _threat_and_figure(game, adv)
+    if t is None or "site" not in t["home"]:
+        return []
+    site = w.sites[int(t["home"]["site"])]
+    w.politics.setdefault("laid", {})[str(site.id)] = game.moment.year
+    scars = w.politics.get("scars") or []
+    i = (t.get("source") or {}).get("scar")
+    if i is not None and 0 <= int(i) < len(scars):
+        scars[int(i)]["laid"] = True
+    name = fig.full_name() if fig is not None else adv["title"]
+    text = f"{game.leader.name} {kind} {name}, who had walked in {site.name} since they died"
+    remember(w, game.moment.year, "laid_to_rest", text, importance=3, sites=[site.id],
+             figures=[fig.id] if fig is not None else [], player=True, data={"adventure": adv["id"]})
+    _settle(game)
+    return [f"<good>{esc(name)} {said}</>"]
+
+
+@consequence("risen_laid")
+def _risen_laid(game, adv, *args) -> list[str]:
+    """Laid to rest by the rite: he goes back into the dark of his own will, and does not come out again."""
+    return _lay(game, adv, "laid to rest", "is at rest. The barrow is only a grave now.")
+
+
+@consequence("risen_destroyed")
+def _risen_destroyed(game, adv, *args) -> list[str]:
+    """Destroyed with what bound him broken: he is gone for good."""
+    return _lay(game, adv, "destroyed", "is gone, and what bound him to the world is broken with him.")
+
+
+def _gang(game, adv):
+    from realmwalker.world import threats
+
+    t = threats.records(game.world).get(adv["threat"])
+    return threats.gang_of(game.world, t) if t is not None else None
+
+
+@consequence("outlaw_broken")
+def _outlaw_broken(game, adv, *args) -> list[str]:
+    """The band is broken in its hideout: its captain dead (or taken to the gallows), the gang finished
+    (past.den_falls), the roads quieter."""
+    from realmwalker.game import past
+
+    t, fig = _threat_and_figure(game, adv)
+    gang = _gang(game, adv)
+    if t is None or gang is None or not gang.active:
+        return []
+    site = game.world.sites[int(t["home"]["site"])] if "site" in t["home"] else None
+    if fig is not None and fig.alive and site is not None:
+        if adv.get("boss_taken"):
+            pol = past._politics(game)
+            pol.die(fig, f"hanged, taken alive by {game.leader.name}")
+            fig.died_at = f"X{site.id}"
+            gang.flags["leader_slain"] = game.moment.total_days
+        else:
+            past.den_leader_slain(game, gang, fig, site)
+    if site is not None:
+        past.den_falls(game, gang, site)
+    _settle(game)
+    return []
+
+
+@consequence("outlaw_pardoned")
+def _outlaw_pardoned(game, adv, *args) -> list[str]:
+    """A parley that ends it without blood: the band disbands and its men are pardoned through the lord of the
+    town (a law outcome): the gang is no more, its captain lives, the lord owes the hero a little."""
+    from realmwalker.core.textgen import escape_markup as esc
+    from realmwalker.game import past, reputation
+    from realmwalker.game.story import places
+    from realmwalker.world import factions as fx
+    from realmwalker.world.history import remember
+
+    w = game.world
+    t, fig = _threat_and_figure(game, adv)
+    gang = _gang(game, adv)
+    if t is None or gang is None or not gang.active:
+        return []
+    pol = past._politics(game)
+    pol.fall(gang)
+    town = adv["places"].get("town")
+    s = w.settlements[int(town["settlement"])] if town and "settlement" in town else None
+    realm = fx.realm_of_settlement(w, s) if s is not None else None
+    lord = realm.name if realm is not None else "the lord"
+    text = f"{gang.name} laid down their arms at {game.leader.name}'s word, and were pardoned by {lord}"
+    remember(w, pol.year, "pardoned", text, importance=2, factions=[gang.id] + ([realm.id] if realm else []),
+             figures=[fig.id] if fig is not None else [], player=True, data={"adventure": adv["id"]})
+    x, y = places.xy(w, town) if town else (game.player.x, game.player.y)
+    reputation.deed(game, f"ended {gang.name} without blood", {realm.id: 6.0} if realm is not None else {}, x=x, y=y,
+                    fame=2, importance=2, news_text=text)
+    _settle(game)
+    return [f"<good>{esc(gang.name[:1].upper() + gang.name[1:])} are no more.</> <dim>Their men go home, or into "
+            f"{esc(lord)}'s service, with their lives.</>"]

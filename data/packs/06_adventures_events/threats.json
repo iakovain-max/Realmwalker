@@ -89,6 +89,8 @@
       "blueprints": [
         "beast"
       ],
+      "ask": "I hear something is killing your people.",
+      "learn_ask": "What does {villain} fear? What will kill it?",
       "reach": 14,
       "stages": [
         {
@@ -189,9 +191,17 @@
         1,
         4
       ],
-      "tempers": [],
-      "blueprints": [],
-      "reach": 16,
+      "tempers": [
+        "proud",
+        "grieving"
+      ],
+      "blueprints": [
+        "risen"
+      ],
+      "ask": "I hear the dead are walking here.",
+      "learn_ask": "Who was {villain}? What holds him in the world?",
+      "band": "barrow_wight",
+      "reach": 30,
       "creature": "wight",
       "ends": {
         "chance": 0.008,
@@ -332,8 +342,16 @@
         1,
         3
       ],
-      "tempers": [],
-      "blueprints": [],
+      "tempers": [
+        "cunning",
+        "cruel"
+      ],
+      "blueprints": [
+        "outlaw"
+      ],
+      "ask": "I hear your roads are being bled.",
+      "learn_ask": "Who in this town sells {villain} the caravans' days?",
+      "band": "bandit_hideout",
       "reach": 18,
       "creature": "bandit_captain",
       "stages": [

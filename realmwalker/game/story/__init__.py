@@ -159,8 +159,16 @@ def villain_group(game, adv: dict) -> tuple[str | None, str]:
     fig = threats.villain_figure(game.world, t) if t else None
     if fig is None:
         return None, ""
-    group = past.group_of(game, fig) if fig.kind == "beast" else None
+    group = past.group_of(game, fig) if fig.kind == "beast" else \
+        game.tables.threats["kinds"].get(t["kind"], {}).get("band")  # (the barrow's lord, the outlaws' captain: D.3)
     return group, threats.villain_name(game.world, t)
+
+
+def asking(game, adv: dict, key: str, default: str) -> str:
+    """What the hero says of a tale's villain (threats.json kind `ask` / `learn_ask`), with its name."""
+    t = threat_of(game, adv) if adv is not None else None
+    text = game.tables.threats["kinds"].get((t or {}).get("kind", ""), {}).get(key) or default
+    return text.replace("{villain}", _villain_name(game, adv) if adv is not None else "it")
 
 
 def tag_band(creatures: list, adv_id: str, name: str | None, role: str = "villain", step: str | None = None) -> None:
@@ -479,6 +487,49 @@ def _show_tale(game, town) -> bool:
     return False
 
 
+def on_town_tick(game, lm, town) -> None:
+    """A tick of a town's own time while you are on its map (townlife.tick): at midnight, someone a tale would have
+    you follow (a learn step's `tail` route: the gang's man in town) slips out, and the scene of following them
+    begins - once a night (D.3)."""
+    hour = game.moment.hour
+    if not (hour >= 23 or hour < 3) or game.busy:
+        return
+    from realmwalker.game.people import npcs_in
+    from realmwalker.game.story import stage
+    from realmwalker.game.story import words as wordsmod
+
+    today = int(game.moment.total_days) + (1 if hour >= 23 else 0)  # (one night is one try, either side of midnight)
+    for adv in active(game):
+        for st in open_steps(adv):
+            if st["kind"] != "learn" or int(st.get("tailed", -1)) == today:
+                continue
+            route = next((r for r in st["target"]["routes"] if r.get("how") == "tail"), None)
+            if route is None:
+                continue
+            npc = next((n for n in npcs_in(game.world, town.id) if n.alive and _is(game, route.get("who"), n)), None)
+            if npc is None:
+                continue
+            if route.get("role"):
+                _bind_role(game, adv, route["role"], npc)
+            words = {k: v for k, v in wordsmod.for_adventure(game, adv).items() if isinstance(v, str)}
+            then = {"adv": adv["id"], "step": st["id"], "finishes": "inside_followed"}
+            if stage.start(game, "midnight_tail", cast={"suspect": npc.id}, words=words, then=then,
+                           force=True) is not None:
+                st["tailed"] = today
+                return
+
+
+def learned_by_following(game, adv: dict, sid: str) -> list[str]:
+    """Followed to the end: what was seen is the learn step's truth, and the step is done."""
+    st = find_step(game, adv["id"], sid)
+    if st is None or st["state"] != "open":
+        return []
+    told = truth_told(game, adv, st)
+    journal(adv, told, int(game.moment.total_days))
+    step_done(game, adv["id"], sid)
+    return [f"<good>{esc(told)}</>"]
+
+
 def _hunter_situation(game, adv: dict, st: dict, town) -> None:
     """The hunter who knows what it fears is in this town: their part may become a situation (C.10)."""
     from realmwalker.game.people import npcs_in
@@ -602,8 +653,8 @@ def on_battle(game, result, actor=None) -> None:
         elif tag.get("role") != "minion" and how == "dead":
             villain.notice(game, adv, int(villain.spec(game)["lieutenant"]))
     for adv, how in seen:
-        if how == "dead":
-            adv["boss_dead"] = True
+        if how == "dead" or (how == "taken" and _villain_is_person(game, adv)):
+            adv["boss_dead" if how == "dead" else "boss_taken"] = True  # (a lord of outlaws taken alive: D.3)
             for st in open_steps(adv):
                 if st["kind"] in ("slay", "finale"):
                     st["state"] = "done"
@@ -614,6 +665,13 @@ def on_battle(game, result, actor=None) -> None:
             for st in open_steps(adv):
                 if st["kind"] == "slay" and (st["target"].get("fled_ok") or how == "taken"):
                     step_done(game, adv["id"], st["id"])
+
+
+def _villain_is_person(game, adv: dict) -> bool:
+    from realmwalker.world import threats
+
+    fig = threats.villain_figure(game.world, threat_of(game, adv))
+    return fig is not None and fig.kind == "person" and fig.alive
 
 
 def on_fate(game, creature, fate: str) -> str | None:
@@ -667,25 +725,40 @@ def divine_questions(game) -> list[dict]:
         for st in open_steps(adv):
             if st["kind"] == "learn" and any(r.get("how") == "divine" for r in st["target"].get("routes", [])):
                 name = wordsmod.for_adventure(game, adv).get("villain_short", "it")
-                out.append({"adv": adv["id"], "step": st["id"], "ask": f"What will kill {name}?"})
+                ask = f"What will kill {name}?" if st["target"].get("answer") is None else \
+                    asking(game, adv, "learn_ask", "What is {villain}?")
+                out.append({"adv": adv["id"], "step": st["id"], "ask": ask})
     return out
 
 
 def divined(game, aid: str, sid: str) -> list[str]:
     """The powers answered a tale's question: its truth in words (what it fears), a clue, and the step is done."""
     from realmwalker.game.story import beats
-    from realmwalker.game.story import words as wordsmod
 
     adv = adventures(game.world).get(aid)
     st = find_step(game, aid, sid)
     if adv is None or st is None or st["state"] != "open":
         return []
-    words = wordsmod.for_adventure(game, adv)
+    told = truth_told(game, adv, st)
     beats.OPS["clue"](game, {"adv": aid}, st["target"].get("truth", "villain"))
-    journal(adv, f"The powers answered me: {words.get('weakness_lore', 'it can be killed')}",
-            int(game.moment.total_days))
+    journal(adv, f"The powers answered me: {told}", int(game.moment.total_days))
     step_done(game, aid, sid)
-    return [words.get("weakness_lore", "It can be killed, like anything that lives.")]
+    return [told]
+
+
+def truth_told(game, adv: dict, st: dict | None) -> str:
+    """What a learn step's truth is, told (by someone who knows, the powers, a check at the place): its `answer`
+    (a words table of adventures.json, D.3: who the risen was, who sells the caravans' days), else what it fears."""
+    from realmwalker.core import textgen
+    from realmwalker.game.story import words as wordsmod
+
+    words = wordsmod.for_adventure(game, adv)
+    key = (st or {}).get("target", {}).get("answer")
+    tables = game.tables.adventures.get("words", {})
+    if key and tables.get(key):
+        rng = game.world.rng.child(f"truth/{adv['id']}/{(st or {}).get('id', '')}")
+        return textgen.fill(rng.choice(tables[key]), rng, tables, words)
+    return words.get("weakness_lore", "Nobody knows for sure.")
 
 
 def on_read(game, item) -> None:
@@ -786,8 +859,8 @@ def talk_choices(conv) -> list:
                                   data={"adv": adv["id"], "step": st["id"]}))
             if st["kind"] == "learn" and any(r.get("how") == "talk" and _is(game, r.get("who"), npc)
                                              and not (sit_made and r.get("role") == "ally") for r in t["routes"]):
-                out.append(Choice("story_learn", f"What does {name} fear? What will kill it?",
-                                  data={"adv": adv["id"], "step": st["id"]}))
+                out.append(Choice("story_learn", asking(game, adv, "learn_ask", "What does {villain} fear? What will "
+                                                        "kill it?"), data={"adv": adv["id"], "step": st["id"]}))
         if _is(game, adv["cast"].get("patron"), npc):
             out.append(Choice("story_patron", f"About {name}...", data={"adv": adv["id"]}))
     from realmwalker.game.story import deeds, situations
@@ -799,7 +872,8 @@ def talk_choices(conv) -> list:
     out += favours.call_choices(conv)  # (a favour called in, a contact's news: C.7)
     for t in threats.live(game.world):
         if t.get("adventure") is None and npc.notable and npc.settlement in t["stakes"][:6] and _can_take(game, t):
-            out.append(Choice("story_hook", "I hear something is killing your people.", data={"threat": t["id"]}))
+            ask = game.tables.threats["kinds"].get(t["kind"], {}).get("ask", "I hear something is killing your people.")
+            out.append(Choice("story_hook", ask, data={"threat": t["id"]}))
             break
     return out
 
@@ -860,8 +934,8 @@ def talk_choose(conv, choice) -> None:
         _bind_if_waiting(game, adv, st, conv.npc)
         step_done(game, adv["id"], data["step"])
     elif cid == "story_learn":
-        conv.note(esc(words.get("weakness_lore", "Nobody knows for sure.")))
         st = find_step(game, adv["id"], data["step"])
+        conv.note(esc(truth_told(game, adv, st)))
         route = next((r for r in (st or {}).get("target", {}).get("routes", []) if r.get("how") == "talk"
                       and _is(game, r.get("who"), conv.npc)), None)
         if route is not None and route.get("role"):
@@ -886,7 +960,7 @@ def step_told(game, adv: dict, st: dict, who: int | None = None) -> list[str]:
 
     words = wordsmod.for_adventure(game, adv)
     if st["kind"] == "learn":
-        return [esc(words.get("weakness_lore", "Nobody knows for sure."))]
+        return [esc(truth_told(game, adv, st))]
     tables = game.tables.adventures.get("words", {})
     rng = game.world.rng.child(f"talk/{adv['id']}/{st['id']}/{who if who is not None else 'sit'}")
     lines = tables.get(st.get("words") or "witness_tale") or ["It was dark. I ran."]
@@ -1062,6 +1136,10 @@ def finale_card(game) -> dict:
                                                           .get("temper") or "", {})
     rng = game.world.rng.child(f"first/{adv['id']}")
     first = rng.choice(temper.get("first_words") or bp["finale"].get("words", {}).get("first", ["..."]))
+    from realmwalker.core import textgen
+
+    first = textgen.fill(first, rng, game.tables.adventures.get("words", {}),
+                         {k: v for k, v in wordsmod.for_adventure(game, adv).items() if isinstance(v, str)})
     known = []
     for k in bp["finale"].get("keys", {}):
         known.append((wordsmod.key_text(game, adv, k) if k in adv["keys"] else "?", k in adv["keys"]))

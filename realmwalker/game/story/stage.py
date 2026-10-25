@@ -803,6 +803,12 @@ def _learn(game, rec: dict, knows: str | None) -> None:
         adv = game.world.politics.get("adventures", {}).get(rec.get("adv") or (rec.get("then") or {}).get("adv"))
         if adv is not None and knows not in adv.setdefault("flags", []):
             adv["flags"].append(knows)
+        then = rec.get("then") or {}
+        if adv is not None and then.get("step") and then.get("finishes") == knows:  # (a learn step's tail: D.3)
+            from realmwalker.game import story
+
+            for line in story.learned_by_following(game, adv, then["step"]):
+                game.say(line, "story")
 
 
 @cue("overhear")

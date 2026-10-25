@@ -34,7 +34,10 @@ STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left
               "recruit": "Win {who} to your side.", "rally": "Raise the people of {place} to stand.",
               "hold": "Hold {place} on the night of {night}.", "rite": "Perform the rite at {place}.",
               "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know."}
-ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic"}
+ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic",
+               "tail": "follow someone by night"}
+CHECK_WORDS = {"nature": "study its kill", "history": "read the place's past", "religion": "read the signs of the dead",
+               "insight": "watch the people", "investigation": "search the place"}
 
 
 def _thing(game, adv, st) -> str:
@@ -74,9 +77,11 @@ def tale_lines(game, adv) -> str:
         lines += ["", f"<title>Now</> {esc(ch['goal'])}"]
         for st in ch["steps"]:
             tg = st["target"]
-            routes = ", ".join(ROUTE_WORDS.get(r.get("how", ""), r.get("how", "")) for r in tg.get("routes", []))
+            routes = ", ".join(CHECK_WORDS.get(r.get("skill", ""), ROUTE_WORDS["check"]) if r.get("how") == "check"
+                               else ROUTE_WORDS.get(r.get("how", ""), r.get("how", "")) for r in tg.get("routes", []))
             means = ", ".join(game.tables.items.get(m)["name"] for m in tg.get("means", []) if game.tables.items.get(m))
-            text = STEP_WORDS.get(st["kind"], st["kind"]).format(
+            text = st["note"] + (f" ({routes})" if routes else "") if st.get("note") else \
+                STEP_WORDS.get(st["kind"], st["kind"]).format(
                 place=places.name(w, tg["place"]) if tg.get("place") else "the place",
                 who=cast.describe(game, adv, tg["role"]) if tg.get("role") else "them",
                 villain=words.get("villain", "it"), routes=routes, means=means or "something",

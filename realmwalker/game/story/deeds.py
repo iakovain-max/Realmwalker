@@ -309,7 +309,8 @@ def _wave(game, adv: dict, st: dict) -> bool:
     n = int(st.get("wave", 0))
     intro = say(game, adv, "hold_wave") if n else say(game, adv, "band_here", who=_villain_words(game, adv))
     st["wave"] = n + 1
-    _encounter(game, adv, st, "wave", t["group"], intro)
+    enc = _encounter(game, adv, st, "wave", t["group"], intro)
+    enc.field = t.get("field", "")  # (the ford with its carts burning: D.3)
     return True
 
 

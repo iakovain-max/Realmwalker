@@ -18,7 +18,7 @@ may say `goal(st)`: a test of the goal language (story/goals.py) that finishes i
 from __future__ import annotations
 
 STEPS: dict[str, type] = {}
-COMMON = {"kind", "id", "optional", "gives", "fails_to", "tier_min", "words", "beat"}
+COMMON = {"kind", "id", "optional", "gives", "fails_to", "tier_min", "words", "beat", "note"}  # (note: its journal line)
 LEARN_ROUTES = 3  # every truth has at least three ways to be learned (the three-clue rule)
 
 
@@ -122,8 +122,9 @@ class Read(Step):
 
 @step("learn")
 class Learn(Step):
-    """Learn a truth by any of several routes (a sage, someone who knows, a check at the place, divination)."""
-    fields = frozenset({"about", "routes"})
+    """Learn a truth by any of several routes (a sage, someone who knows, a check at the place, divination, following
+    someone by night). `answer`: the words table it is told in (else what the villain fears)."""
+    fields = frozenset({"about", "routes", "answer"})
 
     @classmethod
     def bind(cls, forge, spec):
@@ -139,7 +140,10 @@ class Learn(Step):
                 routes.append(found)
         if len(routes) < LEARN_ROUTES:
             forge.fail(f"the truth '{spec['about']}' has only {len(routes)} ways to be learned")
-        return {"truth": spec["about"], "routes": routes}
+        t = {"truth": spec["about"], "routes": routes}
+        if spec.get("answer"):
+            t["answer"] = spec["answer"]
+        return t
 
     @classmethod
     def repair(cls, game, adv, st):
@@ -345,8 +349,9 @@ class Rally(Step):
 @step("hold")
 class Hold(Step):
     """Hold a place on a set night (said in the journal): waves of the foe as battles one after another with no rest
-    between, at a settlement or on a road tile. Not there that night, or beaten, it fails (fails_to)."""
-    fields = frozenset({"at", "days", "waves", "group"})
+    between, at a settlement or on a road tile. Not there that night, or beaten, it fails (fails_to). `field`: how its
+    battlefield is laid out (game/arena.FIELDS: the ford with burning carts across the road)."""
+    fields = frozenset({"at", "days", "waves", "group", "field"})
     fight = True
 
     @classmethod
@@ -360,6 +365,8 @@ class Hold(Step):
         t["group"] = group
         t["days"] = [int(d) for d in spec.get("days", [6, 9])]
         t["waves"] = int(spec.get("waves", 2 + min(2, int(forge.threat["tier"]) - 1)))
+        if spec.get("field"):
+            t["field"] = spec["field"]
         return t
 
 

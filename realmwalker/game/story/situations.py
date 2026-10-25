@@ -1857,10 +1857,12 @@ def finish(game, sit: dict, e: dict, lapsed: bool = False) -> list[str]:
 
 
 # ---------------------------------------------------------------------------- inside adventures (C.10)
-def inside(tables, kind: str, route: str | None = None) -> list[str]:
-    """The predicaments an adventure's step of this kind (and talk route's role) may become."""
+def inside(tables, kind: str, route: str | None = None, blueprint: str | None = None) -> list[str]:
+    """The predicaments an adventure's step of this kind (and talk route's role) may become (in that tale, when the
+    predicament names the tales it belongs to: the hunter who will not hunt is the beast's)."""
     return [pid for pid, p in sorted(predicaments(tables).items())
-            if (p.get("inside") or {}).get("step") == kind and (p["inside"].get("route") or None) == route]
+            if (p.get("inside") or {}).get("step") == kind and (p["inside"].get("route") or None) == route
+            and (blueprint is None or blueprint in p["inside"].get("blueprints", [blueprint]))]
 
 
 def for_step(game, adv: dict, st: dict, npc, route: str | None = None) -> dict | None:
@@ -1869,7 +1871,7 @@ def for_step(game, adv: dict, st: dict, npc, route: str | None = None) -> dict |
     (the op "step"), and its lapse never leaves the tale stuck."""
     if "inside" in st or npc is None or not npc.alive:
         return None
-    pids = inside(game.tables, st["kind"], route)
+    pids = inside(game.tables, st["kind"], route, adv.get("blueprint"))
     rng = game.world.rng.child(f"inside/{adv['id']}/{st['id']}")
     pid = rng.choice(pids) if pids else None
     st["inside"] = None
