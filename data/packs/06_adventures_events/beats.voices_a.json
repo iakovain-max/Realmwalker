@@ -1,145 +1,175 @@
 {
   "_comment": "Expansion 6 E.7: each villain temper's own first page for the moves it makes (beats.py pages; tests/test_text_variety.py floors).",
   "beats": {
-    "beast_omen": {"_merge": true, "tempers": {
-      "bestial": [
-        "Something has passed this way, and not long ago. {omen} The ground beside it is churned deep, and whatever made the marks did not trouble to hide them.",
-        "A rank smell lies along the road here, like wet dog and an opened grave. {omen} It has been and gone, and it was in no hurry at all.",
-        "The animals stop before you do, ears flat, eyes rolling white. {omen} Whatever it means, they understand it better than you."
-      ]
-    }},
-    "beast_carcass": {"_merge": true, "tempers": {
-      "bestial": [
-        "You wake to flies. A stag lies a dozen paces from the ashes of your fire, belly opened, the bowels dragged out in a long wet line towards the camp as if to show the way. The watch saw nothing come and nothing go.",
-        "Dawn shows you the tracks first, deep in the dew: round pads as broad as a shield-boss, circling your camp twice. Then the boar, hung over a low branch at the edge of the camp and torn from throat to hams, and not a mouthful eaten.",
-        "Your pack animals are trembling when you wake, and you see why. A calf lies between the bedrolls with its neck broken and its eyes open, still warm. Whatever carried it here stepped over sleepers to do it."
-      ]
-    }},
-    "beast_test_night": {"_merge": true, "tempers": {
-      "bestial": [
-        "In the dead of night the horses scream, and the fire bends flat as something huge drags the air past it. A dark shape shoulders the edge of the camp and is gone. You can still hear it out there, circling, breathing.",
-        "Something slams into the packs at the camp's edge in the black hour, and a hot wet breath blows across the coals. It draws back. It does not leave. Two eyes, low and green, hang at the edge of the light.",
-        "A long rasping breath comes from just beyond the firelight, and the smell of old blood, and the watch is on their feet with a brand in hand and no idea where to look. Then branches crack behind you, and the breath comes again from the other side."
-      ]
-    }},
-    "villain_sign": {"_merge": true, "tempers": {
-      "bestial": [
-        "At first light the bark of the nearest tree has been raked open at head height, five deep furrows side by side, weeping sap, each one dark with old blood. The roots below are strewn with stripped bones. Nobody on watch heard a sound.",
-        "At dawn the turf is torn up in a wide ring round your camp, and in the middle of it, on the cold ashes of the fire, sits a skull with the jaw wrenched off. The dew is untouched but for one line of great tracks going in and coming out.",
-        "When you wake there is a smear of mud and blood on the trunk of the nearest tree at the height of a man's head, and under it, pressed into the ash of your fire the way a seal is pressed into wax, a single huge print. The ash is still warm."
-      ],
-      "zealous": [
-        "At first light there is a ring of white ash round the camp, unbroken, and in the last log of the fire a lidless eye has been burned deep. Whoever drew the ring stepped over every sleeper to close it, and none of you woke.",
-        "At the head of each bedroll in the grey of the morning stands a small wooden saint no longer than a hand, its face cut away, and before each a candle-stub burned down to the wick. Nobody smelled smoke in the night.",
-        "A hymn has been scratched into the dirt by your fire, line after line in a script you almost know, and a drop of blood set at the end of each line like a full stop. The watch swears the fire never flickered."
-      ],
-      "cruel": [
-        "At first light your own waterskin hangs from a branch above the dead fire, slit open and dripping, and beneath it stands a boot that is not yours, with the foot still in it. Nobody on watch heard a thing, or will admit to it.",
-        "In the morning ten fingers lie on a flat stone at the edge of the camp, neatly spaced, a ring still on one of them. They are not yours. Someone has scratched a tally in the stone beside them: ten strokes, and room left over.",
-        "Cut into the trunk of the nearest tree at the height of your eyes, fresh and weeping sap, is a crude figure of {hero} hanging from a branch. The knife that cut it is still sunk to the hilt beside it, a rag knotted round the handle."
-      ]
-    }},
-    "villain_hunt": {"_merge": true, "tempers": {
-      "bestial": [
-        "The birds go up all at once, and the quiet after is worse. Then {villain_short} comes out of the cover into the open, between you and any shelter, and stops, and breathes, and looks at you. It has waited a long time to find you out in the open.",
-        "You smell it first: wet fur, old blood, something that has fed well and is not full. {villain_short} stands in the way ahead with its head low, not roaring, not rushing, only looking. It has walked beside you in the trees for an hour and chose this place.",
-        "Something heavy crosses the track behind you, and the horses scream, and when you turn {villain_short} is there, between you and the way back, wet to the shoulder with last night's kill. It does not hurry. It never has to."
-      ],
-      "cunning": [
-        "The way runs open here, with nothing near to hide behind, and in the middle of it {villain_short} sits on a fallen log, alone and quite at ease, as if the log had been put there for the purpose. \"Well,\" says {villain_short}. \"Here we are.\" {He} has chosen the ground with care.",
-        "A boy meets you on the road with a coin in his fist and a message he has learned by heart: {villain_short} is waiting a little further on, and would be glad of a word. You look up, and there {he} stands on the rise, hands empty and open, in plain sight. {He} has nothing to hide, and has seen to it that you have nowhere better to be.",
-        "The road has been swept clean of other travellers, and you only notice it now: no cart for hours, no drover, not even a dog. Then {villain_short} steps out from behind a wall, brushing {his} sleeves, unhurried. A great many favours went into emptying this road, and {he} wants you to know it."
-      ],
-      "cruel": [
-        "A wagon lies on its side across your road, and from its axle hangs a carter you saw two days ago, upside down by his heels, still breathing. {villain_short} sits on the wagon's side wiping a knife, and smiles when you come into view. The carter's blood has not yet dried.",
-        "A scream comes from the trees, a man's, long and ragged, and stops. Then {villain_short} walks out of the wood onto the road ahead, in no hurry, wiping {his} hands on a rag. {He} holds the rag up so that you can see it.",
-        "{villain_short} stands in the road ahead, between you and any shelter, dragging a bundle on a rope that moans each time it hits a stone. {He} lets go of the rope and grins. \"That is what waits for the next one who runs,\" says {villain_short}."
-      ]
-    }},
-    "villain_omen": {"_merge": true, "tempers": {
-      "zealous": [
-        "{omen} Whoever did it was not hiding. It was done with care, the way a priest lays out an altar, and you cannot shake the feeling that it was done for you.",
-        "You are three steps past before it sinks in, and you go back. {omen} A pinch of incense still smoulders in the dust beside it, and whoever left it was here this morning.",
-        "{omen} The ground in front of it is pressed flat where someone knelt a long while, and the marks of two hands lie before the knees. It is a place of worship, and you are what is being worshipped against."
-      ]
-    }},
-    "villain_letter": {"_merge": true, "tempers": {
-      "zealous": [
-        "At first light there is a letter lying by your head, folded in three the way an altar-cloth is folded, sealed with yellow wax pressed with a sun and its rays. It smells of incense. Your name is written on it in brown ink, with a little sun drawn before it and another after.",
-        "A letter waits where you slept, bound round with a strip of linen such as is used to wrap the dead, and knotted three times. They are not a thief's knots. They are a priest's.",
-        "A letter has been left for you, with a little heap of ash and a coin of the old faith beside it. The seal is yellow wax pressed with a burning sun. Before your name on the outside stands one word, in an old fair hand: Heretic."
-      ]
-    }},
-    "villain_rumour": {"_merge": true, "tempers": {
-      "zealous": [
-        "\"There was a pilgrim in here asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Wanted to know if you keep any god at all, and which. Blessed the bench he sat on, left a silver for the poor-box, and went.\"",
-        "An old woman at the well catches your sleeve. \"A man in grey came by with a begging-bowl he never held out,\" she says, low. \"Asked for you by name, and whether you had been shriven. I said I could not say. He said that was all right, he would pray for you.\"",
-        "\"You've a friend,\" says a carter by the gate, not smiling. \"Or a hunter. A man with a shaved head and an eye on a cord round his neck stood here two days, asking everyone through whether they had met you, and wrote down the names of the ones who said no.\""
-      ],
-      "cunning": [
-        "\"Fellow in here yesterday, asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Stood the whole house a round and never asked one question straight. Only let the talk wander round to you, and sat there nodding. Paid in good silver.\"",
-        "An old woman at the well catches your sleeve. \"A gentleman gave me a penny for news of you,\" she says, low, \"and another to forget I had given it. Two pennies for one thing. I never had that before, and it frightens me.\"",
-        "\"You've a friend,\" says a carter by the gate. \"Or the other thing. A man came through asking, nothing anyone could take exception to, and everyone he asked went home with a coin and a new reason to like him. By evening half the town was talking about you for him.\""
-      ],
-      "proud": [
-        "\"A rider came by yesterday asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Never got down off the horse. Spoke to the landlord as if he was a post. Left a gold piece on the step for whoever would tell him first, and did not look to see who picked it up.\"",
-        "An old woman at the well catches your sleeve. \"There was a herald,\" she says, low, \"in a livery nobody here has seen in their lives. Read your name out in the square three times, like a sentence, and asked which way you went as if we owed him the answer. We told him.\"",
-        "\"You've a visitor, or you will have,\" says a carter by the gate, not smiling. \"Two armed men in old-fashioned mail with no badge I know. Would not speak to a common man, only to the reeve. They asked after you, and the reeve told them, and has been sweating ever since.\""
-      ]
-    }},
-    "villain_spy_seen": {"_merge": true, "tempers": {
-      "zealous": [
-        "A grey-cloaked figure keeps pace with you a long bowshot behind, and when you stop it stops, and kneels. Not to you: to the ground, hands lifted, lips moving, as though praying for your soul. When you turn towards it, it rises and goes.",
-        "A shaven head among the trees, a grey robe, an eye drawn on the sleeve in red. It does not trouble to hide. It stands with its arms crossed over its chest and watches you like a priest watching a sinner at the rail. When you stare, it bows from the waist, and turns, and goes.",
-        "The same pilgrim at the door in the morning, at the well at noon, at the corner of the lane at dusk, murmuring over a string of bone beads. At dusk you meet its eyes, and it smiles as if you had answered a prayer, and is gone round the corner."
-      ],
-      "cunning": [
-        "A tinker with a handcart leaves the road when you do, and rejoins it when you do, whistling. He looks at everything but you, and looks at everything with a particular care. When you turn to stare, he doffs his hat in the friendliest way and walks on a little faster.",
-        "Twice already today you have seen the same boy: ginger hair, a wooden whistle, selling nothing, a coin rolled across his knuckles. The third time you look straight at him, he grins, spins the coin to your feet, and bolts.",
-        "A woman in a good plain cloak is at the end of the lane when you come out, and at the end of the next lane when you cross, always looking at something else. She is very good. Only one thing gives her away: in a place where everybody looks at strangers, she never once looks at you. When you start towards her, she drops her basket and goes."
-      ],
-      "cruel": [
-        "A big man leans against a wall in plain sight, picking his teeth with a knife-point, and grins when your eyes meet. He makes no effort to hide. He draws the blade slowly across his own throat, and strolls off, in no hurry, as though he wanted you to give chase.",
-        "There is a man behind you on the road who has not troubled to hide: a scarred bully with a club on his shoulder, a hundred paces back, whistling. When you stop, he stops and spits. When you look hard, he lifts a hand and mimes a noose, and runs, laughing.",
-        "A face in a doorway, watching you eat. A face at the edge of the market, watching you buy. This time it is under a hood in an alley, running a thumb along a notched blade, counting you off. It sees you see, and licks its teeth, and goes."
-      ],
-      "proud": [
-        "A rider in old-fashioned livery sits a horse on the hill above the road, perfectly upright, and looks down at you the way a man looks at a field he means to buy. He makes no effort to be unseen. When you start towards him he does not hurry; he turns the horse like a man leaving a room.",
-        "A servant in a faded purple tabard follows a long way behind, carrying nothing, hands clasped, and stops whenever you stop, with a little bow of the head, as to a stranger one does not intend to remember. When you start towards him, he straightens, and walks away.",
-        "A gaunt figure in a pale cloak stands in the shadow of a doorway, motionless, a gold ring on every finger. It watches you as a lord watches hired help. When you meet its eye it inclines its head, a courtesy that is an insult, and turns away, unhurried."
-      ],
-      "grieving": [
-        "A figure in grey mourning stands at the end of the lane, a long way back, with a bunch of faded flowers held to its chest. It does not follow you so much as keep coming, a step at a time, as people walk behind a coffin. When you turn, it bows its head and stays so until you look away, and when you look back it is walking off, weeping.",
-        "Someone walks along the treeline beside you, in a black veil that hides the face, keeping your pace. It carries a child's wooden horse in both hands, held up to the light and turned, like something being shown. When you turn to look, it lowers the toy and goes back among the trees without a sound.",
-        "There is a woman who sits where she can see you, and cries, and does not wipe her face. Twice you see her through the day, and twice she is at it, looking at you as at somebody else, somebody she cannot stop looking for. Then she sees you looking, and flinches, and is gone."
-      ]
-    }},
-    "villain_token_letter": {"_merge": true, "tempers": {
-      "zealous": [
-        "There is a letter in the morning, sealed with an unlidded eye, and folded inside it, so that it drops into your lap, is {token}. It is the one {token_of} lost these last days, and it has been wrapped in clean white linen and anointed with oil like a relic. {token_of} stares at it as at a hand come out of a grave.",
-        "A letter at first light, with a sprig of rue pressed under the seal, and in the fold {token}, the one {token_of} lost. Someone has blessed it: there is a thumbprint of oil on it and the faint smell of a church. {token_of} will not touch it.",
-        "The letter is heavy at one corner, and when you break the seal {token} drops out, the one {token_of} lost, tied to the fold with a thread of red wool. A lidless eye is drawn on the paper. {token_of} stares at the eye and says nothing."
-      ],
-      "cunning": [
-        "A neat little letter at first light, no seal, only a ribbon, and tucked into the fold, {token}. The one {token_of} lost. It has been wiped clean and wrapped in a cloth, as if a servant had returned it with compliments. {token_of} stares at it, and then at you.",
-        "A polite note lies on your blanket in the morning, and inside it, {token}, the one {token_of} lost. {token_of} looks at it a long time. Someone has had it for days and chose this morning to give it back.",
-        "You find the letter beside your boots when you wake, and {token} resting on top of it in plain sight, tied with a ribbon. {token_of} lost it days ago and looked for it everywhere. Whoever had it knew exactly where it would do most good to put it."
-      ],
-      "cruel": [
-        "The letter is pinned to the ground by your head with a knife driven through its middle, and {token} is nailed beside it, the one {token_of} lost, with a dark smear on it that is not mud. {token_of} makes a sound in the throat and turns away.",
-        "A letter at first light, the seal a red smear thumbed into the wax, and inside it {token}, the one {token_of} lost. A tooth is wrapped in the fold with it. {token_of} stares at the tooth, and at {token}, and does not ask whose.",
-        "You wake to the stink before the letter. {token} has been left on your blanket, the one {token_of} lost, slimed with something rotten, and the letter is wrapped round it like a dead rat in a rag. {token_of} gags."
-      ],
-      "proud": [
-        "A letter at dawn, on heavy paper, sealed with a great seal in black wax, and {token} laid upon it as if upon a cushion. The one {token_of} lost. It has been polished and returned like a lordly kindness, and that is what makes {token_of}'s hands shake.",
-        "The letter is addressed in a hand that has never had to hurry, with a title before your name that nobody has used since your grandfather's time, and in the fold lies {token}, the one {token_of} lost. {token_of} stares at it. Someone has had the keeping of it, and has sent it back with ceremony.",
-        "Someone with great care has laid the letter on a folded cloth by your bed, and across it, like a coin on a dead man's eye, {token}. Lost these last days by {token_of}. A lord returning a thing that was not his to take, and expecting thanks."
-      ],
-      "grieving": [
-        "A letter at first light, the paper creased and re-creased as though it had been held a long time, and with it, folded in a scrap of black cloth, {token}, the one {token_of} lost. A pressed flower lies in the fold. {token_of} takes one look at it and sits down.",
-        "The letter is damp at the edges, as though someone had wept on it, and when you break the seal {token} slides into your palm, the one {token_of} lost. It is warm. It has been held in a hand for a long time and put down with great reluctance.",
-        "There is a letter beside you at first light, tied with a child's ribbon, and under the knot, {token}, the one {token_of} lost. Someone has kept it clean. Someone has kept it as the dead are kept. {token_of} looks at it as at a face."
-      ]
-    }}
+    "beast_omen": {
+      "_merge": true,
+      "tempers": {
+        "bestial": [
+          "Something has passed this way, and not long ago. {omen} Further on, the ground is churned deep, and whatever made the marks did not trouble to hide them.",
+          "A rank smell lies along the road here, like wet dog and an opened grave. {omen} It has been and gone, and it was in no hurry at all.",
+          "The horses stop before you do, ears flat, eyes rolling white, and will not be coaxed on for a while. {omen} Whatever it means, they understand it better than you."
+        ]
+      }
+    },
+    "beast_carcass": {
+      "_merge": true,
+      "tempers": {
+        "bestial": [
+          "You wake to flies. A stag lies a dozen paces from the ashes of your fire, belly opened, the bowels dragged out in a long wet line towards the camp as if to show the way. The watch saw nothing come and nothing go.",
+          "Dawn shows you the tracks first, deep in the dew: round pads as broad as a shield-boss, circling your camp twice. Then the boar, hung over a low branch at the edge of the camp and torn from throat to hams, and not a mouthful eaten.",
+          "Your pack animals are trembling when you wake, and you see why. A calf lies between the bedrolls with its neck broken and its eyes open, still warm. Whatever carried it here stepped over sleepers to do it."
+        ]
+      }
+    },
+    "beast_test_night": {
+      "_merge": true,
+      "tempers": {
+        "bestial": [
+          "In the dead of night the horses scream, and the fire bends flat as something huge drags the air past it. A dark shape shoulders the edge of the camp and is gone. You can still hear it out there, circling, breathing.",
+          "Something slams into the packs at the camp's edge in the black hour, and a hot wet breath blows across the coals. It draws back. It does not leave. Two eyes, low and green, hang at the edge of the light.",
+          "A long rasping breath comes from just beyond the firelight, and the smell of old blood, and the watch is on their feet with a brand in hand and no idea where to look. Then branches crack behind you, and the breath comes again from the other side."
+        ]
+      }
+    },
+    "villain_sign": {
+      "_merge": true,
+      "tempers": {
+        "bestial": [
+          "At first light the bark of the nearest tree has been raked open at head height, five deep furrows side by side, weeping sap, each one dark with old blood. The roots below are strewn with stripped bones. Nobody on watch heard a sound.",
+          "At dawn the turf is torn up in a wide ring round your camp, and in the middle of it, on the cold ashes of the fire, sits a skull with the jaw wrenched off. The dew is untouched but for one line of great tracks going in and coming out.",
+          "When you wake there is a smear of mud and blood on the trunk of the nearest tree at the height of a man's head, and under it, pressed into the ash of your fire the way a seal is pressed into wax, a single huge print. The ash is still warm."
+        ],
+        "zealous": [
+          "At first light there is a ring of white ash round the camp, unbroken, and in the last log of the fire a lidless eye has been burned deep. Whoever drew the ring stepped over every sleeper to close it, and none of you woke.",
+          "At the head of each bedroll in the grey of the morning stands a small wooden saint no longer than a hand, its face cut away, and before each a candle-stub burned down to the wick. Nobody smelled smoke in the night.",
+          "A hymn has been scratched into the dirt by your fire, line after line in a script you almost know, and a drop of blood set at the end of each line like a full stop. The watch swears the fire never flickered."
+        ],
+        "cruel": [
+          "At first light your own waterskin hangs from a branch above the dead fire, slit open and dripping, and beneath it stands a boot that is not yours, with the foot still in it. Nobody on watch heard a thing, or will admit to it.",
+          "In the morning ten fingers lie on a flat stone at the edge of the camp, neatly spaced, a ring still on one of them. They are not yours. Someone has scratched a tally in the stone beside them: ten strokes, and room left over.",
+          "Cut into the trunk of the nearest tree at the height of your eyes, fresh and weeping sap, is a crude figure of {hero} hanging from a branch. The knife that cut it is still sunk to the hilt beside it, a rag knotted round the handle."
+        ]
+      }
+    },
+    "villain_hunt": {
+      "_merge": true,
+      "tempers": {
+        "bestial": [
+          "The birds go up all at once, and the quiet after is worse. Then {villain_short} comes out of the cover into the open, between you and any shelter, and stops, and breathes, and looks at you. It has waited a long time to find you out in the open.",
+          "You smell it first: wet fur, old blood, something that has fed well and is not full. {villain_short} stands in the way ahead with its head low, not roaring, not rushing, only looking. It has walked beside you in the trees for an hour and chose this place.",
+          "Something heavy crosses the track behind you, and the horses scream, and when you turn {villain_short} is there, between you and the way back, wet to the shoulder with last night's kill. It does not hurry. It never has to."
+        ],
+        "cunning": [
+          "The way runs open here, with nothing near to hide behind, and in the middle of it {villain_short} sits on a fallen log, alone and quite at ease, as if the log had been put there for the purpose. \"Well,\" says {villain_short}. \"Here we are.\" {He} has chosen the ground with care.",
+          "A boy meets you on the road with a coin in his fist and a message he has learned by heart: {villain_short} is waiting a little further on, and would be glad of a word. You look up, and there {he} stands on the rise, hands empty and open, in plain sight. {He} has nothing to hide, and has seen to it that you have nowhere better to be.",
+          "The road has been swept clean of other travellers, and you only notice it now: no cart for hours, no drover, not even a dog. Then {villain_short} steps out from behind a wall, brushing {his} sleeves, unhurried. A great many favours went into emptying this road, and {he} wants you to know it."
+        ],
+        "cruel": [
+          "A wagon lies on its side across your road, and from its axle hangs its carter, upside down by his heels, still breathing. {villain_short} sits on the wagon's side wiping a knife, and smiles when you come into view. The carter's blood has not yet dried.",
+          "A scream comes from the trees, a man's, long and ragged, and stops. Then {villain_short} walks out of the wood onto the road ahead, in no hurry, wiping {his} hands on a rag. {He} holds the rag up so that you can see it.",
+          "{villain_short} stands in the road ahead, between you and any shelter, dragging a bundle on a rope that moans each time it hits a stone. {He} lets go of the rope and grins. \"That is what waits for the next one who runs,\" says {villain_short}."
+        ]
+      }
+    },
+    "villain_omen": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "{omen} Nobody in sight will say a word of it, and those you ask make a small sign of the sun and look away, as if it were something holy that it would be wrong to speak of to you.",
+          "{omen} Further on, a pinch of incense still smoulders in the dust at the roadside, and the ground about it is swept clean, as before a shrine.",
+          "{omen} At the next bend the road is pressed flat where someone knelt a long while, facing the way you came. It was a prayer, and you were what it was said against."
+        ]
+      }
+    },
+    "villain_letter": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "At first light there is a letter lying by your head, folded in three the way an altar-cloth is folded, sealed with yellow wax pressed with a sun and its rays. It smells of incense. Your name is written on it in brown ink, with a little sun drawn before it and another after.",
+          "A letter waits where you slept, bound round with a strip of linen such as is used to wrap the dead, and knotted three times. They are not a thief's knots. They are a priest's.",
+          "A letter has been left for you, with a little heap of ash and a coin of the old faith beside it. The seal is yellow wax pressed with a burning sun. Before your name on the outside stands one word, in an old fair hand: Heretic."
+        ]
+      }
+    },
+    "villain_rumour": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "\"There was a pilgrim in here asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Wanted to know if you keep any god at all, and which. Blessed the bench he sat on, left a silver for the poor-box, and went.\"",
+          "An old woman at the well catches your sleeve. \"A man in grey came by with a begging-bowl he never held out,\" she says, low. \"Asked for you by name, and whether you had been shriven. I said I could not say. He said that was all right, he would pray for you.\"",
+          "\"You've a friend,\" says a carter by the gate, not smiling. \"Or a hunter. A man with a shaved head and an eye on a cord round his neck stood here two days, asking everyone through whether they had met you, and wrote down the names of the ones who said no.\""
+        ],
+        "cunning": [
+          "\"Fellow in here yesterday, asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Stood the whole house a round and never asked one question straight. Only let the talk wander round to you, and sat there nodding. Paid in good silver.\"",
+          "An old woman at the well catches your sleeve. \"A gentleman gave me a penny for news of you,\" she says, low, \"and another to forget I had given it. Two pennies for one thing. I never had that before, and it frightens me.\"",
+          "\"You've a friend,\" says a carter by the gate. \"Or the other thing. A man came through asking, nothing anyone could take exception to, and everyone he asked went home with a coin and a new reason to like him. By evening half the town was talking about you for him.\""
+        ],
+        "proud": [
+          "\"A rider came by yesterday asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Never got down off the horse. Spoke to the landlord as if he was a post. Left a gold piece on the step for whoever would tell him first, and did not look to see who picked it up.\"",
+          "An old woman at the well catches your sleeve. \"There was a herald,\" she says, low, \"in a livery nobody here has seen in their lives. Read your name out in the square three times, like a sentence, and asked which way you went as if we owed him the answer. We told him.\"",
+          "\"You've a visitor, or you will have,\" says a carter by the gate, not smiling. \"Two armed men in old-fashioned mail with no badge I know. Would not speak to a common man, only to the reeve. They asked after you, and the reeve told them, and has been sweating ever since.\""
+        ]
+      }
+    },
+    "villain_spy_seen": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "A grey-cloaked figure keeps pace with you a long bowshot behind, and when you stop it stops, and kneels. Not to you: to the ground, hands lifted, lips moving, as though praying for your soul. When you turn towards it, it rises and goes.",
+          "A shaven head among the trees, a grey robe, an eye drawn on the sleeve in red. It does not trouble to hide. It stands with its arms crossed over its chest and watches you like a priest watching a sinner at the rail. When you stare, it bows from the waist, and turns, and goes.",
+          "The same pilgrim at the door in the morning, at the well at noon, at the corner of the lane at dusk, murmuring over a string of bone beads. At dusk you meet its eyes, and it smiles as if you had answered a prayer, and is gone round the corner."
+        ],
+        "cunning": [
+          "A tinker with a handcart leaves the road when you do, and rejoins it when you do, whistling. He looks at everything but you, and looks at everything with a particular care. When you turn to stare, he doffs his hat in the friendliest way and walks on a little faster.",
+          "Twice already today you have seen the same boy: ginger hair, a wooden whistle, selling nothing, a coin rolled across his knuckles. The third time you look straight at him, he grins, spins the coin to your feet, and bolts.",
+          "A woman in a good plain cloak is at the end of the lane when you come out, and at the end of the next lane when you cross, always looking at something else. She is very good. Only one thing gives her away: in a place where everybody looks at strangers, she never once looks at you. When you start towards her, she drops her basket and goes."
+        ],
+        "cruel": [
+          "A big man leans against a wall in plain sight, picking his teeth with a knife-point, and grins when your eyes meet. He makes no effort to hide. He draws the blade slowly across his own throat, and strolls off, in no hurry, as though he wanted you to give chase.",
+          "There is a man behind you on the road who has not troubled to hide: a scarred bully with a club on his shoulder, a hundred paces back, whistling. When you stop, he stops and spits. When you look hard, he lifts a hand and mimes a noose, and runs, laughing.",
+          "A face in a doorway, watching you eat. A face at the edge of the market, watching you buy. This time it is under a hood in an alley, running a thumb along a notched blade, counting you off. It sees you see, and licks its teeth, and goes."
+        ],
+        "proud": [
+          "A rider in old-fashioned livery sits a horse on the hill above the road, perfectly upright, and looks down at you the way a man looks at a field he means to buy. He makes no effort to be unseen. When you start towards him he does not hurry; he turns the horse like a man leaving a room.",
+          "A servant in a faded purple tabard follows a long way behind, carrying nothing, hands clasped, and stops whenever you stop, with a little bow of the head, as to a stranger one does not intend to remember. When you start towards him, he straightens, and walks away.",
+          "A gaunt figure in a pale cloak stands in the shadow of a doorway, motionless, a gold ring on every finger. It watches you as a lord watches hired help. When you meet its eye it inclines its head, a courtesy that is an insult, and turns away, unhurried."
+        ],
+        "grieving": [
+          "A figure in grey mourning stands at the end of the lane, a long way back, with a bunch of faded flowers held to its chest. It does not follow you so much as keep coming, a step at a time, as people walk behind a coffin. When you turn, it bows its head and stays so until you look away, and when you look back it is walking off, weeping.",
+          "Someone walks along the treeline beside you, in a black veil that hides the face, keeping your pace. It carries a child's wooden horse in both hands, held up to the light and turned, like something being shown. When you turn to look, it lowers the toy and goes back among the trees without a sound.",
+          "There is a woman who sits where she can see you, and cries, and does not wipe her face. Twice you see her through the day, and twice she is at it, looking at you as at somebody else, somebody she cannot stop looking for. Then she sees you looking, and flinches, and is gone."
+        ]
+      }
+    },
+    "villain_token_letter": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "There is a letter in the morning, sealed in yellow wax with a sun and its rays, and folded inside it, so that it drops into your lap, is {token}. It is the one {token_of} lost these last days, and it has been wrapped in clean white linen and anointed with oil like a relic. {token_of} stares at it as at a hand come out of a grave.",
+          "A letter at first light, with a sprig of rue pressed under the seal, and in the fold {token}, the one {token_of} lost. Someone has blessed it: there is a thumbprint of oil on it and the faint smell of a church. {token_of} will not touch it.",
+          "The letter is heavy at one corner, and when you break the seal {token} drops out, the one {token_of} lost, tied to the fold with a thread of red wool. A sun with too many rays is drawn on the paper. {token_of} stares at the sun and says nothing."
+        ],
+        "cunning": [
+          "A neat little letter at first light, no seal, only a ribbon, and tucked into the fold, {token}. The one {token_of} lost. It has been wiped clean and wrapped in a cloth, as if a servant had returned it with compliments. {token_of} stares at it, and then at you.",
+          "A polite note lies on your blanket in the morning, and inside it, {token}, the one {token_of} lost. {token_of} looks at it a long time. Someone has had it for days and chose this morning to give it back.",
+          "You find the letter beside your boots when you wake, and {token} resting on top of it in plain sight, tied with a ribbon. {token_of} lost it days ago and looked for it everywhere. Whoever had it knew exactly where it would do most good to put it."
+        ],
+        "cruel": [
+          "The letter is pinned to the ground by your head with a knife driven through its middle, and {token} is nailed beside it, the one {token_of} lost, with a dark smear on it that is not mud. {token_of} makes a sound in the throat and turns away.",
+          "A letter at first light, the seal a red smear thumbed into the wax, and inside it {token}, the one {token_of} lost. A tooth is wrapped in the fold with it. {token_of} stares at the tooth, and at {token}, and does not ask whose.",
+          "You wake to the stink before the letter. {token} has been left on your blanket, the one {token_of} lost, slimed with something rotten, and the letter is wrapped round it like a dead rat in a rag. {token_of} gags."
+        ],
+        "proud": [
+          "A letter at dawn, on heavy paper, sealed with a great crown in old gold wax, and {token} laid upon it as if upon a cushion. The one {token_of} lost. It has been polished and returned like a lordly kindness, and that is what makes {token_of}'s hands shake.",
+          "The letter is addressed in a hand that has never had to hurry, with a title before your name that nobody has used since your grandfather's time, and in the fold lies {token}, the one {token_of} lost. {token_of} stares at it. Someone has had the keeping of it, and has sent it back with ceremony.",
+          "Someone with great care has laid the letter on a folded cloth by your bed, and across it, like a coin on a dead man's eye, {token}. Lost these last days by {token_of}. A lord returning a thing that was not his to take, and expecting thanks."
+        ],
+        "grieving": [
+          "A letter at first light, the paper creased and re-creased as though it had been held a long time, and with it, folded in a scrap of black cloth, {token}, the one {token_of} lost. A pressed flower lies in the fold. {token_of} takes one look at it and sits down.",
+          "The letter is damp at the edges, as though someone had wept on it, and when you break the seal {token} slides into your palm, the one {token_of} lost. It is warm. It has been held in a hand for a long time and put down with great reluctance.",
+          "There is a letter beside you at first light, tied with a child's ribbon, and under the knot, {token}, the one {token_of} lost. Someone has kept it clean. Someone has kept it as the dead are kept. {token_of} looks at it as at a face."
+        ]
+      }
+    }
   }
 }

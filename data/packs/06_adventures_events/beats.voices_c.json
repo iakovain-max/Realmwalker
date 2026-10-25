@@ -1,159 +1,195 @@
 {
   "_comment": "Expansion 6 E.7: each villain temper's own first page for the moves it makes (beats.py pages; tests/test_text_variety.py floors).",
   "beats": {
-    "villain_bargain": {"_merge": true, "tempers": {
-      "zealous": [
-        "A clerk in the grey habit of an almoner sits down across from you, tithe-book on his knee, and speaks as gently as a man at a deathbed. \"{villain_short} bears you no hatred,\" he says. \"The flame does not hate the straw. But there is a way to be spared, and it can be counted out in coin.\"",
-        "The clerk has a small iron sign hung at his throat, and he will not touch the bread you offer. \"I come on {villain_short}'s errand,\" he says, \"and the errand is mercy. It is not often offered. A man who refuses it is not wise, only damned. Say what you would have.\"",
-        "A young clerk with ash on his brow takes the place beside you and offers you bread before he offers the matter. \"{villain_short} has watched your road,\" he says, \"and finds you worthy of a choice. Few are given one. Hear it, and answer with a clear heart.\""
-      ],
-      "cunning": [
-        "A man with the look of somebody's third cousin helps himself to your bread and does not apologise for it. \"I am the clerk, for want of a better word,\" he says. \"{villain_short} has read what you have been doing, and admires it, and would rather pay for it than undo it. Shall we say a figure?\"",
-        "The clerk has plainly been here some time, and has already learned what you take with your supper. \"Do not trouble to wonder how I knew where to find you,\" he says. \"{villain_short} knows where everything is. {He} would rather you were useful than dead. Name a sum.\"",
-        "A clerk with a lawyer's smile lays a folded paper on the board, unsealed and quite blank. \"{villain_short} likes to leave the figure empty,\" he says. \"A man will always ask for more than {he} would have thought to give. Go on. Be greedy. It does you credit.\""
-      ],
-      "proud": [
-        "The one who comes is a clerk in {villain_short}'s livery, and he does not sit, and he speaks to a point somewhat above your head. \"{villain_short} has been informed of you,\" he says. \"{He} is not angry. One is not angry at weather. But {he} will, as a courtesy, be rid of you for a price. You may name it.\"",
-        "The clerk holds the letter between two fingers as though it were wet, and makes it plain that the errand is beneath him. \"{villain_short} will not be troubled with you,\" he says. \"{He} would sooner pay than stoop. Name a sum, and be quick about it. {His} time is not yours.\"",
-        "The clerk wears {villain_short}'s colours and a smile worn thin from use, and he reads from a scroll without once meeting your eyes. \"Whereas {hero}, a person of no standing, has been a vexation to {villain_short},\" he reads, \"it is {his} gracious wish to be quit of the matter for a sum. The sum is for you to say.\""
-      ],
-      "grieving": [
-        "The clerk who finds you is a tired man in black, and he apologises before he begins. \"{villain_short} sent me,\" he says. \"{He} does not wish you harm. {He} has had enough of harm. {He} asks only that you let {him} be, and will pay for it, whatever you say.\"",
-        "A clerk with red-rimmed eyes sits down across from you and sets a small purse between you without opening it. \"I was told to say that {villain_short} is sorry to trouble you,\" he says. \"{He} asked me to say it twice. Name what you will take, and leave {him} to what is left.\"",
-        "The clerk speaks softly, as one does in a sickroom. \"{villain_short} does not sleep,\" he says, \"and has not for a very long time. {He} would pay a great deal for a single night of peace, and for you to let {him} alone. What is your price? It will be paid.\""
-      ]
-    }},
-    "villain_invitation": {"_merge": true, "tempers": {
-      "zealous": [
-        "A rider in a pilgrim's white-banded cloak draws rein before you, an iron censer swinging at the saddle-bow, and holds out a letter bound in red cord and sealed with a lidless eye. \"From {villain_short},\" the rider says. \"You are expected. The hour was fixed a long time ago.\"",
-        "A shaven-headed rider in a plain white tabard waits with both hands raised, one of them holding a letter, and speaks a short blessing over you before anything else. \"{villain_short} bids you come,\" the rider says. \"Do not think it a request. It is a kindness, and kindnesses are not offered twice.\"",
-        "A far-off chapel bell tolls three times as the rider approaches, and the rider makes the sign of the eye over the letter before handing it to you. \"{villain_short} has set a place for you,\" the rider says. \"It was set before you were born. I am to wait until you have read.\""
-      ],
-      "cunning": [
-        "A well-dressed rider falls in beside you as if by chance and keeps exactly your pace for a hundred yards before speaking. \"I carry a letter from {villain_short},\" the rider says pleasantly, \"which you may burn if you like. There are copies.\"",
-        "The rider sits a horse so good it looks borrowed, and holds out a letter the way one offers a coin to a child. \"{villain_short} thought you might be tired of being hunted,\" the rider says. \"Read it, and see how much easier the world could be made.\"",
-        "A boy of ten runs up with a letter, and behind him, at a polite distance, sits the rider who sent him, so that you will know who is watching. \"For {hero},\" the boy says. \"From {villain_short}. The gentleman says you are to read it where he can see.\""
-      ],
-      "proud": [
-        "A herald in {villain_short}'s colours draws rein and does not dismount. He holds out a sealed letter in a gloved hand and reads the address aloud: your name, and after it, in full, the titles {villain_short} allows you, which are none. \"My master invites you,\" he says. \"{He} has not done so before for a person of your kind.\"",
-        "A rider in black waits in the road with a second horse led beside {him}: saddled, riderless, and plainly meant for you. \"{villain_short} will not have a guest arrive on foot,\" the rider says, and holds out a letter. \"You will find the hospitality generous. It is {his} habit to be generous to few.\"",
-        "The rider goes down on one knee in the road, as to an equal one has been told to flatter, and says the words as if they cost something. \"{villain_short} extends {his} table to you,\" the rider says, and raises a letter. \"I am to say that refusal will be noted, and remembered.\""
-      ],
-      "grieving": [
-        "A rider in black mourning comes up slowly, hat in hand, with the face of someone bringing news of a death. \"I am sent by {villain_short},\" the rider says quietly, and offers a letter with a black ribbon round it. \"{He} asks that you read it alone, and that you forgive the asking.\"",
-        "The rider stops well short of you and comes no nearer, as though afraid you might flinch from the livery. A letter is held out at the end of a long arm. \"From {villain_short},\" the rider says. \"{He} has not had a guest in a very long while. {He} did not know how else to ask.\"",
-        "The rider sits a grey horse with a wreath of dried flowers hung from the saddle, and offers a letter with both hands. \"{villain_short} bade me wait for you,\" the rider says, \"through three winters if I had to. {He} will be very glad you came.\""
-      ]
-    }},
-    "outlaw_omen": {"_merge": true, "tempers": {
-      "cunning": [
-        "You nearly pass it. It has been set to be found only by someone looking, and you were looking. {omen}",
-        "The lead walker stops short, and the rest bunch up behind. Whatever lies at the side of the road has been laid out with room around it, so that the eye cannot fail to take it in. {omen}",
-        "Your horse stops before you do. Someone has taken some trouble over this, and not a hair of it is accident. {omen}"
-      ],
-      "cruel": [
-        "The crows go up all at once as you round the bend, complaining, and settle again on the fence to wait for you to be gone. {omen}",
-        "The flies are loud, and the ruts are fresh, and somebody has been busy here not long ago. {omen}",
-        "A farm dog sits at the roadside, whining, and will not go on, and when you come up you see why. {omen}"
-      ]
-    }},
-    "outlaw_warning": {"_merge": true, "tempers": {
-      "cunning": [
-        "In the morning there is a knife standing in the wood by your head, set so exactly that it has not split the grain, and a paper folded in three beneath the hilt like a tradesman's bill. Whoever left it was in no hurry, and knew you would not wake.",
-        "A small neat meal has been laid beside your things, bread and an apple, and in the apple a knife to the hilt, and a paper wound round the blade. It was done sometime after the lamps were out. Nobody has anything to say about it.",
-        "Your boots stand side by side where you left them, brushed clean, and a knife stands in the left one by its hilt, with a paper rolled round the blade. Nothing else has been touched, not a coin, not a button."
-      ],
-      "cruel": [
-        "You wake to the sound of a fly. There is a knife in the wood above your head, driven in so hard that the haft still shivers, and a paper under it with something dark on it that is not ink. Whoever came was close enough to cut your throat, and chose not to.",
-        "A rat has been pinned to the wood at the height of your face with a knife, still warm, and a paper stuck under it with its blood. Nobody in the place saw who did it, and nobody wants to be the one to take it down.",
-        "In the morning there is a knife standing in the wood beside your pillow, and wound round the blade, three turns, a lock of hair cut from your own head. A paper lies under it. You feel the back of your neck, and your hand comes away dry, and that is all the luck there is."
-      ]
-    }},
-    "outlaw_test_road": {"_merge": true, "tempers": {
-      "cunning": [
-        "Four of {gang} are waiting at a narrow place in the road, and they have a table: a plain trestle, a ledger, a man on a stool with a pen. \"{villain_short} likes to know a man's worth before dealing with him,\" says the one with the ledger. \"The toll is modest. Or prove you are worth more than the toll.\"",
-        "A cart has been set across the road, and four of {gang} sit along its rail in the shade and do not bother to rise. \"We were told you would come this way,\" one says. \"{villain_short} wishes to take your measure. Pay, and you pass, or oblige us otherwise.\"",
-        "Four of {gang} walk out of the trees in a line, hands empty and in plain view, which is the most frightening thing about them. \"No need for steel yet,\" one says. \"{villain_short} wants a closer look at you. Pay the toll, or let us see what you are.\""
-      ],
-      "cruel": [
-        "Four of {gang} stand on the road, and in the ditch behind them a carter sits holding his hand, which they have lately broken. \"{villain_short} says you've been asking after us,\" the one with the knife says. \"Pay the toll, or you can sit in the ditch with him.\"",
-        "A whistle, and four of {gang} come out of the bracken grinning, their cudgels already bloody. \"{villain_short} said to leave you your teeth,\" says one, \"and said nothing of how many. Toll is silver. Or we take it out of you.\"",
-        "Four of {gang} block the road, and a rope hangs ready from the branch above them with the noose swinging a little. \"Toll or tree,\" says the biggest. \"{villain_short} says to see what you are made of. Silver will do. So will screaming.\""
-      ]
-    }},
-    "villain_wedge_taken": {"_merge": true, "tempers": {
-      "cunning": [
-        "You wake at the proper hour by long habit, and nobody has woken you. {tempted}'s bedroll is cold and tidy and the pack is gone with it, and whoever had the last watch sleeps so deeply that it takes both your hands to shake them. There is no note.",
-        "The place where {tempted} slept has been swept clean, as though someone took pains that nothing should be found: no ash, no hair, no scrap. The pack is gone, and so is {tempted}. There is no note.",
-        "At first light {tempted} is gone, and the leaving was done with a tidiness that is not the way of a panicked flight: the blanket folded, the fire raked, the pack taken, nothing left over. It looks planned. There is no note."
-      ]
-    }},
-    "villain_wedge": {"_merge": true, "tempers": {
-      "cunning": [
-        "{tempted} wakes you with a hand held over your mouth, as gentle as it is startling, and whispers close to your ear, because someone might be listening. \"A man spoke to me when I went for water,\" {tempted} says. \"He knew my name, and my mother's. He spoke for {villain_short}.\"",
-        "{tempted} lays something on the blanket between you: a coin of unfamiliar mint, thick and sharp-edged with its own newness. \"It was pressed into my hand,\" {tempted} says. \"By someone in {villain_short}'s pay, who was very polite about it. I have not spent it.\"",
-        "{tempted} says nothing for a long time, and then, to your surprise, laughs, short and unhappy. \"They have priced me,\" {tempted} says. \"A man came from {villain_short} with an exact figure, as though it had been worked out on a slate. I would like to know how they got it so right.\""
-      ]
-    }},
-    "villain_frame": {"_merge": true, "tempers": {
-      "cunning": [
-        "A pedlar tells it across a fire for the price of a drink, and it is all very orderly. {frame_victim} was found dead in {frame_town}, a cloak-pin like {hero}'s beside the body, and two neighbours have sworn on the book, in the same words, that they saw {hero} do it.",
-        "A crier's bill, copied out in a fair hand and tacked to a barn door, names {hero}. {frame_victim} was killed in {frame_town}, and the bill gives the hour, the place and two witnesses so exactly that no one thinks to wonder who supplied it.",
-        "The news is dressed very neatly when it reaches you: a copy of the watch's record, in a clerk's good hand, with seals. {frame_victim} is dead in {frame_town}, and two respectable neighbours who never before saw a court have sworn they saw {hero} do it. Their stories agree to the minute."
-      ],
-      "cruel": [
-        "They did not need to be clever about it. {frame_victim} was found in {frame_town} with the throat cut and a board round the neck that read {hero}, and two neighbours with split lips now remember seeing exactly that. It reaches you from a man who would not meet your eye.",
-        "The bell was rung for it in {frame_town}. {frame_victim} lay dead in the market all day while a crier called {hero}'s name over the body, and a bounty with it. Two witnesses swore they saw it done, and one of them has a new black eye. A drover tells you, and wishes he had not.",
-        "A traveller from {frame_town} tells it with relish, believing you a stranger. {frame_victim} was cut down in the street there while two neighbours looked on, and both now say the man was {hero}. The traveller has the gap-toothed smile of one who has been paid to say so."
-      ]
-    }},
-    "risen_omen": {"_merge": true, "tempers": {
-      "proud": [
-        "The road ahead is silent for a bowshot, the silence of a hall into which a lord is about to enter. {omen}",
-        "You have the sense of passing through a gate, though there is no gate. {omen}",
-        "Someone has marked the edge of what {villain_short} still counts as {his} land. {omen}"
-      ],
-      "grieving": [
-        "You find the place by its quiet, which is the quiet of a room where someone has lately died. {omen}",
-        "The wind drops as you come to it, and you find yourself speaking more softly without knowing why. {omen}",
-        "It does not feel like a threat. It feels like a place laid for someone who is late and has not yet come. {omen}"
-      ]
-    }},
-    "risen_letter": {"_merge": true, "tempers": {
-      "proud": [
-        "In the morning a letter lies by your head, a single sheet folded as kings fold, in thirds, and sealed with a crown pressed into black wax. It is addressed to \"the Stranger who walks upon my land.\" The ink is brown, and the capitals are enormous.",
-        "The letter has been set down squarely beside you, squared to the edge of whatever it lies on, with an old coin of some forgotten mint on top to keep it from the wind. The seal is a crown, in wax that was black before your grandmother was born. The paper smells of dust and cedar.",
-        "You wake to find a parchment tied with purple silk laid across your boots like a command, and under the silk a seal bearing a crown. The pen strokes are long and unhesitating, the strokes of a hand that has never once in its life been refused."
-      ],
-      "grieving": [
-        "You wake to find a letter tucked into your hand, folded small and sealed with black wax into which a ring has been pressed, and pressed again, as if the sealer could not get it right. The paper is yellow as a tooth and soft at the folds from much handling.",
-        "There is a letter beside you in the morning, half wrapped round a sprig of something dried and black. The wax is a crown crushed flat, as if a thumb had pressed too hard. The hand that addressed it shook. The address reads: To whoever is kind enough.",
-        "A letter has been left where you would be sure to find it, tied with a strip of grey cloth, and the cloth is damp. The seal is a crown, cracked straight across, as though it had been closed and opened and closed again many times, in the dark, by someone who could not decide."
-      ]
-    }},
-    "risen_at_camp": {"_merge": true, "tempers": {
-      "proud": [
-        "In the black hour the fire sinks, and when you look up there are figures standing at the edge of the light in ranks, as soldiers stand for a lord: shoulder to shoulder, spears grounded, faces toward you. Nobody heard them come.",
-        "Sometime after midnight a hush comes down, and past the fire stands a line of pale figures in the ruin of mail, drawn up in two curving ranks as for an audience. The nearest of them bears the rags of a banner. Nobody saw them come.",
-        "The fire gutters low, and in the lull you see them: pale figures in a wide half-ring, and at its centre an empty space, kept clear, the way a space is kept in a hall for someone who has not yet entered."
-      ],
-      "grieving": [
-        "In the black hour the fire sinks, and past it there are people standing in the dark, a good way off, with their hands hanging empty and their faces turned to the warmth like cold travellers at a window. Nobody heard them come.",
-        "Some time after midnight you wake to a sound like someone trying not to weep, and then you see them: grey figures at the edge of the firelight, standing singly, far apart, each as alone as the next. None of them looks at another.",
-        "The fire burns low and blue, and at the limit of its light stands a small crowd of the pale dead, close together, the way people stand at a graveside. Some are in the rags of a feast-day coat. Nobody saw them come."
-      ]
-    }},
-    "risen_test_road": {"_merge": true, "tempers": {
-      "proud": [
-        "The ground beside the road splits, and the dead climb out of it in order, not as a mob but as a guard, each finding its place in the line before the next appears. {villain_short} has sent {his} household to see how you stand.",
-        "The turf lifts like a lid, and a hand reaches up and plants an old spear butt in the road, and then there are twenty spears, and the dead behind them rising to attention. This is {villain_short}'s idea of a greeting.",
-        "Behind you a horn sounds, thin and cracked and unmistakable, and the verge on both sides heaves as if turned by a plough. The dead come up in pairs, like an escort. {villain_short} would see whether you can be made to kneel."
-      ],
-      "grieving": [
-        "The earth beside the road shivers, and the dead come up out of it slowly, one at a time, like people waking from a bad sleep and not quite believing the world. They stretch out open hands towards you. {villain_short} has sent them.",
-        "The turf along the verge opens in a long row, and the dead come up out of it without tears or sound, their mouths open and nothing coming out of them. They turn their faces to you. {villain_short} wants to see what you will do.",
-        "The ground tolls under your feet like a bell, once, twice, and the dead begin to rise on both sides of the road, thin as wicker, in the clothes they were laid in. A small shape is among them. {villain_short} means you to see."
-      ]
-    }}
+    "villain_bargain": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "A clerk in the grey habit of an almoner sits down across from you, tithe-book on his knee, and speaks as gently as a man at a deathbed. \"{villain_short} bears you no hatred,\" he says. \"The flame does not hate the straw. But there is a way to be spared, and it can be counted out in coin.\"",
+          "The clerk has a small iron sign hung at his throat, and he will not touch the bread you offer. \"I come on {villain_short}'s errand,\" he says, \"and the errand is mercy. It is not often offered. A man who refuses it is not wise, only damned. Say what you would have.\"",
+          "A young clerk with ash on his brow takes the place beside you and offers you bread before he offers the matter. \"{villain_short} has watched your road,\" he says, \"and finds you worthy of a choice. Few are given one. Hear it, and answer with a clear heart.\""
+        ],
+        "cunning": [
+          "A man with the look of somebody's third cousin helps himself to your bread and does not apologise for it. \"I am the clerk, for want of a better word,\" he says. \"{villain_short} has read what you have been doing, and admires it, and would rather pay for it than undo it. Shall we say a figure?\"",
+          "The clerk has plainly been here some time, and has already learned what you take with your supper. \"Do not trouble to wonder how I knew where to find you,\" he says. \"{villain_short} knows where everything is. {He} would rather you were useful than dead. Name a sum.\"",
+          "A clerk with a lawyer's smile lays a folded paper on the board, unsealed and quite blank. \"{villain_short} likes to leave the figure empty,\" he says. \"A man will always ask for more than {he} would have thought to give. Go on. Be greedy. It does you credit.\""
+        ],
+        "proud": [
+          "The one who comes is a clerk in {villain_short}'s livery, and he does not sit, and he speaks to a point somewhat above your head. \"{villain_short} has been informed of you,\" he says. \"{He} is not angry. One is not angry at weather. But {he} will, as a courtesy, be rid of you for a price. You may name it.\"",
+          "The clerk holds the letter between two fingers as though it were wet, and makes it plain that the errand is beneath him. \"{villain_short} will not be troubled with you,\" he says. \"{He} would sooner pay than stoop. Name a sum, and be quick about it. {His} time is not yours.\"",
+          "The clerk wears {villain_short}'s colours and a smile worn thin from use, and he reads from a scroll without once meeting your eyes. \"Whereas {hero}, a person of no standing, has been a vexation to {villain_short},\" he reads, \"it is {his} gracious wish to be quit of the matter for a sum. The sum is for you to say.\""
+        ],
+        "grieving": [
+          "The clerk who finds you is a tired man in black, and he apologises before he begins. \"{villain_short} sent me,\" he says. \"{He} does not wish you harm. {He} has had enough of harm. {He} asks only that you let {him} be, and will pay for it, whatever you say.\"",
+          "A clerk with red-rimmed eyes sits down across from you and sets a small purse between you without opening it. \"I was told to say that {villain_short} is sorry to trouble you,\" he says. \"{He} asked me to say it twice. Name what you will take, and leave {him} to what is left.\"",
+          "The clerk speaks softly, as one does in a sickroom. \"{villain_short} does not sleep,\" he says, \"and has not for a very long time. {He} would pay a great deal for a single night of peace, and for you to let {him} alone. What is your price? It will be paid.\""
+        ]
+      }
+    },
+    "villain_invitation": {
+      "_merge": true,
+      "tempers": {
+        "zealous": [
+          "A rider in a pilgrim's white-banded cloak draws rein before you, an iron censer swinging at the saddle-bow, and holds out a letter bound in red cord and sealed with a yellow sun. \"From {villain_short},\" the rider says. \"You are expected. The hour was fixed a long time ago.\"",
+          "A shaven-headed rider in a plain white tabard waits with both hands raised, one of them holding a letter, and speaks a short blessing over you before anything else. \"{villain_short} bids you come,\" the rider says. \"Do not think it a request. It is a kindness, and kindnesses are not offered twice.\"",
+          "A far-off chapel bell tolls three times as the rider approaches, and the rider makes the sign of the sun over the letter before handing it to you. \"{villain_short} has set a place for you,\" the rider says. \"It was set before you were born. I am to wait until you have read.\""
+        ],
+        "cunning": [
+          "A well-dressed rider falls in beside you as if by chance and keeps exactly your pace for a hundred yards before speaking. \"I carry a letter from {villain_short},\" the rider says pleasantly, \"which you may burn if you like. There are copies.\"",
+          "The rider sits a horse so good it looks borrowed, and holds out a letter the way one offers a coin to a child. \"{villain_short} thought you might be tired of being hunted,\" the rider says. \"Read it, and see how much easier the world could be made.\"",
+          "A boy of ten runs up with a letter, and behind him, at a polite distance, sits the rider who sent him, so that you will know who is watching. \"For {hero},\" the boy says. \"From {villain_short}. The gentleman says you are to read it where he can see.\""
+        ],
+        "proud": [
+          "A herald in {villain_short}'s colours draws rein and does not dismount. He holds out a sealed letter in a gloved hand and reads the address aloud: your name, and after it, in full, the titles {villain_short} allows you, which are none. \"My master invites you,\" he says. \"{He} has not done so before for a person of your kind.\"",
+          "A rider in black waits in the road with a second horse on a leading rein: saddled, riderless, and plainly meant for you. \"{villain_short} will not have a guest arrive on foot,\" the rider says, and holds out a letter. \"You will find the hospitality generous. It is {his} habit to be generous to few.\"",
+          "The rider goes down on one knee in the road, as to an equal one has been told to flatter, and says the words as if they cost something. \"{villain_short} extends {his} table to you,\" the rider says, and raises a letter. \"I am to say that refusal will be noted, and remembered.\""
+        ],
+        "grieving": [
+          "A rider in black mourning comes up slowly, hat in hand, with the face of someone bringing news of a death. \"I am sent by {villain_short},\" the rider says quietly, and offers a letter with a black ribbon round it. \"{He} asks that you read it alone, and that you forgive the asking.\"",
+          "The rider stops well short of you and comes no nearer, as though afraid you might flinch from the livery. A letter is held out at the end of a long arm. \"From {villain_short},\" the rider says. \"{He} has not had a guest in a very long while. {He} did not know how else to ask.\"",
+          "The rider sits a grey horse with a wreath of dried flowers hung from the saddle, and offers a letter with both hands. \"{villain_short} bade me wait for you,\" the rider says, \"through three winters if I had to. {He} will be very glad you came.\""
+        ]
+      }
+    },
+    "outlaw_omen": {
+      "_merge": true,
+      "tempers": {
+        "cunning": [
+          "You nearly pass it. It has been set to be found only by someone looking, and you were looking. {omen}",
+          "The lead walker stops short, and the rest bunch up behind. Whatever lies at the side of the road has been laid out with room around it, so that the eye cannot fail to take it in. {omen}",
+          "Your horse stops before you do. Someone has taken some trouble over this, and not a hair of it is accident. {omen}"
+        ],
+        "cruel": [
+          "The crows go up all at once as you round the bend, complaining, and settle again on the fence to wait for you to be gone. {omen}",
+          "The flies are loud, and the ruts are fresh, and somebody has been busy here not long ago. {omen}",
+          "A farm dog sits at the roadside, whining, and will not go on, and when you come up you see why. {omen}"
+        ]
+      }
+    },
+    "outlaw_warning": {
+      "_merge": true,
+      "tempers": {
+        "cunning": [
+          "In the morning there is a knife standing in the wood by your head, set so exactly that it has not split the grain, and a paper folded in three beneath the hilt like a tradesman's bill. Whoever left it was in no hurry, and knew you would not wake.",
+          "A small neat meal has been laid beside your things, bread and an apple, and in the apple a knife to the hilt, and a paper wound round the blade. It was done sometime after the lamps were out. Nobody has anything to say about it.",
+          "Your boots stand side by side where you left them, brushed clean, and a knife stands in the left one by its hilt, with a paper rolled round the blade. Nothing else has been touched, not a coin, not a button."
+        ],
+        "cruel": [
+          "You wake to the sound of a fly. There is a knife in the wood above your head, driven in so hard that the haft still shivers, and a paper under it with something dark on it that is not ink. Whoever came was close enough to cut your throat, and chose not to.",
+          "A rat has been pinned to the wood at the height of your face with a knife, still warm, and a paper stuck under it with its blood. Nobody in the place saw who did it, and nobody wants to be the one to take it down.",
+          "In the morning there is a knife standing in the wood beside your pillow, and wound round the blade, three turns, a lock of hair cut from your own head. A paper lies under it. You feel the back of your neck, and your hand comes away dry, and that is all the luck there is."
+        ]
+      }
+    },
+    "outlaw_test_road": {
+      "_merge": true,
+      "tempers": {
+        "cunning": [
+          "Four of {gang} are waiting at a narrow place in the road, and they have a table: a plain trestle, a ledger, a man on a stool with a pen. \"{villain_short} likes to know a man's worth before dealing with him,\" says the one with the ledger. \"The toll is modest. Or prove you are worth more than the toll.\"",
+          "A cart has been set across the road, and four of {gang} sit along its rail in the shade and do not bother to rise. \"We were told you would come this way,\" one says. \"{villain_short} wishes to take your measure. Pay, and you pass, or oblige us otherwise.\"",
+          "Four of {gang} walk out of the trees in a line, hands empty and in plain view, which is the most frightening thing about them. \"No need for steel yet,\" one says. \"{villain_short} wants a closer look at you. Pay the toll, or let us see what you are.\""
+        ],
+        "cruel": [
+          "Four of {gang} stand on the road, and in the ditch behind them a carter sits holding his hand, which they have lately broken. \"{villain_short} says you've been asking after us,\" the one with the knife says. \"Pay the toll, or you can sit in the ditch with him.\"",
+          "A whistle, and four of {gang} come out of the bracken grinning, their cudgels already bloody. \"{villain_short} said to leave you your teeth,\" says one, \"and said nothing of how many. Toll is silver. Or we take it out of you.\"",
+          "Four of {gang} block the road, and a rope hangs ready from the branch above them with the noose swinging a little. \"Toll or tree,\" says the biggest. \"{villain_short} says to see what you are made of. Silver will do. So will screaming.\""
+        ]
+      }
+    },
+    "villain_wedge_taken": {
+      "_merge": true,
+      "tempers": {
+        "cunning": [
+          "You wake at the proper hour by long habit, and nobody has woken you. {tempted}'s bedroll is cold and tidy and the pack is gone with it, and whoever had the last watch sleeps so deeply that it takes both your hands to shake them. There is no note.",
+          "The place where {tempted} slept has been swept clean, as though someone took pains that nothing should be found: no ash, no hair, no scrap. The pack is gone, and so is {tempted}. There is no note.",
+          "At first light {tempted} is gone, and the leaving was done with a tidiness that is not the way of a panicked flight: the blanket folded, the fire raked, the pack taken, nothing left over. It looks planned. There is no note."
+        ]
+      }
+    },
+    "villain_wedge": {
+      "_merge": true,
+      "tempers": {
+        "cunning": [
+          "{tempted} wakes you with a hand held over your mouth, as gentle as it is startling, and whispers close to your ear, because someone might be listening. \"A man spoke to me when I went for water,\" {tempted} says. \"He knew my name, and my mother's. He spoke for {villain_short}.\"",
+          "{tempted} lays something on the blanket between you: a coin of unfamiliar mint, thick and sharp-edged with its own newness. \"It was pressed into my hand,\" {tempted} says. \"By someone in {villain_short}'s pay, who was very polite about it. I have not spent it.\"",
+          "{tempted} says nothing for a long time, and then, to your surprise, laughs, short and unhappy. \"They have priced me,\" {tempted} says. \"A man came from {villain_short} with an exact figure, as though it had been worked out on a slate. I would like to know how they got it so right.\""
+        ]
+      }
+    },
+    "villain_frame": {
+      "_merge": true,
+      "tempers": {
+        "cunning": [
+          "A pedlar tells it across a fire for the price of a drink, and it is all very orderly. {frame_victim} was found dead in {frame_town}, a cloak-pin like {hero}'s beside the body, and two neighbours have sworn on the book, in the same words, that they saw {hero} do it.",
+          "A crier's bill, copied out in a fair hand and tacked to a barn door, names {hero}. {frame_victim} was killed in {frame_town}, and the bill gives the hour, the place and two witnesses so exactly that no one thinks to wonder who supplied it.",
+          "The news is dressed very neatly when it reaches you: a copy of the watch's record, in a clerk's good hand, with seals. {frame_victim} is dead in {frame_town}, and two respectable neighbours who never before saw a court have sworn they saw {hero} do it. Their stories agree to the minute."
+        ],
+        "cruel": [
+          "They did not need to be clever about it. {frame_victim} was found in {frame_town} with the throat cut and a board round the neck that read {hero}, and two neighbours with split lips now remember seeing exactly that. It reaches you from a man who would not meet your eye.",
+          "The bell was rung for it in {frame_town}. {frame_victim} lay dead in the market all day while a crier called {hero}'s name over the body, and a bounty with it. Two witnesses swore they saw it done, and one of them has a new black eye. A drover tells you, and wishes he had not.",
+          "A traveller from {frame_town} tells it with relish, believing you a stranger. {frame_victim} was cut down in the street there while two neighbours looked on, and both now say the man was {hero}. The traveller has the gap-toothed smile of one who has been paid to say so."
+        ]
+      }
+    },
+    "risen_omen": {
+      "_merge": true,
+      "tempers": {
+        "proud": [
+          "The road ahead is silent for a bowshot, the silence of a hall into which a lord is about to enter. {omen}",
+          "You have the sense of passing through a gate, though there is no gate. {omen}",
+          "Someone has marked the edge of what {villain_short} still counts as {his} land. {omen}"
+        ],
+        "grieving": [
+          "A hush lies over this stretch of the road, the hush of a house where someone has lately died. {omen}",
+          "The wind drops as you come to it, and you find yourself speaking more softly without knowing why. {omen}",
+          "It does not feel like a threat. It feels like a place laid for someone who is late and has not yet come. {omen}"
+        ]
+      }
+    },
+    "risen_letter": {
+      "_merge": true,
+      "tempers": {
+        "proud": [
+          "In the morning a letter lies by your head, a single sheet folded as kings fold, in thirds, and sealed with a crown pressed into old gold wax. It is addressed to \"the Stranger who walks upon my land.\" The ink is brown, and the capitals are enormous.",
+          "The letter has been set down squarely beside you, squared to the edge of whatever it lies on, with an old coin of some forgotten mint on top to keep it from the wind. The seal is a crown, in dull gold wax gone dark with age. The paper smells of dust and cedar.",
+          "You wake to find a parchment tied with purple silk laid across your boots like a command, and under the silk a seal bearing a crown. The pen strokes are long and unhesitating, the strokes of a hand that has never once in its life been refused."
+        ],
+        "grieving": [
+          "You wake to find a letter tucked into your hand, folded small and sealed with grey wax into which a falling tear has been pressed, and pressed again, as if the sealer could not get it right. The paper is yellow as a tooth and soft at the folds from much handling.",
+          "There is a letter beside you in the morning, half wrapped round a sprig of something dried and black. The wax is grey, a tear pressed into it and smeared, as if a thumb had pressed too hard. The hand that addressed it shook. The address reads: To whoever is kind enough.",
+          "A letter has been left where you would be sure to find it, tied with a strip of grey cloth, and the cloth is damp. The seal is a tear in grey wax, cracked straight across, as though it had been closed and opened and closed again many times, in the dark, by someone who could not decide."
+        ]
+      }
+    },
+    "risen_at_camp": {
+      "_merge": true,
+      "tempers": {
+        "proud": [
+          "In the black hour the fire sinks, and when you look up there are figures standing at the edge of the light in ranks, as soldiers stand for a lord: shoulder to shoulder, spears grounded, faces toward you. Nobody heard them come.",
+          "Sometime after midnight a hush comes down, and past the fire stands a line of pale figures in the ruin of mail, drawn up in two curving ranks as for an audience. The nearest of them bears the rags of a banner. Nobody saw them come.",
+          "The fire gutters low, and in the lull you see them: pale figures in a wide half-ring, and at its centre an empty space, kept clear, the way a space is kept in a hall for someone who has not yet entered."
+        ],
+        "grieving": [
+          "In the black hour the fire sinks, and past it there are people standing in the dark, a good way off, with their hands hanging empty and their faces turned to the warmth like cold travellers at a window. Nobody heard them come.",
+          "Some time after midnight you wake to a sound like someone trying not to weep, and then you see them: grey figures at the edge of the firelight, standing singly, far apart, each as alone as the next. None of them looks at another.",
+          "The fire burns low and blue, and at the limit of its light stands a small crowd of the pale dead, close together, the way people stand at a graveside. Some are in the rags of a feast-day coat. Nobody saw them come."
+        ]
+      }
+    },
+    "risen_test_road": {
+      "_merge": true,
+      "tempers": {
+        "proud": [
+          "The ground beside the road splits, and the dead climb out of it in order, not as a mob but as a guard, each finding its place in the line before the next appears. {villain_short} has sent {his} household to see how you stand.",
+          "The turf lifts like a lid, and a hand reaches up and plants an old spear butt in the road, and then there are twenty spears, and the dead behind them rising to attention. This is {villain_short}'s idea of a greeting.",
+          "Behind you a horn sounds, thin and cracked and unmistakable, and the verge on both sides heaves as if turned by a plough. The dead come up in pairs, like an escort. {villain_short} would see whether you can be made to kneel."
+        ],
+        "grieving": [
+          "The earth beside the road shivers, and the dead come up out of it slowly, one at a time, like people waking from a bad sleep and not quite believing the world. They stretch out open hands towards you. {villain_short} has sent them.",
+          "The turf along the verge opens in a long row, and the dead come up out of it without tears or sound, their mouths open and nothing coming out of them. They turn their faces to you. {villain_short} wants to see what you will do.",
+          "The ground tolls under your feet like a bell, once, twice, and the dead begin to rise on both sides of the road, thin as wicker, in the clothes they were laid in. A small shape is among them. {villain_short} means you to see."
+        ]
+      }
+    }
   }
 }

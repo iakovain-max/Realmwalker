@@ -178,8 +178,9 @@ def problems(tables) -> list[str]:
             if cond not in beatlang.CONDITIONS:
                 out.append(f"{where}: the condition '{cond}' is not one the game knows.")
         _ops(where, beat.get("ops"), beatlang.OPS, out, "op")
-        for temper in beat.get("tempers") or {}:  # (E.7: a temper's own first page)
-            if temper not in tables.villains.get("tempers", {}):
+        known_tempers = tables.villains.get("tempers") or {}
+        for temper in (beat.get("tempers") or {}) if known_tempers else ():  # (E.7: a temper's own first page)
+            if temper not in known_tempers:
                 out.append(f"{where}: it has words for the temper '{temper}', which there is not.")
         if beat.get("leaves") and beat["leaves"] not in LEFT:
             out.append(f"{where}: it leaves '{beat['leaves']}', which the camp's picture cannot draw.")

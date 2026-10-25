@@ -35,9 +35,8 @@ Codex coverage: 2,951 entries from the three books, every one assigned to an exp
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
   30 adapted); Expansion 5: all 72 settled (39 done, 32 adapted, 1 omitted). PHB 69% · DMG 21% · MM 17%
-Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
-  one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
-  branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
+Known, not yet chased: (the townsfolk piled on one square that autoplay saw now and then since Expansion 5 were
+  parted in E.7: townlife._unpile.) The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
 - Expansion 6 C.6 (situations): a trouble's acts open once taken on; a failed check may be tried the next day
@@ -585,6 +584,11 @@ fighter tagged villain); `villain.known_face`; the journal draws the villain's f
 (journal.villain_portrait: SHADOW tint until known). `vignette.HALL_PROPS` by temper replace the "lair" picture's
 props. Sound `villain_move` (villain_1.wav quieter) is a villain-family beat's sound_open. textgen's slot pattern takes
 a capital first letter ({He}, {His}, {They} in story words were never filled). FORMAT_VERSION 23.
+The fresh review's fixes: omen lines no longer point back at the omen as a thing (some omens are sounds); seals in
+the words as drawn (sun in yellow, crown in old gold, tear in grey); a rider's horse, not the villain's pronoun; tests
+that every temper line fills in a real tale of each kind, a villain fought is seen, and a warden keeps its square.
+Town piles: `townlife.unpile` also after `people.update_positions` (one back from fleeing or from your company
+stands where they last stood). The story check skips beat tempers when the villains table has none (test fakes).
 E.6 (2026-10-25, realmwalker-b): the fairness measure. `tools/storyplay.py --finale all|half|none --kind K` (Finalist,
 finale_once, finales): a tale forged and taken straight to its finale (chapter set to the last, adv["keys"] set,
 "means" with a weakness and the party carrying the best of its means), a party of four at the target level, rested,

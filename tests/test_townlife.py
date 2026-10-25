@@ -126,6 +126,22 @@ def test_two_put_on_one_square_part_at_the_next_step(town, monkeypatch):
     check_nobody_overlaps(game, s)
 
 
+def test_a_warden_keeps_its_square_when_another_is_put_on_it(town):
+    """E.7: of two on one square, the one who never budges stays; the other is parted, never onto you."""
+    game, s = town
+    lm = game.local
+    at_hour(game, 9)
+    townlife.settle(game, lm)
+    a, b = folk(game, s)[:2]
+    a.flags["stays"] = "gate"
+    spot = (a.x, a.y)
+    b.x, b.y = spot
+    townlife.unpile(game, lm)
+    assert (a.x, a.y) == spot and (b.x, b.y) != spot
+    assert (b.x, b.y) != (game.player.lx, game.player.ly)
+    check_nobody_overlaps(game, s)
+
+
 def test_they_go_in_and_out_through_doors(town):
     game, s = town
     lm = game.local

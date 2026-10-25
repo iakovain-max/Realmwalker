@@ -333,3 +333,33 @@ def test_each_temper_tells_its_moves_in_its_own_words(made, tables):
     beats.choose(game, beats.pending(game), 1)
     rec = letters.records(game.world)[game.letter]
     assert rec.get("sigil") == villain.temper(game, adv)["hand"]["sigil"]
+
+
+@pytest.mark.parametrize("kind", ["beast", "outlaw", "risen"])
+def test_every_temper_line_is_filled_in_a_real_tale(made, tables, kind):
+    """Expansion 6 E.7: every slot of every line its villain's temper has (a beat's `tempers`) is filled for a tale of
+    that kind ({He} too: textgen fills a capital slot)."""
+    from realmwalker.core import textgen
+
+    game, adv, t = _tale(made, tables, kind)
+    temper = t["villain"]["temper"]
+    rec = beats.offer(game, "villain_omen", adv=adv["id"], where="road")
+    words = {k: str(v) for k, v in beats.words_for(game, rec).items()}
+    rng = beats.rng_for(game, rec)
+    lines = [line for beat in tables.beats.values() for line in (beat.get("tempers") or {}).get(temper, [])]
+    assert lines, f"the {temper} have words of their own"
+    unfilled = [line for line in lines
+                if "{" in textgen.fill(line, rng, tables.adventures.get("words", {}), words)]
+    assert not unfilled, unfilled[:3]
+
+
+def test_a_villain_fought_is_a_villain_seen(made, tables):
+    """Expansion 6 E.7: after a fight it stood in, the journal knows its face."""
+    from types import SimpleNamespace
+
+    game, adv, t = _tale(made, tables, "outlaw")
+    assert not villain.known_face(adv)
+    boss = SimpleNamespace(creature=SimpleNamespace(story={"adv": adv["id"], "role": "villain"}))
+    game.battle = SimpleNamespace(fighters=[boss], great_magic=0)
+    story.on_battle(game, SimpleNamespace(outcome="won", dead=[], captives=[], fled=[]))
+    assert villain.known_face(adv) and adv["seen"] == int(game.moment.total_days)

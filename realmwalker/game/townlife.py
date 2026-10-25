@@ -500,6 +500,16 @@ def tick(game, lm, s) -> None:
         _call_out(game, lm, town, people)
 
 
+def unpile(game, lm) -> None:
+    """Part anyone sharing a square (people.update_positions: one back from fleeing or from your company stands where
+    they last stood, which someone else may have taken since)."""
+    from realmwalker.game.people import settlement_of
+
+    s = settlement_of(game, lm)
+    if s is not None:
+        _unpile(_town(game, lm), _people(game, s), _you(game, lm), lm)
+
+
 def _unpile(town: _Town, people, me, lm) -> dict:
     """Who stands where, the beasts' squares too; two put on one square (sent home, placed by a scene or a trouble, a
     crowded settling) part to the nearest free square, so the town never keeps them piled."""
