@@ -1671,6 +1671,8 @@ SITUATIONS = Obj({  # situations (game/story/situations.py, C.6)
     "predicaments": Map(Obj({
         "name": Str(max_len=80), "asks": Str(max_len=30, optional=True),
         "vignette": Obj({"needs": Str(max_len=30), "weight": Float(min=0, max=10, optional=True)}, optional=True),
+        "inside": Obj({"step": Str(max_len=20), "route": Str(max_len=20, optional=True),  # (an adventure step's, C.10)
+                       "chance": Float(min=0, max=1)}, optional=True),
         "roles": Map(Obj({"bind": Str(max_len=20)}, strict=False), min_items=1),
         "parts": Map(Str(max_len=30), optional=True), "base": Str(max_len=40, optional=True),
         "forge": List(List(Any_(), min_items=1), optional=True),

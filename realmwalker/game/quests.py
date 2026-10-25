@@ -276,6 +276,10 @@ def _bounty(game, npc, target, rng, town):
     return q
 
 
+DEN_STYLES = ("cellars", "crypt", "cave", "warren", "tower")
+DENS = 1  # (dens on a town's board at once: C.10; two drew the careful into more than they could kill)
+
+
 def _clear_lair_pick(game, npc, rng, town):
     """{"site"}: a place to clear near the town, a beast of the old songs first."""
     from realmwalker.game import past
@@ -284,7 +288,7 @@ def _clear_lair_pick(game, npc, rng, town):
     w = game.world
     done = cleared(game) | {q["target"].get("site") for q in _all_quests(game) if q["template"] == "clear_lair"}
     sites = [s for s in w.sites if s.id not in done and 3 <= dist(s, town) <= 16
-             and gen.style_for(w, s) in ("cellars", "crypt", "cave", "warren", "tower")]
+             and gen.style_for(w, s) in DEN_STYLES]
     if not sites:
         return None
     # A beast of the old songs, if one lairs near enough: the town has a name for it, and its dead.
@@ -896,10 +900,49 @@ def _all_quests(game) -> list[dict]:
     return list(game.quests) + work.waiting(game)
 
 
+def hunted_sites(game) -> set:
+    """Sites some work is already after (a lair's beast hunted, a den or a hideout to clear)."""
+    return {q["target"].get("site") for q in _all_quests(game)
+            if q["template"] in ("clear_lair", "hunt_beast", "bounty") and q.get("state") != "finished"}
+
+
+def _dens(game, settlement, posted: dict, taken: set) -> list[dict]:
+    """The nearest den that troubles a town's roads, posted by its watch (C.10): never a place already cleared or
+    that other work is after, never a gang's hideout (its own poster) or a lived-in tower, never one whose beast would
+    very likely kill a traveller; another town's poster for the same den is enough."""
+    from realmwalker.game import past
+    from realmwalker.world import dungeon as gen
+
+    w = game.world
+    done = cleared(game)
+    for k in [k for k, v in posted.items() if k.startswith("lair")]:
+        if posted[k].get("state") != "offered" or int(k[4:]) in done or int(k[4:]) in taken:
+            del posted[k]  # (cleared since, or another's work now)
+    dens = {int(k[4:]) for k in posted if k.startswith("lair")}
+    if len(dens) < DENS:
+        others = {int(k[4:]) for t in w.towns.values() for k in (t.flags.get("board") or {}) if k.startswith("lair")}
+        hideouts = {g.site for g in fx.active_factions(w, "bandit_gang")}
+        near = []
+        for s in w.sites:
+            if s.id in done or s.id in taken or s.id in dens or s.id in others or s.id in hideouts:
+                continue
+            if not 3 <= dist(s, settlement) <= 16 or gen.style_for(w, s) not in DEN_STYLES or gen.tower_master(w, s):
+                continue
+            beast = past.lair_beast(game, s)
+            group = past.group_of(game, beast) if beast is not None else None
+            if group in game.tables.creatures.encounters and beast_ratio(game, group) >= DEADLY_RATIO:
+                continue
+            near.append((dist(s, settlement), s.id))
+        for _, sid in sorted(near)[:DENS - len(dens)]:
+            posted[f"lair{sid}"] = make(game, None, {"kind": "clear_lair", "site": sid, "town": settlement.id},
+                                        w.rng.child(f"board/{settlement.id}/lair{sid}"))
+    return [v for k, v in sorted(posted.items()) if k.startswith("lair")]
+
+
 def board_bounties(game, settlement) -> list[dict]:
     """Bounties posted on the notice board here, paid by the town's watch: one for each gang within reach, and for
     the two nearest beasts of the history that lair within it (a threat's villain among them: taking that bounty
-    opens its tale, story.on_job_taken)."""
+    opens its tale, story.on_job_taken), and the nearest den to be cleared (C.10)."""
     from realmwalker.game import past
     from realmwalker.game.people import town_of
 
@@ -928,6 +971,7 @@ def board_bounties(game, settlement) -> list[dict]:
                                   "town": settlement.id}, w.rng.child(f"board/{settlement.id}/beast{fid}"))
             posted[f"beast{fid}"] = q
         wild.append(q)
+    wild += _dens(game, settlement, posted, {s for _, s, _, _ in beasts} | hunted_sites(game))
     out = []
     for gang in fx.active_factions(w, "bandit_gang"):
         if not 0 <= gang.site < len(w.sites) or gang.site in cleared(game) or gang.id in taken:

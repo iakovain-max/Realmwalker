@@ -162,3 +162,30 @@ def test_every_story_has_enough_ways_to_be_told(data):
             if len(st.get("signs", [])) < 3:
                 short.append(f"threat {kid} stage {st['id']}: {len(st.get('signs', []))} signs")
     assert not short, "\n".join(short)
+
+
+def test_every_situation_has_enough_ways_to_be_told(data):
+    """docs/ADVENTURES.md §8.8 (C.10): every predicament (vignettes and an adventure's own too) has >=3 titles,
+    stakes, pleas and first notes where it has them, >=3 lines for each ending and for its lapse, and >=3 ways of
+    describing each obstacle; each scene's lines >=3 variants."""
+    sits, scenes = _pack(data, "situations"), _pack(data, "scenes")
+    short = []
+    for pid, p in sits.get("predicaments", {}).items():
+        if pid.startswith("_"):
+            continue
+        for k in ("title", "stakes", "plea", "first"):
+            if k in p.get("words", {}) and len(p["words"][k]) < 3:
+                short.append(f"{pid}: {len(p['words'][k])} {k}")
+        for e in p.get("endings", []) + [dict(p.get("lapse") or {}, id="lapse")]:
+            if len(e.get("line", [])) < 3:
+                short.append(f"{pid} ending {e['id']}: {len(e.get('line', []))} lines")
+        for ob in p.get("obstacles", []):
+            if len(ob.get("note", [])) < 3:
+                short.append(f"{pid} obstacle {ob['id']}: {len(ob.get('note', []))} notes")
+    for sid, sc in scenes.items():
+        if sid.startswith("_") or not isinstance(sc, dict):
+            continue
+        for k, lines in (sc.get("words") or {}).items():
+            if isinstance(lines, list) and len(lines) < 3:
+                short.append(f"scene {sid} {k}: {len(lines)} lines")
+    assert not short, "\n".join(short)

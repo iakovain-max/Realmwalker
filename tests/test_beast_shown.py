@@ -61,6 +61,7 @@ def test_the_survivor_tells_it_in_the_street_and_comes_to_you(made, tables):
     witness = cast.person(game.world, adv["cast"]["witness"])
     if witness is None or witness.settlement != town.id:
         pytest.skip("the witness is not of the town")
+    next(st for st in story.open_steps(adv) if st["kind"] == "witness")["inside"] = None  # (no situation: C.10)
     _enter(game, town)
     rec = stage.current(game)
     assert rec is not None and rec["id"] == "survivor" and rec["cast"]["survivor"] == witness.id

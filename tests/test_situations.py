@@ -24,8 +24,9 @@ def life(tables):
 
 
 def plain(tables) -> dict:
-    """The predicaments forged from ordinary roots (not the hand-made vignettes, tests/test_vignettes.py)."""
-    return {k: v for k, v in situations.predicaments(tables).items() if not v.get("vignette")}
+    """The predicaments forged from ordinary roots (not the hand-made vignettes, tests/test_vignettes.py, nor an
+    adventure's steps, tests/test_inside.py)."""
+    return {k: v for k, v in situations.predicaments(tables).items() if not v.get("vignette") and not v.get("inside")}
 
 
 def watched_town(game):
@@ -374,3 +375,34 @@ def test_an_ending_is_played_once(life):
     marked = situations._npc(game, sit, "marked")
     lm = goals._town_map(game, town.id)
     assert sum(g["who"] == {"npc": marked.id} for g in lm.meta.get("graves", [])) == 1, "one grave, not two"
+
+
+@pytest.mark.slow
+def test_thirty_met_are_varied_and_rare(tables):
+    """docs/ADVENTURES.md §9, the variety and rarity measures (C.10): a scripted hero wandering one world meets thirty
+    situations; no two share root, predicament, turn and meeting; at least twelve predicaments and twelve meetings;
+    the likeness score under 0.25; a town never shows more than its share, its next comes ten days after its last,
+    no more than three live within reach when one is forged, and a new one is met at least every twenty days."""
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+    from tools import storyplay
+
+    wo = storyplay.WORLDS[0]
+    m = storyplay.meet_once(tables, cached_world(WorldOptions(*wo), tables), wo[0])
+    g = type("G", (), {"tables": tables})()
+    ps = [storyplay.parts(g, s) for s in m.sits]
+    assert len(m.sits) == storyplay.MEET
+    assert not storyplay.twins(g, m.sits)
+    assert len({p["predicament"] for p in ps}) >= 12 and len({p["meeting"] for p in ps}) >= 12
+    assert storyplay.likeness(g, m.sits) < 0.25
+    assert not m.rarity, m.rarity
+    assert m.longest <= 20
+
+
+@pytest.mark.slow
+def test_every_situation_forged_passes_the_six_rules(tables):
+    """§5.15's six rules and every line filled, on thirty situations forged in a test world (storybook --check)."""
+    from tools import storybook
+
+    sits, trouble = storybook.run_situations(77, "medium", 30, True, quiet=True, tables=tables, name="Forgeland")
+    assert len(sits) == 30 and not trouble, "\n".join(trouble)

@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Part A on main (2026-10-24): the story engine and the Beast; Parts B-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-C on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; Parts D-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,40 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.10 — situations inside adventures, and the proof — **Part C merged into `main`**
+
+- **The Beast's hunt now runs through people's troubles.** The one who saw the beast may *not want to talk*: their
+  husband, mother or brother turns you away at the door ("talk of it brings it"), and the witness slips out after
+  you. Win the family round, pay them for what they lost, frighten them aside, charm them, or meet the witness at
+  the shrine after dark: each way ends differently (a grateful house that will speak for you, a house that will not
+  open its door again, hard words between them). Leave it, and the tale reaches you late, from the priest or the inn.
+- **The hunter who knows what it fears may have sworn never to hunt it again.** You find them at work in their
+  yard, the old bow on the wall, the neighbours muttering what they used to be. Ask what happened the last time and
+  ask them to finish it for the friend they lost, shame them into it, or pay off the debt that holds them: they will
+  tell you how it can be hurt and stand with you at the end. Leave it too long and the oath holds.
+- Not every hunt has them (about two in three): the rest are told in the street as before.
+- **Every trouble has more words**: every kind of trouble (and the twenty hand-made ones) now has at least three
+  titles, pleas, journal notes, lines for each ending and for the world's own outcome, and ways of saying what stands
+  in the way. A fresh reader went through thirty of them as a player would; the mistakes found were fixed (a lord
+  and their daughter with the same name, endings that promised money nobody paid, names repeated where "her" or
+  "his" belonged).
+- **Towns post a den on the board**: besides gangs and the beasts of the old songs, the watch now offers a bounty on
+  the nearest den that troubles its roads (a cave, crypt, warren, cellars or a tower), so a hero living by honest work
+  still finds loot as before.
+- **The proof** (for the curious): the storybook prints troubles as the design shows them and checks every one keeps
+  the six rules (a person with a name, something left to see, a real choice, a way without blood, a thread outward,
+  money only from someone who would pay); a scripted hero met thirty troubles in each test world with no two alike
+  (19 to 21 kinds, 14 or 15 ways of meeting them) and never more in a town than the rules allow.
+
+How to see it: **a new world is needed** (the save format changed). Take on a beast's tale and go to the witness's
+town; read the board in any town for its den.
+
+Decisions (Anton may want to change): the chance a hunt's witness or hunter becomes a trouble (0.65 each,
+situations.inside.json `inside.chance`); one den a board (`quests.DENS`); the careful player of the income measure
+now also takes troubles whose way through is honest work (a rescue, a body brought home), as the old one took those
+jobs. The careful player's coin over thirty days is 0.82 of what it was before Part C (inside the 0.7-1.3 band),
+but it dies more often doing it (a third of the runs, against a fifth before): dens are dangerous.
 
 ### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.9 — vignettes — branch `dlc/06-adventures-events`
 

@@ -26,7 +26,8 @@
           "who": "bride",
           "note": [
             "{bride} has promised to wed {dead_name}, who died {dead_cause} {dead_years} ago, and means to keep the promise on the dark of the moon, {due}.",
-            "{bride} walks out to the graves at dusk and comes back with her hands cold. She has given her word to the dead, and says she will not take it back."
+            "{bride} walks out to the graves at dusk and comes back with her hands cold. She has given her word to the dead, and says she will not take it back.",
+            "{bride} has a ribbon ready for {dead_first}, and a promise she will not break. {dead_name} has been {dead_years} in the ground."
           ],
           "acts": [
             {
@@ -72,7 +73,8 @@
           "who": "priest",
           "note": [
             "{priest_full} knows the grave of {dead_name}, or the place where it should be, and could lay the dead one to rest, with the proper office and a name said aloud.",
-            "A grave unvisited for {dead_years} wants the office said over it again. {priest} could do it, if asked, and if paid."
+            "A grave unvisited for {dead_years} wants the office said over it again. {priest} could do it, if asked, and if paid.",
+            "The churchyard of {town} holds {dead_name} somewhere, and {priest_full} keeps the book of the graves. A name said there by the right voice might be heard."
           ],
           "spells": ["gentle_repose", "speak_with_dead", "hallow"],
           "by_magic": [["flag", "laid"]],
@@ -117,7 +119,8 @@
           "ops": [["disposition", "father", 35], ["disposition", "bride", 25], ["favour", "father", "shelter", 2], ["mark", "memorial"], ["xp_story", "fair"]],
           "line": [
             "{dead_name} has a stone now, and his name is said once a year at the dark of the moon. {bride} lays a ribbon on it and then goes home to her father's house.",
-            "The office was said and the name spoken, and {bride} stood by {dead_first}'s grave and did not feel cold. {father} cried with his hat in his hands."
+            "The office was said and the name spoken, and {bride} stood by {dead_first}'s grave and did not feel cold. {father} cried with his hat in his hands.",
+            "A stone with a name on it stands in the churchyard of {town}, and the cold has left it. {bride} goes there in daylight now, and {father} lets her go alone."
           ]
         },
         {
@@ -127,7 +130,8 @@
           "ops": [["disposition", "father", 25], ["disposition", "bride", 10], ["xp_story", "small"]],
           "line": [
             "{bride} said {dead_first}'s name over the grave and told him she could not. Nothing answered. She still goes out to the graves at dusk, and her father watches from the door.",
-            "{bride} stays among the living, and does not forgive it. On the dark of the moon, {father} sits up all night with the door barred."
+            "{bride} stays among the living, and does not forgive it. On the dark of the moon, {father} sits up all night with the door barred.",
+            "{bride} did not go to the grave on the dark of the moon. She sits at {father}'s table and eats little, and the ribbon is shut in a box."
           ]
         },
         {
@@ -137,7 +141,8 @@
           "ops": [["disposition", "father", 20], ["xp_story", "small"]],
           "line": [
             "The dead one is laid and the cold has gone out of the street. {bride} is quiet and does not say what she promised, or what she lost.",
-            "The office was said, and nothing answered. {bride} keeps her hand in her sleeve now and will not look at the graves."
+            "The office was said, and nothing answered. {bride} keeps her hand in her sleeve now and will not look at the graves.",
+            "The grave of {dead_name} is quiet, and so is the house of {father}. {bride} sews, and does not sing, and the ribbon is gone from her sleeve."
           ]
         },
         {
@@ -147,7 +152,8 @@
           "ops": [["npc_fate", "bride", "dead"], ["disposition", "father", -25], ["news", "news_wed"]],
           "line": [
             "{bride} was found at dawn on the grave of {dead_name}, cold, a ribbon wound round her hand and her face quite peaceful. {father} will not speak of you.",
-            "The dark of the moon came. In the morning {father} found {bride} lying on the grave, dressed as for a wedding. She was cold. She was smiling."
+            "The dark of the moon came. In the morning {father} found {bride} lying on the grave, dressed as for a wedding. She was cold. She was smiling.",
+            "{father} has a new grave to tend in {town}, beside the old one of {dead_name}. {bride} went to the dark of the moon willingly. Nobody dares say you could have stopped it."
           ]
         }
       ],
@@ -156,21 +162,24 @@
         "ops": [["npc_fate", "bride", "dead"], ["news", "news_wed"]],
         "line": [
           "The dark of the moon came and went. {bride} was found at dawn on the grave of {dead_name}, cold, a ribbon wound about her hand.",
-          "No one stopped her. {father} found {bride} on the grave at first light, dressed for a wedding, and did not wake her."
+          "No one stopped her. {father} found {bride} on the grave at first light, dressed for a wedding, and did not wake her.",
+          "The dark of the moon passed with no one at the graves but {bride}. {father} buried the girl beside {dead_name}, and the ribbon with her."
         ]
       },
       "clock": [6, 10],
       "meetings": ["v_bride_vow"],
       "words": {
         "title": ["The bride of the dead", "A wedding on the dark of the moon", "The promise to {dead_first}"],
-        "stakes": ["{bride}'s life, and the promise she made to {dead_name}", "{bride}, promised to a dead man"],
+        "stakes": ["{bride}'s life, and the promise she made to {dead_name}", "{bride}, promised to a dead man", "a wedding at a grave, and the one who means to keep it"],
         "plea": [
           "My girl {bride} says she is to be wed. On the dark of the moon, {due}. To {dead_name}. He died {dead_cause}, {dead_years} ago, and his name is still known in {town}. She goes out to the graves at dusk and talks to him. She will not eat. Please. Talk to her. Find out what he wants.",
-          "{bride} is my daughter. She promised herself to a dead man, {dead_name}, who died {dead_cause}, {dead_years} ago. She has the ribbon already. The wedding is {due}, on the dark of the moon, and I think she means to go to him. I am an old fool and she does not listen to me. She might listen to you."
+          "{bride} is my daughter. She promised herself to a dead man, {dead_name}, who died {dead_cause}, {dead_years} ago. She has the ribbon already. The wedding is {due}, on the dark of the moon, and I think she means to go to him. I am an old fool and she does not listen to me. She might listen to you.",
+          "I am {father}, and {bride} is all I have. She goes out to the graves at dusk with a ribbon and says she is to be wed {due}, on the dark of the moon, to {dead_name}, who died {dead_cause}, {dead_years} ago. Go and speak with her. Learn what the dead man asked, and turn her from it if you can."
         ],
         "first": [
           "{bride} has promised to wed the dead {dead_name} on the dark of the moon, {due}. Her father {father} wants her turned from it.",
-          "{father} fears {bride} will follow {dead_name}, dead {dead_years}, into his grave on the dark of the moon."
+          "{father} fears {bride} will follow {dead_name}, dead {dead_years}, into his grave on the dark of the moon.",
+          "{bride} walks out to the graves of {town} at dusk and speaks to {dead_name}. {father} asks you to learn what the dead man wants of her."
         ],
         "news_wed": ["In {town}, {bride} was found dead on the grave of {dead_name}, dressed as for a wedding.", "{bride} of {town} is dead. They found her on a grave, in a ribbon."]
       }
@@ -190,7 +199,8 @@
           "who": "hermit",
           "note": [
             "{hermit_full} sits at the middle of the bridge over {river} and will let no one pass without answering the riddles of the bridge's own past. The bridge has stood {founded_years}, and the old tale of it runs: {founding}",
-            "A beggar's blanket across the planks. Nobody crosses over {river} without answering, or paying, or being put in the water. The carts stand in a line on either bank."
+            "A beggar's blanket across the planks. Nobody crosses over {river} without answering, or paying, or being put in the water. The carts stand in a line on either bank.",
+            "{hermit} asks every carter the same questions about the bridge over {river}, and sends them back with their loads. Nobody in {town} can say who set the first stone."
           ],
           "acts": [
             {
@@ -277,7 +287,8 @@
           "ops": [["disposition", "asker", 35], ["favour", "asker", "goods", 2], ["xp_story", "fair"]],
           "line": [
             "{hermit} sits by the keeper's door now and not on the planks, and counts the carts across {river}. The carts go to market again, and {hermit} knows every one.",
-            "The old keeper has the keeper's house back. {asker} brings bread, and {hermit} tells over the bridge's story to anyone who stops long enough."
+            "The old keeper has the keeper's house back. {asker} brings bread, and {hermit} tells over the bridge's story to anyone who stops long enough.",
+            "The bridge over {river} is clear, and {hermit} has a stool by the keeper's door and a cup of broth. {asker} sold the grain at the next market, and tells the tale of the bridge to the children."
           ]
         },
         {
@@ -288,7 +299,8 @@
           "ops": [["disposition", "asker", 25], ["xp_story", "small"]],
           "line": [
             "{hermit} lets the carts over now, and asks the old questions of whoever stops. Nobody knows who {hermit} is. {asker} gets the goods to market, and does not look at the blanket as the cart goes by.",
-            "The riddles were answered and the bridge is open. {hermit} sits on the blanket and waits for the next to ask, as the old one has always waited."
+            "The riddles were answered and the bridge is open. {hermit} sits on the blanket and waits for the next to ask, as the old one has always waited.",
+            "Carts roll over the bridge on {river} again, one by one, and each pays in answers. {hermit} nods the carters through. {asker} reached the market late, with grain that was still sound."
           ]
         },
         {
@@ -298,7 +310,8 @@
           "ops": [["disposition", "asker", 20], ["xp_story", "small"]],
           "line": [
             "The toll was paid and the carts went over. {hermit} takes a copper from every one that crosses now, and nobody has the heart to stop {hermit_them}.",
-            "{hermit} has a toll again, and a cup for it. The carts cross {river} one by one, paying."
+            "{hermit} has a toll again, and a cup for it. The carts cross {river} one by one, paying.",
+            "Every carter drops a copper in {hermit}'s cup and goes over. {asker} paid with the rest, and was let by without a word."
           ]
         },
         {
@@ -308,7 +321,8 @@
           "ops": [["xp_story", "small"]],
           "line": [
             "The old one went over the rail and the river took {hermit}. {asker} crosses the bridge now, and does not look down. The water has been quiet since.",
-            "The carts cross, and {hermit} is not on the bridge. Someone has laid the blanket in the water. {asker} will not say who."
+            "The carts cross, and {hermit} is not on the bridge. Someone has laid the blanket in the water. {asker} will not say who.",
+            "The bridge over {river} is open and empty. {hermit} went into the water in the night, and the carters who stood by that morning do not meet one another's eyes."
           ]
         }
       ],
@@ -317,21 +331,24 @@
         "ops": [["npc_fate", "asker", "ruined"], ["news", "news_lapse"]],
         "line": [
           "The carts stood at {river} until the grain spoiled. {asker} could not get to market, and the debts came due.",
-          "No one crossed. {asker} sold the cart at a loss, and the old one still sits on the planks, asking."
+          "No one crossed. {asker} sold the cart at a loss, and the old one still sits on the planks, asking.",
+          "The grain spoiled on the cart, and {asker} walked home from {river} with an empty purse. {hermit} sat on the planks through the rain."
         ]
       },
       "clock": [8, 14],
       "meetings": ["v_toll_jam"],
       "words": {
         "title": ["The bridge-keeper's toll", "Riddles on the bridge", "The old one on the bridge"],
-        "stakes": ["{asker}'s carts, and the old one on the bridge over {river}", "the bridge over {river}, and the one who guards it"],
+        "stakes": ["{asker}'s carts, and the old one on the bridge over {river}", "the bridge over {river}, and the one who guards it", "a load of grain, and a riddle about the bridge's making"],
         "plea": [
           "There's an old beggar on the bridge over {river}. Sits right in the middle of the planks, and will not let a cart past without a riddle answered. About the bridge, about how it was built. {founded_years} it's stood. I've missed two markets already. Nobody knows who the old one is. Can you get me across?",
-          "The beggar asks about the bridge. Who built it, who set the first stone. I don't know! Nobody knows, it's {founded_years} back. I have a load of grain that will spoil, and the old fool sits there and says no. The reeve won't move him. Perhaps you can. Answer him. Or pay him. Or whatever it takes."
+          "The beggar asks about the bridge. Who built it, who set the first stone. I don't know! Nobody knows, it's {founded_years} back. I have a load of grain that will spoil, and the old fool sits there and says no. The reeve won't move him. Perhaps you can. Answer him. Or pay him. Or whatever it takes.",
+          "I have stood on this bank since the market day before last. The old beggar on the bridge over {river} wants to know who built it, and I have no idea, and neither has anyone. {founded_years} it has stood. My grain is going soft in the sacks. Get me over, by answers or by coin."
         ],
         "first": [
           "An old beggar will not let any cart over the bridge on {river} without an answer to riddles about its past. {asker} cannot get to market.",
-          "{asker} cannot cross the bridge on {river}: an old beggar on it asks about the bridge's building, and no one knows."
+          "{asker} cannot cross the bridge on {river}: an old beggar on it asks about the bridge's building, and no one knows.",
+          "The bridge over {river} is held by an old beggar who wants the story of its building. {asker} needs it crossed before the grain spoils."
         ],
         "news_lapse": ["{asker} of {town} was ruined: the bridge on {river} was held by a beggar, and the harvest rotted.", "In {town}, {asker} lost everything at the bridge over {river}."]
       }
@@ -352,7 +369,8 @@
           "who": "smith",
           "note": [
             "{smith_full} could forge {blade} again, made by {blade_maker} {blade_years} ago of {blade_material}, but not with the iron to be had in {town}. It wants star-iron, and the star-iron lies at {lode}.",
-            "{smith} learned the old way from a master who learned it from a master. Nobody after {smith} will know it. There is no iron for it but what lies at {lode}."
+            "{smith} learned the old way from a master who learned it from a master. Nobody after {smith} will know it. There is no iron for it but what lies at {lode}.",
+            "The forge in {town} burns ordinary iron, and {smith_full} will not waste a hundred hours of the old way on it. The star-iron is at {lode}, and {smith} is too old to fetch it."
           ],
           "acts": [
             {
@@ -420,7 +438,8 @@
           "ops": [["item", "blade_new"], ["disposition", "smith", 40], ["favour", "smith", "sword", 2], ["contact", "smith", "fence"], ["xp_story", "great"]],
           "line": [
             "{smith} forged {blade} again, at dawn, to the old song, with you at the bellows. It was quenched in snow-water. The blade rang true, and {smith} wept without hiding it. It is yours.",
-            "The star-iron went into the fire, and {blade} came out of it, folded forty times, as {blade_maker} made it {blade_years} ago. {smith} pressed it into your hands and would not take payment."
+            "The star-iron went into the fire, and {blade} came out of it, folded forty times, as {blade_maker} made it {blade_years} ago. {smith} pressed it into your hands and would not take payment.",
+            "{blade} rang when it was quenched, a clear note, and the whole street heard it. {smith} sang the old song over it, and then gave it to you with both hands."
           ]
         },
         {
@@ -431,7 +450,8 @@
           "ops": [["disposition", "smith", 30], ["favour", "smith", "sword", 1], ["money", 1200], ["xp_story", "fair"]],
           "line": [
             "{blade} hangs on the wall of the forge in {town}, made new by {smith}. It was not for you, and {smith} will not hear of it leaving. Pilgrims come to look.",
-            "{smith} made {blade} again and keeps it, and the old way with it. {smith} says it is enough to have made it once more. You were paid, and thanked, and shown the door."
+            "{smith} made {blade} again and keeps it, and the old way with it. {smith} says it is enough to have made it once more. You were paid, and thanked, and shown the door.",
+            "The forge in {town} has a new wall-piece: {blade}, under a cloth, that {smith} shows only to those who ask the right way. It will not be sold, and it will not be carried out."
           ]
         },
         {
@@ -441,7 +461,8 @@
           "ops": [["item", "blade_new"], ["disposition", "smith", 25], ["xp_story", "fair"]],
           "line": [
             "{smith} forged the star-iron, and what came out was a blade, but not {blade}. It cuts well. It does not sing. Something was lost in the making, and {smith} knows it.",
-            "{blade} was made again, after a fashion. {smith} turned it over in the light and said nothing. It is a good blade, and not the one {blade_maker} made."
+            "{blade} was made again, after a fashion. {smith} turned it over in the light and said nothing. It is a good blade, and not the one {blade_maker} made.",
+            "The star-iron is spent, and the blade that came of it is sound and plain. {smith} hung it by the door of the forge in {town} and does not look at it twice."
           ]
         },
         {
@@ -451,7 +472,8 @@
           "ops": [["disposition", "smith", 5], ["xp_story", "small"]],
           "line": [
             "{smith} forged a blade of the iron of {town}, in the shape of {blade}. A good blade. Not that one. {smith} does not sing over it, and does not say so.",
-            "A copy of {blade} hangs in the forge in {town}. Everyone knows it for what it is. {smith} will not say another word about the old way."
+            "A copy of {blade} hangs in the forge in {town}. Everyone knows it for what it is. {smith} will not say another word about the old way.",
+            "The blade that {smith} made of the iron of {town} is true and cheap, and sells well. It is not {blade}, and the song that made {blade} stays unsung."
           ]
         },
         {
@@ -461,7 +483,8 @@
           "ops": [["shop", "smith", "shut", 60], ["disposition", "smith", -10], ["xp_story", "small"]],
           "line": [
             "{smith} put the hammers away that evening and shut the forge. The old way dies with {smith}. The song is not sung, and not written down.",
-            "The anvil in {town} is cold. {smith} sits in the doorway and hums, over and over, a note to each blow, with nothing to strike."
+            "The anvil in {town} is cold. {smith} sits in the doorway and hums, over and over, a note to each blow, with nothing to strike.",
+            "No prentice stands at the bellows in {town}. {smith} oils the tongs each morning, and each evening hangs them up again, and the old way ends with the last of the oil."
           ]
         }
       ],
@@ -470,7 +493,8 @@
         "ops": [["npc_fate", "smith", "dead"], ["shop", "smith", "shut", 90], ["news", "news_lapse"]],
         "line": [
           "{smith} died at the anvil with nothing on it. The song of {blade_maker} went into the ground with {smith}, and {blade} lies where it lies.",
-          "The forge in {town} went cold. {smith} was found sitting by the dead fire. The old way died with {smith}, and nobody had asked."
+          "The forge in {town} went cold. {smith} was found sitting by the dead fire. The old way died with {smith}, and nobody had asked.",
+          "The anvil in {town} was never struck again. {smith} died with the song unsung, and {blade} is a story that grows shorter each time it is told."
         ]
       },
       "clock": [18, 30],
@@ -480,14 +504,16 @@
         "iron": ["the star-iron of {lode}", "the star-iron from {lode}"],
         "blade_new": ["{blade}, made new", "{blade}, as {smith} forged it again"],
         "title": ["The last smith", "{blade}, made new", "The song of the old smith"],
-        "stakes": ["{smith}'s craft, and the blade {blade}", "the old way of the forge, and {blade}"],
+        "stakes": ["{smith}'s craft, and the blade {blade}", "the old way of the forge, and {blade}", "star-iron from {lode}, and the last song of the anvil"],
         "plea": [
           "{blade}. Made by {blade_maker}, {blade_years} ago, of {blade_material}. It {blade_fate}. I could forge it again, I know how, I'm the last that does. But not of the iron I can buy. It wants star-iron. There's a lode of it out at {lode}. Bring it. Bring me star-iron and I will make {blade} again before I die.",
-          "I am the last smith of the old way. Nobody after me will know it. I could make {blade} again, as {blade_maker} did {blade_years} ago, if I had the iron for it, star-iron, from {lode}. I'm too old to go. You are not. Bring it, and I will teach the iron to sing again."
+          "I am the last smith of the old way. Nobody after me will know it. I could make {blade} again, as {blade_maker} did {blade_years} ago, if I had the iron for it, star-iron, from {lode}. I'm too old to go. You are not. Bring it, and I will teach the iron to sing again.",
+          "Forty years I have kept the song of the old forge, and no one has asked to hear it. {blade} was {blade_maker}'s, {blade_years} ago, of {blade_material}. I can make it again, but only from star-iron, and that lies at {lode}. Fetch it for me. I will not see another winter."
         ],
         "first": [
           "{smith} will forge {blade} again if given star-iron from {lode}: the last of the old way.",
-          "{smith} wants star-iron from {lode} to make {blade} anew, before the old way is lost."
+          "{smith} wants star-iron from {lode} to make {blade} anew, before the old way is lost.",
+          "{smith}, the last of the old forge-masters in {town}, asks for star-iron from {lode}. With it {blade} can be made again."
         ],
         "news_lapse": ["{smith}, smith of {town}, died with the old way of the forge.", "The last smith of the old way died in {town}."]
       }
@@ -507,7 +533,8 @@
           "who": "reeve",
           "note": [
             "The tithe barn of {town} burned in the night with the winter's grain in it. {reeve_full} wants someone to answer for it before the first frost.",
-            "A black hull where the barn stood, and grain in the ash, half-cooked. {reeve} says it was set. The village has not eaten well since {famine_years} ago, and no one dares guess."
+            "A black hull where the barn stood, and grain in the ash, half-cooked. {reeve} says it was set. The village has not eaten well since {famine_years} ago, and no one dares guess.",
+            "The roof of the tithe barn lies in the ash, and the doors are burned to the hinges. {reeve} walks the black floor each day and says the fire began inside."
           ],
           "acts": [
             {
@@ -547,7 +574,8 @@
           "who": "reeve",
           "note": [
             "{reeve} wants a name to give the watch, and a neck for it, {by_due}.",
-            "Someone will hang for the barn unless it is settled otherwise {by_due}."
+            "Someone will hang for the barn unless it is settled otherwise {by_due}.",
+            "The watch will take whoever {reeve} names {by_due}, guilty or not, and the village knows it. No one in {town} will say aloud who it should be."
           ],
           "acts": [
             {
@@ -601,7 +629,8 @@
           "ops": [["disposition", "culprit", 35], ["favour", "culprit", "shelter", 2], ["xp_story", "fair"]],
           "line": [
             "The watch took {reeve} for the sale, and not {culprit} for the fire. The village shares what grain is left. {culprit} brings you a loaf from the first baking, still warm.",
-            "{reeve} sold the winter's grain and burned the barn to hide it. {culprit} is spared. The village will eat thin, but together."
+            "{reeve} sold the winter's grain and burned the barn to hide it. {culprit} is spared. The village will eat thin, but together.",
+            "The sacks sold in the autumn were counted at last, and {reeve} was led off in front of the whole of {town}. {culprit} goes unnamed, and eats what the neighbours share."
           ]
         },
         {
@@ -611,7 +640,8 @@
           "ops": [["xp_story", "fair"]],
           "line": [
             "{reeve} is taken by the watch, and the village learns what became of its grain. No one knows yet who set the fire, and the village does not ask.",
-            "The reeve is accused, and the barn is nobody's fault, for now. The winter will be hard."
+            "The reeve is accused, and the barn is nobody's fault, for now. The winter will be hard.",
+            "{reeve} stands before the watch with the books open, and the grain that should have been in the barn is not in them. The fire is still no one's fault, and the village is hungry."
           ]
         },
         {
@@ -621,7 +651,8 @@
           "ops": [["disposition", "reeve", -10], ["disposition", "culprit", 20], ["xp_story", "small"]],
           "line": [
             "It was lightning, the watch was told. {culprit} keeps quiet and eats what the village gives. {reeve} watches you in the street and does not forget.",
-            "No neck, no name. The barn burned of itself. {culprit} thanks you without looking at you."
+            "No neck, no name. The barn burned of itself. {culprit} thanks you without looking at you.",
+            "The watch wrote it down as an accident and closed the book. {culprit} sleeps at home in {town}, and {reeve} counts what is left of the winter and says nothing."
           ]
         },
         {
@@ -631,7 +662,8 @@
           "ops": [["disposition", "reeve", 15], ["xp_story", "small"]],
           "line": [
             "Coin bought grain from the next valley, and the village winters on it. {reeve} counts every sack twice. No one hangs, and no one says who lit the lamp.",
-            "{reeve} has the grain, and the village has an unspoken debt to a stranger. The fire is called an accident."
+            "{reeve} has the grain, and the village has an unspoken debt to a stranger. The fire is called an accident.",
+            "Sacks of grain came up the road from the next valley, paid for in silver. {reeve} gave them out by the head, and {culprit} took a sack with both hands and no thanks to anyone."
           ]
         },
         {
@@ -641,7 +673,8 @@
           "ops": [["mark", "famine"], ["disposition", "culprit", -30], ["xp_story", "small"]],
           "line": [
             "{culprit} is in the watch-house, and the village is quiet. The grain was never counted. {reeve} sleeps well. The children of {culprit} eat at the temple door.",
-            "{culprit} will hang at the thaw. {reeve} stands taller. The winter is long, and the grain that should have fed {town} was not in the ash."
+            "{culprit} will hang at the thaw. {reeve} stands taller. The winter is long, and the grain that should have fed {town} was not in the ash.",
+            "The watch-house holds {culprit} and the village looks away. {reeve} was believed, because someone had to be, and the truth of the barn stays in the ash."
           ]
         }
       ],
@@ -650,21 +683,24 @@
         "ops": [["law", "culprit", "hanged"], ["mark", "famine"], ["news", "news_lapse"]],
         "line": [
           "{reeve} named {culprit} before the frost, and {culprit} hanged. The barn was never counted. The winter took more than the fire did.",
-          "{culprit} was hanged at the first frost for the barn. The hungry children of {culprit} were fed at the temple door, and not by {reeve}."
+          "{culprit} was hanged at the first frost for the barn. The hungry children of {culprit} were fed at the temple door, and not by {reeve}.",
+          "The frost came, and {reeve} gave the watch a name. {culprit} went to the rope, and the barn was never counted, and the children of {town} were hungry before the thaw."
         ]
       },
       "clock": [8, 14],
       "meetings": ["v_barn_ash"],
       "words": {
         "title": ["The tithe-barn fire", "Ash where the barn stood", "Who burned the winter's grain"],
-        "stakes": ["the winter's grain, and the neck of whoever {reeve} names", "a burned barn, a hungry village, and a name for the watch"],
+        "stakes": ["the winter's grain, and the neck of whoever {reeve} names", "a burned barn, a hungry village, and a name for the watch", "a neck on a rope by the first frost, and the truth of the fire"],
         "plea": [
           "The tithe barn burned three nights ago. All the village's grain, gone, and winter coming. The watch wants a name and I have none. Somebody set it, someone with a grievance, or a lamp. I need the one who did it, {by_due}, before the first frost. Or I have to hang somebody for the look of the thing.",
-          "You have seen it. Black from the roof beams down. The grain was in it, the whole winter's tithe, and it's gone. I will not have the village starve and say nothing. I want who set that fire. I must give the watch a name {by_due}. Find me one that is true."
+          "You have seen it. Black from the roof beams down. The grain was in it, the whole winter's tithe, and it's gone. I will not have the village starve and say nothing. I want who set that fire. I must give the watch a name {by_due}. Find me one that is true.",
+          "Come and look at what is left of the barn. The winter's grain, and the seed for spring, and nothing now but ash. I am the reeve of {town} and the watch looks to me for a name {by_due}. I would sooner give them the right one. Find out who set that fire, and bring me proof."
         ],
         "first": [
           "The tithe barn of {town} burned with the grain in it; {reeve} wants the one who set it {by_due}.",
-          "{reeve} needs to know who burned the barn {by_due}."
+          "{reeve} needs to know who burned the barn {by_due}.",
+          "The tithe barn of {town} is ash, and the watch wants a name {by_due}. {reeve} will take a true one."
         ],
         "news_lapse": ["{culprit} of {town} was hanged for the burning of the tithe barn.", "In {town} the barn burned, a poor soul hanged, and the winter came hard."]
       }
@@ -685,7 +721,8 @@
           "who": "thief",
           "note": [
             "The bones of {saint} are gone from the reliquary, and the saint's day is upon {town}. A seller of relics came in on the road this week and has not stayed to be thanked.",
-            "{thief_full}, who sells holy things from a pack, took a room at the inn the night before the reliquary was found open, and has kept a bag close ever since."
+            "{thief_full}, who sells holy things from a pack, took a room at the inn the night before the reliquary was found open, and has kept a bag close ever since.",
+            "A pedlar of relics left {town} the morning the niche was found empty, and the road is the only place to ask after {thief}. The bones of {saint} may be in that pack still."
           ],
           "acts": [
             {
@@ -731,7 +768,8 @@
           "who": "priest",
           "note": [
             "{priest_full} was the last to see the reliquary. The lock was not broken.",
-            "No thief forced the lock of the reliquary. The key hangs at {priest}'s belt, and {priest} has not eaten since the day it was found open."
+            "No thief forced the lock of the reliquary. The key hangs at {priest}'s belt, and {priest} has not eaten since the day it was found open.",
+            "The key to the reliquary of {saint} has one keeper, and {priest_full} cannot meet anyone's eye on the matter. The lock was turned, not broken."
           ],
           "acts": [
             {
@@ -771,7 +809,8 @@
           "ops": [["disposition", "priest", 40], ["favour", "priest", "shelter", 2], ["contact", "priest", "healer"], ["xp_story", "fair"]],
           "line": [
             "The bones of {saint} were back in the reliquary before the bells rang, and {priest} walked at the head of the procession with a face like paper. Nobody asked how. {priest} knows.",
-            "On the saint's day the reliquary stood closed and full, and the people sang. You kept the old priest's secret. {priest} lights a candle for you every year."
+            "On the saint's day the reliquary stood closed and full, and the people sang. You kept the old priest's secret. {priest} lights a candle for you every year.",
+            "The pilgrims of {saint}'s day went home glad, and never learned how close the niche came to standing empty. {priest} will not say what was done, and will not say it to you either."
           ]
         },
         {
@@ -782,7 +821,8 @@
           "ops": [["disposition", "priest", 20], ["xp_story", "small"]],
           "line": [
             "The bones were carried back through the crowd in a bag, and {thief} was driven from {town} with a split lip. The saint's day went ahead. Nobody asked why the lock was not broken.",
-            "{saint} is home. {thief} is gone, minus a tooth, and a story is told that the saint turned the thief out. {priest} does not tell it."
+            "{saint} is home. {thief} is gone, minus a tooth, and a story is told that the saint turned the thief out. {priest} does not tell it.",
+            "The reliquary of {saint} was shut and full by the feast. {thief} limped out of {town} by the north gate, and {priest} rang the bell for the people."
           ]
         },
         {
@@ -792,7 +832,8 @@
           "ops": [["disposition", "priest", 25], ["xp_story", "small"]],
           "line": [
             "The bones of {saint} are home, and {thief} is richer. Word will get round that the dead can be sold and bought. {priest} does not like to hear it said.",
-            "The saint's day was kept, and the reliquary full. {thief} went on down the road with your silver, and somewhere another relic-seller is already counting."
+            "The saint's day was kept, and the reliquary full. {thief} went on down the road with your silver, and somewhere another relic-seller is already counting.",
+            "The niche is full again, and the silver is gone down the road with {thief}. {priest} kneels before the bones of {saint} each night and does not ask what they cost."
           ]
         },
         {
@@ -802,7 +843,8 @@
           "ops": [["disposition", "priest", -20], ["xp_story", "small"]],
           "line": [
             "The people were told on the saint's eve, and {priest} was gone by morning. The reliquary stays empty. {town} has a saint's day with no saint in it.",
-            "The truth was said in the square, and {priest} left. The bones of {saint} lie wherever {thief} sold them. The people sing anyway, to an empty niche."
+            "The truth was said in the square, and {priest} left. The bones of {saint} lie wherever {thief} sold them. The people sing anyway, to an empty niche.",
+            "{town} knows now who kept the key. {priest}'s door is shut, and the reliquary of {saint} stands open and empty on the saint's day."
           ]
         }
       ],
@@ -811,21 +853,24 @@
         "ops": [["npc_fate", "priest", "ruined"], ["news", "news_lapse"]],
         "line": [
           "The saint's day came with an empty reliquary. The people stood in the rain in front of an open niche, and in the evening they went to {priest}'s house.",
-          "{saint}'s day was kept in silence in {town}. The niche was empty. {priest} did not come out of the temple again."
+          "{saint}'s day was kept in silence in {town}. The niche was empty. {priest} did not come out of the temple again.",
+          "Nothing stood in the niche on the saint's day, and the pilgrims of {saint} went home down the wet roads. {priest} was found in the temple in the morning, kneeling."
         ]
       },
       "clock": [4, 7],
       "meetings": ["v_empty_niche"],
       "words": {
         "title": ["The saint's bones", "The empty reliquary", "The eve of {saint}'s day"],
-        "stakes": ["the bones of {saint}, and the peace of {town}", "the relics of {saint}, and {priest}'s good name"],
+        "stakes": ["the bones of {saint}, and the peace of {town}", "the relics of {saint}, and {priest}'s good name", "an empty niche on the saint's day, and a priest with a secret"],
         "plea": [
           "The reliquary was found open this morning. The bones of {saint}, {saint_years} in the keeping of this temple, gone. The saint's day is {due}. The whole country comes. I cannot show them an empty niche. Find who took them. Find them back. I will pay what I can, which is nothing.",
-          "They are gone. The relics of {saint}, who has lain in our care for {saint_years}. Taken in the night, on the eve of the saint's day. The pilgrims come {due}, and if there is nothing in the niche, they will have my head, or worse. I have no one else to ask. Please."
+          "They are gone. The relics of {saint}, who has lain in our care for {saint_years}. Taken in the night, on the eve of the saint's day. The pilgrims come {due}, and if there is nothing in the niche, they will have my head, or worse. I have no one else to ask. Please.",
+          "I opened the niche this morning and it was empty. I cannot tell you how. {saint} has lain here {saint_years}. The pilgrims come {due}. A stranger who had been in the temple left the town in a hurry. Find the bones. Bring them back before the feast."
         ],
         "first": [
           "The bones of {saint} were stolen from the temple of {town}, and the saint's day is {due}. {priest} begs you find them.",
-          "{priest} must show the relics of {saint} {due}, and they are gone."
+          "{priest} must show the relics of {saint} {due}, and they are gone.",
+          "The niche of {saint} stands empty in the temple of {town}. {priest} needs the bones back before the pilgrims come {due}."
         ],
         "news_lapse": ["The saint's day of {saint} passed in {town} with no relics to show.", "In {town}, the bones of {saint} were never found."]
       }
@@ -845,7 +890,8 @@
           "who": "asker",
           "note": [
             "At {scar}, {scar_years} ago, {scar_hanged} were hanged from one tree, and the tree still stands. At midnight the hanged speak, and each wants one thing.",
-            "A tree where people were hanged, after {scar}. They hang in the dark yet, the old ones say. At midnight they ask. The old ones have not answered in years."
+            "A tree where people were hanged, after {scar}. They hang in the dark yet, the old ones say. At midnight they ask. The old ones have not answered in years.",
+            "The tree at {scar} stands bare in all seasons, and the hanged speak from it after midnight. Each asks one thing of the living, and no one has listened to more than a word."
           ],
           "spells": ["speak_with_dead", "gentle_repose", "hallow"],
           "by_magic": [["flag", "heard"], ["learn", "wants"]],
@@ -931,7 +977,8 @@
           "ops": [["lay_scar"], ["disposition", "asker", 40], ["favour", "asker", "shelter", 2], ["mark", "memorial"], ["xp_story", "great"]],
           "line": [
             "The name was said, the debt paid, the bones laid in holy ground. At midnight the tree stands silent. {asker} sat under it until dawn and heard only the wind, and wept for it.",
-            "{scar} is laid at last. The hanged have what they wanted, and the tree is only a tree, with old rope on one bough. {asker} cut the rope down, and burned it."
+            "{scar} is laid at last. The hanged have what they wanted, and the tree is only a tree, with old rope on one bough. {asker} cut the rope down, and burned it.",
+            "Nothing speaks at {scar} after midnight now. The tree stands with a plain bough, and the children of {town} climb it in summer."
           ]
         },
         {
@@ -941,7 +988,8 @@
           "ops": [["disposition", "asker", -10], ["xp_story", "small"]],
           "line": [
             "The tree burned for three days. The wants of the hanged did not burn. {asker} says they speak from the stump now, and softer, and not to anyone in particular.",
-            "The tree is gone, and the field of {scar} is bare. Nobody hears the hanged any longer. {asker} lies awake and listens for them anyway."
+            "The tree is gone, and the field of {scar} is bare. Nobody hears the hanged any longer. {asker} lies awake and listens for them anyway.",
+            "The axes did their work, and {scar_hanged} were not laid to rest by it. The wind in the field of {scar} has a sound in it, and {asker} will not walk there."
           ]
         }
       ],
@@ -950,21 +998,24 @@
         "ops": [["npc_fate", "asker", "dead"], ["news", "news_lapse"]],
         "line": [
           "The hanged were not answered, or not all of them. {asker} was found under it at dawn, standing, as if called, with a rope's mark on the neck that no rope had made.",
-          "{asker} went to the tree alone, at midnight, and did not return. The shutters of {town} close earlier now."
+          "{asker} went to the tree alone, at midnight, and did not return. The shutters of {town} close earlier now.",
+          "The hanged were not answered, and the tree took the old one who listened. {asker} lies in the churchyard of {town}, and the neighbours cross the road at dusk."
         ]
       },
       "clock": [10, 18],
       "meetings": ["v_dusk_shutters"],
       "words": {
         "title": ["The hanging tree", "What the hanged ask", "Midnight at {scar}"],
-        "stakes": ["the hanged of {scar}, and the old one who hears them", "a tree, a rope, and what the dead still want"],
+        "stakes": ["the hanged of {scar}, and the old one who hears them", "a tree, a rope, and what the dead still want", "the dead of {scar}, and what they ask at midnight"],
         "plea": [
           "{scar_hanged} were hanged from that tree after {scar}, {scar_years} ago. At midnight they speak. I hear them from my bed, each one with a small want of their own. I am too old to go and answer. I have done nothing for them in all these years. Go and listen. Find what they want. Then do it, and let them rest.",
-          "You know the tree at {scar}? The hanged speak at midnight, every one, each asking one thing of the living. I have listened for years from my window and I am a coward. Go and hear them. A name, a debt, a burial: I think that is all they want. Please. Do it, before they ask for something worse."
+          "You know the tree at {scar}? The hanged speak at midnight, every one, each asking one thing of the living. I have listened for years from my window and I am a coward. Go and hear them. A name, a debt, a burial: I think that is all they want. Please. Do it, before they ask for something worse.",
+          "I have heard them every midnight for years. {scar_hanged} were hanged at {scar}, {scar_years} ago, and they are still asking. They do not shout. They ask, each in turn, and no one has ever answered. Go to the tree. Listen to all of them. Then do what they ask, if it can be done."
         ],
         "first": [
           "At {scar}, a tree where {scar_hanged} were hanged speaks at midnight. {asker} asks you to go and hear what the dead want.",
-          "{asker} hears the hanged of {scar} each night, and cannot answer them."
+          "{asker} hears the hanged of {scar} each night, and cannot answer them.",
+          "The tree at {scar} speaks at midnight, and {asker} of {town} is too frail to go and listen. You are asked to go in {asker}'s place."
         ],
         "news_lapse": ["{asker} of {town} was found dead under the old hanging tree at {scar}.", "In {town}, an old one was found under the hanging tree, dead, with a mark on the neck."]
       }

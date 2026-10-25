@@ -387,6 +387,245 @@ def six_rules(game, adv: dict, bp: dict, t: dict) -> list[str]:
     return out
 
 
+# ---------------------------------------------------------------------------- situations (Part C, §5.15-5.16, §7)
+VISIBLE = {"npc_fate", "dead_kin", "away", "tie", "grave", "mark", "favour", "contact", "shop", "move", "law",
+           "disposition", "standing", "item", "plant", "hand", "give_back", "lay_scar", "news", "step", "key", "tell"}
+OUTWARD = {"favour", "contact", "tie", "thread", "step", "key", "standing", "law"}
+OUTWARD_ROOTS = {"threat", "politics", "faction", "history", "adventure", "companion", "vignette", "land"}
+OUTWARD_ROLES = {"band", "faction", "threat", "figure", "site"}
+FIGHT_ONLY = {"assassinate", "clear_lair", "bounty"}  # (work done only by blood: a rescue or a retrieval may be crept)
+
+
+def forge_situations(game, count: int) -> list[dict]:
+    """Up to `count` situations forged from the towns' own roots, nearest towns first, round after round (each town
+    peopled as the hero would find it; the rarity rules are the rarity measure's, not the storybook's)."""
+    from realmwalker.game.people import prepare_town
+    from realmwalker.game.story import situations
+
+    w = game.world
+    towns = sorted((s for s in w.settlements if s.population > 0 and s.kind in ("village", "town", "city")),
+                   key=lambda s: (abs(s.x - game.player.x) + abs(s.y - game.player.y), s.id))[:24]
+    out = []
+    for _ in range(4):
+        for s in towns:
+            if len(out) >= count:
+                return out
+            prepare_town(game, s)
+            sit = situations.make(game, s.id)
+            if sit is not None:
+                out.append(sit)
+    return out
+
+
+def _role_line(game, sit: dict, role: str) -> str:
+    from realmwalker.game.story import situations
+
+    rec = sit["roles"][role]
+    full, _, title = situations._name(game, rec)
+    w = game.world
+    if rec.get("npc") is not None:
+        n = w.npcs.get(rec["npc"])
+        bits = [title] + ([rec["kin"]] if rec.get("kin") else []) + ([rec["tie"]] if rec.get("tie") else [])
+        if n is not None:
+            bits.append(f"{n.age}")
+        return f"{full} ({', '.join(b for b in bits if b)})"
+    if rec.get("band") is not None or rec.get("faction") is not None:
+        return f"{rec.get('name', full)} ({rec.get('kind', 'band')}, faction {rec.get('faction')}, site {rec.get('site')})"
+    return full
+
+
+def _act_text(game, sit: dict, a: dict) -> str:
+    from realmwalker.game.story import situations
+    from realmwalker.rules.items import money_text
+
+    label = situations._fill(game, sit, a.get("label") or a["id"], f"act/{a['id']}")
+    extra = []
+    if a.get("check"):
+        extra.append(f"{a['check'][0].replace('_', ' ').capitalize()} {a['check'][1]}")
+    if a.get("price"):
+        extra.append(money_text(situations._price(sit, a)))
+    if a.get("needs"):
+        extra.append("after " + ", ".join(a["needs"]))
+    return f"{a['id']}: {label}" + (f" ({'; '.join(extra)})" if extra else "")
+
+
+def situation_synopsis(game, sit: dict) -> str:
+    """A situation as §7 prints it: predicament, turn, roles, stakes, meeting, obstacles and their ways, goals,
+    endings, the lapse and the thread outward."""
+    from realmwalker.game.story import situations
+
+    w = game.world
+    spec = situations.spec_of(game, sit)
+    situations._write_words(game, sit)
+    town = w.settlements[sit["town"]]
+    root = sit["root"]
+    where = f"root: {root.get('kind')} {root.get('key', '')}".strip()
+    if sit.get("adventure"):
+        where += f"; inside adventure {sit['adventure']}, step {sit.get('step')}"
+    head = situations.title(game, sit).upper()
+    tail = f"(situation {sit['id']}, {town.name}; {where})"
+    lines = [f"{head:<{max(len(head) + 2, WIDTH - len(tail))}}{tail}"]
+
+    def field(label: str, text: str) -> None:
+        wrapped = textwrap.wrap(text, WIDTH - 13) or [""]
+        lines.append(f"{label:<13}{wrapped[0]}")
+        lines.extend(" " * 13 + more for more in wrapped[1:])
+
+    turn = (sit.get("turn") or {}).get("id") or "none"
+    field("Predicament", f"{spec.get('name', sit['predicament'])} ({sit['predicament']})      Turn  {turn}")
+    for role in sit["roles"]:
+        field("Roles" if role == next(iter(sit["roles"])) else "", f"{role:<11}{_role_line(game, sit, role)}")
+    field("Stakes", f"{sit['words'].get('stakes', '')} (due day {sit['clock']['due']}, made day {sit['made']})")
+    m = sit.get("meeting") or {}
+    scene = ((situations.data(game).get("meetings") or {}).get(m.get("kind")) or {}).get("scene")
+    field("Meeting", f"{m.get('kind')} (scene {scene})")
+    field("Plea", sit["words"].get("plea", ""))
+    for ob in sit["obstacles"]:
+        note = situations._fill(game, sit, ob.get("note"), f"note/{ob['id']}")
+        ways = [_act_text(game, sit, a) for a in ob.get("acts", [])]
+        if ob.get("favour"):
+            ways.append("a favour called in")
+        if ob.get("spells"):
+            ways.append("magic: " + ", ".join(ob["spells"]))
+        field("Obstacle", f"{ob['kind']} ({ob.get('who', '-')}): {note} Ways: " + " | ".join(ways))
+    acts = [_act_text(game, sit, a) + f" [with {a.get('who')}]" for a in spec.get("acts", [])]
+    if acts:
+        field("Acts", " | ".join(acts))
+    if sit.get("quest") or spec.get("work"):
+        field("Work", (spec.get("work") or {}).get("kind", "?"))
+    field("Goals", "; ".join(f"{g['id']} = {g['test']}" for g in sit["goals"]))
+    for e in spec.get("endings", []):
+        ops = ", ".join(o[0] if len(o) < 2 else f"{o[0]} {o[1]}" for o in e.get("ops", []))
+        line = situations._fill(game, sit, e.get("line"), f"end/{e['id']}")
+        cond = f" if {' and '.join(e['if'])}" if e.get("if") else ""
+        field("Endings" if e is spec["endings"][0] else "", f"{e['id']} ({e['tone']}{cond}): {line} [{ops}]")
+    lapse = spec.get("lapse") or {}
+    field("Lapse", f"{situations._fill(game, sit, lapse.get('line'), 'end/lapsed')} "
+                   f"[{', '.join(o[0] for o in lapse.get('ops', []))}]")
+    field("Connects", "; ".join(_threads(game, sit)) or "nothing outward")
+    return "\n".join(lines)
+
+
+def _all_ops(spec: dict) -> list[list]:
+    acts = [a for ob in spec.get("obstacles", []) for a in ob.get("acts", [])] + spec.get("acts", [])
+    out = [o for e in spec.get("endings", []) for o in e.get("ops", [])]
+    out += [o for a in acts for o in a.get("then", [])] + [o for g in spec.get("goals", []) for o in g.get("then", [])]
+    return out
+
+
+def _leading_ops(spec: dict, e: dict) -> list[list]:
+    """The ops of the acts that make an ending's goal true (the hermit thrown from the bridge is dead by the act)."""
+    goal = next((g for g in spec.get("goals", []) if g["id"] == e.get("when")), None)
+    flags = {goal["test"][1]} if goal and goal["test"][0] == "flag" else set()
+    acts = [a for ob in spec.get("obstacles", []) for a in ob.get("acts", [])] + spec.get("acts", [])
+    return [o for a in acts if any(x[:2] == ["flag", f] for x in a.get("then", []) for f in flags)
+            for o in a.get("then", [])]
+
+
+def _threads(game, sit: dict) -> list[str]:
+    from realmwalker.game.story import situations
+
+    spec = situations.spec_of(game, sit)
+    out = []
+    if sit.get("adventure"):
+        out.append(f"adventure {sit['adventure']}")
+    if sit.get("threat"):
+        out.append(f"threat {sit['threat']}")
+    if sit["root"].get("kind") in OUTWARD_ROOTS:
+        out.append(f"root {sit['root']['kind']}")
+    out += [f"{r} ({k})" for r, rec in sit["roles"].items() for k in OUTWARD_ROLES if rec.get(k) is not None][:3]
+    ties = sorted({o[0] for o in _all_ops(spec) if o and o[0] in OUTWARD})
+    if ties:
+        out.append("a lasting tie: " + ", ".join(ties))
+    if any(o and o[0] == "disposition" and int(o[2]) <= -20 for o in _all_ops(spec)):
+        out.append("an enemy made")
+    if spec.get("work"):
+        out.append(f"work: {spec['work'].get('kind')}")
+    return out
+
+
+def situation_rules(game, sit: dict) -> list[str]:
+    """§5.15's six rules for one situation: (1) a person with a name and a stake; (2) every ending leaves something
+    to see later; (3) a real decision (two endings that end differently); (4) a way through without a fight; (5) a
+    thread outward; (6) money only from someone who would pay, and never the whole of a reward."""
+    from realmwalker.game.story import situations
+
+    spec = situations.spec_of(game, sit)
+    sid = f"{sit['id']} ({sit['predicament']}, {game.world.settlements[sit['town']].name})"
+    out = []
+    asker = situations.asker(game, sit)
+    if asker is None or not asker.name or not sit["words"].get("stakes"):
+        out.append(f"{sid}: rule 1: nobody with a name asks, or nothing is at stake")
+    for e in spec.get("endings", []) + [dict(spec.get("lapse") or {}, id="lapse")]:
+        if not any(o and o[0] in VISIBLE for o in e.get("ops", []) + _leading_ops(spec, e)):
+            out.append(f"{sid}: rule 2: the ending {e.get('id')} leaves nothing to see later")
+    ends = {(e.get("tone"), tuple(sorted(o[0] for o in e.get("ops", [])))) for e in spec.get("endings", [])}
+    ends.add(((spec.get("lapse") or {}).get("tone"), tuple(sorted(o[0] for o in (spec.get("lapse") or {}).get("ops", [])))))
+    if len(ends) < 2:
+        out.append(f"{sid}: rule 3: no two endings end differently")
+    acts = [a for ob in sit["obstacles"] for a in ob.get("acts", [])] + spec.get("acts", [])
+    peaceful = [a for a in acts if a.get("way", "talk") != "fight"] + \
+        [ob for ob in sit["obstacles"] if ob.get("favour") or ob.get("spells")]
+    work = (spec.get("work") or {}).get("kind")
+    if not peaceful and work in FIGHT_ONLY:
+        out.append(f"{sid}: rule 4: no way through without a fight")
+    if not _threads(game, sit):
+        out.append(f"{sid}: rule 5: nothing connects it outward")
+    for e in spec.get("endings", []):
+        money = [o for o in e.get("ops", []) if o and o[0] == "money" and int(o[1]) > 0]
+        if not money:
+            continue
+        if asker is None:
+            out.append(f"{sid}: rule 6: the ending {e['id']} pays, and nobody of the town would pay it")
+        if not any(o[0] in VISIBLE and o[0] not in ("money",) for o in e.get("ops", [])):
+            out.append(f"{sid}: rule 6: the ending {e['id']} rewards with money alone")
+    return out
+
+
+def situation_words(game, sit: dict) -> list[str]:
+    """Every line the situation can show, each variant filled: a slot left unfilled is a problem."""
+    from realmwalker.game.story import situations
+
+    spec = situations.spec_of(game, sit)
+    values = situations._values(game, sit)
+    tables = game.tables.adventures.get("words", {})
+    rng = game.world.rng.child(f"storybook/{sit['id']}")
+    lines = []
+    for k, v in spec.get("words", {}).items():
+        if k != "keep" and isinstance(v, list):
+            lines += [(f"words.{k}", x) for x in v if isinstance(x, str)]
+    for e in spec.get("endings", []) + [dict(spec.get("lapse") or {}, id="lapse")]:
+        lines += [(f"ending {e.get('id')}", x) for x in e.get("line", [])]
+    acts = [a for ob in sit["obstacles"] for a in ob.get("acts", [])] + spec.get("acts", [])
+    for ob in sit["obstacles"]:
+        lines += [(f"obstacle {ob['id']}", x) for x in ob.get("note", []) + ob.get("magic_note", [])]
+    for a in acts:
+        for k in ("label", "say", "fail_say", "note"):
+            lines += [(f"act {a['id']} {k}", x) for x in a.get(k) or []]
+    out = []
+    for where, line in lines:
+        left = SLOT.findall(textgen.fill(line, rng, tables, values))
+        if left:
+            out.append(f"{sit['id']} ({sit['predicament']}): {where}: {', '.join(left)} left unfilled in "
+                       f"\"{line[:60]}...\"")
+    return out
+
+
+def run_situations(seed: int, size: str, count: int, check: bool, quiet: bool = False, tables=None,
+                   name: str | None = None) -> tuple[list[dict], list[str]]:
+    tables = tables or load_tables()
+    game = make_game(seed, size, tables, name)
+    sits = forge_situations(game, count)
+    trouble = [] if sits else [f"seed {seed}: no situation could be forged"]
+    for sit in sits:
+        if not quiet:
+            print(situation_synopsis(game, sit))
+            print()
+        if check:
+            trouble += situation_rules(game, sit) + situation_words(game, sit)
+    return sits, trouble
+
+
 # ---------------------------------------------------------------------------- the command
 def run(seed: int, size: str, count: int, blueprint: str | None, check: bool, quiet: bool = False,
         tables=None, name: str | None = None) -> tuple[list[dict], list[str]]:
@@ -420,8 +659,12 @@ def main() -> int:
     ap.add_argument("--blueprint", default=None)
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--name", default=None, help="the world's name (a test world's, to use its cache)")
+    ap.add_argument("--situations", type=int, default=0, help="print (and --check) this many situations instead")
     a = ap.parse_args()
-    _, trouble = run(a.seed, a.size, a.count, a.blueprint, a.check, name=a.name)
+    if a.situations:
+        _, trouble = run_situations(a.seed, a.size, a.situations, a.check, name=a.name)
+    else:
+        _, trouble = run(a.seed, a.size, a.count, a.blueprint, a.check, name=a.name)
     if a.check:
         for p in trouble:
             print("PROBLEM:", p)
