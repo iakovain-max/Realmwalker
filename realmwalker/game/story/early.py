@@ -212,6 +212,9 @@ def _contingency_step(game, adv: dict) -> dict:
     beat = "early_last_letter" if villain.speaks(game, adv) else "early_loosed"
     lo, hi = spec(game)["after"]
     target = {"beat": beat, "group": beats._minions(game, {"adv": adv["id"]}), "after": [int(lo), int(hi)]}
+    field = game.tables.adventures["blueprints"][adv["blueprint"]]["finale"].get("endure_field")
+    if field:
+        target["field"] = field  # (its last orders carried out on the land: a burning village, E.5)
     return {"id": "early.1", "kind": "endure", "state": "open", "optional": False, "gives": [], "target": target}
 
 

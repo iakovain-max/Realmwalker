@@ -162,6 +162,8 @@
         "boss": "villain",
         "template": "outlaw",
         "at": "home.deepest",
+        "arenas": ["throne_hall", "bridge", "tower_top"],
+        "endure_field": "burning_village",
         "keys": {
           "backway": ["surprise"],
           "inside": ["minions(-50)"]

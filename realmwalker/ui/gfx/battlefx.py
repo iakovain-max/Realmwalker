@@ -195,6 +195,15 @@ class BattleBoard:
             dur = 0.3 if k == "fly" else 0.22
             self.lifts[who] = (t, start, end, dur)
             return t + dur
+        if k == "telegraph":  # a boss marks where its great attack will fall (the omen zone shows the place)
+            self.fx.append({"kind": "float", "who": ev["by"], "text": "!", "color": (255, 120, 90), "t0": t,
+                            "dur": FLOAT, "size": 22})
+            return t + 0.3
+        if k == "great":  # ...and it falls there
+            for c in ev.get("cells", ())[::2]:
+                self.fx.append({"kind": "puff", "at": tuple(c), "t0": t, "dur": 0.45, "color": (255, 150, 110)})
+            self.shake_until = max(self.shake_until, t + 0.35)
+            return t + 0.45
         if k in ("boss", "phase"):  # a story's villain: its name and its line cross the mat, and the ground shakes
             self.fx.append({"kind": "banner", "title": ev.get("name", ""), "sub": ev.get("line", ""), "t0": t,
                             "dur": BANNER})
@@ -690,6 +699,13 @@ class BattleBoard:
                     bx, by = self.sq_px(min(xs), min(ys))
                     canvas.under(theme.lines_box(bx, by, (max(xs) - min(xs) + 1) * T, (max(ys) - min(ys) + 1) * T,
                                                  (*col, int(110 + 70 * pulse))))
+            elif z.kind in ("omen", "rite"):  # where a boss's great attack will fall; a ritual circle flaring (E.5)
+                pulse = 0.5 + 0.5 * math.sin(now * (5.0 if z.kind == "omen" else 2.4)) if ambient else 0.7
+                col = (255, 70, 50) if z.kind == "omen" else (170, 200, 255)
+                for (x, y) in z.cells:
+                    px, py = self.sq_px(x, y)
+                    canvas.under(Rect(px, py, T, T, (*col, int(40 + 50 * pulse))))
+                    canvas.under(Rect(px + 1, py + 1, T - 2, T - 2, (*col, int(90 + 80 * pulse)), line=1))
             elif z.kind in ("fire", "sphere"):
                 frames = atlas.family("fx/fire") or atlas.family("fx/flame")
                 for i, (x, y) in enumerate(sorted(z.cells)):

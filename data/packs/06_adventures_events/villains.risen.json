@@ -68,6 +68,36 @@
       "resistances": 2,
       "actions": 2,
       "menu": ["move", "strike"],
+      "entrance": [
+        "{name} rises from the seat, slow as a tide, and the cold of the grave comes off it like breath off ice.",
+        "Dust pours from {name} as it stands. Old gold glints on its brow, and the dark in the hall leans towards it.",
+        "{name} lifts one hand, and every flame in the place bows low and burns blue."
+      ],
+      "great": {
+        "name": "the grave-cold",
+        "area": {"size": 10, "range": 60},
+        "save": "con",
+        "dc": [12, 14, 16, 18],
+        "damage": ["2d10", "4d10", "6d10", "8d10"],
+        "type": "necrotic",
+        "every": 3,
+        "first": 2,
+        "warn": [
+          "{name} points, and frost creeps out across the floor in a ring. The air there grows thick and grey. Something is coming to that place.",
+          "The crown on {name} burns cold, and a circle of rime spreads on the ground, white and widening. Do not be standing in it.",
+          "{name} whispers a word older than the barrow, and the shadows pool on the floor in a circle, deepening."
+        ],
+        "go": [
+          "The grave-cold falls where the frost was, and it bites to the bone.",
+          "The circle of rime goes black, and the cold in it is the cold of the long dark under the hill.",
+          "{name} closes its hand, and the pooled shadow drinks the warmth from everything inside it."
+        ]
+      },
+      "by_tier": {
+        "2": {"menu": ["move", "strike", "command"]},
+        "3": {"resistances": 3, "actions": 3},
+        "4": {"hp": 2.0}
+      },
       "phase": {
         "at": 0.5,
         "kind": "raise",

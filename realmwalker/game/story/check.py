@@ -152,6 +152,16 @@ def problems(tables) -> list[str]:
         for k, keys in fin.get("keys", {}).items():
             for key in keys:
                 _key(f"{where}, finale.keys.{k}", key, out)
+        from realmwalker.game import arena as arenamod
+        from realmwalker.game.story import arenas
+
+        for a in fin.get("arenas", ()):  # (E.5: the finale's arenas, code and words)
+            if a not in arenas.ARENAS or a not in arenas.CHANGES:
+                out.append(f"{where}: the finale's arena '{a}' is not one the game knows ({', '.join(arenas.ARENAS)}).")
+            elif a not in tables.adventures.get("arenas", {}):
+                out.append(f"{where}: the finale's arena '{a}' has no words in adventures.json \"arenas\".")
+        if fin.get("endure_field") and fin["endure_field"] not in arenamod.FIELDS:
+            out.append(f"{where}: the set piece's field '{fin['endure_field']}' is not one the game knows.")
         for e in bp["endings"]:
             if not _built(e):
                 continue
@@ -202,6 +212,11 @@ def problems(tables) -> list[str]:
         if "phase" in boss and boss["phase"]["kind"] not in finale.PHASES:
             out.append(f"villains.json: boss {tid}: the second phase '{boss['phase']['kind']}' is not one the game "
                        f"knows.")
+        for tier, over in (boss.get("by_tier") or {}).items():  # (E.5: its numbers at the tiers above)
+            for m in over.get("menu", ()):
+                if m not in finale.LEGENDARY:
+                    out.append(f"villains.json: boss {tid} at tier {tier}: the legendary action '{m}' is not one the "
+                               f"game knows.")
         if boss.get("phase", {}).get("creature") and boss["phase"]["creature"] not in tables.creatures:
             out.append(f"villains.json: boss {tid}: there is no creature '{boss['phase']['creature']}' to come at its "
                        f"second phase.")

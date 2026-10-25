@@ -391,7 +391,9 @@ def endure(game, adv: dict, st: dict | None) -> list[str]:
     if st is None or st["state"] != "open" or st["kind"] != "endure":
         return []
     st["fighting"] = _today(game)
-    _encounter(game, adv, st, "endure", st["target"]["group"], say(game, adv, "endure_here"))
+    enc = _encounter(game, adv, st, "endure", st["target"]["group"], say(game, adv, "endure_here"))
+    if enc is not None:
+        enc.field = st["target"].get("field", "")  # (a set piece's own battlefield: the burning village, E.5)
     return []
 
 

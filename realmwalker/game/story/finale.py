@@ -8,6 +8,12 @@ not here.
 
 The finale's band carries the story tag {"adv", "role"} on its creatures (saved with the actor); `prepare` finds
 the adventure from it, so any fight with the boss is its finale, wherever it is met.
+
+E.5: a template's `by_tier` {"3": {...}} overrides its numbers at the tiers above (more Legendary Resistances and
+actions, "command" in the menu, a harder great attack); `great` is its telegraphed great attack (dc and damage a
+list by tier: rules/engine/handlers/bosses.py); `entrance` its words as it enters (the battle's "boss" event, a banner
+across the mat). The arena (game/story/arenas.py) is laid when the field is built, and armed here to change with the
+second phase.
 """
 
 from __future__ import annotations
@@ -53,8 +59,28 @@ def template_for(tables, adv: dict) -> dict:
     return tables.villains["bosses"][adv["finale"]["template"]]
 
 
+def at_tier(template: dict, tier: int) -> dict:
+    """The template's numbers at this tier: its `by_tier` entries up to it laid over the base, in order."""
+    out = dict(template)
+    for t in sorted((int(k) for k in (template.get("by_tier") or {})), key=int):
+        if t <= int(tier):
+            out.update(template["by_tier"][str(t)])
+    return out
+
+
+def great_at(spec: dict, tier: int) -> dict:
+    """A great attack's numbers at this tier (dc and damage are lists by tier, the last kept for the tiers above)."""
+    d = dict(spec)
+    for k in ("dc", "damage"):
+        v = spec[k]
+        d[k] = v[max(0, min(len(v) - 1, int(tier) - 1))] if isinstance(v, list) else v
+    return d
+
+
 def make_boss(battle, f, template: dict, tier: int) -> None:
-    """The template on the creature: hit points, Legendary Resistances, legendary actions, the phase armed."""
+    """The template on the creature: hit points, Legendary Resistances, legendary actions, the phase armed, its great
+    attack (E.5)."""
+    template = at_tier(template, tier)
     d = dict(f.cdef)
     mult = float(template["hp"]) * (1.0 + 0.15 * (int(tier) - int(template["tiers"][0])))
     hp = max(f.max_hp, int(round(f.max_hp * mult)))
@@ -71,6 +97,8 @@ def make_boss(battle, f, template: dict, tier: int) -> None:
         d["legendary"] = {"uses": int(template["actions"]), "actions": actions}
     if template.get("phase"):
         d["boss_phase"] = dict(template["phase"])
+    if template.get("great"):
+        d["boss_great"] = great_at(template["great"], tier)
     d["morale"] = "fanatic"  # (at its end it stands and fights: law 5, and the tale's own words)
     f.cdef = d
     if f.creature is not None:
@@ -119,7 +147,14 @@ def prepare(battle, game) -> list[str]:
         line = early.on_boss(battle, game, adv, f)  # (come back from the dead, and harder to put down: E.4)
         if line:
             out.append(line)
-        battle.events.append({"kind": "boss", "who": f.id, "name": f.name, "line": adv["title"]})  # (its entrance)
+        entrance = at_tier(template, int(adv["tier"])).get("entrance")
+        if entrance:  # (its entrance: the words, and its name across the mat)
+            words = battle.rng.choice(entrance).replace("{name}", f.the_name)
+            out.append(f"<danger>{words[:1].upper() + words[1:]}</>")
+        battle.events.append({"kind": "boss", "who": f.id, "name": f.name, "line": adv["title"]})
+        from realmwalker.game.story import arenas
+
+        out += arenas.on_finale(battle, game, adv, f)  # (the arena armed to change with its second phase)
         for found, keys in adv["finale"]["keys"].items():
             if found not in adv["keys"]:
                 continue
@@ -171,6 +206,12 @@ def _strike(f) -> list[dict]:
 def _move(f) -> list[dict]:
     """It moves out of turn (half its speed, without drawing blows): Battle._legendary_window."""
     return [{"move": True}]
+
+
+@legendary("command")
+def _command(f) -> list[dict]:
+    """One of its own side strikes at its word (rules/engine/handlers/bosses.command)."""
+    return [{"command": True}]
 
 
 # ---------------------------------------------------------------------------- keys

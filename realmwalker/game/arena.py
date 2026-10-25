@@ -107,6 +107,9 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
     x0 = max(0, min(lm.width - W, x0))
     y0 = max(0, min(lm.height - H, y0))
     terrain = game.remap_for(lm)[lm.terrain[x0:x0 + W, y0:y0 + H]].astype(np.uint16)
+    dressed = _finale_arena(game, lm, actor, terrain, (me[0] - x0, me[1] - y0),
+                            None if them is None else (max(0, min(W - 1, them[0] - x0)), max(0, min(H - 1, them[1] - y0))),
+                            rng)
     lights = _terrain_lights(game, terrain)
     under = lm.under_rock(*me)
     indoors = under or lm.building_at(*me) is not None
@@ -114,6 +117,13 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
                        key=f"{lm.key}/battle{number}", base_light=env.light, indoors=indoors, underground=under,
                        ground=env.ground, lights=lights, origin=(x0, y0))
     field.cut_from = lm.key  # (its dead and blood are written back there: game/remains.py)
+    if dressed is not None:
+        field.lights = list(field.lights) + [tuple(x) for x in dressed["lights"] if tuple(x) not in field.lights]
+        field.__dict__["arena"] = dressed  # (the finale's arena: game/story/arenas.py)
+        if dressed["fires"]:
+            field.__dict__["fires"] = sorted(dressed["fires"])
+            field.__dict__["village"] = bool(dressed.get("burning"))
+        field._derive()
     lead = (me[0] - x0, me[1] - y0)
     if them is not None:
         foe_at = (max(0, min(W - 1, them[0] - x0)), max(0, min(H - 1, them[1] - y0)))
@@ -221,6 +231,7 @@ def _wild(game, party, creatures, env, rng, *, situation, number):
                        ground=env.ground, lights=lights)
     if fires:
         field.__dict__["fires"] = sorted(fires)  # (lit by fire.on_battle_start: the carts burning)
+        field.__dict__["village"] = story_field == "burning_village"  # (its houses' timbers catch: E.5)
     taken: set = set()
     spots = _place_party(field, party, lead, forward, taken)
     mode = {"ambushed": "surround", "camp": "surround", "unaware": "cluster"}.get(situation, "line")
@@ -275,7 +286,30 @@ def _captors(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
     return [(fire[0], fire[1], 4)], set()
 
 
-FIELDS = {"ford": _ford, "captors": _captors}  # a story's own battlefields (the hold step's `field`: Expansion 6 D.3)
+def _village(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
+    from realmwalker.game.story import arenas
+
+    return arenas.village_field(terrain, tables, lead, foe_at, nrng)
+
+
+# a story's own battlefields (the hold step's `field`: Expansion 6 D.3; a set piece's: E.5)
+FIELDS = {"ford": _ford, "captors": _captors, "burning_village": _village}
+
+
+def _finale_arena(game, lm, actor, terrain, lead, foe_at, rng) -> dict | None:
+    """A story's finale fought here: its arena laid on the terrain (game/story/arenas.py), the two sides joined."""
+    if actor is None or foe_at is None or lm.kind != "dungeon":
+        return None
+    from realmwalker.game import story
+    from realmwalker.game.story import arenas
+
+    adv = story.finale_band(game, actor)
+    if adv is None:
+        return None
+    out = arenas.lay(game, adv, lm.meta.get("style", ""), terrain, lead, foe_at, rng.numpy("arena-dress"))
+    if out is not None:
+        _connect(terrain, game.tables, lead, foe_at)
+    return out
 
 
 def _robbers(game, creatures) -> bool:

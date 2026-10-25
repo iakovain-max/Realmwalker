@@ -170,6 +170,7 @@
         "boss": "villain",
         "template": "risen",
         "at": "home.deepest",
+        "arenas": ["throne_hall", "ritual_circle", "bridge", "tower_top"],
         "keys": {
           "anchor": ["no_legendary_resistance", "no_escape"],
           "name": ["frightened(1)"],

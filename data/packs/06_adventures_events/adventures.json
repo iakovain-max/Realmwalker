@@ -39,6 +39,74 @@
       "\"We are counting on you,\" says {patron}. \"{goal}\""
     ]
   },
+  "arenas": {
+    "throne_hall": {
+      "styles": ["crypt", "hideout", "temple", "cellars", "tower", "warren"],
+      "enter": [
+        "A long hall, pillared, with a seat at the far end and braziers burning either side of it. Stone coffins line the walls.",
+        "Pillars march down either side of the hall towards a raised seat. Firelight from two braziers throws their shadows long across the floor.",
+        "The room opens into a hall of pillars. At its end, between two burning braziers, someone has made a throne of the place."
+      ],
+      "change": [
+        "Stone grinds on stone across the hall.",
+        "The pillars shudder, and dust and grit rain from above.",
+        "A crack runs through the floor, and the hall groans like a ship in a storm."
+      ]
+    },
+    "ritual_circle": {
+      "styles": ["crypt", "temple", "tower", "cave"],
+      "enter": [
+        "A circle is cut into the floor here, deep and old, and standing stones keep its four quarters. Whatever stands inside it is waiting for you.",
+        "Lines are scored into the ground in a ring, filled with something dark that has dried. Four stones stand round it like mourners.",
+        "A ring of carved stone, four standing stones about it, and in the middle of it all your enemy."
+      ],
+      "change": [
+        "The circle wakes: its lines fill with a cold light that hurts to look at.",
+        "Light runs round the ring in the floor like fire along a fuse, cold and white.",
+        "The carved ring blazes up, and the air above it shimmers with a cold that burns."
+      ]
+    },
+    "bridge": {
+      "styles": ["cave", "crypt", "cellars", "hideout", "warren"],
+      "enter": [
+        "The floor ends at a chasm. A narrow bridge crosses it, and on the far side your enemy waits.",
+        "A crack in the earth splits the place in two, black and bottomless, with one narrow way across.",
+        "Between you and the end of this a chasm opens, crossed by a bridge two strides wide. There is no other way over."
+      ],
+      "change": [
+        "The ground at the chasm's lip cracks and slides away into the dark.",
+        "With a roar of falling stone the edge of the chasm gives way.",
+        "Rock breaks from the chasm's edge and falls, and falls, and you never hear it land."
+      ]
+    },
+    "tower_top": {
+      "styles": ["tower"],
+      "wild": true,
+      "enter": [
+        "The stair ends under the open sky: the top of the tower, a ring of parapet, and nothing beyond it but the wind and the drop.",
+        "Wind tears at you as you come up onto the roof. The parapet is waist-high and old, and the ground is very far below.",
+        "Flagstones, sky, and a low wall all round, and past it a long, long fall. Your enemy stands on the roof, waiting."
+      ],
+      "change": [
+        "The old parapet cracks and stones tumble away into the drop.",
+        "With a grinding lurch part of the parapet breaks off and falls.",
+        "The wall round the roof crumbles in places, leaving nothing between you and the sky."
+      ]
+    },
+    "burning_village": {
+      "wild": true,
+      "enter": [
+        "The houses are burning. Roofs blaze on both sides of the way, and the heat rolls over you in waves.",
+        "Smoke and flame and the crack of burning timber: the hamlet is on fire, and the ones who lit it are still here.",
+        "Every other roof in the place is alight. Sparks drift across the lane like snow."
+      ],
+      "change": [
+        "With a roar the fire leaps to the next roof.",
+        "A gust drives the flames across the lane, and another house goes up.",
+        "Burning thatch blows over the road, and the fire takes hold of a new roof."
+      ]
+    }
+  },
   "epithets": {
     "beast": [
       "Beastslayer",
@@ -264,6 +332,7 @@
         "boss": "villain",
         "template": "beast",
         "at": "home.deepest",
+        "arenas": ["bridge", "ritual_circle"],
         "keys": {
           "weakness": [
             "weakness"

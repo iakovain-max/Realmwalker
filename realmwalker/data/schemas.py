@@ -1531,7 +1531,9 @@ BLUEPRINT = Obj({
     "chapters": List(CHAPTER, min_items=2, max_items=6),
     "finale": Obj({"boss": Str(max_len=60), "template": Str(max_len=40), "at": Str(max_len=80),
                    "with": List(Str(max_len=60), optional=True), "keys": Map(List(Str(max_len=60)), optional=True),
-                   "words": Map(word_list(1, 600), optional=True)}),
+                   "words": Map(word_list(1, 600), optional=True),
+                   # (E.5) the arenas it may be fought in (story/arenas.py), and the field of a set piece on the land
+                   "arenas": List(Str(max_len=30), optional=True), "endure_field": Str(max_len=30, optional=True)}),
     "endings": List(ENDING, min_items=2),
     "epithets": List(Str(max_len=40), optional=True),  # tags of the epithets its epilogue offers
     # (E.3) the cast roles led by a named lieutenant: the creature at the band's head, their byname, and what one
@@ -1552,8 +1554,24 @@ ADVENTURES = Obj({
     "openings": Map(Obj({"weight": Int(min=0, max=20), "kinds": List(Str(max_len=30), optional=True),
                          "near": Bool(optional=True), "backgrounds": Map(Int(min=0, max=20), optional=True)}),
                     optional=True),
+    # (E.5) a finale's arenas (story/arenas.py): the dungeon styles each fits, or the land; said as the fight begins
+    # and when the boss's second phase changes it
+    "arenas": Map(Obj({"styles": List(Str(max_len=30), optional=True), "wild": Bool(optional=True),
+                       "enter": word_list(3, 300), "change": word_list(3, 300)}), optional=True),
 })
 
+GREAT_ATTACK = Obj({
+    "name": Str(max_len=40),
+    "area": Obj({"size": Int(min=5, max=60), "range": Int(min=0, max=120)}),  # feet; range 0: round itself
+    "save": Str(choices=["str", "dex", "con", "int", "wis", "cha"]),
+    "dc": List(Int(min=8, max=25), min_items=1, max_items=4),  # by tier
+    "damage": List(Str(max_len=20), min_items=1, max_items=4),  # by tier
+    "type": Str(max_len=20),
+    "every": Int(min=2, max=10, optional=True),  # rounds between one and the next (default 3)
+    "first": Int(min=1, max=10, optional=True),  # the first round it may be marked (default 2)
+    "warn": word_list(3, 300),  # said as it is marked ({name})
+    "go": word_list(3, 300),  # said as it falls ({name})
+}, optional=True)
 BOSS = Obj({
     "tiers": TIER_BAND,
     "roles": List(Str(max_len=30), min_items=1),  # what it makes a boss of (a beast, a dead king, a captain...)
@@ -1567,6 +1585,14 @@ BOSS = Obj({
     # met before its finale it fights as itself, and does this when it falls to `at` of its hit points (breaks off)
     "before": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
                   optional=True),
+    # (E.5) its entrance (words as it enters), its telegraphed great attack (rules/engine/handlers/bosses.py: dc and
+    # damage by tier), and its numbers at the tiers above (any of the keys here but `tiers`, `roles`, `by_tier`)
+    "entrance": List(Str(max_len=300), min_items=3, optional=True),
+    "great": GREAT_ATTACK,
+    "by_tier": Map(Obj({"hp": Float(min=1, max=10, optional=True), "resistances": Int(min=0, max=5, optional=True),
+                        "actions": Int(min=0, max=5, optional=True),
+                        "menu": List(Str(max_len=30), min_items=1, optional=True),
+                        "great": GREAT_ATTACK, "entrance": List(Str(max_len=300), min_items=3, optional=True)}), optional=True),
 })
 TEMPER = Obj({
     "speaks": Bool(),

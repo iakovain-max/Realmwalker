@@ -304,6 +304,34 @@
         "move",
         "strike"
       ],
+      "entrance": [
+        "Out of the dark of its den {name} comes, and the ground takes its weight with a sound like a dropped sack of stones.",
+        "{name} lifts its head from what it was eating, and the light finds its eyes, and it comes.",
+        "Something huge unfolds from the shadows at the back of the den. {name} is awake, and you are in its home."
+      ],
+      "great": {
+        "name": "the rampage",
+        "area": {"size": 10, "range": 0},
+        "save": "dex",
+        "dc": [12, 14, 16],
+        "damage": ["2d10", "4d10", "6d10"],
+        "type": "bludgeoning",
+        "every": 3,
+        "first": 2,
+        "warn": [
+          "{name} drops low and gathers itself, every muscle bunching. Whatever is near it when it moves will be under it.",
+          "{name} goes still and coils, head down, tail lashing. It is about to throw its whole weight round.",
+          "A long rumble comes out of {name}, and it braces its feet wide. Get clear of it."
+        ],
+        "go": [
+          "{name} explodes into motion, whirling through everything round it.",
+          "{name} lunges and spins, and the ground round it is a storm of claws and bulk.",
+          "{name} throws itself round in a great sweep, smashing at everything in reach."
+        ]
+      },
+      "by_tier": {
+        "3": {"resistances": 2, "actions": 3}
+      },
       "phase": {
         "at": 0.5,
         "kind": "frenzy",

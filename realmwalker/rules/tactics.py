@@ -112,6 +112,9 @@ def take_turn(b: Battle, f: Fighter) -> None:
     if f.state == "fleeing":
         flee(b, f)
         return
+    _out_of_harm(b, f)
+    if b.current is not f or b.outcome is not None:
+        return
     if "frightened" in f.conditions and (f.cond_ends.get("frightened") or {}).get("terror"):
         _terror_turn(b, f)  # (a Mace of Terror: it runs as far from the bearer as it can, and nothing else)
         return
@@ -125,6 +128,28 @@ def take_turn(b: Battle, f: Fighter) -> None:
         _epic_moves(b, f)
     else:
         _monster_turn(b, f)
+
+
+def _out_of_harm(b: Battle, f: Fighter) -> None:
+    """Standing where a boss's great attack is about to fall (its omen on the field, Expansion 6 E.5): step out first,
+    to the nearest square outside it - and beside a foe, if one can be reached as cheaply."""
+    if f.move_left <= 0 or not any(z.kind == "omen" for z in b.zones):
+        return
+    from realmwalker.rules.engine.handlers import bosses
+
+    if not bosses.in_omen(b, f):
+        return
+    bad = bosses.omen_cells(b, f)
+    tree = b.move_tree(f)
+    occ = b.occupied_by_others(f)
+    spots = [sq for sq in tree if not any(c in bad for c in grid.cells(sq[0], sq[1], f.sq))
+             and grid.can_stop(sq, f.sq, occ)]
+    if not spots:
+        return
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    best = min(spots, key=lambda sq: (tree[sq].cost, tree[sq].risk,
+                                      min((b.gap_from(f, sq, e) for e in foes), default=0)))
+    b.walk(f, grid.route(tree, best))
 
 
 def _shift_shapes(b: Battle, f: Fighter) -> None:
