@@ -14,8 +14,8 @@ wrath is villain.on_fight's), taken (given to the law, or questioned and kept), 
 In a fight (`arm`, from finale.prepare): its trait's morale and, where the trait runs at all, a try at escape at
 `flee_at` of its hit points (the kernel's boss phase "escape": gone at once with nobody beside it, else it must run
 for it); each grudge more hit points, armour and a better blade (villains.json lieutenants.grudge). Every lieutenant
-still free stands beside the villain at the finale (`join_finale`, from story.fight_finale): the lieutenant slain is
-not in the fight.
+still free stands beside the villain at the finale, in the place of one of its men (`join_finale`, from
+story.fight_finale): the lieutenant slain is not in the fight.
 
 At the tale's end (`after_tale`, from endings.finish) each lieutenant gets a page in the epilogue, and the one with
 the greatest grudge who is still free when its villain has fallen is promoted: a nemesis
@@ -307,7 +307,8 @@ def on_fate(game, creature, fate: str) -> str | None:
 
 # ---------------------------------------------------------------------------- the finale
 def join_finale(game, adv: dict, actor) -> list[str]:
-    """Every lieutenant still the villain's stands beside it at the end (once: they stay in its band)."""
+    """Every lieutenant still the villain's stands beside it at the end, each in the place of one of its men (the
+    band is led, not swollen: law 5's numbers stay the finale's); once, and they stay in its band."""
     if actor is None or not actor.creatures or adv.get("lt_joined"):
         return []
     from realmwalker.rules.creatures import spawn
@@ -329,6 +330,9 @@ def join_finale(game, adv: dict, actor) -> list[str]:
         c = spawn(game.tables, cid, rng.child(role), uid, now=game.world.time)
         uid += 1
         _dress(c, rec, adv["id"], role, int(adv["cast"][role]["lt"]))
+        men = [m for m in actor.creatures if (getattr(m, "story", None) or {}).get("role") == "minion"]
+        if men:
+            actor.creatures.remove(men[-1])
         actor.creatures.append(c)
         key = "turncoat" if rec["fate"] == "turncoat" else "joins_grudge" if int(rec.get("grudge", 0)) else "joins"
         out.append(line(game, adv, rec, key, rng))

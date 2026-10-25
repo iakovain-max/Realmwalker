@@ -567,10 +567,38 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.3 (*lieutenants who remember: escapes,
-scars, grudges, promotion, turning; their epilogue lines*), on branch `dlc/06-adventures-events`. Read docs/expansions/
-06-adventures-events.md Part E, docs/ADVENTURES.md §5.5, game/story/villain.py (docstring and the E.2 sections),
-game/story/finale.py, and the E.2 and E.1 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.4 (*escapes once per adventure, anchors,
+returning villains, early ends (contingencies, a lieutenant's succession, "the cat is away"); step kind `endure`*), on
+branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.4
+("Escapes and early ends", "Anchors and returning villains"), game/story/lieutenants.py and villain.py (docstrings),
+game/story/finale.py, endings.py (`sequel`), and the E.3, E.2 and E.1 notes below. A lieutenant's succession can build
+on lieutenants.py: the one with the greatest grudge still free (`after_tale` picks it for the nemesis today).
+E.3 (2026-10-25, realmwalker-a): `game/story/lieutenants.py` (docstring has it all). Blueprint `lieutenants` [{as,
+creature, titles, turns}] (risen: waker; outlaw: raiders, lookout) on cast roles that are bands; `forge` (from
+forge._record, after the cast is bound) keeps records on `threat["lieutenants"]` and the cast entry's "lt" index (the
+living come back with a returning villain: AGAIN fates); `cast.describe` and `deeds.role_name` name the band for a
+FREE lieutenant. `on_spawn` (deeds.band, dungeon populate's story band) dresses the band's head (its creature, name,
+tag {role, lt}); `arm` (finale.prepare, every foe) sets the trait's morale, boss_phase kind "escape" (kernel
+handlers/bosses.py: gone with nobody adjacent and not held, else fleeing) and grudge numbers (villains.lieutenants.json
+grudge: ac, hp, a "grudge" buff damage_die). `on_battle` (first in story.on_battle): dead -> slain (grief or rage line
+by temper; villain.on_fight counts it as before), taken, fled -> escaped (grudge, a scar if hurt). `on_fate` (story.
+on_fate): execute -> slain + villain.on_fight; spare/rob -> trait `turn` (rob x0.5) -> turned (blueprint `turns`
+through beats.OPS clue/key) or turncoat (`betray`: nothing given), else spared (grudge); capture/interrogate -> taken.
+`join_finale` (story.fight_finale, once: adv["lt_joined"]) adds FREE lieutenants to the boss's actor, each in the place of one of its minions. `after_tale`
+(endings.finish, after the ops): epilogue pages about "lieutenant:<role>" (epilogue screen ABOUT "lieutenant";
+vignette.for_epilogue: figure, grave or gallows), and the greatest grudge (>= nemesis.grudge) still free when the
+villain fell (dead or taken, not let go, not bargained) is promoted: `politics["nemeses"]` [{lt (a copy), threat,
+villain, life, band, next, state hunting|slain|taken}], met by `on_travel` (from story.on_travel, out of towns; its
+men are tagged {nemesis, role minion} and are not it). Journal "Its hands" (`journal_lines`). check.py: lieutenant on
+a band role, creatures, turns a clue/key the tale knows; trait morale; nemesis bands. Autoplay `_check_lieutenants`.
+Fixed: waves and ambushes counted as lieutenants slain (story.on_battle harm). Not in E.3: a turned lieutenant as an
+ally who fights (the ally keys are E.5's), grief and rage differ only in words (both are wrath), a lieutenant as the
+villain of a whole sequel tale (the nemesis is its road form; E.4's succession may grow it), the weakness is words.
+Measures (storyplay, 20 lives): outlaw 18/20 (19 before; both lost lives died; at first the joining lieutenants
+swelled the finale and one life lost it over and over: they now take the place of one of its men each), risen
+19/20 (18 before; the lost life died). tests/test_risen_outlaw._tale now sets the first hour aside, as storyplay
+does (the first hour's dice follow the hero's name and the world's id, and a terror opening left a beat waiting).
+Checks: CHECKS_LINE.
 E.2 (2026-10-25, realmwalker-b): the schemes. villains.json moves may say `needs` (villain.NEEDS: helper, companion,
 town, lair; `able`) and `disloyal` (the wedge's beat for a companion under villains.json wedge `loyal` 50); due_move
 fills adv["reprisal"] (helper; the wedge too, for its darkest choice), adv["wedge"] {name, loyalty, offer} (`_tempted`,

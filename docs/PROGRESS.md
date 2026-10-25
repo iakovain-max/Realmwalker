@@ -79,6 +79,13 @@ most +2), +25% hit points and a better blade (1d4, then 1d6 extra damage); at mo
 finale's keys of E.5 may use it). The outlaw tale has two lieutenants (the raiders' right hand and the lookout), the
 Risen one (the waker); the Beast has none.
 
+At the end each lieutenant still free takes the place of one of the villain's men (the band is led, not made
+bigger).
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 18 of 20 finished, the
+Risen's 19 of 20 (19 and 18 before; every lost life died in a fight, none was stuck). Checks: tests/test_lieutenants.py
+(8), the full suite, autoplay OK, smoke test OK.
+
 Fixed on the way: in a held place, each creature of a wave you killed counted as a lieutenant slain (the villain's eye
 jumped by two for each); waves and ambushes now count as its servants.
 

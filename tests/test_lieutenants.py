@@ -154,7 +154,7 @@ def test_the_free_stand_beside_the_villain_at_the_end_and_the_slain_do_not(made,
     villain = SimpleNamespace(uid=1, story={"adv": adv["id"], "role": "villain"})
     actor = SimpleNamespace(creatures=[villain])
     lines = lieutenants.join_finale(game, adv, actor)
-    assert len(actor.creatures) == 2 and actor.creatures[1].name == lieutenants.full(raid)
+    assert len(actor.creatures) == 2 and actor.creatures[1].name == lieutenants.full(raid), "no men to make room"
     assert actor.creatures[1].story == {"adv": adv["id"], "role": "raiders", "lt": adv["cast"]["raiders"]["lt"]}
     assert lines and "notched ear" in lines[0], "it brings its grudge"
     assert not lieutenants.join_finale(game, adv, actor), "once"
