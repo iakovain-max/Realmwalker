@@ -556,11 +556,34 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.5 (*the goal language*:
-`game/story/goals.py`: the predicates of ADVENTURES.md §8.10 with `all`, `any`, `not`, checked at start-up;
-`goals.notify` from a conversation's end, battles, captives' fates, the law, items changing hands, entering and leaving
-towns and buildings, and the day; ways through recorded by kind; tests/test_goals.py), on branch
-`dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.6 (*situations*:
+`game/story/situations.py`, `situations.json` + fragments: forged in peopled towns from roots, the first twenty
+predicaments of §6.7, roles bound to real people, obstacles and ways, turns, meetings as scenes, endings with the people
+ops, `lapsed`, the rarity rules, story people replacing generated ones, latent again when the hero dies, Troubles in the
+journal; tests/test_situations.py), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md
+Part C and ADVENTURES.md §6.7-§6.10 and §8.10 first.
+C.5 (2026-10-25, realmwalker-b): `game/story/goals.py`. A test is a list `[name, *args]` with "all"/"any"/"not";
+`PREDICATES` (Pred fn, args kinds who/place/thing/word/faction/op/int/law/day, `listens`): alive, dead, at, with_party,
+free, holds, gone, married, owes, knows, law_state, standing, status, cleared, faction_active, flag, day. Who: "you", a
+role name of `sit["roles"]` ({npc}/{figure}/{band}/{faction}/{place}) or a record; a place: a role with {place}, a place
+record ({settlement[, building|spot|part "inn"]}, {site}, {tile}) or `home_of(r)`/`work_of(r)`/`town_of(r)` (a spot:
+the building holding it). State read: band role `state` (dead/taken/fled/gone, set by notify from creature tags
+`c.story = {"situation", "role"}` in battle and captive fates), npc.flags captive / law (accused, jailed, pardoned,
+hanged: C.6's people ops write it) / gone / moved_on / knows / with_party, life ties (husband/wife, creditor), the
+hero's `renown.flags["truths"]` and `["debts"]`, sit `flags` (+ its adventure's), sit `clock.due` ("clock" in day).
+`goals.notify(game, kind, way=None, **refs)` (kinds `EVENTS`: talk, battle, captive, law, item, town, building, party,
+magic, day; ways `WAYS`; `DEFAULT_WAY`, `CRIME_WAYS`) tests the live (latent/met/taken) situations within lives.json
+`reach` whose `listens` (computed once into the record) hold the kind; a reached goal gets `reached` (day) and `way`
+and a `sit["ways"]` entry {goal, way, day, by}; `REACTIONS` (fn(game, sit, gid, way)) is where C.6 hangs what follows;
+`way_used(sit, way, goal=None)` for endings' `way:<kind>`; `learn(game, who, truth, way)`. Callers:
+`Conversation.close` (the dialogue screen's finish; `talk_way`: pay after a bribe `conv.paid`, magic when charmed or
+enthralled), `fight.finish_battle` (after story.on_battle), `fight._fate_heard` (decide_captive), `law.commit`,
+economy.buy/sell (pay), `Conversation.give_item` (talk), `law.steal_from_shop` and law_talk pickpocketing (steal),
+`fight.take_loot` (fight), GameState overworld arrival and `leave_local` and `story.on_enter_town` (town), entering or
+leaving a building in `_move_local` (wait, sneak while sneaking), `dungeon.unlock` (sneak picked / force),
+`magic.cast_on_road` (magic), companions.hire/dismiss (party), `quests.free_captive` (a feature's `npc`: freed and
+`with_party`; force), `story.daily` (day: wait). Start-up: `check.problems` runs `goals.self_problems` and
+`goals.data_problems` (situations.json predicaments' `roles`/`places` and `goals` [{id, test}]). No save format change.
 C.4 (2026-10-25, realmwalker-a): a life is `npc.flags["life"]` {ties [{kind (husband/wife/son/daughter/father/mother/
 brother/sister or lover/rival/creditor/patron/enemy), name, npc id|None, figure id|None, state alive/dead/levied,
 age?}], want, fear (ids in lives.json), secrets [{kind, to?, faction?, known}], things [{kind, words, state

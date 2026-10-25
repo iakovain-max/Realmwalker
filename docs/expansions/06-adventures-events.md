@@ -289,7 +289,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
   cults' hidden members among them), things of note; `npc.profile` written from the life; weekly life events within
   30 tiles (at most three a town) that show by themselves (mourning at the well, a shop shut with a sign, a new grave,
   a christening crowd). Tests: `tests/test_lives.py`.
-- [ ] C.5 **The goal language** (`game/story/goals.py`): the predicates of ADVENTURES.md §8.10 with `all`, `any` and
+- [x] C.5 **The goal language** (`game/story/goals.py`): the predicates of ADVENTURES.md §8.10 with `all`, `any` and
   `not`, checked at start-up; `goals.notify` from a conversation's end, battles, captives' fates, the law, items
   changing hands, entering and leaving towns and buildings, and the day; ways through recorded by kind. Tests:
   `tests/test_goals.py` (each predicate made true by each way the game has).

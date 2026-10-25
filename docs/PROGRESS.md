@@ -46,6 +46,27 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.5 — the goal language — branch `dlc/06-adventures-events` (not yet on main)
+
+Nothing new to see yet: this is the machinery the coming troubles (C.6) are judged by.
+- **What a story can ask of the world**: that someone is alive or dead, somewhere (a town, a house, a site), with
+  you, free (not in chains, not in the cells), holding a thing, gone from the town, married, owing someone, knowing
+  something; how the law stands with someone; your standing with a faction; a town's state (plague, siege...); a
+  place cleared; a faction still standing; a word remembered; a day reached. These combine with "all", "any" and
+  "not", and the game checks every one the data names when it starts.
+- **How it is noticed**: whenever something happens that could change one of these – a conversation ends, a fight
+  ends, you decide a prisoner's fate, you break the law, something changes hands (bought, sold, given, stolen,
+  looted), you walk into or out of a town or a house, you cast a spell on the road, someone joins or leaves you, a
+  day passes – the troubles near you look again.
+- **How you did it counts**: the game keeps the way each goal was reached – by talk, by coin, unseen, by theft, by
+  force, by the sword, by magic, by the law, or by waiting – so the same end reached by words or by blood can end
+  differently.
+- Choices made without Anton: walking somewhere openly counts as "waiting" (time and feet, nothing done to anyone);
+  a lock picked counts as unseen, a lock broken as force; a bribe taken in a conversation makes it "by coin", a
+  charmed listener "by magic"; you count as "at" a town while you stand on its square of the map; a goal once
+  reached stays reached. A chained captive in a dungeon may now be a town's own person, freed and walking with you.
+- How to try: nothing to try by hand yet; tests/test_goals.py makes each one true through the game's own code.
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.4 — lives — branch `dlc/06-adventures-events` (not yet on main)
 
 The people of the towns near you now have lives of their own, and the weeks change them.
