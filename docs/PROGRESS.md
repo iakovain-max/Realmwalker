@@ -77,7 +77,7 @@ the expansion programme (the first entries below).
   on a stage, its eye on you hardens, and an ally who came with you may lose heart and go home. The tale goes on.
 - **Losing the finale need not be death.** A proud, cruel or cunning villain (the dead king, the outlaw captain) takes
   the beaten alive: you wake in a cell at the far end of its den, at 1 hit point, your weapons, armour and money
-  thrown into a locked chest in a room nearby. Get them back, get out (a new line in the journal: "Get out of ...
+  thrown into a locked chest in a room nearby. It keeps the wounds you gave it. Get them back, get out (a new line in the journal: "Get out of ...
   alive"), and come back for the end when you are ready. It does this once in a tale; a beast never does.
 - Try it: take the Risen tale, go down to the barrow's last level and fight the king; watch for the frost ring on the
   floor and step out of it; let him beat you once.
@@ -86,7 +86,17 @@ Decisions (Anton may want to change): great attacks come first on round 2 and th
 and damage 2d10/4d10/6d10/8d10 by tier (the captain's volley 2d8 per tier step); the circle's burning ground is 2d6
 necrotic (Constitution save, the great attack's DC); a retreat loses the ally one time in three; the chest with your
 things has a DC 12 lock; the cells are the room farthest from the boss; all arenas fit only where there is room (a
-cramped level stays as it is).
+cramped level stays as it is). The captain commands his men only from tier 2 (at tier 1 it tipped the fight too far).
+
+Fixed on the way (older faults the new finales brought out): a boss's out-of-turn move that brought it no nearer kept
+a stand-off going for ever (now the fight breaks off as it should); a battlefield could be cut in two where two walls
+met at a corner (the check that joins the two sides let a path squeeze between them, which nobody can walk).
+
+Measured (a careful party playing whole tales, six of each): the outlaw captain's 6 of 6 (twice taken alive in the
+finale, got out, came back and won), the Risen's 5 of 6; the same as before E.5. Checks: tests/test_finale_arenas.py
+(16), tests/test_finale_end.py (8), the full suite (only the known timing tests under load, which pass alone),
+autoplay, smoke test; a fresh review (its finds fixed: an arena that did not fit wrecked the ground, a tower top could
+leave no way off for a retreat, names unescaped, lines with one variant).
 
 
 - **A villain gets away from you once.** Meet the outlaw captain (or the beast) before its den and hurt it badly,

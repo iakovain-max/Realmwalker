@@ -596,8 +596,12 @@ robbers; adventures.finale.json retreat {attention, ally_lost}, defeat {tempers,
 risen's name += party_buff(courage), rite_allowed; the outlaw's inside += lieutenant_absent(raiders). Not in E.5:
 places that seal (no blueprint says so yet; the retreat is always open), rival bands (Part F's cast: the key works,
 nothing uses it yet), the party blessed by a beacon (the key works with "bless"/"warded"; only "courage" is used).
-Tests: tests/test_finale_arenas.py (12), tests/test_finale_end.py (8); autoplay `_check_finale`; storyplay
-`reclaim` (after "taken": open the chest, arm again).
+Tests: tests/test_finale_arenas.py (16), tests/test_finale_end.py (8); autoplay `_check_finale`; storyplay
+`reclaim` (after "taken": open the chest, arm again, out and rest). Defeat leaves the boss's wounds (only a retreat heals
+it). Fixed on the way: `Battle._legendary_move` only when it brings the boss nearer (its shuffle kept QUIET_ROUNDS
+from ending a stand-off); `game/arena._connect` floods without squeezing diagonally between two walls and digs along
+the axes. Arenas are laid on a copy (`arenas.lay`) and `_way_off` keeps an edge reachable. The captain's `command` is
+from tier 2; great attacks first on round 3. Measures: storyplay six each: outlaw 6/6, risen 5/6 (as before E.5).
 E.4 (2026-10-25, realmwalker-b): `game/story/early.py` (docstring has it all). Escapes: `may_escape` (not after
 adv["escaped"], kept by `on_fled` from story.on_battle; not with a found key whose finale effects include the new KEYS
 `no_escape`: the risen's anchor) gates the template `before` in finale.prepare; else `no_flight` (morale fanatic, the
