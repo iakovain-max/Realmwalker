@@ -35,7 +35,7 @@
       "given": ["plea"]
     },
     "vig_toll_jam": {
-      "about": "Carts stand in a line on the road to a bridge, and a man is shouting at an old beggar who sits right in the middle of the planks and calls out questions.",
+      "about": "Carts stand in a line on the road to a bridge, and a carter is shouting at an old beggar who sits right in the middle of the planks and calls out questions.",
       "cues": [
         {"cue": "hold"},
         {"cue": "focus", "at": "hermit"},
@@ -55,13 +55,13 @@
         ],
         "grumble": [
           "Two markets gone, and the grain going soft.",
-          "Why does nobody throw him in the river?",
-          "He is touched. Leave him. He is only asking.",
+          "Why does nobody throw the old one in the river?",
+          "The old one is touched. Leave it be. Only asking.",
           "My load will rot on the road.",
           "Where is the watch, when it is wanted?"
         ],
-        "curse": ["Old fool! Mad old fool, it is only a bridge!", "I have a load to deliver! Let me over!", "Answer him, someone! Anyone!"],
-        "open": ["You. You look as though you read. Come here.", "Stranger. You can talk to a madman better than I can. Come here.", "You, with the sword. A word."]
+        "curse": ["Old fool! Mad old fool, it is only a bridge!", "I have a load to deliver! Let me over!", "Answer the riddle, someone! Anyone!"],
+        "open": ["You. You look as though you read. Come here.", "Stranger. You can talk to a mad one better than I can. Come here.", "You, with the sword. A word."]
       },
       "cast": ["asker", "hermit"],
       "given": ["plea"]
@@ -188,7 +188,7 @@
           "I will not go past {scar} after the bells."
         ],
         "mutter": [
-          "{scar_dead}. I count them every night and every night I miss one.",
+          "{scar_hanged}. I count them every night and every night I miss one.",
           "They only want what anyone wants. Someone to listen.",
           "Rope creaks. That is all it is. That is all it ever is."
         ],

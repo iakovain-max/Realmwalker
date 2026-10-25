@@ -23,10 +23,10 @@
           "Your dead hero's a story. Go home."
         ],
         "swear": [
-          "It's real! It's his hand! It's his!",
+          "It's real! It's the hero's own hand!",
           "Look at the line. Look where it goes!",
           "I'll show you. I'll show every one of you!",
-          "He was real! He fell out there!"
+          "The hero was real! Fell out there!"
         ],
         "open": [
           "You're not from here. You might believe me.",
@@ -69,7 +69,7 @@
           "You. You're not of the house. Good. Listen.",
           "Not here. Walk with me. Please.",
           "I can't tell the master. I can tell you.",
-          "Take it. Look at it. That's what he'll be wearing."
+          "Take it. Look at it. That's what the heir will be wearing."
         ]
       },
       "cast": ["asker"],
@@ -146,7 +146,7 @@
           "Don't point. Don't tell. It'll only be on our heads."
         ],
         "plead": [
-          "It was his book! It's meant for those who learned from him!",
+          "It was the master's book! It's meant for those who learned from the master!",
           "I only want what's mine to read! Is that so much?",
           "You'll give directions to a thief, but not to me?"
         ],

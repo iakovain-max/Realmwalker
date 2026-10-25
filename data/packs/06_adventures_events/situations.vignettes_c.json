@@ -14,6 +14,7 @@
       "name": "The ring from the barrow",
       "vignette": {"needs": "barrow_near", "weight": 2.0},
       "asks": "finder",
+      "base": "plain_ring",
       "roles": {
         "finder": {"bind": "given"},
         "barrow": {"bind": "given"},
@@ -183,7 +184,7 @@
         "stakes": ["{finder}'s yard, and the ring of {barrow_king}", "the beasts of {finder}, and a dead king's ring"],
         "plea": [
           "I was cutting turf under {barrow} when the bank slumped, and there was a hand in the earth, grey as a root, and a ring on it. I took the ring. We had nothing. Since then the beasts die one by one, and the dog will not cross my step, and something walks my yard at night. Take it back. I cannot go near that place.",
-          "It is {barrow_king}'s mound, they tell me now. I did not know. I dug, and I found a ring, and I put it in my pocket, and God forgive me I was glad. The beasts are dying and the dog sleeps in the lane. Help me. Take the thing back, or have it blessed away. I will pay what I can."
+          "It is {barrow_king}'s mound, they tell me now. I did not know. I dug, and I found a ring, and I put it in my pocket, and God forgive me I was glad. The beasts are dying and the dog sleeps in the lane. Help me. Take the thing back, or have it blessed away. I have eleven pence and a side of bacon, and they are yours."
         ],
         "first": [
           "{finder} took a ring from the barrow of {barrow_king} at {barrow}. Since then the beasts die and the dog will not come in.",
@@ -748,6 +749,7 @@
       "name": "The pilgrim's vow",
       "vignette": {"needs": "holy_road", "weight": 2.0},
       "asks": "pilgrim",
+      "base": "pouch",
       "roles": {
         "pilgrim": {"bind": "stranger", "jobs": ["pilgrim"]},
         "priest": {"bind": "far", "town": "root", "jobs": ["priest", "monk", "preacher"]}
@@ -796,7 +798,7 @@
               "then": [["hand", "pilgrim"], ["flag", "handed"]],
               "say": [
                 "Take it. Put it inside your coat, against the skin, where it was against mine. Give it to the priest. Only the priest. Swear it.",
-                "Take it, then. Take it quick, before I think better of it. And thank you. I am not a man who thanks."
+                "Take it, then. Take it quick, before I think better of it. And thank you. I am not one who thanks."
               ]
             }
           ]
@@ -863,7 +865,7 @@
       "words": {
         "keep": ["offering"],
         "offering": ["a packet of oilcloth, sewn shut, from a dying pilgrim", "the pilgrim's sewn packet for the priest of {shrine}"],
-        "title": ["The pilgrim's vow", "An offering for {shrine}", "What the dying man carried"],
+        "title": ["The pilgrim's vow", "An offering for {shrine}", "What the dying one carried"],
         "stakes": ["{pilgrim}'s offering to the priest of {shrine}, and {pilgrim}'s soul", "a vow that must be kept by someone else"],
         "plea": [
           "I will not live to see {shrine}. I know it. The fever is in my chest. I took a vow, long ago, and I have a thing sewn in my coat for the priest there, and no one else. Will you carry it? You will be paid at the other end, and I cannot pay you here. It matters more than I can say. I would be shriven, and I cannot go to be.",
@@ -1049,7 +1051,7 @@
         "stakes": ["the inn of {innkeeper}, and the peace of {dead_name}", "a dead guest, and a house's old shame"],
         "plea": [
           "There is a room at the back of my house that nobody takes. {dead_name} died in it, {dead_years} ago ({dead_cause}). Since then guests who sleep there are out in the yard by midnight, white as lard, and will not say why, and then they tell other people. I am losing the trade. Sleep in it a night. Find out what it wants. I will not charge you for the bed.",
-          "Do you see my guests leaving? Every one, by midnight, out of the back room. {dead_name} died in there, {dead_years} ago, and I will not say what is in the room, but nobody will stay. {dead_cause}, they say. Sleep there. Learn why. I will pay for what you need. I cannot go in myself."
+          "Do you see my guests leaving? Every one, by midnight, out of the back room. {dead_name} died in there, {dead_years} ago, and I will not say what is in the room, but nobody will stay. {dead_cause}, they say. Sleep there. Learn why. Whatever you need, the house will stand it. I cannot go in myself."
         ],
         "first": [
           "{innkeeper}'s back room is empty, and its guests leave by midnight. {dead_name} died there {dead_years} ago.",
@@ -1062,6 +1064,7 @@
       "name": "The book under the floor",
       "vignette": {"needs": "persecution", "weight": 2.0},
       "asks": "keeper",
+      "base": "prayer_book",
       "roles": {
         "keeper": {"bind": "given"},
         "priest": {"bind": "given"}
@@ -1161,7 +1164,7 @@
       "goals": [
         {"id": "betrayed", "test": ["flag", "betrayed"]},
         {"id": "mercy", "test": ["flag", "mercy"]},
-        {"id": "carried", "test": ["all", ["flag", "carried"], ["holds", "you", "story:$story"]]},
+        {"id": "carried", "test": ["all", ["flag", "carried"], ["holds", "you", "$story"]]},
         {"id": "hidden", "test": ["flag", "hidden"]}
       ],
       "endings": [

@@ -35,7 +35,7 @@
               "unless": ["knows:fell_alone"],
               "then": [["learn", "fell_alone"]],
               "say": [
-                "It was sewn in the lining of a cloak that came back from {place} without the man who wore it. That cloak is all that came back. {hero} fell out there, alone, {hero_years} ago, and nobody stayed to bury a hero.",
+                "It was sewn in the lining of a cloak that came back from {place} without the one who wore it. That cloak is all that came back. {hero} fell out there, alone, {hero_years} ago, and nobody stayed to bury a hero.",
                 "In the old chest, with the cloak. {hero} drew it, they say, in the last days, so someone could find the way back for the body. No one ever did. That is all the map is: a way to a grave nobody dug."
               ],
               "fail_say": ["It was a long time ago. There was a cloak, and a scrap of hide. I do not remember more, and I wish the child did not either."],
@@ -70,7 +70,7 @@
               "unless": ["knows:hope"],
               "then": [["learn", "hope"]],
               "say": [
-                "That somebody wasn't forgotten. He fell and nobody went back for him. If his things come home, then somebody remembers, and then... somebody'd remember me.",
+                "That somebody wasn't forgotten. {hero} fell and nobody went back. If the things come home, then somebody remembers, and then... somebody'd remember me.",
                 "I want it to be true. I want one thing in this town to be true and mine."
               ],
               "fail_say": ["I want to be believed. That's all. That's all there is."],
@@ -79,11 +79,11 @@
             },
             {
               "id": "kind",
-              "label": ["I will bring you the best of what I find, and let that be enough.", "I will tell you he died well, whatever I find."],
+              "label": ["I will bring you the best of what I find, and let that be enough.", "I will tell you {hero} died well, whatever I find."],
               "unless": ["flag:plain"],
               "then": [["flag", "kind"]],
               "say": [
-                "Really? You promise? That he died... that it was brave?",
+                "Really? You promise? That {hero} died... that it was brave?",
                 "Say it again. That it'll be all right when you come back."
               ]
             },
@@ -116,7 +116,7 @@
           "ops": [["disposition", "child", 35], ["disposition", "keeper", 20], ["favour", "keeper", "shelter", 2], ["mark", "memorial"], ["xp_story", "fair"]],
           "line": [
             "{keeper} read out how {hero} fell at {place}, alone, and {child} listened to the end. The things of {hero} hang in the chapel of {town}, and the map was buried with the cloak.",
-            "Told plain: a man who fell alone, and was brought home at last by a stranger. {child} did not cry. {child} stood very straight and said the name."
+            "Told plain: one who fell alone, and was brought home at last by a stranger. {child} did not cry. {child} stood very straight and said the name."
           ]
         },
         {
@@ -137,7 +137,7 @@
           "tone": "mixed",
           "ops": [["disposition", "child", 30], ["disposition", "keeper", -10], ["xp_story", "small"]],
           "line": [
-            "You told {child} that {hero} died well. {child} sleeps with the things of {hero} under the pillow and tells the others it was seven men he fought. {keeper} knows better and says nothing.",
+            "You told {child} that {hero} died well. {child} sleeps with the things of {hero} under the pillow and tells the others {hero} fought seven men. {keeper} knows better and says nothing.",
             "A kind lie, and a small one. {child} stopped being laughed at. {keeper} does not meet your eye in the street."
           ]
         },
@@ -178,7 +178,7 @@
         "title": ["The child's map", "The map of {hero}", "What {child} carries"],
         "stakes": ["a child's hope, and what lies at {place}", "{child}'s map, and the things of {hero}"],
         "plea": [
-          "Don't laugh. It's real. It was drawn by {hero}, who fell out at {place}, {hero_years} ago. I found it sewn in the lining of the chapel chest. The line goes all the way. {keeper} says leave it, but at the end of the line there's something, his things. Bring them home, so they'll stop saying I made it up.",
+          "Don't laugh. It's real. It was drawn by {hero}, who fell out at {place}, {hero_years} ago. I found it sewn in the lining of the chapel chest. The line goes all the way. {keeper} says leave it, but at the end of the line there's something, {hero}'s things. Bring them home, so they'll stop saying I made it up.",
           "They all say it's a scrap of hide and I'm a liar. It's the map of {hero}, and it leads to {place}. {keeper} took the candle off me when I showed it. Will you go? I've nothing to give you. But somebody ought to bring {hero} home, even if it's only {hero}'s boots.",
           "Look at it. Please. {hero} drew it, {hero_years} ago, before {place}. Nobody ever went to see. I want {hero}'s things brought back to the chapel, where there's a stone for it. Then they'd know."
         ],
@@ -269,8 +269,8 @@
               "unless": ["knows:the_wrong"],
               "then": [["learn", "the_wrong"]],
               "say": [
-                "The old wrong, the one everybody in {town} knows: {wrong}. The family of the wronged never forgave it. They have waited a long time, and they are patient.",
-                "Everyone remembers it, and nobody says it aloud: {wrong}. That is the blood a knife would be for."
+                "It is {wrong}. Everybody in {town} knows it. The family of the wronged never forgave it. They have waited a long time, and they are patient.",
+                "Everyone remembers {wrong}, and nobody says it aloud. That is the blood a knife would be for."
               ],
               "fail_say": ["It is a very old story. I do not remember the whole of it. Ask someone who does."],
               "pass": false,
@@ -640,6 +640,7 @@
       "name": "The scribe and the last book",
       "vignette": {"needs": "masterless_tower", "weight": 2.0},
       "asks": "apprentice",
+      "base": "spellbook",
       "roles": {
         "tower": {"bind": "given"},
         "apprentice": {"bind": "stranger", "jobs": ["scribe"]}
@@ -688,7 +689,7 @@
               "unless": ["taken"],
               "then": [["flag", "give"]],
               "say": [
-                "You will? You really will? I will pay for it. I will pay all I have. Thank you.",
+                "You will? You really will? Then the school will see you right. Thank you.",
                 "It is mine by right, and you see that. Thank you. Thank you."
               ]
             },
@@ -785,8 +786,8 @@
         "title": ["The apprentice of {master}", "The last book of {master}", "A scribe at the inn"],
         "stakes": ["{master}'s last book, and the one who wants it", "what {master} wrote last, and who should read it"],
         "plea": [
-          "I am a scribe of the school that keeps the works of {master}. {master} died {master_years} ago, and left a last book in {tower}, and nobody has been in to fetch it. I am only a scribe, and I cannot go in alone. I will pay what I can. It is not much. But the book belongs to those who keep {master}'s work.",
-          "You are the sort who goes into places. I am looking for {master_first}'s last book, the one {master} wrote in {tower}. My teacher swore it was real, and spent her life on it. It belongs to the school that keeps {master}'s work, and I am what is left of that school. Bring it to me. I will give you everything I have."
+          "I am a scribe of the school that keeps the works of {master}. {master} died {master_years} ago, and left a last book in {tower}, and nobody has been in to fetch it. I am only a scribe, and I cannot go in alone. There is a little silver in my purse, and the school will add to it. But the book belongs to those who keep {master}'s work.",
+          "You are the sort who goes into places. I am looking for {master_first}'s last book, the one {master} wrote in {tower}. My teacher swore it was real, and spent her life on it. It belongs to the school that keeps {master}'s work, and I am what is left of that school. Bring it to me, and my purse is yours, whatever is in it."
         ],
         "first": [
           "{apprentice}, a scribe come in from the road, wants {master}'s last book fetched from {tower}.",
@@ -890,7 +891,7 @@
               "then": [["flag", "hidden"]],
               "say": [
                 "...All right. All right. I am afraid, and I do not want to go up there. I will follow you. Tell {parent} I am not a coward.",
-                "I have heard them whispering about the white dress all week. Yes. Out through the sheepfold, now."
+                "I have heard them whispering about the white robe all week. Yes. Out through the sheepfold, now."
               ],
               "fail_say": ["They'd miss me within the hour. They would know it was you. I will not be the cause of that."],
               "fail": [["disposition", "parent", -5]],
@@ -927,7 +928,7 @@
           "id": "paid",
           "when": "paid",
           "tone": "good",
-          "ops": [["disposition", "parent", 35], ["disposition", "chosen", 30], ["favour", "parent", "shelter", 2], ["mark", "tribute"], ["xp_story", "fair"]],
+          "ops": [["disposition", "parent", 35], ["disposition", "chosen", 30], ["favour", "parent", "shelter", 2], ["xp_story", "fair"]],
           "line": [
             "{headman} carried the coin up to {lair} on a cart, and came down alone. {chosen} stood at the gate and watched the road, and did not believe it until dark.",
             "The tithe was paid in gold, and the {dragon_colour} dragon took it. {chosen} lives. The town does not yet know what it will ask for next year."
@@ -937,7 +938,7 @@
           "id": "went_up",
           "when": "went_up",
           "tone": "mixed",
-          "ops": [["disposition", "parent", 30], ["favour", "parent", "word", 2], ["mark", "tribute"], ["xp_story", "great"]],
+          "ops": [["disposition", "parent", 30], ["favour", "parent", "word", 2], ["xp_story", "great"]],
           "line": [
             "You climbed to {lair} alone, and stood before {dragon}, and came down alive. What was said in that place you tell nobody. {chosen} is not to go, this year.",
             "Whatever you carried up, whatever you promised, {dragon} let you come down. The town will not look at you, and the parent of {chosen} will not stop thanking you."
@@ -948,7 +949,7 @@
           "when": "spared",
           "if": ["knows:lots"],
           "tone": "mixed",
-          "ops": [["disposition", "parent", 30], ["disposition", "headman", -10], ["mark", "tribute"], ["xp_story", "fair"]],
+          "ops": [["disposition", "parent", 30], ["disposition", "headman", -10], ["xp_story", "fair"]],
           "line": [
             "The lots were drawn again in the square, in the open, and no name was read. {headman} sent grain and ten ewes up to {lair}, and keeps out of your way. {dragon} has not yet answered.",
             "The town sent beasts, not a person, and {headman} paid in more than grain. It was enough this year. Nobody says it will be next."
@@ -958,7 +959,7 @@
           "id": "spared",
           "when": "spared",
           "tone": "mixed",
-          "ops": [["disposition", "parent", 25], ["mark", "tribute"], ["xp_story", "fair"]],
+          "ops": [["disposition", "parent", 25], ["xp_story", "fair"]],
           "line": [
             "{headman} sent grain and sheep up to {lair} instead of a person. The {dragon_colour} dragon did not come down, and has not said yet whether that was enough.",
             "Beasts and grain went up the mountain, and nobody went with them. {chosen} lives, and every night the town looks at the hills."
@@ -968,7 +969,7 @@
           "id": "hidden",
           "when": "hidden",
           "tone": "bitter",
-          "ops": [["npc_fate", "chosen", "gone"], ["disposition", "parent", 25], ["disposition", "headman", -20], ["mark", "tribute"], ["xp_story", "fair"]],
+          "ops": [["npc_fate", "chosen", "gone"], ["disposition", "parent", 25], ["disposition", "headman", -20], ["xp_story", "fair"]],
           "line": [
             "{chosen} is hidden, and far away by now. The lots were drawn a third time, and the name that came out belonged to someone with no one to ask. The {dragon_colour} dragon has had its tithe.",
             "You took {chosen} out by the sheepfold, and someone else went up the mountain. The parent of {chosen} weeps in the dark and does not say whom {parent_they} weeps for."
@@ -977,7 +978,7 @@
       ],
       "lapse": {
         "tone": "bitter",
-        "ops": [["npc_fate", "chosen", "gone"], ["mark", "tribute"], ["news", "news_lapse"]],
+        "ops": [["npc_fate", "chosen", "gone"], ["news", "news_lapse"]],
         "line": [
           "On the new moon {headman} and the elders took {chosen} up the old road to {lair}, with a lamp, and came back without. The parent of {chosen} sat on the doorstep all night, facing the hill.",
           "{chosen} went up the mountain at dawn, dressed in white. {dragon} the {dragon_colour} has had its tithe, and the town has eaten nothing since."
@@ -989,7 +990,7 @@
         "title": ["The dragon's tithe", "{chosen} for {dragon}", "What goes up to {lair}"],
         "stakes": ["the life of {chosen}, and the tithe of {dragon}", "a child of {town} for the {dragon_colour} dragon at {lair}"],
         "plea": [
-          "{headman} has drawn {chosen}'s name. {dragon}, the {dragon_colour} one up at {lair}, has had its tithe from {town}, grain and sheep and, when the harvest is poor, a person. This year the name was my child's. They say the lots were fair. I do not believe it. Please. I will give you everything I have. It is not much.",
+          "{headman} has drawn {chosen}'s name. {dragon}, the {dragon_colour} one up at {lair}, has had its tithe from {town}, grain and sheep and, when the harvest is poor, a person. This year the name was my child's. They say the lots were fair. I do not believe it. Please. Take the pig, the loom, anything in the house. It is little enough.",
           "They are taking {chosen} up to {lair} {due}. For {dragon}. It takes a person when the barley is poor, they say, and this year the barley was poor. I am {chosen}'s parent. I have no money, no sword, no say. You do. Do something. Anything."
         ],
         "first": [
@@ -1000,7 +1001,7 @@
       }
     },
     "v_beast_widow": {
-      "name": "The widow's token",
+      "name": "What the beast took",
       "vignette": {"needs": "beast_lair", "weight": 2.0},
       "asks": "widow",
       "roles": {
@@ -1174,7 +1175,7 @@
       "words": {
         "keep": ["token"],
         "token": ["{spouse}'s wedding ring", "the knife {spouse} always carried", "{spouse}'s worn belt-buckle"],
-        "title": ["The widow's token", "{spouse} at {lair}", "A grave with nothing in it"],
+        "title": ["What the beast took", "{spouse} at {lair}", "A grave with nothing in it"],
         "stakes": ["something of {spouse} to bury, and the truth of why {spouse} went", "the body of {spouse}, taken by {beast} at {lair}"],
         "plea": [
           "{beast} took {spouse} at {lair}. I never saw {spouse_them} fall. The shepherds saw. I want {spouse_them} home, not the beast killed, nor a bounty paid. Bring me {token}, or whatever of {spouse_them} lies in that place, and let me put it in the ground. I have a stone ready and nothing to put under it.",

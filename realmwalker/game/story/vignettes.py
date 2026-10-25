@@ -241,6 +241,7 @@ def _smith_and_blade(game, s, rng):
     w = game.world
     smiths = _folk(game, s, jobs=("smith",))
     arts = [a for a in (w.politics.get("artifacts") or []) if isinstance(a, dict) and a.get("kind") in WEAPONS]
+    arts = [a for a in arts if not a.get("found")] or arts
     lode = _sites(game, s, 3, 16, kinds=("cave", "ruin"))
     if not smiths or not arts or not lode:
         return None
@@ -251,7 +252,8 @@ def _smith_and_blade(game, s, rng):
     return ({"smith": _entry(smith), "lode": _site_entry(lode[0])},
             {"blade": a["name"], "blade_maker": maker.name if maker is not None else "a smith of old",
              "blade_years": _years(_year(game) - int(a.get("made", _year(game) - 300))),
-             "blade_material": a.get("material") or "old iron", "blade_fate": a.get("fate") or "is lost"}, {})
+             "blade_material": a.get("material") or "old iron",
+             "blade_fate": (a.get("fate") or "is lost") if not a.get("found") else "is far from here, in other hands"}, {})
 
 
 @need("hunger_here")
@@ -305,7 +307,8 @@ def _gallows_scar(game, s, rng):
     i, sc = scars[0]
     return ({"asker": _entry(asker)},
             {"scar": sc.get("name") or "the old field", "scar_years": _years(_year(game) - int(sc.get("year", 0))),
-             "scar_dead": str(int(sc.get("dead", 40)))}, {"scar": i})
+             "scar_dead": str(max(12, int(sc.get("dead", 40) or 40))),
+             "scar_hanged": str(min(40, max(7, int(sc.get("dead", 0) or 0) // 8)))}, {"scar": i})
 
 
 @need("fallen_hero")
@@ -324,7 +327,7 @@ def _fallen_hero(game, s, rng):
             break
     if place is None:
         for f in _dead_figures(game, s, here_only=False):
-            if f.role not in ("hero", "legend") or not str(f.died_at).startswith("X"):
+            if f.role not in ("hero", "legend") or not str(f.died_at).startswith("X") or _year(game) - f.died > 80:
                 continue
             x = w.sites[int(f.died_at[1:])] if int(f.died_at[1:]) < len(w.sites) else None
             if x is not None and dist(x, s) <= 20:
@@ -351,7 +354,9 @@ def _lord_and_heir(game, s, rng):
     lord = lords[0]
     fig = w.figures.get(lord.flags["figure"])
     g = next((g for g in w.politics.get("grudges") or () if fig is not None and g.get("against") == fig.id), None)
-    wrong = g.get("cause") if g else "an old wrong between two houses"
+    kin = w.figures.get(g.get("kin", -1)) if g else None
+    wrong = f"the death of {kin.name}, {g.get('cause') or 'long ago'}" if kin is not None else \
+        "an old wrong between two houses"
     return ({"lord": _entry(lord)}, {"wrong": wrong, "house": (fig.family if fig is not None and fig.family else
                                                                 lord.name.split()[-1])}, {})
 
@@ -394,7 +399,7 @@ def _dragon_near(game, s, rng):
     for d in w.politics.get("dragons") or ():
         lair = d.get("lair")
         if not d.get("alive") or lair is None or not 0 <= int(lair) < len(w.sites) or \
-                dist(w.sites[int(lair)], s) > 30:
+                dist(w.sites[int(lair)], s) > 30 or _year(game) - int(d.get("last_seen", -9999)) > 25:  # (awake)
             continue
         young = _folk(game, s, age=(15, 21))
         head = next(iter(_folk(game, s, jobs=("headman", "elder", "lord"))), None)
@@ -412,7 +417,7 @@ def _beast_lair(game, s, rng):
     lairs = w.politics.get("lairs") or {}
     for x in _sites(game, s, 3, 20):
         f = w.figures.get(lairs.get(str(x.id), -1))
-        if f is None or not f.alive:
+        if f is None or not f.alive or f.kind == "dragon":  # (a dragon's lair is the dragon's tithe)
             continue
         left = _folk(game, s, age=(22, 70))
         if not left:
@@ -436,7 +441,7 @@ def _barrow_near(game, s, rng):
         if not finder:
             return None
         return ({"finder": _entry(rng.choice(finder)), "barrow": _site_entry(x)},
-                {"barrow_king": f.full_name(), "king_years": _years(_year(game) - int(f.died or _year(game) - 300))},
+                {"barrow_king": f"{f.name} {f.epithet}".strip() if f.epithet and f.epithet not in f.name else f.name, "king_years": _years(_year(game) - int(f.died or _year(game) - 300))},
                 {})
     return None
 
@@ -551,6 +556,12 @@ def problems(tables) -> list[str]:
         for m in spec.get("meetings", []):
             if not m.startswith("v_"):
                 out.append(f"situations: vignette {vid} meets as '{m}': a vignette's meetings are its own (v_...)")
+        acts = [a for ob in spec.get("obstacles", []) for a in ob.get("acts", [])] + spec.get("acts", [])
+        for a in acts:
+            if "work_done" in a.get("needs", []) or "work_failed" in a.get("needs", []):
+                out.append(f"situations: vignette {vid}: the act '{a['id']}' waits for the work, which ends the story")
+        if "story:$story" in repr(spec.get("goals")):
+            out.append(f"situations: vignette {vid}: a goal names 'story:$story' (the story's thing is \"$story\")")
         if not any(rs.get("bind") == "given" for rs in spec.get("roles", {}).values()) and v.get("needs") != "holy_road":
             out.append(f"situations: vignette {vid} binds no role to what its need finds (\"bind\": \"given\")")
     return out

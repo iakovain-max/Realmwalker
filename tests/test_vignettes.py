@@ -188,12 +188,18 @@ def test_the_drowned_bell_is_met_in_its_own_scene_raised_and_remembered(tables):
     assert "memorial" in marks.marks_of(s), "the bell's memorial is a mark on the town"
 
 
-def test_the_hanging_tree_lays_its_field(tables):
+def test_the_hanging_tree_is_laid_when_every_want_is_answered(tables):
     townlife.forget()
     game, town = a_life(tables, SEEDS[0])
     sit, s = forged(game, "v_hanging_tree")
     i = sit["root"]["scar"]
-    situations._op(game, sit, ["lay_scar"])
+    situations.met(game, sit)
+    sit["state"] = "taken"
+    for f in ("named", "debt_paid"):
+        sit["flags"].append(f)
+        goals.notify(game, "talk")
+        assert sit["state"] == "taken", "one want answered is not the end"
+    sit["flags"].append("buried")
+    goals.notify(game, "talk")
+    assert sit["state"] == "done" and sit["ending"] == "laid"
     assert game.world.politics["scars"][i]["laid"], "the field of the dead is laid for good"
-    assert vignettes.NEEDS["gallows_scar"](game, s, game.world.rng.child("t")) is None or \
-        vignettes.NEEDS["gallows_scar"](game, s, game.world.rng.child("t"))[2]["scar"] != i

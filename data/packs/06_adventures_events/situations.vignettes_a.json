@@ -274,9 +274,9 @@
           "id": "named",
           "when": "named",
           "tone": "good",
-          "ops": [["disposition", "asker", 35], ["favour", "asker", "goods", 2], ["mark", "rebuilding"], ["xp_story", "fair"]],
+          "ops": [["disposition", "asker", 35], ["favour", "asker", "goods", 2], ["xp_story", "fair"]],
           "line": [
-            "{hermit} sits by the keeper's door now and not on the planks, and counts the carts across {river}. The carts go to market again. He knows every one.",
+            "{hermit} sits by the keeper's door now and not on the planks, and counts the carts across {river}. The carts go to market again, and {hermit} knows every one.",
             "The old keeper has the keeper's house back. {asker} brings bread, and {hermit} tells over the bridge's story to anyone who stops long enough."
           ]
         },
@@ -287,8 +287,8 @@
           "tone": "mixed",
           "ops": [["disposition", "asker", 25], ["xp_story", "small"]],
           "line": [
-            "{hermit} lets the carts over now, and asks the old questions of whoever stops. Nobody knows who he is. {asker} gets the goods to market, and does not look at him as they pass.",
-            "The riddles were answered and the bridge is open. {hermit} sits on the blanket and waits for the next to ask, as he has always waited."
+            "{hermit} lets the carts over now, and asks the old questions of whoever stops. Nobody knows who {hermit} is. {asker} gets the goods to market, and does not look at the blanket as the cart goes by.",
+            "The riddles were answered and the bridge is open. {hermit} sits on the blanket and waits for the next to ask, as the old one has always waited."
           ]
         },
         {
@@ -297,7 +297,7 @@
           "tone": "mixed",
           "ops": [["disposition", "asker", 20], ["xp_story", "small"]],
           "line": [
-            "The toll was paid and the carts went over. {hermit} takes a copper from every one that crosses now, and nobody has the heart to stop him.",
+            "The toll was paid and the carts went over. {hermit} takes a copper from every one that crosses now, and nobody has the heart to stop {hermit_them}.",
             "{hermit} has a toll again, and a cup for it. The carts cross {river} one by one, paying."
           ]
         },
@@ -326,8 +326,8 @@
         "title": ["The bridge-keeper's toll", "Riddles on the bridge", "The old one on the bridge"],
         "stakes": ["{asker}'s carts, and the old one on the bridge over {river}", "the bridge over {river}, and the one who guards it"],
         "plea": [
-          "There's an old beggar on the bridge over {river}. Sits right in the middle of the planks, and will not let a cart past without a riddle answered. About the bridge, about how it was built. {founded_years} it's stood. I've missed two markets already. Nobody knows who he is. Can you get me across?",
-          "He asks about the bridge. Who built it, who set the first stone. I don't know! Nobody knows, it's {founded_years} back. I have a load of grain that will spoil, and the old fool sits there and says no. The reeve won't move him. Perhaps you can. Answer him. Or pay him. Or whatever it takes."
+          "There's an old beggar on the bridge over {river}. Sits right in the middle of the planks, and will not let a cart past without a riddle answered. About the bridge, about how it was built. {founded_years} it's stood. I've missed two markets already. Nobody knows who the old one is. Can you get me across?",
+          "The beggar asks about the bridge. Who built it, who set the first stone. I don't know! Nobody knows, it's {founded_years} back. I have a load of grain that will spoil, and the old fool sits there and says no. The reeve won't move him. Perhaps you can. Answer him. Or pay him. Or whatever it takes."
         ],
         "first": [
           "An old beggar will not let any cart over the bridge on {river} without an answer to riddles about its past. {asker} cannot get to market.",
@@ -340,6 +340,7 @@
       "name": "The last smith of the old way",
       "vignette": {"needs": "smith_and_blade", "weight": 2.0},
       "asks": "smith",
+      "base": "longsword",
       "roles": {
         "smith": {"bind": "given"},
         "lode": {"bind": "given"}
@@ -364,14 +365,15 @@
                 "Folded forty times, and the hammer sung to it, a note to every blow. {blade_maker} sang to the iron as the work went. That is the secret. Not the metal. The song. I know the song. I know it, and nobody will ever ask me for it again.",
                 "You hammer it to a rhythm, and quench it in snow-water at dawn, never at night. That is all the secret there ever was. {blade_maker} had it from the one before. I have it from my own master. Nobody comes to learn it now."
               ],
-              "fail_say": ["Ask in a better hour. I'm busy. The fire is going out.", "A smith does not tell his craft to any who ask."],
+              "fail_say": ["Ask in a better hour. I'm busy. The fire is going out.", "A smith does not hand the craft to any who ask."],
               "pass": false,
               "retry": true
             },
             {
               "id": "flatter",
-              "label": ["The blade will be yours. You made it. I only carried the iron."],
-              "needs": ["work_done"],
+              "label": ["The blade will be yours, {smith}. You made it once, and you will make it again. I only carry the iron."],
+              "needs": ["taken"],
+              "unless": ["work_done"],
               "then": [["flag", "pride"]],
               "say": [
                 "Mine. Yes. Mine, in the end. I'll hang it where I can see it from the anvil. No one will wield it, no one need. It will be a thing of mine that lasted.",
@@ -413,7 +415,7 @@
         {
           "id": "remade_known",
           "when": "remade",
-          "if": ["knows:old_way"],
+          "if": ["knows:old_way", "not:flag:pride"],
           "tone": "good",
           "ops": [["item", "blade_new"], ["disposition", "smith", 40], ["favour", "smith", "sword", 2], ["contact", "smith", "fence"], ["xp_story", "great"]],
           "line": [
@@ -544,8 +546,8 @@
           "kind": "law",
           "who": "reeve",
           "note": [
-            "{reeve} wants a name to give the watch, and a neck for it, {due}.",
-            "Someone will hang for the barn unless it is settled otherwise, {due}."
+            "{reeve} wants a name to give the watch, and a neck for it, {by_due}.",
+            "Someone will hang for the barn unless it is settled otherwise {by_due}."
           ],
           "acts": [
             {
@@ -578,7 +580,7 @@
               "needs": ["knows:sold"],
               "way": "law",
               "then": [["law", "reeve", "accused"], ["flag", "exposed"], ["law", "culprit", "free"]],
-              "say": ["...You cannot prove... I only... the winter... it was only a little, at first.", "Who told you? Who? I did what a man does with a hungry year coming. I sold what I could carry."],
+              "say": ["...You cannot prove... I only... the winter... it was only a little, at first.", "Who told you? Who? I did what anyone does with a hungry year coming. I sold what I could carry."],
               "fail_say": ["Slander."]
             }
           ]
@@ -657,14 +659,14 @@
         "title": ["The tithe-barn fire", "Ash where the barn stood", "Who burned the winter's grain"],
         "stakes": ["the winter's grain, and the neck of whoever {reeve} names", "a burned barn, a hungry village, and a name for the watch"],
         "plea": [
-          "The tithe barn burned three nights ago. All the village's grain, gone, and winter coming. The watch wants a name and I have none. Somebody set it, someone with a grievance, or a lamp. I need the one who did it, before the first frost, {due}. Or I have to hang somebody for the look of the thing.",
-          "You have seen it. Black from the roof beams down. The grain was in it, the whole winter's tithe, and it's gone. I will not have the village starve and say nothing. I want who set that fire. {due}, I must give the watch a name. Find me one that is true."
+          "The tithe barn burned three nights ago. All the village's grain, gone, and winter coming. The watch wants a name and I have none. Somebody set it, someone with a grievance, or a lamp. I need the one who did it, {by_due}, before the first frost. Or I have to hang somebody for the look of the thing.",
+          "You have seen it. Black from the roof beams down. The grain was in it, the whole winter's tithe, and it's gone. I will not have the village starve and say nothing. I want who set that fire. I must give the watch a name {by_due}. Find me one that is true."
         ],
         "first": [
-          "The tithe barn of {town} burned with the grain in it; {reeve} wants the one who set it {due}.",
-          "{reeve} needs to know who burned the barn, before {due}."
+          "The tithe barn of {town} burned with the grain in it; {reeve} wants the one who set it {by_due}.",
+          "{reeve} needs to know who burned the barn {by_due}."
         ],
-        "news_lapse": ["{culprit} of {town} was hanged for the burning of the tithe barn.", "In {town} the barn burned, a poor man hanged, and the winter came hard."]
+        "news_lapse": ["{culprit} of {town} was hanged for the burning of the tithe barn.", "In {town} the barn burned, a poor soul hanged, and the winter came hard."]
       }
     },
     "v_saints_bones": {
@@ -696,7 +698,7 @@
                 "{thief} answers too quickly and watches the door behind you. The bag clinks when it is set down, and is moved between the feet. {thief} has the bones, or knows who does.",
                 "{thief} is a poor liar. The bag is heavy and the sleeve is stained with the dust of old bone. The bones are here, or were, and some have been sold already."
               ],
-              "fail_say": ["I sell what honest pilgrims want. Pins, ribbons, a splinter of a holy tree. Buy or move on.", "I have nothing for you. Ask the priest who he keeps in his house."],
+              "fail_say": ["I sell what honest pilgrims want. Pins, ribbons, a splinter of a holy tree. Buy or move on.", "I have nothing for you. Ask the priest who {priest_they} keeps in {priest_their} house."],
               "pass": false,
               "retry": true
             },
@@ -819,7 +821,7 @@
         "stakes": ["the bones of {saint}, and the peace of {town}", "the relics of {saint}, and {priest}'s good name"],
         "plea": [
           "The reliquary was found open this morning. The bones of {saint}, {saint_years} in the keeping of this temple, gone. The saint's day is {due}. The whole country comes. I cannot show them an empty niche. Find who took them. Find them back. I will pay what I can, which is nothing.",
-          "They are gone. The relics of {saint}, who has lain in our care for {saint_years}. Taken in the night, on the eve of the saint's day. {due}, the pilgrims come, and if there is nothing in the niche, they will have my head, or worse. I have no one else to ask. Please."
+          "They are gone. The relics of {saint}, who has lain in our care for {saint_years}. Taken in the night, on the eve of the saint's day. The pilgrims come {due}, and if there is nothing in the niche, they will have my head, or worse. I have no one else to ask. Please."
         ],
         "first": [
           "The bones of {saint} were stolen from the temple of {town}, and the saint's day is {due}. {priest} begs you find them.",
@@ -842,8 +844,8 @@
           "kind": "ward",
           "who": "asker",
           "note": [
-            "At {scar}, {scar_years} ago, {scar_dead} were hanged from one tree, and the tree still stands. At midnight the hanged speak, and each wants one thing.",
-            "A tree where men were hanged, after {scar}. They hang in the dark yet, the old ones say. At midnight they ask. The old ones have not answered in years."
+            "At {scar}, {scar_years} ago, {scar_hanged} were hanged from one tree, and the tree still stands. At midnight the hanged speak, and each wants one thing.",
+            "A tree where people were hanged, after {scar}. They hang in the dark yet, the old ones say. At midnight they ask. The old ones have not answered in years."
           ],
           "spells": ["speak_with_dead", "gentle_repose", "hallow"],
           "by_magic": [["flag", "heard"], ["learn", "wants"]],
@@ -884,13 +886,13 @@
               "check": ["persuasion", 12],
               "needs": ["knows:wants"],
               "then": [["flag", "named"]],
-              "say": ["A name for the book, after {scar_years}. Yes. I will write it, and say it at the next dawn rite. It is little enough.", "Unnamed, and hanged, and forgotten. I will write him in, and say his name aloud. Let him hear it."],
+              "say": ["A name for the book, after {scar_years}. Yes. I will write it, and say it at the next dawn rite. It is little enough.", "Unnamed, and hanged, and forgotten. I will write the name in, and say it aloud. Let them hear it."],
               "fail_say": ["A name from a tree? You ask me to put a ghost's word in the book of the living. No."],
               "retry": true
             },
             {
               "id": "pay_debt",
-              "label": ["Here is the old debt, in coin, for the heirs of the one he wronged."],
+              "label": ["Here is the old debt, in coin, for the heirs of the one who was wronged."],
               "price": 1000,
               "way": "pay",
               "needs": ["knows:wants"],
@@ -919,8 +921,7 @@
       ],
       "goals": [
         {"id": "laid", "test": ["all", ["flag", "named"], ["flag", "debt_paid"], ["flag", "buried"]]},
-        {"id": "felled", "test": ["flag", "felled"]},
-        {"id": "partly", "test": ["any", ["flag", "named"], ["flag", "debt_paid"], ["flag", "buried"]]}
+        {"id": "felled", "test": ["flag", "felled"]}
       ],
       "endings": [
         {
@@ -942,23 +943,13 @@
             "The tree burned for three days. The wants of the hanged did not burn. {asker} says they speak from the stump now, and softer, and not to anyone in particular.",
             "The tree is gone, and the field of {scar} is bare. Nobody hears the hanged any longer. {asker} lies awake and listens for them anyway."
           ]
-        },
-        {
-          "id": "partly",
-          "when": "partly",
-          "tone": "mixed",
-          "ops": [["disposition", "asker", 15], ["xp_story", "small"]],
-          "line": [
-            "One of the wants was answered, and one of the hanged was quiet. The others still ask. {asker} no longer goes to listen, but sits by the window with the shutters open.",
-            "The hanged are fewer at midnight now, and louder. {asker} says the ones left are the ones with the least to ask, and the longest to wait."
-          ]
         }
       ],
       "lapse": {
         "tone": "bitter",
         "ops": [["npc_fate", "asker", "dead"], ["news", "news_lapse"]],
         "line": [
-          "Nobody went to the tree, and the hanged were not answered. {asker} was found under it at dawn, standing, as if called, with a rope's mark on the neck that no rope had made.",
+          "The hanged were not answered, or not all of them. {asker} was found under it at dawn, standing, as if called, with a rope's mark on the neck that no rope had made.",
           "{asker} went to the tree alone, at midnight, and did not return. The shutters of {town} close earlier now."
         ]
       },
@@ -968,11 +959,11 @@
         "title": ["The hanging tree", "What the hanged ask", "Midnight at {scar}"],
         "stakes": ["the hanged of {scar}, and the old one who hears them", "a tree, a rope, and what the dead still want"],
         "plea": [
-          "{scar_dead} were hanged from that tree after {scar}, {scar_years} ago. At midnight they speak. I hear them from my bed, each one with his own small want. I am too old to go and answer. I have done nothing for them in all these years. Go and listen. Find what they want. Then do it, and let them rest.",
+          "{scar_hanged} were hanged from that tree after {scar}, {scar_years} ago. At midnight they speak. I hear them from my bed, each one with a small want of their own. I am too old to go and answer. I have done nothing for them in all these years. Go and listen. Find what they want. Then do it, and let them rest.",
           "You know the tree at {scar}? The hanged speak at midnight, every one, each asking one thing of the living. I have listened for years from my window and I am a coward. Go and hear them. A name, a debt, a burial: I think that is all they want. Please. Do it, before they ask for something worse."
         ],
         "first": [
-          "At {scar}, a tree where {scar_dead} were hanged speaks at midnight. {asker} asks you to go and hear what the dead want.",
+          "At {scar}, a tree where {scar_hanged} were hanged speaks at midnight. {asker} asks you to go and hear what the dead want.",
           "{asker} hears the hanged of {scar} each night, and cannot answer them."
         ],
         "news_lapse": ["{asker} of {town} was found dead under the old hanging tree at {scar}.", "In {town}, an old one was found under the hanging tree, dead, with a mark on the neck."]
