@@ -291,3 +291,21 @@ def test_a_kidnap_adds_a_rescue_with_a_short_time(made, tables, monkeypatch):
     assert npc.flags.get("captive") and npc.flags.get("kidnapped")
     story.on_quest_end(game, q, False)
     assert st["state"] == "failed" and not npc.alive, "too late: they die in its hall"
+
+
+def test_one_it_took_is_freed_from_the_chains_in_its_hall(made, tables, monkeypatch):
+    from realmwalker.game import quests
+    from tests.test_deeds import _down_to
+
+    game, adv, t = _tale(made, tables, "risen")
+    npc = _helper_ready(game, adv, t)
+    if villain.lair(game, adv) is None:
+        pytest.skip("this barrow has no hall to hold a captive in")
+    adv["reprisal"] = npc.id
+    assert villain.kidnap(game, adv) == npc.name
+    st = next(s for s in story.chapter(adv)["steps"] if s.get("kidnap"))
+    _down_to(game, villain.lair(game, adv), 1)
+    spot = next(xy for xy, f in game.local.features.items() if f.get("kind") == "captive"
+                and f.get("quest") == st["quest"])
+    quests.free_captive(game, game.local, *spot)
+    assert st["state"] == "done" and npc.alive and not npc.flags.get("captive")

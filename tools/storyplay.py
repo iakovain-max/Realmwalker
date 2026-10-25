@@ -142,10 +142,10 @@ class Player:
         self.run.beats.append(rec["beat"])
         self.moment()
         self.note(f"beat {rec['beat']}: {pick['label'] if pick else '(none)'}")
-        if pick is None or pick["i"] < 0:
+        if pick is None:
             beats.director(g.world)["pending"] = None
             return
-        beats.choose(g, rec, pick["i"])
+        beats.choose(g, rec, pick["i"])  # (-1: a beat with no choices, its own ops played: a wedge driven home, E.2)
 
     def battle(self) -> None:
         from tools.arena import run as play_out

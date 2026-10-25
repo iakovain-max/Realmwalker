@@ -391,6 +391,21 @@ def _check_villains(game, fail) -> None:
             npc = game.world.npcs.get(int(nid))
             if npc is not None and npc.alive:
                 fail(f"{where}: {npc.name} paid for helping you, and is alive")
+        # (E.2) a safe conduct runs to a day and is going or coming home; a frame is a crime on your record; a kidnap
+        # is an optional rescue whose captive is held or freed or dead
+        inv = adv.get("invited")
+        if inv is not None and (inv.get("state") not in ("going", "home") or "until" not in inv):
+            fail(f"{where}: a safe conduct that is neither going nor coming home ({inv})")
+        crimes = {int(r["id"]) for r in game.renown.crimes if r.get("framed") == adv["id"]}
+        if any(int(c) not in crimes for c in adv.get("frames", [])):
+            fail(f"{where}: a frame with no crime on the record ({adv.get('frames')}, {sorted(crimes)})")
+        for ch in adv["chapters"]:
+            for st in ch["steps"]:
+                if st.get("kidnap") and (st["kind"] != "rescue" or not st.get("optional")):
+                    fail(f"{where}: a kidnap's step is not an optional rescue ({st})")
+    left = (game.world.politics.get("director") or {}).get("left") or {}
+    if left.get("what") not in (None,) + story.LEFT:
+        fail(f"something left at the camp that its picture cannot draw ({left})")
 
 
 def _check_part_d(game, fail) -> None:
