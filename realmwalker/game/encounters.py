@@ -124,7 +124,11 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
     scar = past.scar_at(w, p.x, p.y)
     haunted = night and scar is not None and not scar.get("laid")  # a field where the history left its dead
     # (unless it was hallowed with Peaceful Rest: game/warding.py)
-    if not rng.chance(encounter_chance(danger, minutes, night, on_road) * (1.6 if haunted else 1.0)):
+    from realmwalker.world import threats
+
+    road = threats.on_the_road(w, game.tables, p.x, p.y, night)  # (a threat's bands on the land: Expansion 6 D.1)
+    boost = float(road[1]["boost"]) if road is not None else 1.0
+    if not rng.chance(encounter_chance(danger, minutes, night, on_road) * (1.6 if haunted else 1.0) * boost):
         return None
     if haunted:
         intro = past.restless(game, rng)
@@ -132,6 +136,11 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
             enc = make_encounter(game, "restless_dead", rng)
             enc.intro = intro
             return enc
+    if road is not None and road[1]["group"] in game.tables.creatures.encounters and rng.chance(1.0 - 1.0 / boost):
+        t, roads = road  # (the share of meetings the threat added: the dead on the road at night, the gang's toll)
+        enc = make_encounter(game, roads["group"], rng)
+        enc.intro = threats.road_words(w, t, roads, rng)
+        return enc
     group = choose_encounter(game.tables, game.land_key(p.x, p.y), danger, night, on_road, rng)
     if group is None:
         return None

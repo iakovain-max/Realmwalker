@@ -385,9 +385,12 @@ def _check_threats(game, fail) -> None:
         if t["state"] in threats.LIVE:
             if not 0 <= stage < len(kinds[t["kind"]]["stages"]):
                 fail(f"threat {tid} is on a stage its scheme does not have ({stage})")
-            fig = threats.villain_figure(w, t)
-            if fig is not None and not fig.alive:
-                fail(f"threat {tid} goes on though its villain is dead")
+            if not threats.villain_lives(w, t) and threats.villain_figure(w, t) is not None:
+                fail(f"threat {tid} goes on though its villain is gone (dead, laid to rest, or the band fallen)")
+            if t["kind"] == "risen" and str(home.get("site")) not in w.politics.get("tombs", {}):
+                fail(f"risen threat {tid} has no tomb at its home")
+            if t["kind"] == "outlaw" and threats.gang_of(w, t) is None:
+                fail(f"outlaw threat {tid} has no band")
         elif t["state"] == "ended" and not t.get("outcome"):
             fail(f"threat {tid} ended without an outcome")
     for s in w.settlements:

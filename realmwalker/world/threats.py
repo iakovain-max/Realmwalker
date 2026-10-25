@@ -5,12 +5,20 @@ history left, living in `world.politics["threats"]` whether or not the player ca
 moves in the interlude between lives too (at most `interlude_stages` stages there).
 
 - `seed(world, tables, rng)` at world creation, after the ages: a dormant threat for every source the history left
-  (Part A: the named beasts in `politics["lairs"]`), and a few of them stirring, within the world's budget.
+  (the named beasts in `politics["lairs"]`; the dead in `tombs` whose barrow is at least two levels deep, the risen,
+  with the nearest field of the dead in `scars`; the active gangs with a living captain, the outlaw lord), and a few
+  of them stirring, within the world's budget.
 - `advance(politics, days)` from `Politics.advance`: dormant threats may stir; a stirring or active threat's scheme
   moves stage by stage on its clock (signs through `world/news.add` first, the stage's effects a week later); the
   last stage is its doom, bounded and recoverable (an emptied village keeps a floor of its people and comes back);
-  the history's beast-hunters keep hunting; a threat whose villain is gone ends.
-- `seed_from(politics, kind, **refs)` while you play: a beast that comes down wakes (or makes) its threat.
+  the history's beast-hunters keep hunting, and a kind's `ends` is the world's own ending of it (priests lay the
+  risen to rest; politics hangs gangs, which ends their outlaw lord); a threat whose villain is gone ends
+  (`villain_lives`: a beast in its lair, the risen while his barrow is not laid, the outlaw lord while his gang
+  stands - a new captain takes his place in the threat).
+- `seed_from(politics, kind, **refs)` while you play: a beast that comes down, or a new gang, wakes (or makes) its
+  threat.
+- `on_the_road(world, tables, x, y, night)`: the threat whose stage keeps its bands on the land here (a stage's
+  `roads`: the dead on the road at night, the gang at the ford), for game/encounters.py.
 
 STAGE_OPS are what a stage may do to the world when its effects come (threats.json `effects`); story/check.py reports
 any other.
@@ -107,9 +115,9 @@ def _new_id(world) -> str:
 
 def make(world, tables, rng, kind_id: str, *, source: dict, home: dict, figure=None, day: float = 0.0) -> dict:
     kind = tables.threats["kinds"][kind_id]
+    creature = (getattr(figure, "creature", "") if figure is not None else "") or kind.get("creature", "")
     t = {"id": _new_id(world), "kind": kind_id, "tier": 1, "state": "dormant", "source": source, "home": home,
-         "villain": {"figure": figure.id if figure is not None else None,
-                     "creature": getattr(figure, "creature", "") if figure is not None else "",
+         "villain": {"figure": figure.id if figure is not None else None, "creature": creature,
                      "temper": rng.choice(kind["tempers"]) if kind["tempers"] else None},
          "stakes": [], "scheme": {"stages": [s["id"] for s in kind["stages"]], "stage": -1, "since": None,
                                   "next": None, "effects_on": None, "applied": False, "held_until": None},
@@ -139,12 +147,69 @@ def seed(world, tables, rng) -> None:
             make(world, tables, rng.child(f"beast/{key}"), "beast", source={"kind": "lairs", "site": int(key),
                                                                             "figure": fig.id},
                  home={"site": int(key)}, figure=fig, day=0.0)
+    if "risen" in kinds:
+        for site, fig in risen_sources(world):
+            scar = nearest_scar(world, site, 2 * int(kinds["risen"]["reach"]))
+            make(world, tables, rng.child(f"risen/{site.id}"), "risen",
+                 source={"kind": "tombs", "site": site.id, "figure": fig.id, "scar": scar},
+                 home={"site": site.id}, figure=fig, day=0.0)
+    if "outlaw" in kinds:
+        for gang, leader in gang_sources(world):
+            make(world, tables, rng.child(f"outlaw/{gang.id}"), "outlaw",
+                 source={"kind": "gangs", "faction": gang.id, "site": gang.site, "figure": leader.id},
+                 home={"site": gang.site}, figure=leader, day=0.0)
     lo, hi = budget(world, tables)
     dormant = [t for t in sorted(records(world).values(), key=lambda t: int(t["id"][1:])) if t["state"] == "dormant"]
     rng.shuffle(dormant)
     want = rng.randint(lo, hi) if hi >= lo else 0
     for t in dormant[:want]:
         stir(world, tables, t, rng, day=0.0)
+
+
+def risen_sources(world) -> list:
+    """(barrow, its dead) for every tomb whose barrow is at least two levels deep (so that the taken are held above
+    the king's own hall) and whose dead has not been laid to rest."""
+    from realmwalker.world import dungeon
+
+    out = []
+    laid = world.politics.get("laid", {})
+    for key, fid in sorted(world.politics.get("tombs", {}).items(), key=lambda kv: int(kv[0])):
+        fig = world.figures.get(fid)
+        if fig is None or not 0 <= int(key) < len(world.sites) or str(key) in laid:
+            continue
+        site = world.sites[int(key)]
+        if site.kind == "barrow" and dungeon.depth_for(world, site) >= 2:
+            out.append((site, fig))
+    return out
+
+
+def nearest_scar(world, site, within: float) -> int | None:
+    """The index of the field of the dead (politics["scars"]) nearest a place, if one is within reach."""
+    best = None
+    for i, sc in enumerate(world.politics.get("scars") or ()):
+        d = math.hypot(sc["x"] - site.x, sc["y"] - site.y)
+        if d <= within and (best is None or d < best[0]):
+            best = (d, i)
+    return best[1] if best is not None else None
+
+
+def gang_sources(world) -> list:
+    """(gang, its captain) for every active outlaw band with a living captain and a hideout."""
+    from realmwalker.world import factions as fx
+
+    out = []
+    for gang in fx.active_factions(world, "bandit_gang"):
+        leader = fx.leader_of(world, gang)
+        if leader is not None and leader.alive and 0 <= gang.site < len(world.sites):
+            out.append((gang, leader))
+    return out
+
+
+def gang_of(world, t: dict):
+    """The outlaw lord's band (None for any other kind, or a band gone from the records)."""
+    if t["kind"] != "outlaw":
+        return None
+    return world.factions.get(t["source"].get("faction"))
 
 
 def budget(world, tables) -> tuple[int, int]:
@@ -188,8 +253,10 @@ def _words(world, t: dict, rng) -> dict:
     hx, hy = home_xy(world, t)
     area = world.area_at(hx, hy)
     place = next((world.settlements[s].name for s in t["stakes"]), home_name(world, t))
+    gang = gang_of(world, t)
     return {"villain": villain_name(world, t), "home": home_name(world, t), "place": place,
-            "area": area.name if area is not None else "the wild country"}
+            "area": area.name if area is not None else "the wild country",
+            "gang": gang.name if gang is not None else "the gang"}
 
 
 def _sign(world, tables, t: dict, st: dict, rng, day: float) -> None:
@@ -213,8 +280,9 @@ def advance(pol, days: float) -> None:
     for t in sorted(records(w).values(), key=lambda t: int(t["id"][1:])):
         if t["state"] == "ended":
             continue
-        if not _villain_lives(w, t):
-            end(w, t, "slain" if villain_figure(w, t) is not None else "gone", day)
+        _new_captain(w, t)
+        if not villain_lives(w, t):
+            end(w, t, gone_outcome(w, t), day)
             continue
         if t["state"] == "dormant":
             if pol.rng.chance(float(tables.threats.get("wake", 0.0)) * days / 7.0) and room_for(w, tables, t):
@@ -235,6 +303,7 @@ def advance(pol, days: float) -> None:
                 if interlude:
                     t["interlude_moved"] = int(t.get("interlude_moved", 0)) + 1
         _hunted(pol, t)
+        _ends_alone(pol, t)
     _recover(pol)
 
 
@@ -257,16 +326,59 @@ def end(world, t: dict, outcome: str, day: float) -> None:
     t["offer"] = None
 
 
-def _villain_lives(world, t: dict) -> bool:
+def villain_lives(world, t: dict) -> bool:
+    """Whether the will behind a threat is still at work: a beast in its own lair; the risen while his barrow is not
+    laid (he is dead, and walks); the outlaw lord while his band stands."""
     fig = villain_figure(world, t)
     if fig is None:
         return t["villain"].get("figure") is None
+    if t["kind"] == "risen":
+        site = str(t["home"].get("site"))
+        return site not in world.politics.get("laid", {}) and world.politics.get("tombs", {}).get(site) == fig.id
+    if t["kind"] == "outlaw":
+        gang = gang_of(world, t)
+        return gang is not None and gang.active and fig.alive
     if not fig.alive:
         return False
     if t["kind"] == "beast":
         return str(t["home"].get("site")) in world.politics.get("lairs", {}) and \
             world.politics["lairs"][str(t["home"]["site"])] == fig.id
     return True
+
+
+def settle(world, day: float) -> None:
+    """End at once every threat whose villain is gone (the barrow king put down, the band broken in its hideout), and
+    give an outlaw lord's threat to his band's new captain: what the hero did is not left waiting for the week."""
+    for t in records(world).values():
+        if t["state"] == "ended":
+            continue
+        _new_captain(world, t)
+        if not villain_lives(world, t):
+            end(world, t, gone_outcome(world, t), day)
+
+
+def gone_outcome(world, t: dict) -> str:
+    """How a threat whose villain is gone ended."""
+    if t["kind"] == "risen":
+        return "laid"
+    if t["kind"] == "outlaw":
+        gang = gang_of(world, t)
+        return "fallen" if gang is None or not gang.active else "slain"
+    return "slain" if villain_figure(world, t) is not None else "gone"
+
+
+def _new_captain(world, t: dict) -> None:
+    """The outlaw lord dies and his band chooses another: the threat is the new captain's now."""
+    from realmwalker.world import factions as fx
+
+    gang = gang_of(world, t)
+    if gang is None or not gang.active:
+        return
+    leader = fx.leader_of(world, gang)
+    if leader is not None and leader.alive and leader.id != t["villain"].get("figure"):
+        t["villain"]["figure"] = leader.id
+        t["villain"]["name"] = villain_name(world, t)
+        t["source"]["figure"] = leader.id
 
 
 def room_for(world, tables, t: dict) -> bool:
@@ -320,11 +432,43 @@ def _hunted(pol, t: dict) -> None:
     end(w, t, "hunted", pol.day)
 
 
+ENDINGS: dict[str, object] = {}  # kind -> fn(politics, threat): what the world's own ending of it does
+
+
+def _ends_alone(pol, t: dict) -> None:
+    """A threat nobody has taken on may end without the hero (its kind's `ends`: a weekly chance while it stirs)."""
+    spec = pol.t.threats["kinds"][t["kind"]].get("ends")
+    if not spec or t.get("adventure") is not None or t["state"] not in LIVE or t["kind"] not in ENDINGS:
+        return
+    if not pol.rng.chance(float(spec["chance"])):
+        return
+    ENDINGS[t["kind"]](pol, t)
+    hx, hy = home_xy(pol.w, t)
+    fid = t["villain"].get("figure")
+    pol.say(spec["text"], _words(pol.w, t, pol.rng), where=(hx, hy), importance=3, places=t["stakes"][:1],
+            figures=[fid] if fid is not None else [])
+    end(pol.w, t, spec["outcome"], pol.day)
+
+
+def _laid_by_others(pol, t: dict) -> None:
+    """The risen laid to rest by priests or a hermit of the land: his barrow is only a grave again."""
+    pol.w.politics.setdefault("laid", {})[str(t["home"]["site"])] = pol.year
+
+
+ENDINGS["risen"] = _laid_by_others
+
+
 def _recover(pol) -> None:
-    """Dooms are bounded: an emptied place fills again (rebuilding), and in time is itself again."""
+    """Dooms are bounded: an emptied place fills again (rebuilding), and in time is itself again; a place paying a
+    fallen gang pays nobody."""
     w = pol.w
     spec = pol.t.threats.get("emptied", {"floor": 0.2, "rebuild_days": 90})
     for s in w.settlements:
+        x = s.status.get("extorted")
+        if isinstance(x, dict) and isinstance(x.get("by"), int):
+            gang = w.factions.get(x["by"])
+            if gang is None or not gang.active:
+                marks.lift(w, s, "extorted")
         e = s.status.get("emptied")
         if isinstance(e, dict) and pol.day >= float(e.get("until", 0)):
             marks.lift(w, s, "emptied")
@@ -339,8 +483,9 @@ def _recover(pol) -> None:
 
 
 # ---------------------------------------------------------------------------- while you play
-def seed_from(pol, kind: str, *, figure=None, site: int | None = None) -> dict | None:
-    """Something politics did may wake a threat (a beast came down): its own if it has one, else a new one."""
+def seed_from(pol, kind: str, *, figure=None, site: int | None = None, faction=None) -> dict | None:
+    """Something politics did may wake a threat (a beast came down, a new gang took to the roads): its own if it has
+    one, else a new one."""
     w, tables = pol.w, pol.t
     if kind not in tables.threats.get("kinds", {}):
         return None
@@ -356,7 +501,34 @@ def seed_from(pol, kind: str, *, figure=None, site: int | None = None) -> dict |
         if room_for(w, tables, t):
             stir(w, tables, t, pol.rng, day=pol.day)
         return t
+    if kind == "outlaw" and figure is not None and faction is not None and 0 <= faction.site < len(w.sites):
+        t = make(w, tables, pol.rng.child(f"outlaw/{faction.id}/{int(pol.day)}"), "outlaw",
+                 source={"kind": "gangs", "faction": faction.id, "site": faction.site, "figure": figure.id},
+                 home={"site": faction.site}, figure=figure, day=pol.day)
+        if room_for(w, tables, t):
+            stir(w, tables, t, pol.rng, day=pol.day)
+        return t
     return None
+
+
+def on_the_road(world, tables, x: int, y: int, night: bool) -> tuple[dict, dict] | None:
+    """A live threat whose stage, its effects begun, keeps its bands on the land here: (threat, the stage's roads)."""
+    kinds = tables.threats.get("kinds", {})
+    for t in live(world):
+        sch = t["scheme"]
+        if t["kind"] not in kinds or not sch["applied"] or not 0 <= sch["stage"] < len(stages(tables, t)):
+            continue
+        roads = stages(tables, t)[sch["stage"]].get("roads")
+        if not roads or (roads.get("night") and not night) or distance(world, t, x, y) > int(t["reach"]["r"]):
+            continue
+        return t, roads
+    return None
+
+
+def road_words(world, t: dict, roads: dict, rng) -> str:
+    """How the threat's band on the road comes at you (its stage's `roads` intro, filled)."""
+    text = textgen.fill(rng.choice(roads["intro"]), rng, {}, _words(world, t, rng))
+    return text[:1].upper() + text[1:]
 
 
 # ---------------------------------------------------------------------------- what a stage does
@@ -391,11 +563,16 @@ def _danger(pol, t: dict, n: int) -> None:
 @stage_op("emptied")
 def _emptied(pol, t: dict, which: str = "nearest", *also: str) -> None:
     """The doom: the nearest small place it threatens empties, keeping a floor of its people, until it fills again.
-    `also` are marks the place is left with besides (the beast's: "burned", a farmstead burned as its people fled)."""
+    `which`: "nearest" (the nearest small place), "hamlet" or "village" (the nearest of that kind first); a place
+    already emptied is passed over. `also` are marks the place is left with besides (the beast's: "burned", a
+    farmstead burned as its people fled; the risen's: "haunted", held by his dead)."""
     from realmwalker.world.history import remember
 
     w = pol.w
-    towns = _in_reach(w, t, ("hamlet", "village")) or _in_reach(w, t)
+    small = [s for s in _in_reach(w, t, ("hamlet", "village")) if "emptied" not in s.status]
+    towns = small or [s for s in _in_reach(w, t) if "emptied" not in s.status]
+    if which in ("hamlet", "village"):
+        towns = [s for s in towns if s.kind == which] + [s for s in towns if s.kind != which]
     if not towns:
         return
     s = towns[0]
@@ -410,3 +587,33 @@ def _emptied(pol, t: dict, which: str = "nearest", *also: str) -> None:
                    importance=2, places=[s])
     remember(w, pol.year, "emptied", text, importance=3, places=[s.id],
              figures=[t["villain"]["figure"]] if t["villain"].get("figure") is not None else [])
+
+
+@stage_op("mark")
+def _mark(pol, t: dict, key: str, how: str = "nearest") -> None:
+    """A mark that outlasts the stage on the place it threatens (the outlaw lord's doom: a town paying tribute to his
+    band, until the band falls), remembered in the history."""
+    from realmwalker.world.history import remember
+
+    w = pol.w
+    towns = [s for s in _in_reach(w, t) if key not in s.status]
+    if how == "nearest":
+        towns = towns[:1]
+    gang = gang_of(w, t)
+    for s in towns:
+        marks.add(w, s, key, pol.day, pol.t, by=gang.id if gang is not None else villain_name(w, t), threat=t["id"])
+        who = gang.name if gang is not None else villain_name(w, t)
+        remember(w, pol.year, key, f"{s.name} began to pay {who}", importance=3, places=[s.id],
+                 figures=[t["villain"]["figure"]] if t["villain"].get("figure") is not None else [])
+
+
+@stage_op("gang")
+def _gang(pol, t: dict, how: str = "grow") -> None:
+    """The outlaw lord's band grows: deserters and runaways come to it, and silver off the roads pays them."""
+    gang = gang_of(pol.w, t)
+    if gang is None or not gang.active or how != "grow":
+        return
+    gang.military += pol.rng.randint(5, 12)
+    gang.wealth += pol.rng.randint(10, 30)
+    hx, hy = home_xy(pol.w, t)
+    pol.say("threat_gang_grows", _words(pol.w, t, pol.rng), where=(hx, hy), importance=2, factions=[gang])

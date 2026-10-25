@@ -1,5 +1,5 @@
 {
-  "_comment": "Threats (docs/ADVENTURES.md §5.1, §8.3; world/threats.py): kinds of danger with a will behind them, made from what the history left. budget: how many may be stirring or active at once, by world size. near_hero: at most `untaken` of them within `tiles` of the hero that the hero has not taken on. start: at least `tier_one` tier-1 threats within `tiles` of a starting town (a week's walk is about 56 tiles). stage_days: how long a scheme's stage lasts, by tier. sign_lead_days: a stage's first sign comes at least this long before its effects. target_level: the party level a finale is measured for, by tier. tier_by_danger: [least danger of the home, tier]. wake: a dormant threat's weekly chance to stir by itself. emptied: a doomed settlement keeps `floor` of its people and comes back after `rebuild_days`. hunters: the history's beast-hunting heroes go on hunting (a weekly chance, more by fame). interlude_stages: the most stages a threat moves while nobody plays.",
+  "_comment": "Threats (docs/ADVENTURES.md §5.1, §8.3; world/threats.py): kinds of danger with a will behind them, made from what the history left. budget: how many may be stirring or active at once, by world size. near_hero: at most `untaken` of them within `tiles` of the hero that the hero has not taken on. start: at least `tier_one` tier-1 threats within `tiles` of a starting town (a week's walk is about 56 tiles). stage_days: how long a scheme's stage lasts, by tier. sign_lead_days: a stage's first sign comes at least this long before its effects. target_level: the party level a finale is measured for, by tier. tier_by_danger: [least danger of the home, tier]. wake: a dormant threat's weekly chance to stir by itself. emptied: a doomed settlement keeps `floor` of its people and comes back after `rebuild_days`. hunters: the history's beast-hunting heroes go on hunting (a weekly chance, more by fame). interlude_stages: the most stages a threat moves while nobody plays. A kind's creature: what its villain fights as when its figure has no creature of its own (the dead king risen, the gang's captain). A stage's roads: while its effects hold, bands of `group` are met more often (x `boost`) on the land within its reach - only at night if `night` - with these words as their coming (the dead on the road at night, the gang's men at the ford). A kind's ends: the world's own ending of it (a weekly `chance` while it stirs; its `outcome`; news from politics.json `text`).",
   "budget": {
     "small": [
       3,
@@ -180,6 +180,281 @@
         "Wanted: someone to put an end to {villain}. The people of {town} will feed and house whoever tries. It lairs at {home}, {where}.",
         "{villain} has killed again. Anyone with the stomach for a hunt, ask for the headman of {town}. Its lair is {home}, {where}.",
         "A widow of {town} will give everything she has to whoever kills {villain}. It sleeps at {home}, {where}."
+      ]
+    },
+    "risen": {
+      "name": "the risen",
+      "from": "tombs",
+      "tiers": [
+        1,
+        4
+      ],
+      "tempers": [],
+      "blueprints": [],
+      "reach": 16,
+      "creature": "wight",
+      "ends": {
+        "chance": 0.008,
+        "outcome": "laid",
+        "text": "threat_laid"
+      },
+      "stages": [
+        {
+          "id": "omens",
+          "days": [
+            10,
+            20
+          ],
+          "signs": [
+            "Graves have been opened in the churchyard at {place}, from below, the sexton swears, not from above.",
+            "Every dog in {place} howls towards {home} at moonrise, and none of them will be called in.",
+            "A cold mist lies on {home} in the mornings now, and the shepherds of {area} keep their flocks away from it.",
+            "Lights have been seen going in and out of {home} at night, slow, the way a procession walks.",
+            "The old women of {place} are hanging iron over their doors again. They say the one in {home} is turning over."
+          ],
+          "flavour": [
+            "A grave by the track has been opened. The earth is thrown outwards, as if whoever lay there dug his own way up.",
+            "The birds are quiet here. Even the crows keep off the barrow-ward side of the road.",
+            "Someone has driven an iron nail into every gatepost along this lane, and hung a sprig of rowan from each."
+          ]
+        },
+        {
+          "id": "walking",
+          "days": [
+            10,
+            20
+          ],
+          "effects": [
+            [
+              "status",
+              "haunted",
+              "nearest"
+            ]
+          ],
+          "roads": {
+            "group": "restless_dead",
+            "night": true,
+            "boost": 2.5,
+            "intro": [
+              "Figures stand in the road ahead, very still in the moonlight. They have been dead a long time, and they turn to you all at once.",
+              "A slow procession comes up the road from {home}, without lanterns, without a sound. The dead of {villain} are walking.",
+              "Bones in rotted mail climb out of the ditch as you pass. Someone in {home} has sent them for you.",
+              "The mist off the barrow-fields thickens round you, and there are shapes walking in it that should be lying down."
+            ]
+          },
+          "signs": [
+            "The dead walk the roads round {place} at night. A carter swears he passed a whole line of them, going towards {home}.",
+            "Two men of {place} went out after dark and did not come back. Their tracks went up towards {home}, side by side with others.",
+            "Nobody in {area} travels after sunset now: things in old armour stand at the crossroads, waiting.",
+            "{place} keeps fires burning at every gate all night. The dead came to the fence and stood there till cockcrow.",
+            "They are saying in {place} that {villain} is awake, and has called his old guard out of the ground."
+          ]
+        },
+        {
+          "id": "emptying",
+          "days": [
+            10,
+            20
+          ],
+          "effects": [
+            [
+              "emptied",
+              "hamlet"
+            ],
+            [
+              "danger",
+              1
+            ]
+          ],
+          "roads": {
+            "group": "restless_dead",
+            "night": true,
+            "boost": 3.0,
+            "intro": [
+              "Some of the dead on the road wear the clothes of farm folk, and not long dead at that. They walk towards {home} and do not stop for you - until they do.",
+              "A woman in a nightdress walks barefoot up the road, her eyes open and empty. Behind her come the others, and they have noticed you.",
+              "A line of the dead goes by in the dark, old bones and new, all walking to {home}. The last of them turn aside for you."
+            ]
+          },
+          "signs": [
+            "A hamlet near {place} woke to find half its people gone: beds empty, doors open, footprints going up to {home}.",
+            "Refugees on the road from {area} tell of their own kin getting up at midnight and walking out towards {home}, and not hearing when called.",
+            "The priest of {place} rang the bell all night, and still the sleepers went out to {villain}. In the morning there were only the old and the children.",
+            "There are new dead walking with the old ones round {home} now. People of {area} know their faces."
+          ]
+        },
+        {
+          "id": "march",
+          "days": [
+            7,
+            14
+          ],
+          "doom": true,
+          "effects": [
+            [
+              "emptied",
+              "village",
+              "haunted"
+            ],
+            [
+              "danger",
+              1
+            ]
+          ],
+          "roads": {
+            "group": "restless_dead",
+            "night": false,
+            "boost": 2.0,
+            "intro": [
+              "Even by day the dead keep the roads here now. They come out of the grey light in their old ranks, as if the land were theirs again.",
+              "The dead of {villain} hold this road. They stand aside for nobody living."
+            ]
+          },
+          "signs": [
+            "The dead are marching out of {home}, rank on rank, and {place} is in their way.",
+            "{villain} has come out of {home} in his old crown, they say, and his dead walk before him towards {place}.",
+            "There is no more sleeping in {area}. {villain} means to have the living country back, and {place} is the first of it.",
+            "Bells all night in {area}: the dead are on the march, and {place} is emptying ahead of them."
+          ]
+        }
+      ],
+      "hooks": [
+        "The priest of {town} asks for anyone with the courage to go up to {home}, {where}, where {villain} has woken.",
+        "The dead walk round {town}. The headman will pay whoever puts {villain} back in his grave at {home}, {where}.",
+        "Help wanted at {town}: the barrow of {villain} is open, {where}, and the dead come out of it by night.",
+        "Families of {town} who have lost their own to the walking dead ask for someone to lay {villain} to rest. His barrow is {home}, {where}."
+      ]
+    },
+    "outlaw": {
+      "name": "the outlaw lord",
+      "from": "gangs",
+      "tiers": [
+        1,
+        3
+      ],
+      "tempers": [],
+      "blueprints": [],
+      "reach": 18,
+      "creature": "bandit_captain",
+      "stages": [
+        {
+          "id": "tolls",
+          "days": [
+            10,
+            20
+          ],
+          "roads": {
+            "group": "bandits",
+            "boost": 1.5,
+            "intro": [
+              "A rope is drawn up across the road from the ditch, and men step out on both sides. {gang} wants its toll.",
+              "A man sits on a fallen tree across the way, eating an apple. \"Road's closed,\" he says, \"unless you pay {villain}.\" His friends come out of the trees.",
+              "There are men waiting at the ford with crossbows, and a fire, as if they have been there a while. They wear {gang}'s rag on their arms."
+            ]
+          },
+          "signs": [
+            "A carter of {place} was stopped on the road and stripped of his load by men who said they were {villain}'s.",
+            "{gang} has drawn a chain across the road below {place}, and takes a toll from all who pass.",
+            "Merchants in {area} have started riding in company. {gang} took two wagons in a week.",
+            "A pedlar walked into {place} in his shirt, with nothing else. {villain}'s men took the rest, his boots included."
+          ],
+          "flavour": [
+            "A wagon lies on its side in the ditch, its load gone, its axle cut through.",
+            "A rag is tied round a milestone here - the gang's mark, the carters say: this road pays.",
+            "Fresh hoofprints leave the road here, many of them, and go off into the scrub towards nowhere honest."
+          ]
+        },
+        {
+          "id": "bleeding",
+          "days": [
+            10,
+            20
+          ],
+          "effects": [
+            [
+              "status",
+              "bled",
+              "nearest"
+            ]
+          ],
+          "roads": {
+            "group": "bandits",
+            "boost": 2.0,
+            "intro": [
+              "They are waiting at the bend, where the trees close in. {gang} has learned which roads are worth watching.",
+              "A boy runs out into the road shouting for help, and when you stop, his friends come out of the hedge with their blades out. {gang} sends its regards.",
+              "Horsemen come up behind you at a trot and spread out across the road. \"{villain} says you're carrying too much,\" one of them calls."
+            ]
+          },
+          "signs": [
+            "No wagon has reached {place} in a fortnight without paying {gang}. Salt and iron cost twice what they did.",
+            "The lord's toll-keeper on the road to {place} was found hanged from his own gate. {villain} does not like competition.",
+            "{place} sent to its lord for soldiers against {gang}, and the messenger came back without his ears.",
+            "They say {villain} knows every wagon that leaves {place} before it is loaded. Someone in town is talking."
+          ]
+        },
+        {
+          "id": "bold",
+          "days": [
+            10,
+            20
+          ],
+          "effects": [
+            [
+              "gang",
+              "grow"
+            ],
+            [
+              "danger",
+              1
+            ]
+          ],
+          "roads": {
+            "group": "bandit_gang",
+            "boost": 2.0,
+            "intro": [
+              "Men ride out of the trees in a long line, and one at their head with a captain's sash. {gang} does not hide any more.",
+              "There are more of them than any robbers have a right to be. {villain} has been recruiting."
+            ]
+          },
+          "signs": [
+            "{gang} rode into a village of {area} by daylight, took what they liked, and drank the inn dry before they left.",
+            "Deserters and runaways are going up to {home} to join {villain}. They say he pays better than the lord.",
+            "{villain} has sent word to {place}: a tenth of everything, every month, or the barns burn.",
+            "The lord's patrol met {gang} on the road and came off worst. Nobody in {area} expects another."
+          ]
+        },
+        {
+          "id": "tribute",
+          "days": [
+            7,
+            14
+          ],
+          "doom": true,
+          "effects": [
+            [
+              "mark",
+              "extorted",
+              "nearest"
+            ],
+            [
+              "gang",
+              "grow"
+            ]
+          ],
+          "signs": [
+            "{place} has given in. Every month a cart goes up to {home} with a tenth of all they have, and {villain} lets them live.",
+            "The headman of {place} has sworn to {villain} on the green, with the gang's riders round him. The town pays now.",
+            "{gang} rules the roads of {area}. {place} pays its tribute, and the lord does nothing.",
+            "There is a new law in {place}, and it is {villain}'s: pay, and keep your roof."
+          ]
+        }
+      ],
+      "hooks": [
+        "The merchants of {town} will pay well for the end of {villain} and {gang}, that hold the roads from {home}, {where}.",
+        "Wanted, alive or otherwise: {villain}, captain of {gang}. Ask at the gate of {town}. The gang keeps to {home}, {where}.",
+        "{town} has had enough of paying {gang}. Whoever breaks {villain} at {home}, {where}, will want for nothing here.",
+        "A robbed carter of {town} offers all he has left to whoever brings down {villain}. His men lie up at {home}, {where}."
       ]
     }
   }

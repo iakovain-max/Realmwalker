@@ -1431,6 +1431,9 @@ THREAT_STAGE = Obj({
     "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail
     "effects": ops_list(optional=True),  # world/threats.STAGE_OPS
     "doom": Bool(optional=True),
+    # while its effects hold, its bands are met more often on the land in its reach (game/encounters.py)
+    "roads": Obj({"group": Str(max_len=40), "night": Bool(optional=True), "boost": Float(min=1, max=10),
+                  "intro": word_list(1, 300)}, optional=True),
 })
 THREAT_KIND = Obj({
     "name": Str(max_len=40),
@@ -1440,6 +1443,9 @@ THREAT_KIND = Obj({
     "tempers": List(Str(max_len=30)),
     "blueprints": List(Str(max_len=40)),
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
+    "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
+    # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
+    "ends": Obj({"chance": Float(min=0, max=1), "outcome": Str(max_len=30), "text": Str(max_len=40)}, optional=True),
     "stages": List(THREAT_STAGE, min_items=3, max_items=7),
     "hooks": word_list(3, 300),  # a notice board's line or a patron's plea ({villain}, {home}, {town}, {where})
 })

@@ -69,12 +69,23 @@ def problems(tables) -> list[str]:
     skills = set(tables.rules.get("skills", {}))
     beats = tables.beats
     bosses = tables.villains.get("bosses", {})
+    creatures = getattr(tables, "creatures", None)
+    news_words = (getattr(tables, "politics", None) or {}).get("text")  # (None: tables without them, in tests)
     for kid, kind in tables.threats.get("kinds", {}).items():
         if kid.startswith("_"):
             continue
         for stage in kind["stages"]:
             _ops(f"threats.json: {kid}, stage {stage['id']}", stage.get("effects"), threats.STAGE_OPS, out,
                  "stage effect")
+            group = (stage.get("roads") or {}).get("group")
+            if group and creatures is not None and group not in creatures.encounters:
+                out.append(f"threats.json: {kid}, stage {stage['id']}: the road band '{group}' is not an encounter.")
+        if kind.get("creature") and creatures is not None and kind["creature"] not in creatures:
+            out.append(f"threats.json: {kid}: the creature '{kind['creature']}' is not one the game has.")
+        ends = kind.get("ends")
+        if ends and (kid not in threats.ENDINGS or (news_words is not None and ends["text"] not in news_words)):
+            out.append(f"threats.json: {kid}: its own ending needs a handler in world/threats.ENDINGS and news "
+                       f"'{ends['text']}' in politics.json.")
     for bid, bp in tables.adventures.get("blueprints", {}).items():
         if bid.startswith("_"):
             continue

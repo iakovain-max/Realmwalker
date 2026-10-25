@@ -909,7 +909,7 @@ def notices(game, settlement) -> list[str]:
 
     reach = int(game.tables.threats.get("start", {}).get("tiles", 56))
     return [hook_line(game, t, settlement) for t in threats.live(game.world) if t.get("adventure") is None
-            and threats.distance(game.world, t, settlement.x, settlement.y) <= reach]
+            and threats.distance(game.world, t, settlement.x, settlement.y) <= reach and _can_take(game, t)]
 
 
 # ---------------------------------------------------------------------------- lives

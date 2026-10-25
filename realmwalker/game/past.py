@@ -264,6 +264,9 @@ def on_battle(game, result) -> None:
                      player=True)
             game.say(f"<good>{esc(fig.full_name())} is still at last.</> <dim>{esc(cap(site.name))} is only a grave "
                      f"now.</>", "good")
+    from realmwalker.world import news, threats
+
+    threats.settle(w, news.now_days(w))  # (a risen king put down, a band broken: their threats end now)
 
 
 def _politics(game):
