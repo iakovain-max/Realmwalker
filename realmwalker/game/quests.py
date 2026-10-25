@@ -1315,24 +1315,34 @@ def free_captive(game, lm, x: int, y: int) -> None:
     from realmwalker.game.dungeon import set_terrain
 
     f = lm.features.pop((x, y), {})
+    held = game.world.npcs.get(int(f["npc"])) if f.get("npc") is not None else None  # (a situation's captive: C.5)
+    held = held if held is not None and held.alive else None
     q = by_id(game, f.get("quest"))
     name = f.get("name", "The captive")
-    if q is not None and q["state"] in LIVE:
+    live = q is not None and q["state"] in LIVE
+    if live or held is not None:
         from realmwalker.game import magic_items
 
         magic_items.notice(game, "rescue")
-    if q is None or q["state"] not in LIVE:
+    if not live and held is None:
         set_terrain(lm, x, y, "bones")
         game.say(f"<warn>{name} is dead, still in the chains. You were too late.</>", "warn")
         return
     set_terrain(lm, x, y, "chains")
-    q["target"]["freed"] = True
     game.say(f"<good>You break the chains. {name} is thin and filthy, but alive, and will follow you home.</>", "good")
-    mark_done(game, q)
+    if live:
+        q["target"]["freed"] = True
+        mark_done(game, q)
     if game.party[1:]:
         from realmwalker.game.companions import react
 
         react(game, "mercy", "help_poor")
+    if held is not None:
+        held.flags.pop("captive", None)
+        held.flags["with_party"] = True
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "captive", "force", npc=held)
 
 
 def on_pickpocket(game, npc) -> list[str]:

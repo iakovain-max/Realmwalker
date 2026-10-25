@@ -830,6 +830,9 @@ class GameState:
             from realmwalker.game import quests
 
             quests.on_arrive(self)
+        from realmwalker.game.story import goals
+
+        goals.notify(self, "town")  # (into a town or a place, or out of one: a situation's goals, C.5)
         if self.encounter is None and self.battle is None:
             from realmwalker.game import story
 
@@ -1077,6 +1080,10 @@ class GameState:
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
         self.dirty = True
+        if here is not None:
+            from realmwalker.game.story import goals
+
+            goals.notify(self, "town")  # (out of its streets: C.5)
 
     def _move_local(self, dx: int, dy: int) -> bool:
         lm = self.local
@@ -1182,6 +1189,10 @@ class GameState:
 
                 law.trespass_check(self, lm.buildings.index(now_building))
             self._walk_in(lm, now_building)
+        if now_building is not before_building:
+            from realmwalker.game.story import goals
+
+            goals.notify(self, "building", "sneak" if self.sneaking else "wait")  # (in or out of a house: C.5)
         creep = 2.0 if self.sneaking else 1.0
         self.pass_seconds(int(LOCAL_STEP_SECONDS * float(T.cost[t]) * (1.41 if dx and dy else 1.0) * pace * creep), "walk")
         here = lm.items.get((nx, ny))

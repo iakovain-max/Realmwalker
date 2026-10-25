@@ -158,6 +158,9 @@ def hire(game, npc) -> list[str]:
             f"{game.tables.classes[char.cls]['name'].lower()}, {data(game)['archetypes'][t['archetype']]['name']}. "
             f"<dim>({terms_text_for(game, char) if char.companion['wage'] else 'no wage: only their keep'})</>"]
     msgs.append(f"<name>{first(char)}:</> {line(game, 'hired', char)}")
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "party", "pay" if char.companion["wage"] else "talk")  # (C.5)
     return msgs
 
 
@@ -309,6 +312,9 @@ def dismiss(game, c: Character, *, deserted: bool = False) -> list[str]:
         from realmwalker.game import uniques
 
         uniques.left(game, c)  # home again, as they are, to be found there
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "party")  # (C.5)
     return [line(game, "desert" if deserted else "leave", c)]
 
 

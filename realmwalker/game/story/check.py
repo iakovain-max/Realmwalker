@@ -168,6 +168,10 @@ def problems(tables) -> list[str]:
     from realmwalker.game.story import lives
 
     out.extend(lives.problems(tables))
+    from realmwalker.game.story import goals
+
+    out.extend(goals.self_problems())
+    out.extend(goals.data_problems(tables))
     return out
 
 

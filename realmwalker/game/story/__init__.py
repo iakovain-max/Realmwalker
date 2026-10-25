@@ -23,7 +23,7 @@ from realmwalker.core.textgen import escape_markup as esc
 # The modules whose handlers fill the registries story/check.py reads (step kinds, selectors, ops, keys).
 HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selectors", "realmwalker.game.story.cast",
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
-                   "realmwalker.game.story.finale", "realmwalker.game.story.stage")
+                   "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook"}
 
 
@@ -213,6 +213,9 @@ def daily(game) -> None:
     from realmwalker.game.story import lives
 
     lives.daily(game)  # (the week's life events in the towns near you: C.4)
+    from realmwalker.game.story import goals
+
+    goals.notify(game, "day")  # (clocks, lives and the world's own turns: a situation's goals, C.5)
     for adv in active(game):
         villain.quiet(game, adv)
         t = threat_of(game, adv)
@@ -377,7 +380,9 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.world import threats
 
     lives.ensure(game, settlement.id)  # (a town peopled before lives were kept)
+    from realmwalker.game.story import goals
 
+    goals.notify(game, "town")  # (into its streets: a situation's goals, C.5)
     if beats.pending(game) is not None:
         return
     if _show_tale(game, settlement):

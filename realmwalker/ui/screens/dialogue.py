@@ -76,9 +76,7 @@ class DialogueScreen(Screen):
         trade.open_request(self, request, choice)
 
     def finish(self) -> None:
-        if self.conv.minutes:
-            self.game.pass_time(self.conv.minutes, "rest")
-        self.game.dirty = True
+        self.conv.close()
         self.close()
 
     # ------------------------------------------------------------------ input

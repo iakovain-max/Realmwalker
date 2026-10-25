@@ -431,7 +431,17 @@ def best_at(game, skill: str):
 
 
 def unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
-    """Pick the lock if you have the tools, otherwise force it."""
+    """Pick the lock if you have the tools, otherwise force it. A lock open may reach a situation's goal (C.5)."""
+    picked = has_tools(game)
+    ok, text = _unlock(game, lm, x, y, dc)
+    if ok:
+        from realmwalker.game.story import goals
+
+        goals.notify(game, "building", "sneak" if picked else "force")
+    return ok, text
+
+
+def _unlock(game, lm, x: int, y: int, dc: int) -> tuple[bool, str]:
     rng = rng_for(game, "lock")
     game.pass_seconds(60)
     if has_tools(game):
