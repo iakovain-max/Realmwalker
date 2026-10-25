@@ -66,7 +66,11 @@ def test_local_map_enter_walk_and_leave(game):
     moved = sum(game.move(dx, dy) for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)] * 3)
     assert moved > 0
     assert "You are here" in describe_local(game, p.lx, p.ly) or describe_local(game, p.lx, p.ly)
-    # Walking off the edge returns to the overworld.
+    # Walking off the edge returns to the overworld (once any scene the town began is played out: Expansion 6).
+    from realmwalker.game.story import stage
+
+    stage.skip(game)
+    game.talk_to = None
     p.lx = 0
     game.move(-1, 0)
     assert not game.in_local

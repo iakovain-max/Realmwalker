@@ -459,9 +459,10 @@ def tick(game, lm, s) -> None:
     """One step of time: a scene's cue first (game/story/stage.py), then everyone takes a step towards where they are
     going (a runner on a scene's errand, two)."""
     if game.local is lm:
-        from realmwalker.game.story import stage
+        from realmwalker.game.story import situations, stage
 
         stage.tick(game, lm)
+        situations.on_tick(game, lm, s)  # (a trouble here may be met: C.6)
     if lm.meta.get("fire") or "burning" in s.status:
         from realmwalker.game import fire
 

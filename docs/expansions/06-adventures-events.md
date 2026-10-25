@@ -293,7 +293,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
   `not`, checked at start-up; `goals.notify` from a conversation's end, battles, captives' fates, the law, items
   changing hands, entering and leaving towns and buildings, and the day; ways through recorded by kind. Tests:
   `tests/test_goals.py` (each predicate made true by each way the game has).
-- [ ] C.6 **Situations** (`game/story/situations.py`, `situations.json` + fragments): forged only in towns that have
+- [x] C.6 **Situations** (`game/story/situations.py`, `situations.json` + fragments): forged only in towns that have
   their people (on entering one, or when its gap has passed), from roots (lives, threats' signs, marks and wars,
   faction goals, the history, the land, companions; happenings and echoes come in Part I), the first twenty
   predicaments of §6.7, roles bound to real people, stakes and clocks, obstacles and their ways (§6.8), a first twelve

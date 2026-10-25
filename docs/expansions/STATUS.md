@@ -32,6 +32,12 @@ Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's chec
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
+- Expansion 6 C.6 (situations): a trouble's acts open once taken on; a failed check may be tried the next day
+  (`sit["tried"]`); its work's deadline is the trouble's clock (lengthened if the walk needs it); a failed haggle
+  costs nothing; every death a
+  trouble brings gets a grave in its town; a tale's own hook goes before a trouble's meeting on entering a town; a
+  trouble's end gives a share of a fair fight's experience (more with no blood shed); turns come in about half of
+  them; the innocent are hanged and the feud's due paid if nobody comes; refusing a lord's letter is remembered.
 - Expansion 6 B.7 (fire): fire spreads only on town maps (a wild map or dungeon level scorches at once); fire leans
   west to east, turning a little each day (the weather keeps no wind direction); rain or snow slows it to a fifth at
   most; after more than twelve minutes at once what burned has burned out; battle smoke is a picture only; a falling
@@ -556,12 +562,40 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.6 (*situations*:
-`game/story/situations.py`, `situations.json` + fragments: forged in peopled towns from roots, the first twenty
-predicaments of §6.7, roles bound to real people, obstacles and ways, turns, meetings as scenes, endings with the people
-ops, `lapsed`, the rarity rules, story people replacing generated ones, latent again when the hero dies, Troubles in the
-journal; tests/test_situations.py), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md
-Part C and ADVENTURES.md §6.7-§6.10 and §8.10 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.7 (*favours and contacts*:
+`game/story/favours.py`: favours spent as ways through, contacts who send word by runner, deal at night and warn of the
+law; both in the People tab), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C
+and ADVENTURES.md §8.10 (Favours and contacts) first.
+C.6 (2026-10-25, realmwalker-a; checks: suite green but for the turn-time tests, each passing alone as before; autoplay clean; smoke clean; a fresh review's fifteen points fixed in 8977157): `game/story/situations.py` (docstring has the record and API), data
+`situations.json` (rarity, roots key -> predicaments, 12 meetings -> scenes, 15 turns) + `situations.predicaments.json`
+(the first twenty of §6.7) + `scenes.situations.json` (12 meeting scenes; SCENE `cast`/`given` = roles and words the
+caller supplies; story/check knows them). Forged by `maybe_forge` from `story.daily` (via `situations.daily`, after
+lapses and half-clock turns) and `story.on_enter_town` (after a tale's own hook; first visit sets a first gap of
+`rarity.first` days); `due_here`: peopled, < per_town (great 2) live, gap passed (`Town.flags["sit_next"]`), < 3 live
+within reach (lives.json reach). `make(game, sid, root=, predicament=)`: ROOTS life (lives.seeds + unknown secrets as
+`life:secret_<kind>`), threat, politics (war, plague), faction (gang/cult within 22, temple), history (grudge, scar),
+land, companion; weight /(1+2 same met)/(1+.3 kind)/(1+3 same town). BINDS root/job/notable/watch/priest/healer/
+merchant/any/kin (life ties; a name becomes an NPC by `_make_person`; `young`, `make`)/tie/stranger/band/site/threat/
+figure/far (story_people {"sit", "role", "jobs"}; cast.place_people hands it to `situations.place_people`); a role's
+`or` is a second way; bound npcs carry `flags["story"] = {"sit", "role"}` until the end. Goals' "$story" = the
+situation's own thing tag. Acts (obstacles' and the predicament's) are dialogue choices "sit_act" once taken: `check`
+first, then `price` (copper; `price_mult` from the price_lie turn), `needs`/`unless` conditions (goal:, way:, flag:,
+knows:, turn:, holds, taken, refused, work_done/failed, not:), `then` ops, `pass` the obstacle; each act notifies
+"talk" with its way. "sit_ask" (latent, the one who asks: met), "sit_take" (work made: WORKS rescue/retrieve/deliver/
+cure/feud/assassinate/collect_debt through `quests.make` + `accept`, `q["situation"]`; quests.reward/fail ->
+`on_quest_end` -> flags work_done/work_failed), "sit_refuse" (flag refused). Obstacles' `spells` pass by
+`on_magic` (magic.cast_on_road). Ops (OPS/OP_ARGS, checked at start-up): flag unflag learn tell law npc_fate (alive
+home gone ruined jailed dead) away dead_kin tie grave mark favour contact xp_story shop move money disposition
+standing item plant hand give_back thread clock price news say. Favours `renown.legend["favours"]` {from, weight,
+kind, day, used, situation} and contacts `["contacts"]` {npc, kind, since} are written (C.7 spends them); xp_story is
+a share of a moderate budget (x1.25 with no fight; C.8 adds the setting). Endings: first with `when` = the goal just
+reached and `if` all true (goals.REACTIONS `_on_goal`, after the goal's `then`); `finish` closes the work, unbinds,
+starts the town's gap; lapse = the world's outcome (state lapsed). A death in a story (`_die`) mourns, forgets and
+digs a grave. `on_death`: back to latent (meeting waiting, life None, quest None), clocks kept. Meetings:
+`_try_meet` from `on_tick` only (never on the step through the gate; townlife.tick, every 12 ticks) via `stage.start`; the scene's talk cue
+opens the asker's conversation with the plea. people.update_positions keeps captive/with_party/gone folk out of the
+streets; quests' captive feature carries `npc`. Journal: Adventures tab "Troubles" (`troubles`, `journal_lines`).
+Autoplay checks situations and the bot acts on them. No save format change (C.10 bumps it).
 C.5 (2026-10-25, realmwalker-b): `game/story/goals.py`. A test is a list `[name, *args]` with "all"/"any"/"not";
 `PREDICATES` (Pred fn, args kinds who/place/thing/word/faction/op/int/law/day, `listens`): alive, dead, at, with_party,
 free, holds, gone, married, owes, knows, law_state, standing, status, cleared, faction_active, flag, day. Who: "you", a

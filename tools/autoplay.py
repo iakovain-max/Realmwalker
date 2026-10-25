@@ -68,7 +68,8 @@ class AutoplayReport:
             f"  turns inside a game: {self.game_turns}  save/load round trips checked: {self.save_checks}",
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
             f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  work taken on: "
-            f"{self.quests} (visited: {self.quest_trips})  turns spent in battle: {self.battle_turns}",
+            f"{self.quests} (visited: {self.quest_trips})  troubles acted on: {getattr(self, 'sits', 0)}  "
+            f"turns spent in battle: {self.battle_turns}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -883,6 +884,36 @@ def _check_quests(game, fail) -> None:
             if q["template"] != "defend" and (not q.get("danger") or
                                               q["danger"].get("group") not in game.tables.creatures.encounters):
                 fail(f"contract {rec['id']} in {s.name} names no real danger on its road")
+    from realmwalker.game.story import situations  # (situations, C.6)
+
+    preds = situations.predicaments(game.tables)
+    live_by_town: dict[int, int] = {}
+    for sit in w.politics.get("situations", {}).values():
+        if sit.get("predicament") not in preds:
+            continue
+        where = f"situation {sit['id']} ({sit['predicament']})"
+        if sit["state"] not in situations.LIVE + situations.ENDED:
+            fail(f"{where} is in state {sit['state']!r}")
+        if not 0 <= int(sit["town"]) < len(w.settlements) or int(sit["town"]) not in w.towns:
+            fail(f"{where} is in a town with no people")
+        for role, rec in sit["roles"].items():
+            if rec.get("npc") is not None and rec["npc"] not in w.npcs:
+                fail(f"{where}: its {role} is nobody")
+            n = w.npcs.get(rec.get("npc", -1))
+            if n is not None and sit["state"] in situations.LIVE and n.alive and \
+                    (n.flags.get("story") or {}).get("sit") not in (sit["id"], None):
+                fail(f"{where}: its {role} {n.name} belongs to another story")
+        if sit["state"] in situations.LIVE:
+            live_by_town[int(sit["town"])] = live_by_town.get(int(sit["town"]), 0) + 1
+            if sit["state"] == "taken" and sit.get("life") != situations._life(game) and sit.get("life"):
+                fail(f"{where} is taken by a hero who is not this one")
+        elif sit.get("ending") is None:
+            fail(f"{where} ended with no ending")
+        if "{" in " ".join(str(v) for v in sit["words"].values()) + " ".join(sit["journal"]):
+            fail(f"{where}'s words are unfilled")
+    for sid, n in live_by_town.items():
+        if n > (2 if w.settlements[sid].great else 1):
+            fail(f"{w.settlements[sid].name} has {n} live situations at once")
     events = game.tables.lives.get("events", {})  # (lives of townsfolk, C.4)
     for npc in w.npcs.values():
         lf = npc.flags.get("life")
@@ -993,6 +1024,21 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
                 if q in game.quests:
                     report.quests += 1
                     return
+            # A trouble of the town (C.6): ask the one who asks, take it on, and try an act or two of it.
+            from realmwalker.game.story import situations
+
+            for sit in situations.live_in(game, here.id):
+                for role in sit["roles"]:
+                    npc = situations._npc(game, sit, role)
+                    if npc is None or not npc.alive or not npc.present:
+                        continue
+                    conv = Conversation(game, npc)
+                    opts = [c for c in conv.menu() if c.id.startswith("sit_") and c.enabled and c.id != "sit_refuse"]
+                    if opts:
+                        conv.choose(rng.choice(opts))
+                        conv.close()
+                        report.sits = getattr(report, "sits", 0) + 1
+                        return
         if people and rng.random() < 0.1 and game.world.factions:
             # Now and then the bot joins a faction of someone here, so that commissions come (Expansion 6 C.2).
             from realmwalker.game import reputation

@@ -23,8 +23,10 @@ from realmwalker.core.textgen import escape_markup as esc
 # The modules whose handlers fill the registries story/check.py reads (step kinds, selectors, ops, keys).
 HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selectors", "realmwalker.game.story.cast",
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
-                   "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals")
-STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook"}
+                   "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
+                   "realmwalker.game.story.situations")
+STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
+                 "sit_act"}  # (the last four: situations, C.6)
 
 
 def load_all() -> None:
@@ -216,6 +218,9 @@ def daily(game) -> None:
     from realmwalker.game.story import goals
 
     goals.notify(game, "day")  # (clocks, lives and the world's own turns: a situation's goals, C.5)
+    from realmwalker.game.story import situations
+
+    situations.daily(game)  # (clocks run out, turns at half time, a new trouble in a town near you: C.6)
     for adv in active(game):
         villain.quiet(game, adv)
         t = threat_of(game, adv)
@@ -383,6 +388,8 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.game.story import goals
 
     goals.notify(game, "town")  # (into its streets: a situation's goals, C.5)
+    from realmwalker.game.story import situations
+
     if beats.pending(game) is not None:
         return
     if _show_tale(game, settlement):
@@ -393,6 +400,7 @@ def on_enter_town(game, settlement) -> None:
             if int(game.moment.total_days) - int(offer.get("since", -99)) >= 7:
                 offer_hook(game, t, settlement)
                 return
+    situations.on_enter_town(game, settlement)  # (a trouble forged here, or met in a scene: C.6)
 
 
 def _show_tale(game, town) -> bool:
@@ -702,6 +710,9 @@ def talk_choices(conv) -> list:
                                   data={"adv": adv["id"], "step": st["id"]}))
         if _is(game, adv["cast"].get("patron"), npc):
             out.append(Choice("story_patron", f"About {name}...", data={"adv": adv["id"]}))
+    from realmwalker.game.story import situations
+
+    out += situations.talk_choices(conv)
     for t in threats.live(game.world):
         if t.get("adventure") is None and npc.notable and npc.settlement in t["stakes"][:6] and _can_take(game, t):
             out.append(Choice("story_hook", "I hear something is killing your people.", data={"threat": t["id"]}))
@@ -728,6 +739,11 @@ def talk_choose(conv, choice) -> None:
 
     game = conv.game
     cid, data = choice.id, choice.data
+    if cid.startswith("sit_"):
+        from realmwalker.game.story import situations
+
+        situations.talk_choose(conv, choice)
+        return
     if cid == "story_hook":
         from realmwalker.world import threats
 
@@ -875,6 +891,9 @@ def on_death(game) -> None:
     d["pending"] = None
     d["card"] = None
     d["scheduled"] = []
+    from realmwalker.game.story import situations
+
+    situations.on_death(game)  # (live troubles lose their work and wait for the next hero: C.6)
 
 
 # ---------------------------------------------------------------------------- the finale's card

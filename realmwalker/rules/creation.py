@@ -547,6 +547,8 @@ class CharacterBuilder:
 
     def can_change(self, ability: str, delta: int) -> bool:
         pb = self.point_buy
+        if getattr(self, "score_method", "point_buy") != "point_buy":
+            return False  # (an array or rolled scores are swapped, not bought: a right-click there does nothing)
         new = self.scores[ability] + delta
         if new < pb["min"] or new > pb["max"]:
             return False

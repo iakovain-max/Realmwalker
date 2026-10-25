@@ -104,6 +104,11 @@ def place_people(game, town, settlement) -> None:
     waiting = w.politics.get("story_people", {}).pop(f"S{settlement.id}", [])
     advs = w.politics.get("adventures", {})
     for rec in waiting:
+        if rec.get("sit") is not None:
+            from realmwalker.game.story import situations
+
+            situations.place_people(game, settlement, rec)  # (a trouble's person elsewhere: C.6)
+            continue
         adv = advs.get(rec["adv"])
         if adv is None or adv.get("state") != "active":
             continue

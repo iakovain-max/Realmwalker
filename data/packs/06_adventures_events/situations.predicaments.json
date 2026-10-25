@@ -1,0 +1,2030 @@
+{
+  "_comment": "The first twenty predicaments of ADVENTURES.md §6.7 (C.6). roles: how each is bound (situations.BINDS: root, job, notable, watch, priest, healer, merchant, any, kin, tie, stranger, band, site, threat, figure, far; `or` a second way). The one who asks is the role 'asker'. obstacles: what stands in the way, each with its acts (with the role `who`: a check, a price, needs/unless conditions, then ops) and the spells that pass it. goals: goals.py tests; endings: the first whose `when` goal is reached and whose `if` holds; lapse: the world's own outcome when the clock runs out. Money is in copper (100 = 1 gp).",
+  "predicaments": {
+    "gone_where_not": {
+      "name": "Gone where they should not",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "lost": {"bind": "kin", "of": "asker", "kinds": ["son", "daughter", "brother", "sister"], "make": true},
+        "band": {"bind": "band", "kinds": ["bandit_gang", "cult"], "within": 22}
+      },
+      "forge": [["away", "lost"]],
+      "obstacles": [
+        {
+          "id": "camp",
+          "kind": "danger",
+          "who": "band",
+          "note": ["{lost} is out at {band_site}, with {band}.", "{band} keep {lost} at {band_site}."]
+        }
+      ],
+      "acts": [
+        {
+          "id": "where",
+          "who": "asker",
+          "label": ["Where would {lost} go? Tell me everything."],
+          "unless": ["knows:where"],
+          "then": [["learn", "where"]],
+          "say": [
+            "To {band}. Out at {band_site}. Everyone knows where they sleep, and nobody goes.",
+            "{band}. They came to the market with coin and stories, and {lost} listened. They are at {band_site}."
+          ],
+          "note": ["{asker} says {lost} went to {band} at {band_site}."]
+        }
+      ],
+      "work": {"kind": "rescue", "giver": "asker", "band": "band", "who": "lost"},
+      "goals": [
+        {
+          "id": "home",
+          "test": ["all", ["alive", "lost"], ["free", "lost"], ["at", "lost", "town_of(asker)"]],
+          "then": [["npc_fate", "lost", "home"]]
+        },
+        {"id": "kept", "test": ["flag", "stays_home"]},
+        {"id": "left", "test": ["flag", "let_go"]},
+        {"id": "dead", "test": ["dead", "lost"]}
+      ],
+      "endings": [
+        {
+          "id": "home",
+          "when": "home",
+          "if": ["not:flag:would_go"],
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 1], ["xp_story", "fair"], ["thread"]],
+          "line": [
+            "{lost} is home, thin and quiet, and {asker} will not let go of {lost_them}.",
+            "{lost} sleeps under {asker}'s roof again. Nobody in the house speaks of {band}."
+          ]
+        },
+        {
+          "id": "kept",
+          "when": "kept",
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["xp_story", "fair"], ["thread"]],
+          "line": ["{lost} stays. It is not easy, but {lost_they} stays."]
+        },
+        {
+          "id": "staying",
+          "when": "left",
+          "tone": "mixed",
+          "ops": [["npc_fate", "lost", "gone"], ["disposition", "asker", 5], ["xp_story", "small"]],
+          "line": [
+            "{lost} is alive, and gone again by the next new moon. {asker} lights a candle in the window anyway.",
+            "Alive, but not home: {lost} went back to the road. It was {lost_their} own choice."
+          ]
+        },
+        {
+          "id": "dead",
+          "when": "dead",
+          "tone": "bitter",
+          "ops": [["grave", "lost"], ["disposition", "asker", -10]],
+          "line": [
+            "{lost} is dead. {asker} buried {lost_them} by the temple wall.",
+            "They brought {lost} home on a door. {asker} has not spoken since."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "lost", "dead"], ["grave", "lost"], ["news", "news_lapse"]],
+        "line": [
+          "{lost} rode out with {band} and did not come back. There is a new grave by the temple.",
+          "Nobody went for {lost}. Word came at last from {band_site}: there is a grave in {town} now."
+        ]
+      },
+      "clock": [14, 24],
+      "meetings": ["weeping", "plea", "runner", "sermon", "stranger"],
+      "words": {
+        "title": ["{asker}'s {lost_kin}", "Gone to {band}", "The road to {band_site}"],
+        "stakes": [
+          "{lost}, {asker}'s {lost_kin}, gone to {band} at {band_site}",
+          "{asker}'s {lost_kin} {lost}, out with {band}"
+        ],
+        "plea": [
+          "My {lost_kin}, {lost}. {lost_they} went to {band}, out at {band_site}. I know what they do to the ones who want to leave. Bring {lost_them} home. Please.",
+          "{lost} is gone. Gone to {band}. {lost_they} thinks they are friends. They are not. I cannot go out there - but you could."
+        ],
+        "first": [
+          "{asker} of {town} begged me to bring {lost_their} {lost_kin} {lost} home from {band} at {band_site}.",
+          "{asker}'s {lost_kin} {lost} has gone to {band}. {asker} wants {lost_them} home."
+        ],
+        "news_lapse": [
+          "In {town}, {asker}'s {lost_kin} {lost} died out with {band}.",
+          "{town} buries {lost}, who ran off with {band}."
+        ]
+      }
+    },
+    "promise_unkept": {
+      "name": "A promise that cannot be kept",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "creditor": {
+          "bind": "tie",
+          "of": "asker",
+          "kinds": ["creditor"],
+          "jobs": ["moneylender", "shopkeeper", "market_trader", "innkeeper", "lord", "smith"],
+          "make": true
+        }
+      },
+      "parts": {"other": "creditor"},
+      "obstacles": [
+        {
+          "id": "debt",
+          "kind": "price",
+          "who": "creditor",
+          "note": ["{asker} owes {creditor_full} {price_pay}, and cannot pay {by_due}."],
+          "acts": [
+            {
+              "id": "pay",
+              "label": ["I will pay what {asker} owes."],
+              "price": 3000,
+              "way": "pay",
+              "then": [["flag", "paid"]],
+              "say": ["Well. Well, well. Paid in full. Tell {asker} the slate is clean.", "Coin is coin. It's done, then."]
+            },
+            {
+              "id": "wait",
+              "label": ["Give {asker} until the harvest. You lose nothing by waiting."],
+              "check": ["persuasion", 15],
+              "then": [["flag", "waits"]],
+              "say": ["...Until the harvest. Not a day more.", "Fine. Fine! But I'll have it with the harvest."],
+              "fail_say": ["A promise is a promise. I'll have it {due} or I'll have the house."]
+            },
+            {
+              "id": "scare",
+              "label": ["Forget this debt, or answer to me."],
+              "check": ["intimidation", 14],
+              "then": [["flag", "forgiven"], ["disposition", "creditor", -30]],
+              "say": ["...Forget it, then. Forget it! Just go.", "All right! All right. It's forgotten."],
+              "fail_say": ["Threaten me in my own house? Get out before I call the watch."],
+              "fail": [["disposition", "creditor", -15]]
+            }
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "kept", "test": ["any", ["flag", "paid"], ["flag", "forgiven"]]},
+        {"id": "honour", "test": ["flag", "waits"]}
+      ],
+      "endings": [
+        {
+          "id": "kept_paid",
+          "when": "kept",
+          "if": ["way:pay"],
+          "tone": "good",
+          "ops": [["disposition", "asker", 35], ["favour", "asker", "goods", 2], ["xp_story", "small"]],
+          "line": [
+            "{asker}'s promise is kept with your coin. {asker} will not forget it.",
+            "The debt is paid. {asker} wept, and then laughed, and then wept again."
+          ]
+        },
+        {
+          "id": "kept_forgiven",
+          "when": "kept",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 20], ["xp_story", "small"]],
+          "line": [
+            "The debt is gone, but {creditor} will not forget who frightened it away.",
+            "{creditor} gave up the debt. {asker} is free of it, and {creditor} crosses the street to avoid you."
+          ]
+        },
+        {
+          "id": "honour",
+          "when": "honour",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 20], ["money", 800], ["xp_story", "small"]],
+          "line": [
+            "Broken, but with honour: {asker} has until the harvest.",
+            "{creditor} will wait. It is not an end, but it is time."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "asker", "ruined"], ["disposition", "asker", -5], ["news", "news_lapse"]],
+        "line": [
+          "{asker} could not pay. {creditor} has taken what there was, and {asker}'s door is shut.",
+          "The day came and went. {asker} broke the promise, and the town knows it."
+        ]
+      },
+      "clock": [10, 18],
+      "meetings": ["shut_shop", "quarrel", "plea", "weeping"],
+      "words": {
+        "title": ["{asker}'s debt", "What {asker} owes", "A debt to {creditor}"],
+        "stakes": ["{asker}'s promise to {creditor}", "{asker}'s debt to {creditor}"],
+        "plea": [
+          "I promised {creditor} the money {due}. I swore it, before witnesses. I don't have it. I'll lose everything, the house, the trade - everything.",
+          "You'll think me a fool. I gave my word to {creditor}, and I can't keep it. {due}, they come for what I owe."
+        ],
+        "first": [
+          "{asker} owes {creditor} more than {asker} can pay, {by_due}.",
+          "{asker} promised {creditor} money {asker} does not have."
+        ],
+        "news_lapse": [
+          "{asker} of {town} is ruined by debt to {creditor}.",
+          "In {town}, {creditor} has taken {asker}'s goods for a debt."
+        ]
+      }
+    },
+    "two_want_one": {
+      "name": "Two who want one thing",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "rival": {"bind": "tie", "of": "asker", "kinds": ["rival", "enemy"], "same_job": true, "make": true},
+        "judge": {"bind": "notable"}
+      },
+      "parts": {"other": "rival"},
+      "obstacles": [
+        {
+          "id": "rival",
+          "kind": "rival",
+          "who": "rival",
+          "note": ["{rival_full} wants {prize} too, and will not step aside."],
+          "acts": [
+            {
+              "id": "yield",
+              "label": ["Let {asker} have it. You have enough."],
+              "check": ["persuasion", 16],
+              "then": [["flag", "rival_yields"]],
+              "say": ["...Let them have it. I'm tired of the whole business.", "Fine. Fine! But they'll owe me."],
+              "fail_say": ["Never. It's mine by right."]
+            },
+            {
+              "id": "buy",
+              "label": ["What would it take for you to step aside?"],
+              "price": 2500,
+              "way": "pay",
+              "then": [["flag", "rival_yields"]],
+              "say": ["For that? For that, they can have it."]
+            },
+            {
+              "id": "share",
+              "label": ["Share it between you. Half and half."],
+              "check": ["persuasion", 13],
+              "then": [["flag", "shared"]],
+              "say": ["Half. Half is better than a quarrel to the grave, I suppose."],
+              "fail_say": ["Half? I'd rather burn it."]
+            }
+          ]
+        },
+        {
+          "id": "judge",
+          "kind": "rank",
+          "who": "judge",
+          "note": ["{judge_full} will decide, and listens to whoever speaks best."],
+          "acts": [
+            {
+              "id": "speak",
+              "label": ["Let me speak for {asker}."],
+              "check": ["persuasion", 15],
+              "then": [["flag", "judge_for_asker"]],
+              "say": ["You make a fair case. {asker} shall have it.", "Hm. Yes. Yes, that's right. {asker}, then."],
+              "fail_say": ["I'll hear no more of it today."]
+            }
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "won", "test": ["any", ["flag", "rival_yields"], ["flag", "judge_for_asker"]]},
+        {"id": "shared", "test": ["flag", "shared"]}
+      ],
+      "endings": [
+        {
+          "id": "won",
+          "when": "won",
+          "tone": "good",
+          "ops": [
+            ["disposition", "asker", 25],
+            ["disposition", "rival", -20],
+            ["favour", "asker", "word", 1],
+            ["money", 1200],
+            ["xp_story", "small"]
+          ],
+          "line": [
+            "{asker} has {prize}. {rival} does not greet you any more.",
+            "{prize} is {asker}'s, and {judge} has said so before the town."
+          ]
+        },
+        {
+          "id": "shared",
+          "when": "shared",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 10], ["disposition", "rival", 10], ["xp_story", "small"]],
+          "line": [
+            "Shared: neither is glad of it, and both are glad it is over.",
+            "{asker} and {rival} have half each. They still do not speak."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["disposition", "asker", -5], ["disposition", "rival", -5]],
+        "line": [
+          "They quarrelled until {judge} gave {prize} to neither. A cousin from the city has it now.",
+          "Both lost it: {judge}, sick of them, gave {prize} to the temple."
+        ]
+      },
+      "clock": [10, 20],
+      "meetings": ["quarrel", "plea", "notice"],
+      "words": {
+        "keep": ["prize"],
+        "prize": [
+          "the lease of the old mill",
+          "the stall by the gate",
+          "a seat at the town's table",
+          "the strip of land by the river",
+          "the hand of the miller's daughter",
+          "the old orchard"
+        ],
+        "title": ["{asker} and {rival}", "Who shall have {prize}", "{prize}"],
+        "stakes": ["who shall have {prize}, {asker} or {rival}", "{prize}, between {asker} and {rival}"],
+        "plea": [
+          "{rival} wants {prize}. It should be mine - everyone knows it should be mine. {judge} decides {due}. Speak for me. They'll listen to someone like you.",
+          "There's {prize}, and there's two of us that want it, and only one of us deserves it. Help me."
+        ],
+        "first": ["{asker} and {rival} both want {prize}; {judge} decides {due}."]
+      }
+    },
+    "truth_buried": {
+      "name": "A truth someone wants buried",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "knower": {"bind": "tie", "of": "asker", "kinds": ["rival", "enemy"], "make": true}
+      },
+      "parts": {"other": "knower"},
+      "obstacles": [
+        {
+          "id": "knower",
+          "kind": "watcher",
+          "who": "knower",
+          "note": ["{knower_full} knows {asker}'s secret and means to tell it."],
+          "acts": [
+            {
+              "id": "silence",
+              "label": ["Keep what you know to yourself. It harms nobody buried."],
+              "check": ["persuasion", 16],
+              "then": [["flag", "buried"]],
+              "say": ["...Maybe it does no good, telling it. Maybe.", "For your sake, then. Not theirs."],
+              "fail_say": ["The truth is the truth. People should know."]
+            },
+            {
+              "id": "buy",
+              "label": ["Here. For your silence."],
+              "price": 2000,
+              "way": "pay",
+              "then": [["flag", "buried"]],
+              "say": ["I didn't see a thing. Never did."]
+            },
+            {
+              "id": "threat",
+              "label": ["Say a word of it and you will regret it."],
+              "check": ["intimidation", 15],
+              "then": [["flag", "buried"], ["disposition", "knower", -30]],
+              "say": ["I - I won't say anything. I swear it."],
+              "fail_say": ["You don't frighten me. I'll tell it in the market."]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "learn",
+          "who": "asker",
+          "label": ["What is it they know? I cannot help blind."],
+          "unless": ["knows:secret"],
+          "then": [["learn", "secret"]],
+          "say": [
+            "...Years ago, I did a thing I am ashamed of. A thing that would end me here. {knower} saw.",
+            "There was a child, before I married. Nobody knows. {knower} knows."
+          ]
+        },
+        {
+          "id": "tell",
+          "who": "knower",
+          "needs": ["knows:secret"],
+          "label": ["Tell it, then. The town should know."],
+          "then": [["flag", "told"]],
+          "say": ["I will. I will, today."]
+        },
+        {
+          "id": "blackmail",
+          "who": "asker",
+          "needs": ["knows:secret"],
+          "label": ["I know it too, now. That will cost you."],
+          "check": ["intimidation", 13],
+          "then": [["flag", "used"], ["money", 1500], ["disposition", "asker", -40]],
+          "say": ["...How much? Just say how much."],
+          "fail_say": ["Then tell it. I'm done being afraid."]
+        }
+      ],
+      "goals": [
+        {"id": "buried", "test": ["flag", "buried"]},
+        {"id": "told", "test": ["flag", "told"]},
+        {"id": "used", "test": ["flag", "used"]}
+      ],
+      "endings": [
+        {
+          "id": "buried",
+          "when": "buried",
+          "tone": "good",
+          "ops": [["disposition", "asker", 25], ["favour", "asker", "word", 2], ["money", 1000], ["xp_story", "small"]],
+          "line": ["It stays buried. {asker} sleeps again.", "{knower} will say nothing. {asker} owes you more than coin."]
+        },
+        {
+          "id": "told",
+          "when": "told",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", -40], ["shop", "asker", "shut", 10], ["xp_story", "small"]],
+          "line": [
+            "Told: the whole town knows {asker}'s secret. Some are kinder than {asker} feared.",
+            "It is out. {asker} keeps indoors, and the street talks of nothing else."
+          ]
+        },
+        {
+          "id": "used",
+          "when": "used",
+          "tone": "bitter",
+          "ops": [["xp_story", "small"]],
+          "line": [
+            "You used it. {asker} pays, and hates you, and will go on paying.",
+            "Used: {asker}'s secret is yours now, and so is a little of {asker}'s coin."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["shop", "asker", "shut", 14], ["disposition", "asker", -10]],
+        "line": [
+          "{knower} told it in the market. {asker} keeps indoors now.",
+          "The secret came out without you. It always does."
+        ]
+      },
+      "clock": [8, 16],
+      "meetings": ["stranger", "plea", "quarrel"],
+      "words": {
+        "title": ["{asker}'s secret", "What {knower} knows", "Something buried"],
+        "stakes": ["{asker}'s secret, and whether {knower} tells it", "what {knower} knows about {asker}"],
+        "plea": [
+          "{knower} knows something about me. Something old. If it comes out I'm finished in this town. Make it go away. I don't care how.",
+          "There is a thing about me nobody must know, and {knower} knows it. Help me keep it buried."
+        ],
+        "first": ["{asker} has a secret, and {knower} means to tell it."]
+      }
+    },
+    "truth_to_prove": {
+      "name": "A truth that must be proven",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "witness": {"bind": "any"},
+        "judge": {"bind": "notable"},
+        "rival": {"bind": "tie", "of": "asker", "kinds": ["rival", "enemy"], "make": true}
+      },
+      "parts": {"other": "rival"},
+      "obstacles": [
+        {
+          "id": "witness",
+          "kind": "silence",
+          "who": "witness",
+          "note": ["{witness_full} heard it, and is afraid to say so."],
+          "acts": [
+            {
+              "id": "ask",
+              "label": ["You were there. Say what you heard."],
+              "check": ["persuasion", 15],
+              "then": [["learn", "proof"]],
+              "say": [
+                "...I heard it. {dead} said it plain: it all goes to {asker}. There. I said it.",
+                "Yes. I was there. I'll say it before {judge}, if I must."
+              ],
+              "fail_say": ["I saw nothing. I heard nothing."]
+            },
+            {
+              "id": "pay",
+              "label": ["Your time is worth something. Here."],
+              "price": 1500,
+              "way": "pay",
+              "then": [["learn", "proof"]],
+              "say": ["...All right. I'll tell {judge} what I heard."]
+            },
+            {
+              "id": "fear",
+              "label": ["Who are you afraid of?"],
+              "check": ["insight", 14],
+              "then": [["learn", "proof"]],
+              "say": ["{rival}. I'm afraid of {rival}. But you're here now. All right, I'll tell it."],
+              "fail_say": ["Nobody. Leave me alone."]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "prove",
+          "who": "judge",
+          "needs": ["knows:proof"],
+          "label": ["There is a witness. Hear them, and judge."],
+          "way": "law",
+          "then": [["flag", "proven"]],
+          "say": ["Then it's proven, and that's an end of it. {asker} has the right."]
+        },
+        {
+          "id": "plead",
+          "who": "judge",
+          "unless": ["knows:proof"],
+          "label": ["Believe {asker}. You know them."],
+          "check": ["persuasion", 17],
+          "then": [["flag", "believed"]],
+          "say": ["...I believe them. Without proof, mind. People will talk."],
+          "fail_say": ["Bring me proof, or bring me nothing."]
+        }
+      ],
+      "goals": [{"id": "proven", "test": ["flag", "proven"]}, {"id": "believed", "test": ["flag", "believed"]}],
+      "endings": [
+        {
+          "id": "proven",
+          "when": "proven",
+          "tone": "good",
+          "ops": [
+            ["disposition", "asker", 30],
+            ["disposition", "rival", -20],
+            ["favour", "asker", "goods", 2],
+            ["money", 1500],
+            ["xp_story", "fair"]
+          ],
+          "line": [
+            "Proven before {judge}: {asker} has what is theirs.",
+            "The witness spoke, {judge} judged, and {rival} has nothing to say."
+          ]
+        },
+        {
+          "id": "believed",
+          "when": "believed",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 20], ["xp_story", "small"]],
+          "line": ["Believed, without proof. {asker} has it, and the town whispers that {asker} has it unfairly."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "asker", "ruined"], ["disposition", "asker", -5]],
+        "line": ["{judge} found for {rival}. {asker} has nothing.", "Without proof it was lost. {rival} has it all."]
+      },
+      "clock": [10, 18],
+      "meetings": ["plea", "quarrel", "notice", "funeral"],
+      "words": {
+        "title": ["{dead}'s last words", "{asker}'s claim", "The proof"],
+        "stakes": ["whether {asker} can prove the truth before {judge}", "{asker}'s claim against {rival}"],
+        "plea": [
+          "Everyone knows what was promised me. {rival} says it was never said. Somebody heard it - somebody must have. {judge} decides {due}.",
+          "It's mine by right, and I can't prove it. Help me prove it, {by_due}, before {judge}."
+        ],
+        "first": ["{asker} must prove a truth before {judge}, {by_due}, against {rival}."]
+      },
+      "forge": [["dead_kin", "asker"]]
+    },
+    "innocent_accused": {
+      "name": "An innocent accused",
+      "roles": {
+        "accused": {"bind": "root", "or": "any"},
+        "asker": {
+          "bind": "kin",
+          "of": "accused",
+          "kinds": ["mother", "father", "wife", "husband", "sister", "brother"],
+          "make": true
+        },
+        "judge": {"bind": "notable"},
+        "watch": {"bind": "watch"},
+        "culprit": {"bind": "any"}
+      },
+      "forge": [["law", "accused", "accused"]],
+      "obstacles": [
+        {
+          "id": "culprit",
+          "kind": "lie",
+          "who": "culprit",
+          "note": ["Someone in {town} knows who really did it."],
+          "acts": [
+            {
+              "id": "catch",
+              "label": ["Where were you that night?"],
+              "check": ["insight", 15],
+              "then": [["learn", "culprit"]],
+              "say": [
+                "...At home. Asleep. Why do you - why are you looking at me like that?",
+                "Why does it matter where I was? I - I was nowhere."
+              ],
+              "note": ["{culprit} lied about that night. It was {culprit}, not {accused}."],
+              "fail_say": ["At home, like every honest soul."]
+            }
+          ]
+        },
+        {
+          "id": "law",
+          "kind": "law",
+          "who": "judge",
+          "note": ["{judge_full} has {accused} to hang {due}."],
+          "acts": [
+            {
+              "id": "proof",
+              "needs": ["knows:culprit"],
+              "label": ["It was {culprit_full}. Here is how I know."],
+              "way": "law",
+              "then": [["law", "accused", "pardoned"], ["law", "culprit", "accused"]],
+              "say": ["...Then {accused} goes free, and {culprit} answers for it."]
+            },
+            {
+              "id": "plead",
+              "label": ["Spare {accused}. There is no proof."],
+              "check": ["persuasion", 18],
+              "way": "law",
+              "then": [["law", "accused", "pardoned"], ["flag", "shamed"]],
+              "say": ["Mercy, then. But the town will have its opinion."],
+              "fail_say": ["The law is the law. {due}."]
+            },
+            {
+              "id": "fine",
+              "label": ["Perhaps a fine would settle it."],
+              "price": 4000,
+              "way": "pay",
+              "then": [["law", "accused", "pardoned"], ["flag", "shamed"]],
+              "say": ["A fine. Yes. A fine meets the case."]
+            }
+          ]
+        }
+      ],
+      "goals": [{"id": "freed", "test": ["law_state", "accused", "pardoned"]}, {"id": "dead", "test": ["dead", "accused"]}],
+      "endings": [
+        {
+          "id": "freed",
+          "when": "freed",
+          "if": ["not:flag:shamed"],
+          "tone": "good",
+          "ops": [
+            ["disposition", "asker", 30],
+            ["disposition", "accused", 30],
+            ["favour", "asker", "shelter", 2],
+            ["money", 1500],
+            ["xp_story", "fair"]
+          ],
+          "line": [
+            "{accused} is free, and the town knows it was {culprit}.",
+            "Freed, and cleared: {accused} walks home through the square with {asker}."
+          ]
+        },
+        {
+          "id": "shamed",
+          "when": "freed",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 20], ["xp_story", "small"]],
+          "line": [
+            "Freed but shamed: {accused} lives, and the town still whispers.",
+            "{accused} is out, and nobody will buy from {asker}'s house for a while."
+          ]
+        },
+        {
+          "id": "dead",
+          "when": "dead",
+          "tone": "bitter",
+          "ops": [["grave", "accused"], ["disposition", "asker", -20]],
+          "line": ["{accused} is dead. Innocent, and dead."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["law", "accused", "hanged"], ["news", "news_lapse"]],
+        "line": [
+          "They hanged {accused} at dawn. {asker} was at the front of the crowd.",
+          "{accused} hanged, as was said. Some say {culprit} was in the crowd, and did not look away."
+        ]
+      },
+      "clock": [6, 12],
+      "meetings": ["stocks", "weeping", "plea", "crier"],
+      "words": {
+        "title": ["{accused} accused", "The hanging in {town}", "The wrong one"],
+        "stakes": [
+          "{accused}'s neck: {judge} means to hang {accused_them}",
+          "{accused}, to hang for what {accused_they} did not do"
+        ],
+        "plea": [
+          "They say {accused} did it. {accused} didn't. I know my own {accused_kin}. They hang {accused_them} {due}. Please. You can ask questions. You can make them listen.",
+          "My {accused_kin}... they're going to hang {accused_them}. For nothing. {due}. Please help me."
+        ],
+        "first": ["{accused} is to hang {due}; {asker} swears {accused_they} is innocent."],
+        "news_lapse": ["{town} hangs {accused}.", "In {town}, {accused} was hanged for a crime."]
+      }
+    },
+    "guilty_protected": {
+      "name": "A guilty one protected",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "lord": {"bind": "notable"},
+        "culprit": {"bind": "kin", "of": "lord", "kinds": ["son", "daughter", "brother"], "make": true},
+        "witness": {"bind": "any"}
+      },
+      "parts": {"other": "culprit"},
+      "obstacles": [
+        {
+          "id": "silence",
+          "kind": "silence",
+          "who": "witness",
+          "note": ["{witness} saw what {culprit} did, and is afraid of {lord}."],
+          "acts": [
+            {
+              "id": "ask",
+              "label": ["You saw it. I will stand by you."],
+              "check": ["persuasion", 16],
+              "then": [["learn", "deed"]],
+              "say": [
+                "...I saw it. It was {culprit}. God help me, I'll say it.",
+                "It was {culprit}. Everyone knows, and nobody says."
+              ],
+              "fail_say": ["I have children. I saw nothing."]
+            },
+            {
+              "id": "pay",
+              "label": ["Enough coin to leave town, if you must. Now tell me."],
+              "price": 2000,
+              "way": "pay",
+              "then": [["learn", "deed"]],
+              "say": ["...It was {culprit}. I'm going to my sister's tonight."]
+            }
+          ]
+        },
+        {
+          "id": "rank",
+          "kind": "rank",
+          "who": "lord",
+          "note": ["{lord_full} will not judge {lord_their} own {culprit_kin}."],
+          "acts": [
+            {
+              "id": "judge",
+              "needs": ["knows:deed"],
+              "label": ["Your {culprit_kin} did it, and the town knows. Judge as you would judge any of them."],
+              "check": ["persuasion", 14],
+              "way": "law",
+              "then": [["law", "culprit", "jailed"], ["disposition", "lord", -20]],
+              "say": ["...So be it. The cells, then. And may the gods forgive me."],
+              "fail_say": ["Get out. Get out of my hall."],
+              "fail": [["standing", -3]]
+            },
+            {
+              "id": "payoff",
+              "label": ["Make it right with coin, then, if not with justice."],
+              "check": ["persuasion", 12],
+              "then": [["flag", "paid_off"]],
+              "say": ["Coin. Yes. {asker} will have coin, and an end to it."]
+            }
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "judged", "test": ["law_state", "culprit", "jailed"]},
+        {"id": "paid", "test": ["flag", "paid_off"]},
+        {"id": "avenged", "test": ["dead", "culprit"]}
+      ],
+      "endings": [
+        {
+          "id": "judged",
+          "when": "judged",
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["standing", -2], ["money", 1500], ["xp_story", "fair"]],
+          "line": [
+            "{lord} judged {lord_their} own {culprit_kin}. {culprit} is in the cells.",
+            "Judged: the town saw that the law is for {lord}'s house too."
+          ]
+        },
+        {
+          "id": "paid",
+          "when": "paid",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 5], ["xp_story", "small"]],
+          "line": [
+            "Paid off: {asker} has coin, and {culprit} has nothing to fear.",
+            "{lord} paid {asker}. It is not justice. It is money."
+          ]
+        },
+        {
+          "id": "avenged",
+          "when": "avenged",
+          "tone": "bitter",
+          "ops": [["xp_story", "small"]],
+          "line": [
+            "Avenged outside the law: {culprit} is dead, and {lord} will not forget it.",
+            "{culprit} is dead. Nobody calls it justice. Nobody calls it murder, either, where {lord} can hear."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["move", "asker"]],
+        "line": [
+          "Nothing came of it. {culprit} walks the streets as before; {asker} does not. {asker} has left {town}.",
+          "{asker} gave up and went away. {culprit} laughs in the inn."
+        ]
+      },
+      "clock": [12, 22],
+      "meetings": ["quarrel", "plea", "sermon"],
+      "words": {
+        "title": ["{lord}'s {culprit_kin}", "What {culprit} did", "No justice in {town}"],
+        "stakes": [
+          "whether {culprit} answers for it, though {culprit_they} is {lord}'s {culprit_kin}",
+          "justice for {asker} against {lord}'s {culprit_kin}"
+        ],
+        "plea": [
+          "{culprit} did it. Everyone knows {culprit} did it. But {culprit} is {lord}'s {culprit_kin}, and so nothing happens. Nothing ever happens.",
+          "There's no law in {town} for the {lord_title}'s family. Is there any anywhere?"
+        ],
+        "first": ["{lord}'s {culprit_kin} {culprit} wronged {asker}, and {lord} protects {culprit_them}."]
+      }
+    },
+    "wrong_awaits_revenge": {
+      "name": "A wrong that waits for revenge",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "enemy": {"bind": "tie", "of": "asker", "kinds": ["enemy", "rival"], "make": true}
+      },
+      "parts": {"other": "enemy"},
+      "acts": [
+        {
+          "id": "stop",
+          "who": "asker",
+          "label": ["Let it go. Killing {enemy} will not mend it."],
+          "check": ["persuasion", 16],
+          "then": [["flag", "stopped"]],
+          "say": ["...Maybe not. Maybe nothing mends it.", "I'll let it be. For now. For you."],
+          "fail_say": ["You don't know what they did."]
+        },
+        {
+          "id": "price",
+          "who": "enemy",
+          "label": ["Pay {asker} for the wrong, and there is an end of it."],
+          "check": ["persuasion", 14],
+          "then": [["flag", "blood_price"]],
+          "say": ["If coin ends it, coin it is. I'm too old for knives in the dark."],
+          "fail_say": ["I owe that one nothing."]
+        },
+        {
+          "id": "price_pay",
+          "who": "asker",
+          "label": ["Take this as the price of it, from me, and let it rest."],
+          "price": 2500,
+          "way": "pay",
+          "then": [["flag", "blood_price"]],
+          "say": ["...From you? Why would you - all right. All right. It rests."]
+        }
+      ],
+      "goals": [
+        {"id": "done", "test": ["dead", "enemy"]},
+        {"id": "stopped", "test": ["flag", "stopped"]},
+        {"id": "price", "test": ["flag", "blood_price"]}
+      ],
+      "endings": [
+        {
+          "id": "stopped",
+          "when": "stopped",
+          "tone": "good",
+          "ops": [["disposition", "asker", 20], ["favour", "asker", "word", 1], ["xp_story", "fair"]],
+          "line": [
+            "{asker} let it go. {enemy} will never know how near it came.",
+            "Stopped: {asker} put the knife away, and slept."
+          ]
+        },
+        {
+          "id": "price",
+          "when": "price",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 10], ["xp_story", "small"]],
+          "line": [
+            "Turned into a price paid: {asker} has coin for the wrong, and an ache where the wrong was.",
+            "A price was paid. Nobody died. Nobody forgave, either."
+          ]
+        },
+        {
+          "id": "done",
+          "when": "done",
+          "tone": "mixed",
+          "ops": [["money", 2000], ["xp_story", "small"]],
+          "line": [
+            "Done: {enemy} is dead, and {asker} paid what was promised, and cannot look at you.",
+            "{enemy} is dead. {asker} thought it would feel like more."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "enemy", "dead"], ["grave", "enemy"], ["law", "asker", "jailed"], ["news", "news_lapse"]],
+        "line": [
+          "{asker} did it at last, with a knife, in the street. The watch took {asker} before the body was cold.",
+          "{enemy} is dead, and {asker} is in the cells for it."
+        ]
+      },
+      "clock": [10, 20],
+      "meetings": ["plea", "stranger", "quarrel"],
+      "words": {
+        "title": ["{asker}'s grudge", "What {enemy} owes", "Blood for {asker}"],
+        "stakes": ["{enemy}'s life, and what {asker} will become", "{asker}'s revenge on {enemy}"],
+        "plea": [
+          "{enemy} wronged me, years ago, and has never paid. I want it done. I'll pay you. Or I'll do it myself - and they'll hang me for it.",
+          "Somebody has to make {enemy} pay. If it isn't you, it'll be me, and I'll make a mess of it."
+        ],
+        "first": ["{asker} wants {enemy} dead for an old wrong."],
+        "news_lapse": ["In {town}, {asker} killed {enemy} for an old wrong."]
+      }
+    },
+    "blood_owed": {
+      "name": "Blood owed",
+      "roles": {
+        "avenger": {"bind": "root", "or": "any"},
+        "marked": {"bind": "tie", "of": "avenger", "kinds": ["enemy"], "make": true},
+        "asker": {
+          "bind": "kin",
+          "of": "marked",
+          "kinds": ["wife", "husband", "mother", "father", "sister", "brother"],
+          "make": true
+        }
+      },
+      "work": {"kind": "feud", "giver": "asker", "a": "avenger", "b": "marked"},
+      "acts": [
+        {
+          "id": "warn",
+          "who": "marked",
+          "label": ["{avenger} means to kill you. Leave town for a while."],
+          "check": ["persuasion", 13],
+          "then": [["npc_fate", "marked", "gone"], ["flag", "hidden"]],
+          "say": ["...My cousin has a farm three days east. I'll go tonight."],
+          "fail_say": ["Run? From {avenger}? Never."]
+        }
+      ],
+      "goals": [
+        {"id": "peace", "test": ["flag", "work_done"]},
+        {"id": "hidden", "test": ["flag", "hidden"]},
+        {"id": "done", "test": ["dead", "marked"]}
+      ],
+      "endings": [
+        {
+          "id": "peace",
+          "when": "peace",
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 2], ["xp_story", "fair"]],
+          "line": [
+            "Peace between the houses: the feud is put to rest, for this generation.",
+            "{avenger} and {marked} shook hands in the square. The old ones say they never thought to see it."
+          ]
+        },
+        {
+          "id": "hidden",
+          "when": "hidden",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 10], ["xp_story", "small"]],
+          "line": [
+            "{marked} is gone from {town}: alive, and not home.",
+            "Prevented, for now: {marked} is away, and {avenger} waits."
+          ]
+        },
+        {
+          "id": "done",
+          "when": "done",
+          "tone": "bitter",
+          "ops": [["grave", "marked"], ["disposition", "asker", -20]],
+          "line": [
+            "The feud took its due. {marked} is in the ground.",
+            "{marked} is dead, as the feud said {marked_they} would be."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "marked", "dead"], ["grave", "marked"], ["news", "news_lapse"]],
+        "line": [
+          "The feud took its due: {avenger} killed {marked} at the well.",
+          "{marked} is dead. The next death is already owed."
+        ]
+      },
+      "clock": [10, 20],
+      "meetings": ["plea", "funeral", "weeping"],
+      "words": {
+        "title": ["The feud", "Blood owed", "{avenger}'s due"],
+        "stakes": ["{marked}'s life: the feud says {avenger} must kill {marked_them}", "the next death of the feud"],
+        "plea": [
+          "My {marked_kin}... {avenger} has sworn to kill {marked_them}. It's the feud. It's always the feud. Make it stop.",
+          "{avenger}'s family and ours. Three dead already, in my lifetime. {marked} is next. Please."
+        ],
+        "first": ["The feud says {avenger} must kill {marked}; {asker} begs for peace."],
+        "news_lapse": ["In {town}, the old feud took {marked}."]
+      }
+    },
+    "sickness_with_cause": {
+      "name": "A sickness with a cause",
+      "roles": {
+        "sick": {"bind": "root", "or": "any"},
+        "asker": {
+          "bind": "kin",
+          "of": "sick",
+          "kinds": ["wife", "husband", "mother", "father", "sister", "brother", "son", "daughter"],
+          "make": true
+        },
+        "healer": {"bind": "healer", "optional": true}
+      },
+      "obstacles": [
+        {
+          "id": "sick",
+          "kind": "sick",
+          "who": "sick",
+          "note": ["{sick} is sick, and getting worse."],
+          "spells": ["lesser_restoration", "greater_restoration", "cure_wounds", "heal", "healing_word"],
+          "by_magic": [["flag", "cured"]],
+          "magic_note": ["Your spell takes. By evening {sick} sits up and asks for bread."],
+          "acts": [
+            {
+              "id": "tend",
+              "label": ["Let me see what ails you."],
+              "check": ["medicine", 15],
+              "then": [["flag", "cured"]],
+              "say": [
+                "...The well. You think it's the well? We'll draw from the river, then.",
+                "It's lighter already. I can breathe."
+              ],
+              "fail_say": ["Nobody knows. Nobody knows what it is."]
+            }
+          ]
+        },
+        {
+          "id": "healer",
+          "kind": "price",
+          "who": "healer",
+          "note": ["{healer} could help, for a price."],
+          "acts": [
+            {
+              "id": "fetch",
+              "label": ["Come and see {sick}. I will pay."],
+              "price": 1500,
+              "way": "pay",
+              "then": [["flag", "cured"]],
+              "say": ["Show me. Ah. Yes. I know this. Boil the water, and this, three times a day."]
+            }
+          ]
+        }
+      ],
+      "work": {"kind": "cure", "giver": "asker", "count": 4},
+      "goals": [
+        {"id": "cured", "test": ["any", ["flag", "cured"], ["flag", "work_done"]]},
+        {"id": "dead", "test": ["dead", "sick"]}
+      ],
+      "endings": [
+        {
+          "id": "cured",
+          "when": "cured",
+          "tone": "good",
+          "ops": [
+            ["disposition", "asker", 30],
+            ["disposition", "sick", 30],
+            ["favour", "asker", "shelter", 1],
+            ["xp_story", "fair"],
+            ["thread"]
+          ],
+          "line": [
+            "{sick} is well again, and {asker} has found the cause and stopped it.",
+            "Cured: {sick} is up and about, thinner, and alive."
+          ]
+        },
+        {
+          "id": "dead",
+          "when": "dead",
+          "tone": "bitter",
+          "ops": [["grave", "sick"]],
+          "line": ["{sick} died before it could be stopped."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "sick", "dead"], ["grave", "sick"], ["news", "news_lapse"]],
+        "line": [
+          "It spreads: {sick} is dead, and two more in the street are coughing.",
+          "{sick} is buried. The sickness is not."
+        ]
+      },
+      "clock": [8, 16],
+      "meetings": ["weeping", "shut_shop", "sermon", "plea"],
+      "words": {
+        "title": ["{sick}'s sickness", "The coughing house", "What ails {sick}"],
+        "stakes": ["{sick}'s life, and whoever drinks where {sick} drank", "{sick}, sick and worse each day"],
+        "plea": [
+          "{sick} is sick. It started small, and now {sick_they} can't stand. The healer shrugs. It's something in the house, I think - or the water. Help us.",
+          "My {sick_kin} is dying, and nobody knows why. Please."
+        ],
+        "first": ["{sick} is sick with something that has a cause; {asker} asked for help."],
+        "news_lapse": ["A sickness in {town} took {sick}."]
+      }
+    },
+    "curse_on_house": {
+      "name": "A curse on a house",
+      "roles": {"asker": {"bind": "root", "or": "any"}, "priest": {"bind": "priest", "optional": true}},
+      "obstacles": [
+        {
+          "id": "curse",
+          "kind": "ward",
+          "who": "asker",
+          "note": ["Something lies on {asker}'s house: the milk sours, the children cry at night."],
+          "spells": ["remove_curse", "dispel_magic", "dispel_evil_and_good", "hallow"],
+          "by_magic": [["flag", "lifted"]],
+          "magic_note": ["Your spell takes: the cold goes out of {asker}'s house like a breath let go."],
+          "acts": [
+            {
+              "id": "read",
+              "label": ["Let me look at the signs."],
+              "check": ["arcana", 14],
+              "unless": ["knows:maker"],
+              "then": [["learn", "maker"]],
+              "say": [
+                "...Those marks on the lintel? My husband's mother scratched them there. She never liked me.",
+                "A knot of hair under the step. Who would - oh."
+              ],
+              "fail_say": ["It's just bad luck. That's all it is."],
+              "note": ["The curse was laid with old marks on the house; it can be unsaid."],
+              "pass": false
+            },
+            {
+              "id": "rite",
+              "label": ["Say the words over the door, as the old ones did."],
+              "needs": ["knows:maker"],
+              "check": ["religion", 14],
+              "then": [["flag", "lifted"]],
+              "say": ["The air's different. Can you feel it? It's different."],
+              "fail_say": ["...It's worse. Gods, it's worse."],
+              "fail": [["flag", "angered"]]
+            }
+          ]
+        },
+        {
+          "id": "priest",
+          "kind": "price",
+          "who": "priest",
+          "note": ["{priest} would bless the house, for the temple's due."],
+          "acts": [
+            {
+              "id": "bless",
+              "label": ["Bless {asker}'s house. I will pay the temple."],
+              "price": 2500,
+              "way": "pay",
+              "then": [["flag", "lifted"]],
+              "say": ["The gods hear coin as well as prayer. I'll go tonight."]
+            }
+          ]
+        }
+      ],
+      "goals": [{"id": "lifted", "test": ["flag", "lifted"]}, {"id": "worse", "test": ["flag", "angered"]}],
+      "endings": [
+        {
+          "id": "lifted",
+          "when": "lifted",
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 1], ["money", 1000], ["xp_story", "small"]],
+          "line": [
+            "Lifted: the milk keeps, the children sleep.",
+            "{asker}'s house is clean again. {asker} keeps a candle for you in the window."
+          ]
+        },
+        {
+          "id": "worse",
+          "when": "worse",
+          "tone": "bitter",
+          "ops": [["shop", "asker", "shut", 30], ["disposition", "asker", -10]],
+          "line": ["The curse is worse for your meddling. {asker} has shut up the house."]
+        }
+      ],
+      "lapse": {
+        "tone": "mixed",
+        "ops": [],
+        "line": [
+          "Lived with: {asker} hangs iron over the door and does not speak of it.",
+          "{asker} has learned to live with it. The house is cold, and they are used to the cold."
+        ]
+      },
+      "clock": [12, 24],
+      "meetings": ["shut_shop", "weeping", "sermon", "plea"],
+      "words": {
+        "title": ["The curse on {asker}'s house", "{asker}'s cold house", "A dead hand on the door"],
+        "stakes": ["{asker}'s house and everyone under its roof", "the curse on {asker}'s house"],
+        "plea": [
+          "There's a curse on my house. Don't laugh. The milk sours overnight. The children wake screaming. The dog won't come in. Somebody did this.",
+          "Something is wrong with my house. Something was done to it. Can you see these things? Can you undo them?"
+        ],
+        "first": ["{asker}'s house lies under a curse."]
+      }
+    },
+    "precious_wrong_hands": {
+      "name": "Something precious in the wrong hands",
+      "roles": {"asker": {"bind": "root", "or": "any"}, "holder": {"bind": "merchant"}},
+      "parts": {"other": "holder"},
+      "base": "gold_ring",
+      "forge": [["plant", "holder", "heirloom"]],
+      "obstacles": [
+        {
+          "id": "holder",
+          "kind": "price",
+          "who": "holder",
+          "note": ["{holder_full} has {heirloom}, and will part with it only for coin."],
+          "acts": [
+            {
+              "id": "buy",
+              "label": ["I will buy {heirloom}."],
+              "price": 3000,
+              "way": "pay",
+              "then": [["hand", "holder"], ["flag", "bought"]],
+              "say": ["Done. A pleasure, as they say.", "Coin on the table, and it's yours."]
+            },
+            {
+              "id": "haggle",
+              "label": ["It was never yours to keep. Half, and be glad of it."],
+              "check": ["persuasion", 15],
+              "price": 1500,
+              "way": "pay",
+              "then": [["hand", "holder"], ["disposition", "holder", -10], ["flag", "bought"]],
+              "say": ["Half. You'd haggle the teeth out of a dog. Take it."],
+              "fail_say": ["The price is the price."]
+            },
+            {
+              "id": "threat",
+              "label": ["Hand it over, or I take it."],
+              "check": ["intimidation", 16],
+              "then": [["hand", "holder"], ["disposition", "holder", -30]],
+              "say": ["Take it, then! Take it and get out!"],
+              "fail_say": ["Try it. The watch is just outside."],
+              "fail": [["disposition", "holder", -20]]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "give",
+          "who": "asker",
+          "needs": ["holds"],
+          "label": ["I have {heirloom}. Here."],
+          "then": [["give_back", "asker"]],
+          "say": ["Oh. Oh, you found it. You found it."]
+        }
+      ],
+      "goals": [{"id": "returned", "test": ["holds", "asker", "$story"]}],
+      "endings": [
+        {
+          "id": "returned",
+          "when": "returned",
+          "if": ["not:flag:bought"],
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "goods", 1], ["money", 1200], ["xp_story", "small"]],
+          "line": [
+            "{heirloom} is back where it belongs.",
+            "{asker} has {heirloom} again, and holds it as if it might fly away."
+          ]
+        },
+        {
+          "id": "bought",
+          "when": "returned",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 30], ["xp_story", "small"]],
+          "line": [
+            "Bought back dear: {asker} has {heirloom}, and you are lighter for it.",
+            "Returned, at a price. {asker} swears to pay you back. One day."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["disposition", "asker", -5]],
+        "line": [
+          "Lost: {holder} sold {heirloom} on to a trader from the south.",
+          "{heirloom} is gone. {asker} had a copy made by the smith; it is not the same."
+        ]
+      },
+      "clock": [10, 18],
+      "meetings": ["weeping", "shut_shop", "quarrel", "plea"],
+      "words": {
+        "keep": ["heirloom"],
+        "heirloom": [
+          "{asker}'s mother's ring",
+          "the {asker_title}'s grandfather's signet",
+          "{asker}'s wedding ring",
+          "the family's old ring with the green stone"
+        ],
+        "title": ["{heirloom}", "{asker}'s ring", "In {holder}'s hands"],
+        "stakes": ["{heirloom}, in {holder}'s hands", "getting {heirloom} back from {holder}"],
+        "plea": [
+          "{holder} has {heirloom}. I pawned it, when times were bad, and now {holder} won't give it back at any price I can pay. It's all I have of them.",
+          "{heirloom} - it was stolen, and now it's in {holder}'s window, and {holder} says it was bought fair."
+        ],
+        "first": ["{holder} has {heirloom}, and {asker} wants it back."]
+      }
+    },
+    "the_lost": {
+      "name": "The lost",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "lost": {
+          "bind": "kin",
+          "of": "asker",
+          "kinds": ["son", "daughter", "husband", "wife", "brother", "sister"],
+          "make": true
+        },
+        "place": {"bind": "site", "within": [4, 18]}
+      },
+      "forge": [["away", "lost"]],
+      "obstacles": [
+        {
+          "id": "where",
+          "kind": "missing",
+          "who": "place",
+          "note": ["{lost} was last seen on the way to {place_site}."]
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "asker", "site": "place", "item": "remains"},
+      "goals": [{"id": "found", "test": ["flag", "work_done"]}],
+      "endings": [
+        {
+          "id": "alive",
+          "when": "found",
+          "if": ["flag:alive"],
+          "tone": "good",
+          "ops": [
+            ["npc_fate", "lost", "home"],
+            ["disposition", "asker", 35],
+            ["favour", "asker", "shelter", 2],
+            ["xp_story", "fair"],
+            ["thread"]
+          ],
+          "line": [
+            "Found, and alive: the dead one came home on {lost_their} own feet.",
+            "{lost} is home. Everyone had given up but {asker}."
+          ]
+        },
+        {
+          "id": "buried",
+          "when": "found",
+          "tone": "mixed",
+          "ops": [
+            ["npc_fate", "lost", "dead"],
+            ["grave", "lost"],
+            ["disposition", "asker", 30],
+            ["xp_story", "fair"],
+            ["thread"]
+          ],
+          "line": [
+            "Found dead, and buried: {asker} knows now, and that is something.",
+            "You brought back what was left of {lost}. {asker} buried {lost_them} by the temple, and thanked you."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "lost", "gone"], ["disposition", "asker", -5]],
+        "line": [
+          "Never found. {asker} stopped asking strangers at the gate.",
+          "Nobody went to {place_site}. {lost} is a name now, and a place set at the table."
+        ]
+      },
+      "clock": [16, 28],
+      "meetings": ["weeping", "plea", "notice", "crier"],
+      "words": {
+        "keep": ["remains"],
+        "remains": ["{lost}'s ring", "{lost}'s knife", "{lost}'s pack"],
+        "title": ["{lost}, missing", "The road to {place_site}", "Where is {lost}?"],
+        "stakes": ["{lost}, missing on the way to {place_site}", "what became of {lost}"],
+        "plea": [
+          "{lost} went out to {place_site} and never came back. Everyone says {lost_they}'s dead. If {lost_they} is, bring {lost_them} home so I can bury {lost_them}. If not... bring {lost_them} home.",
+          "My {lost_kin} is lost. Out by {place_site}. Find {lost_them}, living or dead. I have to know."
+        ],
+        "first": ["{asker}'s {lost_kin} {lost} went missing near {place_site}."]
+      }
+    },
+    "love_not_to_be": {
+      "name": "A love that must not be",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "beloved": {"bind": "tie", "of": "asker", "kinds": ["lover"], "make": true},
+        "elder": {"bind": "kin", "of": "asker", "kinds": ["father", "mother"], "make": true}
+      },
+      "parts": {"other": "elder"},
+      "obstacles": [
+        {
+          "id": "family",
+          "kind": "honour",
+          "who": "elder",
+          "note": ["{elder_full} will not hear of {asker} and {beloved}."],
+          "acts": [
+            {
+              "id": "win",
+              "label": ["Give them your blessing. You will lose {asker} otherwise."],
+              "check": ["persuasion", 16],
+              "then": [["flag", "blessed"]],
+              "say": [
+                "...I would rather have a {asker_kin} than be right. Tell them. Tell them yes.",
+                "Fine. Fine. Let them marry. Let them be happy, if they can."
+              ],
+              "fail_say": ["Over my grave."]
+            },
+            {
+              "id": "dowry",
+              "label": ["If it is a matter of a dowry, I will give it."],
+              "price": 3000,
+              "way": "pay",
+              "then": [["flag", "blessed"]],
+              "say": ["...Well. With a dowry like that, nobody can say a word against it."]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "flee",
+          "who": "asker",
+          "label": ["Then go together. Tonight, by the back road."],
+          "way": "sneak",
+          "then": [["flag", "fled"]],
+          "say": ["Tonight. Yes. Tonight."]
+        }
+      ],
+      "goals": [
+        {"id": "together", "test": ["flag", "blessed"], "then": [["tie", "asker", "married", "beloved"]]},
+        {"id": "fled", "test": ["flag", "fled"]}
+      ],
+      "endings": [
+        {
+          "id": "together",
+          "when": "together",
+          "tone": "good",
+          "ops": [
+            ["disposition", "asker", 35],
+            ["disposition", "beloved", 30],
+            ["favour", "asker", "shelter", 1],
+            ["xp_story", "small"]
+          ],
+          "line": [
+            "Together: {asker} and {beloved} are married at the temple door, and {elder} weeps at the back.",
+            "{asker} and {beloved} are wed. {elder} came, in the end."
+          ]
+        },
+        {
+          "id": "fled",
+          "when": "fled",
+          "tone": "mixed",
+          "ops": [
+            ["move", "asker"],
+            ["move", "beloved"],
+            ["disposition", "elder", -30],
+            ["standing", -1],
+            ["xp_story", "small"]
+          ],
+          "line": [
+            "Fled together, outlawed in the eyes of their families.",
+            "{asker} and {beloved} were gone by morning. {elder} has burned everything {asker} left behind."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["move", "beloved"], ["disposition", "asker", -10]],
+        "line": [
+          "Parted: {beloved} was sent away to kin in another town.",
+          "{elder} won. {beloved} is gone, and {asker} goes to the temple every day and says nothing."
+        ]
+      },
+      "clock": [10, 20],
+      "meetings": ["quarrel", "stranger", "plea"],
+      "words": {
+        "title": ["{asker} and {beloved}", "A love that must not be", "{elder}'s word"],
+        "stakes": ["{asker} and {beloved}, and whether {elder} will let them be", "a marriage {elder} forbids"],
+        "plea": [
+          "I love {beloved}. {elder} says I'll marry {beloved} over {elder_their} dead body - that I'll marry who I'm told. Help us. Or help us go.",
+          "{elder} has found out about {beloved} and me. {elder} wants me married to someone else {by_due}."
+        ],
+        "first": ["{asker} loves {beloved}; {elder} forbids it."]
+      }
+    },
+    "child_in_danger": {
+      "name": "A child in danger",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "child": {"bind": "kin", "of": "asker", "kinds": ["son", "daughter"], "make": true, "young": true},
+        "band": {"bind": "band", "kinds": ["bandit_gang", "cult", "tribe"], "within": 22}
+      },
+      "forge": [["away", "child"]],
+      "obstacles": [
+        {
+          "id": "taken",
+          "kind": "danger",
+          "who": "band",
+          "note": ["{band} have {child} at {band_site}, for ransom.", "{child} is held at {band_site} by {band}."]
+        }
+      ],
+      "acts": [
+        {
+          "id": "ransom",
+          "who": "asker",
+          "label": ["Pay them. I will give you the ransom."],
+          "price": 5000,
+          "way": "pay",
+          "then": [["npc_fate", "child", "home"], ["flag", "ransomed"]],
+          "say": ["...They took it. They let {child_them} go at the crossroads. {child} is home."]
+        }
+      ],
+      "work": {"kind": "rescue", "giver": "asker", "band": "band", "who": "child"},
+      "goals": [
+        {
+          "id": "home",
+          "test": ["all", ["alive", "child"], ["free", "child"], ["at", "child", "town_of(asker)"]],
+          "then": [["npc_fate", "child", "home"]]
+        },
+        {"id": "dead", "test": ["dead", "child"]}
+      ],
+      "endings": [
+        {
+          "id": "saved",
+          "when": "home",
+          "if": ["not:flag:ransomed"],
+          "tone": "good",
+          "ops": [["disposition", "asker", 40], ["favour", "asker", "shelter", 2], ["xp_story", "fair"], ["thread"]],
+          "line": [
+            "Saved: {child} is home, and asleep in {asker}'s lap before the fire is lit.",
+            "{child} is home. {asker} cannot speak; {asker} only holds on."
+          ]
+        },
+        {
+          "id": "ransomed",
+          "when": "home",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 35], ["xp_story", "small"]],
+          "line": [
+            "Saved at a price: {band} have your coin, and will take another child when they need more.",
+            "{child} is home, bought back. {band} are richer."
+          ]
+        },
+        {
+          "id": "dead",
+          "when": "dead",
+          "tone": "bitter",
+          "ops": [["grave", "child"], ["disposition", "asker", -20]],
+          "line": ["Lost: {child} is dead."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "child", "gone"], ["news", "news_lapse"]],
+        "line": [
+          "Lost: {band} moved on, and took {child} with them.",
+          "Nobody paid, and nobody went. {child} is gone, sold, they say, in the south."
+        ]
+      },
+      "clock": [6, 12],
+      "meetings": ["weeping", "crier", "plea", "runner"],
+      "words": {
+        "title": ["{child}", "Taken by {band}", "{asker}'s {child_kin}"],
+        "stakes": ["{child}, {asker}'s {child_kin}, held by {band} at {band_site}", "a child taken for ransom"],
+        "plea": [
+          "They took {child}. {band}. They want more than I've ever seen in my life, {by_due}, or... or I don't know. I don't know what they'll do.",
+          "My {child_kin}. {child} is only small. {band} have {child_them} at {band_site}."
+        ],
+        "first": ["{band} took {asker}'s {child_kin} {child} to {band_site}, for ransom."],
+        "news_lapse": ["A child of {town} was taken by {band} and not returned."]
+      }
+    },
+    "stranger_not_himself": {
+      "name": "The stranger is not who he says",
+      "roles": {
+        "asker": {"bind": "notable"},
+        "stranger": {"bind": "root", "or": "stranger", "jobs": ["wayfarer", "pilgrim", "minstrel", "market_trader", "scribe"]}
+      },
+      "obstacles": [
+        {
+          "id": "lie",
+          "kind": "impostor",
+          "who": "stranger",
+          "note": ["{stranger_full} is not who {stranger_they} says."],
+          "acts": [
+            {
+              "id": "unmask",
+              "label": ["Your name. Your real one."],
+              "check": ["insight", 14],
+              "then": [["learn", "name"]],
+              "say": [
+                "...Keep your voice down. It isn't {stranger}. It hasn't been for a long time.",
+                "You're sharper than the rest. All right. Not here. But you're right."
+              ],
+              "fail_say": ["{stranger}. As I said."]
+            },
+            {
+              "id": "bluff",
+              "label": ["I know who you are. Soon everyone will."],
+              "check": ["intimidation", 15],
+              "then": [["learn", "name"]],
+              "say": ["...What do you want? Just tell me what you want."],
+              "fail_say": ["Then you know more than I do."]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "tell",
+          "who": "asker",
+          "needs": ["knows:name"],
+          "label": ["I found out who {stranger} is."],
+          "then": [["flag", "unmasked"], ["law", "stranger", "accused"]],
+          "say": ["I knew it. I knew it. The watch will have a word with {stranger_them}."]
+        },
+        {
+          "id": "cover",
+          "who": "asker",
+          "needs": ["knows:name"],
+          "label": ["{stranger} is harmless. Leave it be."],
+          "check": ["deception", 13],
+          "then": [["flag", "protected"]],
+          "say": ["If you say so. You've been right before."],
+          "fail_say": ["You're lying for them. Why?"],
+          "fail": [["flag", "unmasked"], ["law", "stranger", "accused"]]
+        },
+        {
+          "id": "warn",
+          "who": "stranger",
+          "needs": ["knows:name"],
+          "label": ["They are asking about you. Go, while you can."],
+          "then": [["npc_fate", "stranger", "gone"], ["flag", "let_go"]],
+          "say": ["...Thank you. I won't forget it."]
+        }
+      ],
+      "goals": [
+        {"id": "unmasked", "test": ["flag", "unmasked"]},
+        {"id": "protected", "test": ["flag", "protected"]},
+        {"id": "let_go", "test": ["flag", "let_go"]}
+      ],
+      "endings": [
+        {
+          "id": "unmasked",
+          "when": "unmasked",
+          "tone": "good",
+          "ops": [["favour", "asker", "word", 1], ["standing", 2], ["money", 1200], ["xp_story", "small"]],
+          "line": [
+            "Unmasked: {stranger} is in the watch's hands, and {asker} sleeps easier.",
+            "{asker} has the truth about {stranger}, and so does the watch."
+          ]
+        },
+        {
+          "id": "protected",
+          "when": "protected",
+          "tone": "mixed",
+          "ops": [["contact", "stranger", "informant"], ["xp_story", "small"]],
+          "line": [
+            "Protected: {stranger} stays, and owes you a secret.",
+            "{stranger} keeps {stranger_their} false name, and sends you word now and then."
+          ]
+        },
+        {
+          "id": "let_go",
+          "when": "let_go",
+          "tone": "mixed",
+          "ops": [["xp_story", "small"]],
+          "line": ["Let go: {stranger} left before dawn, and nobody in {town} will ever know who {stranger_they} was."]
+        }
+      ],
+      "lapse": {
+        "tone": "mixed",
+        "ops": [["npc_fate", "stranger", "gone"]],
+        "line": [
+          "The stranger left one night, owing for the room.",
+          "{stranger} is gone, and whoever {stranger_they} was went too."
+        ]
+      },
+      "clock": [8, 16],
+      "meetings": ["plea", "stranger"],
+      "words": {
+        "title": ["{stranger}", "The stranger at the inn", "Who is {stranger}?"],
+        "stakes": ["the truth about the stranger who calls {stranger_them}self {stranger}", "who {stranger} really is"],
+        "plea": [
+          "There's a stranger at the inn calls {stranger_them}self {stranger}. Says {stranger_they}'s a {stranger_title}. {stranger_they} isn't. Find out what {stranger_they} is, before something happens.",
+          "I don't like {stranger}. Nobody comes to {town} for nothing. Find out who {stranger_they} is."
+        ],
+        "first": ["{asker} wants to know who the stranger {stranger} really is."]
+      }
+    },
+    "fugitive_at_door": {
+      "name": "A fugitive at the door",
+      "roles": {
+        "asker": {"bind": "root", "or": "any"},
+        "fugitive": {"bind": "kin", "of": "asker", "kinds": ["son", "brother", "husband", "daughter", "sister"], "make": true},
+        "watch": {"bind": "watch"}
+      },
+      "forge": [["law", "fugitive", "accused"]],
+      "obstacles": [
+        {
+          "id": "search",
+          "kind": "guard",
+          "who": "watch",
+          "note": ["The watch is searching every house for {fugitive}."],
+          "acts": [
+            {
+              "id": "misdirect",
+              "label": ["I saw someone running for the river road. That way."],
+              "check": ["deception", 14],
+              "then": [["flag", "watch_away"]],
+              "say": ["The river road? Right. Thank you, traveller."],
+              "fail_say": ["Funny. Nobody else saw anyone."],
+              "fail": [["flag", "watch_suspects"]]
+            },
+            {
+              "id": "bribe",
+              "label": ["Search somewhere else. Here."],
+              "price": 2000,
+              "way": "pay",
+              "then": [["flag", "watch_away"]],
+              "say": ["I'll search the other end of town. Slowly."]
+            },
+            {
+              "id": "hand",
+              "label": ["{fugitive} is hiding at {asker}'s."],
+              "way": "law",
+              "then": [["law", "fugitive", "jailed"], ["flag", "handed"]],
+              "say": ["Is that so. Right, lads."]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "go",
+          "who": "fugitive",
+          "needs": ["flag:watch_away"],
+          "label": ["Now. Out by the back way, and don't stop."],
+          "way": "sneak",
+          "then": [["npc_fate", "fugitive", "gone"], ["flag", "away"]],
+          "say": ["I won't forget this. Tell my {asker_kin}..."]
+        }
+      ],
+      "goals": [
+        {"id": "away", "test": ["all", ["flag", "away"], ["gone", "fugitive"]]},
+        {"id": "handed", "test": ["law_state", "fugitive", "jailed"]}
+      ],
+      "endings": [
+        {
+          "id": "away",
+          "when": "away",
+          "tone": "good",
+          "ops": [["disposition", "asker", 35], ["favour", "asker", "shelter", 2], ["standing", -1], ["xp_story", "fair"]],
+          "line": [
+            "Away free: {fugitive} is over the hills, and the watch is still searching the river road.",
+            "{fugitive} got away. {asker} will hide you, one day, if you need it."
+          ]
+        },
+        {
+          "id": "handed",
+          "when": "handed",
+          "tone": "bitter",
+          "ops": [["disposition", "asker", -50], ["standing", 3], ["money", 1500], ["xp_story", "small"]],
+          "line": [
+            "Handed over: {fugitive} is in the cells, and {asker} will spit when you pass.",
+            "You gave {fugitive} to the watch. The reward is in your purse."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["law", "fugitive", "jailed"], ["news", "news_lapse"]],
+        "line": [
+          "Caught: the watch found {fugitive} in {asker}'s loft.",
+          "{fugitive} is in the cells. {asker} sits outside them every day."
+        ]
+      },
+      "clock": [5, 10],
+      "meetings": ["seal", "plea", "stranger"],
+      "words": {
+        "title": ["{fugitive} in hiding", "The search", "The watch at {asker}'s door"],
+        "stakes": ["{fugitive}, hidden in {asker}'s house, and the watch searching", "{fugitive}'s freedom"],
+        "plea": [
+          "{fugitive} ran from the levy. {fugitive}'s hiding in my house. The watch are going door to door. If they find {fugitive_them}, they hang {fugitive_them}. Get {fugitive_them} out of town.",
+          "You have to help me. {fugitive} is in the loft and the watch are two doors down."
+        ],
+        "first": ["{asker} is hiding {fugitive} from the watch."],
+        "news_lapse": ["{town}'s watch caught {fugitive}, who was in hiding."]
+      }
+    },
+    "ruler_needs": {
+      "name": "A ruler's need",
+      "roles": {
+        "asker": {"bind": "notable"},
+        "envoy_to": {"bind": "far", "jobs": ["lord", "headman", "elder"], "within": [6, 30]}
+      },
+      "work": {"kind": "deliver", "giver": "asker", "to": "envoy_to"},
+      "goals": [
+        {"id": "served", "test": ["flag", "work_done"]},
+        {"id": "badly", "test": ["flag", "work_failed"]},
+        {"id": "refused", "test": ["flag", "refused"]}
+      ],
+      "endings": [
+        {
+          "id": "served",
+          "when": "served",
+          "tone": "good",
+          "ops": [["standing", 4], ["favour", "asker", "door", 2], ["xp_story", "fair"]],
+          "line": [
+            "Served: the letter came where it was going, and {asker} remembers who carried it.",
+            "{asker}'s need was met. Doors in {town} open a little wider for you."
+          ]
+        },
+        {
+          "id": "badly",
+          "when": "badly",
+          "tone": "mixed",
+          "ops": [["standing", -1], ["xp_story", "small"]],
+          "line": ["Served badly: the letter came late, or not at all."]
+        },
+        {
+          "id": "refused",
+          "when": "refused",
+          "tone": "bitter",
+          "ops": [["standing", -3], ["disposition", "asker", -20]],
+          "line": ["Refused, and remembered: {asker} does not ask twice."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["standing", -1]],
+        "line": ["The letter went with another rider. {asker} remembers who would not carry it."]
+      },
+      "clock": [12, 24],
+      "meetings": ["runner", "crier", "plea"],
+      "words": {
+        "title": ["{asker}'s letter", "A letter for {envoy_to}", "The {asker_title}'s need"],
+        "stakes": ["a letter of {asker}'s to {envoy_to_full}", "{asker}'s word, carried safe"],
+        "plea": [
+          "I have need of someone who can ride and fight and keep their mouth shut. A letter, to {envoy_to_full}. It must arrive, and nobody must read it.",
+          "I need a letter carried to {envoy_to_full}. My own riders are watched. You are not."
+        ],
+        "first": ["{asker} needs a letter carried to {envoy_to_full}."]
+      }
+    },
+    "rite_to_be_done": {
+      "name": "A rite that must be done",
+      "roles": {"asker": {"bind": "root", "or": "any"}, "priest": {"bind": "priest"}},
+      "obstacles": [
+        {
+          "id": "custom",
+          "kind": "custom",
+          "who": "priest",
+          "note": ["{priest_full} will not say the rite for {dead}."],
+          "acts": [
+            {
+              "id": "argue",
+              "label": ["The gods are not so small. Say the words."],
+              "check": ["religion", 15],
+              "then": [["flag", "rite_done"]],
+              "say": [
+                "...You know the old books. Perhaps you are right. I will say it.",
+                "Hm. There is a precedent. Very well."
+              ],
+              "fail_say": ["You know nothing of the gods."],
+              "fail": [["flag", "priest_firm"]]
+            },
+            {
+              "id": "pay",
+              "label": ["For the temple's roof, then. Say the words."],
+              "price": 2000,
+              "way": "pay",
+              "then": [["flag", "rite_done"]],
+              "say": ["The roof does leak. The gods will understand."]
+            },
+            {
+              "id": "plead",
+              "label": ["Do it for {asker}, if not for the dead."],
+              "check": ["persuasion", 16],
+              "then": [["flag", "rite_done"]],
+              "say": ["...For {asker}. Yes."],
+              "fail_say": ["My hands are tied."]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "self",
+          "who": "asker",
+          "label": ["Then we will say the words ourselves. I will help."],
+          "check": ["religion", 12],
+          "way": "talk",
+          "then": [["flag", "rite_wrong"]],
+          "say": ["It was not right. It was not the priest. But it was something."],
+          "fail_say": ["I can't. I can't do it without the priest."],
+          "fail": [["flag", "rite_wrong"]]
+        }
+      ],
+      "goals": [{"id": "done", "test": ["flag", "rite_done"]}, {"id": "wrong", "test": ["flag", "rite_wrong"]}],
+      "endings": [
+        {
+          "id": "done",
+          "when": "done",
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 1], ["money", 800], ["xp_story", "small"]],
+          "line": [
+            "Done: the rite is said over {dead}, and {asker} can grieve.",
+            "{priest} said the words. {dead} rests, and {asker} with {dead}."
+          ]
+        },
+        {
+          "id": "wrong",
+          "when": "wrong",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 15], ["xp_story", "small"]],
+          "line": ["Done wrong: the words were said, but not by a priest, and the old women of {town} shake their heads."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["disposition", "asker", -10], ["news", "news_lapse"]],
+        "line": [
+          "Not done, and the omen: a crow sat on {asker}'s roof for three days, and the town says it was {dead}.",
+          "No rite was said. {asker} sees {dead} in dreams, every night."
+        ]
+      },
+      "clock": [6, 12],
+      "meetings": ["funeral", "weeping", "sermon"],
+      "words": {
+        "title": ["The rite for {dead}", "{dead}, unshriven", "No words for {dead}"],
+        "stakes": ["the rite for {dead}", "whether {dead} is laid to rest as the gods ask"],
+        "plea": [
+          "{priest} won't say the words over {dead}. Because of how {dead} lived, {priest} says. If the rite isn't said {by_due}... you know what they say happens.",
+          "The rite. {dead} must have the rite, and {priest} refuses. Speak to {priest}. Please."
+        ],
+        "first": ["{priest} will not say the rite for {dead}; {asker} needs it done {by_due}."],
+        "news_lapse": ["In {town}, the dead went without their rite, and folk talk of omens."]
+      },
+      "forge": [["dead_kin", "asker"]]
+    },
+    "dead_do_not_rest": {
+      "name": "The dead do not rest",
+      "roles": {"asker": {"bind": "root", "or": "any"}, "place": {"bind": "site", "within": [3, 18]}},
+      "obstacles": [
+        {
+          "id": "ghost",
+          "kind": "ward",
+          "who": "asker",
+          "note": [
+            "The dead walk by {asker}'s house at night, and will not rest until what was taken is brought back from {place_site}."
+          ],
+          "spells": ["gentle_repose", "hallow", "dispel_evil_and_good", "remove_curse"],
+          "by_magic": [["flag", "bound"]],
+          "magic_note": ["Your spell takes. The cold by the door is gone; it is held, if not laid."],
+          "acts": [
+            {
+              "id": "listen",
+              "label": ["Tell me what the dead one wants."],
+              "check": ["religion", 13],
+              "unless": ["knows:task"],
+              "then": [["learn", "task"]],
+              "say": [
+                "It's the old one's things. Taken from the grave by thieves and hidden out at {place_site}. That's what it wants.",
+                "It says one word, over and over: {place_site}."
+              ],
+              "fail_say": ["I don't know what it wants! That's the horror of it."],
+              "pass": false
+            }
+          ]
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "asker", "site": "place"},
+      "goals": [{"id": "laid", "test": ["flag", "work_done"]}, {"id": "bound", "test": ["flag", "bound"]}],
+      "endings": [
+        {
+          "id": "laid",
+          "when": "laid",
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 1], ["xp_story", "fair"], ["thread"]],
+          "line": [
+            "Laid: what was taken is back in the grave, and the nights in {town} are only nights.",
+            "The dead rest. {asker} sleeps with the shutters open for the first time in a month."
+          ]
+        },
+        {
+          "id": "bound",
+          "when": "bound",
+          "tone": "mixed",
+          "ops": [["disposition", "asker", 20], ["xp_story", "small"]],
+          "line": ["Bound, not laid: it is quiet now, and the old ones say it is waiting."]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["shop", "asker", "shut", 30], ["disposition", "asker", -10]],
+        "line": [
+          "Angered: it broke the shutters on {asker}'s house, and {asker}'s family sleep at the temple now.",
+          "The dead did not rest. Now nobody in {asker}'s street does."
+        ]
+      },
+      "clock": [14, 26],
+      "meetings": ["weeping", "sermon", "shut_shop"],
+      "words": {
+        "title": ["What walks by {asker}'s door", "The restless dead", "The thing at the window"],
+        "stakes": ["{asker}'s house, and the dead who walk by it", "the rest of the dead, and of {asker}"],
+        "plea": [
+          "Something comes to my window at night. It was a person once. It wants something - I think it wants what was taken from its grave. Out at {place_site}, the old men say.",
+          "The dead are walking. Mine, by my house. I have not slept in a week. Please."
+        ],
+        "first": ["The dead walk by {asker}'s house; what they want is out at {place_site}."]
+      }
+    }
+  }
+}

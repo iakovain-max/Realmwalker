@@ -46,6 +46,45 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (early morning): Adventures & Events Part C, task C.6 — situations (the people's troubles) — branch `dlc/06-adventures-events`
+
+Towns near you now have **troubles of their own people**: small stories about real townsfolk, not jobs off a board.
+- **Where they come from**: what is already true of the town – a debt come due or a sickness in someone's life, a
+  quarrel, a secret kept (a lover, a false name, an old crime), a gang or a cult camped near, a threat at the door, the
+  realm at war or the plague, a temple, an old blood feud of the history, the land around. From this the game makes
+  one of twenty shapes of trouble: someone gone to the gang, a promise that cannot be kept, two who want one thing, a
+  secret someone wants buried, a truth that must be proven, an innocent to be hanged, a lord's son protected, a wrong
+  waiting for revenge, a feud's next death, a sickness with a cause, a curse on a house, an heirloom in the wrong
+  hands, someone lost out in the land, a love that must not be, a child taken for ransom, a stranger who is not who
+  they say, a deserter hiding in the loft, a lord's letter to carry, a rite the priest refuses, the restless dead.
+- **Who is in it**: the town's own people, by name – the one who asks, the one in trouble, the one in the way. A son
+  who was only a name in his mother's life becomes a real person in the streets.
+- **How you meet it**: always shown, never a list. Two people quarrel in the street, someone weeps at the well, an
+  accused man kneels in the square under the crowd's jeers, the crier cries it, a priest preaches it, a child runs
+  up with a note, the watch stands at someone's door, a stranger follows you... and then the one who asks comes to
+  you and says it in their own words. "You look troubled" works too, if you talk to them first.
+- **What you do**: take it on (or say it is not your trouble – that is remembered). Then talk your way through, pay,
+  threaten, catch a lie with Insight, read a curse with Arcana, argue scripture with Religion, tend the sick with
+  Medicine, petition the lord with what you have found out, cast Remove Curse or a healing spell in the town, or do
+  the work it needs (fight the gang that holds the boy, fetch what the dead want back, carry the letter, find the
+  herbs). The game notices however you did it, and the ending says so.
+- **How it ends**: each has good, mixed and bitter endings that change people – home again, married, ruined and the
+  shop shut, gone from town, jailed, hanged and buried in the graveyard – and a favour owed you, coin, standing and
+  experience. If nobody helps before the day comes, **the world has its own ending**: they hang him at dawn, the boy
+  dies out with the gang and there is a new grave by the temple. You hear of it.
+- **How often**: one trouble a town at a time (two in a great city), ten to twenty days apart, never more than three
+  near you at once. They show in the journal's Adventures tab under **Troubles**, in your own notes: what is at
+  stake, by when, and what stands in the way.
+- When your hero dies, their troubles go on in the world and wait for the next one, clocks still running.
+
+Decisions (Anton may want to change): what you can do in a trouble opens once you have taken it on; a check that
+fails (talking someone round, catching a lie) can be tried again the next day; a failed haggle costs nothing (you pay
+only if the haggle works); a trouble is met a few moments after you walk into its town, never on the step through the
+gate; work a trouble sets has the trouble's own time; every death a trouble brings gets a grave in its town; a
+tale's own call for help goes before a trouble's meeting when you walk into a town; experience from a trouble's end is
+a share of a fair fight's (C.8 will add the setting to have only this); the turns (a liar, a shorter clock, the one who
+asked dying, a cure that costs the shop...) come in about half of them.
+
 ### Session, 2026-10-25 (small hours): Adventures & Events Part C, task C.5 — the goal language — branch `dlc/06-adventures-events` (not yet on main)
 
 Nothing new to see yet: this is the machinery the coming troubles (C.6) are judged by.
