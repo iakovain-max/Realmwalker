@@ -1571,6 +1571,22 @@ ADVENTURES = Obj({
                      "by_kind": Map(Obj({"share": Float(min=0, max=5, optional=True),
                                          "most": Int(min=1, max=16, optional=True)}), optional=True)},
                  optional=True),
+    # (F.1) allies with stakes (story/stakes.py): the class an ally of a trade fights as, the arc's days, each stake
+    # (the blueprints it fits, its crisis, the values and want it gives, its words), and the fates' epilogue lines
+    "allies": Obj({
+        "classes": Map(List(Str(max_len=30), min_items=2, max_items=2)),
+        "default_class": List(Str(max_len=30), min_items=2, max_items=2),
+        "arc": Obj({"confidence_after": Int(min=0, max=60), "crisis_after": Int(min=0, max=60),
+                    "crisis_chance": Float(min=0, max=1), "oath_loyalty": Int(min=0, max=100)}),
+        "stakes": Map(Obj({"blueprints": List(Str(max_len=30), optional=True),
+                           "jobs": List(Str(max_len=30), optional=True),
+                           "crisis": Str(choices=["revenge", "doubt"]),
+                           "values": List(Str(max_len=30), min_items=1),
+                           "want": Str(choices=["pay", "loot", "cause", "knowledge", "revenge"]),
+                           "stake": word_list(3, 200), "confidence": word_list(3, 600)}), min_items=1),
+        "riding": word_list(3, 300),
+        "fates": Map(word_list(3, 400)),
+    }, optional=True),
 })
 
 GREAT_ATTACK = Obj({

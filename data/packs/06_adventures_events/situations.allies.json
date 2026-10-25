@@ -1,0 +1,150 @@
+{
+  "_comment": "An ally's join condition as a situation of its own (Expansion 6 F.1, docs/ADVENTURES.md §5.6: bury a parent, be persuaded): a tale's recruit step met in its person's town may become one of these (story/situations.for_step; the beast's hunter has its own, situations.inside.json). Their endings give the tale its key 'ally' (game/story/stakes.join then brings them in); a lapse finishes the step without them, so the tale is never stuck. Words as in situations.inside.json, with the tale's own.",
+  "predicaments": {
+    "ally_unburied": {
+      "name": "A father unburied",
+      "inside": {"step": "recruit", "chance": 0.5, "blueprints": ["risen"]},
+      "roles": {"asker": {"bind": "given"}},
+      "obstacles": [
+        {
+          "id": "grave", "kind": "grief", "who": "asker",
+          "note": [
+            "{asker}'s father died the week the graves opened, and lies in the cold-house still: the priest will not bury anyone in that ground until the dead stop walking out of it.",
+            "{asker} will not leave until the old man is in the ground, properly, with the words said, and nobody in {town} will dig a grave this month.",
+            "{asker}'s mother lies wrapped in the barn, unburied, because the sexton fled when the dead walked. {asker} will not go anywhere while she lies there."
+          ],
+          "favour": {"kinds": ["word"], "weight": 2, "then": [["flag", "buried"]]},
+          "acts": [
+            {"id": "rite", "label": ["I know the words. We bury them tonight, you and I, and I will say them."], "check": ["religion", 12],
+             "then": [["flag", "buried"], ["flag", "by_you"]],
+             "say": ["...You'd do that? Then get a spade. We'll do it right.", "Tonight, then. I'll fetch the lantern."],
+             "fail_say": ["You don't know them. Not the old ones, not the right ones. I'll not have it done wrong."]},
+            {"id": "priest", "label": ["The priest will bury them if the price is right. I'll pay it."], "price": 1500, "way": "pay",
+             "then": [["flag", "buried"]],
+             "say": ["...They'll do it for that, aye. They'd do anything for that. Thank you."]},
+            {"id": "hill", "label": ["Not the old ground, then. The hill above {town}, and I'll talk the reeve into it."], "check": ["persuasion", 13],
+             "then": [["flag", "buried"], ["flag", "by_you"]],
+             "say": ["The reeve gives way. It takes you and {asker} half the night to dig, in ground like iron, but it is done, and a stone is on it.", "Leave is given, grudgingly. Blisters, a broken spade, and a grave on the hill at dawn: it is done."],
+             "fail_say": ["The reeve will not hear of a grave outside the churchyard, and {asker} sends you away."]}
+          ]
+        }
+      ],
+      "goals": [{"id": "buried", "test": ["flag", "buried"]}],
+      "endings": [
+        {"id": "buried_by_you", "when": "buried", "if": ["flag:by_you"], "tone": "good",
+         "ops": [["step"], ["key", "ally"], ["disposition", "asker", 25], ["xp_story", "small"]],
+         "line": [
+           "You buried them together, and {asker} stood a long time at the grave, and then turned to you: \"Now. Where do we go?\"",
+           "The grave is on the hill, and the words were said. {asker} owes you that, and means to pay it standing beside you.",
+           "{asker} will never forget who held the lantern while the grave was dug. When you go, {asker} goes."
+         ]},
+        {"id": "buried", "when": "buried", "tone": "good",
+         "ops": [["step"], ["key", "ally"], ["disposition", "asker", 15], ["xp_story", "small"]],
+         "line": [
+           "They are buried at last, and {asker} is free to come with you.",
+           "The priest said the words, for a price, and {asker} wept, and then went for {asker_their} spear.",
+           "It is done properly. {asker} will stand with you now."
+         ]}
+      ],
+      "lapse": {
+        "tone": "bitter", "ops": [["step"], ["disposition", "asker", -10]],
+        "line": [
+          "{asker} buried them alone, in the end, and will not leave {town} now. Not for you.",
+          "Too late: {asker} has dug the grave alone and sat by it since, and has no strength left for anything else.",
+          "{asker} stayed to bury them, and stayed after. You go on without {asker_them}."
+        ]
+      },
+      "clock": [4, 8],
+      "meetings": ["funeral", "weeping"],
+      "words": {
+        "title": ["The unburied", "A grave to dig", "{asker}'s dead"],
+        "stakes": ["whether {asker} can leave the dead unburied to fight the dead", "{asker}'s spear, and a grave first", "a burial no one in {town} will do"],
+        "plea": [
+          "I'll come. I want to come. But not while they lie there with no grave. I can't. You understand that. You must.",
+          "They're in the cold-house, wrapped in a sheet, and the priest won't touch them. How can I go, with that?",
+          "Bury them first. That's all I ask. Bury them right, and I'll follow you into the barrow itself."
+        ],
+        "first": [
+          "{asker} will stand with you, once a grave is dug that nobody in {town} will dig.",
+          "{asker} has a parent to bury, and the ground is the ground the dead are walking out of.",
+          "The one who might stand with you is {asker}, who cannot leave the dead unburied."
+        ],
+        "ask": ["They say you're the one who'd stand with us.", "Will you come, when we go up there?", "I need a spear beside me at the barrow."],
+        "take": ["Then we'll bury them first.", "I'll see them in the ground. Then you come.", "Leave it to me."],
+        "thanks": ["...Would you? Would you really?", "Then I'll be waiting, with a spade."]
+      }
+    },
+    "ally_doubts": {
+      "name": "A doubter",
+      "inside": {"step": "recruit", "chance": 0.5, "blueprints": ["risen"]},
+      "roles": {"asker": {"bind": "given"}},
+      "obstacles": [
+        {
+          "id": "doubt", "kind": "fear", "who": "asker",
+          "note": [
+            "{asker} has seen heroes come through {town} before, and bury no one but the folk who followed them.",
+            "{asker} went with the last band that rode out to fight something, and was the only one who came back.",
+            "{asker} does not believe the dead can be fought, and says so to anyone who will listen."
+          ],
+          "acts": [
+            {"id": "why", "label": ["Who were they, the last ones who asked you?"], "unless": ["knows:why"], "pass": false,
+             "then": [["learn", "why"]],
+             "say": ["...Three of them, in good mail, with a banner. They wanted a guide. I guided them. I came back.", "Hired swords, the last ones. They talked like you. They're still up there."]},
+            {"id": "proof", "label": ["I am not them. Here is what I have done, and why I will win."], "needs": ["knows:why"], "check": ["persuasion", 12],
+             "then": [["flag", "comes"]],
+             "say": ["...You're not them. No. Maybe not. All right. I'll come.", "I'll believe it when I see it. But I'll come and see it."],
+             "fail_say": ["They said all that too. Every word of it."]},
+            {"id": "ran", "label": ["You came back because you ran. There is no shame in it. Tell me the rest."], "check": ["insight", 13],
+             "then": [["flag", "comes"], ["flag", "tested"]],
+             "say": ["{asker} is quiet a long time. Then it all comes out, the whole of it, and when it is done {asker} looks lighter. \"All right. All right. I'll come, and I'll not run this time.\""],
+             "fail_say": ["\"You know nothing about it,\" {asker} says, and turns away."]}
+          ]
+        }
+      ],
+      "goals": [{"id": "comes", "test": ["flag", "comes"]}],
+      "endings": [
+        {"id": "comes_tested", "when": "comes", "if": ["flag:tested"], "tone": "good",
+         "ops": [["step"], ["key", "ally"], ["disposition", "asker", 20], ["xp_story", "small"]],
+         "line": [
+           "{asker} told you the worst of it, and you did not look away. When you go, {asker} goes.",
+           "Said aloud at last: {asker} ran, once, and means to stand this time, beside you.",
+           "\"Nobody ever asked me that,\" {asker} says. \"They all just called me lucky.\" {asker} will come."
+         ]},
+        {"id": "comes", "when": "comes", "tone": "good",
+         "ops": [["step"], ["key", "ally"], ["disposition", "asker", 15], ["xp_story", "small"]],
+         "line": [
+           "{asker} still has doubts, and will come anyway.",
+           "Persuaded, if not convinced: {asker} will stand with you.",
+           "{asker} has decided to believe you. It cost {asker_them} something to decide it."
+         ]}
+      ],
+      "lapse": {
+        "tone": "mixed", "ops": [["step"], ["disposition", "asker", -5]],
+        "line": [
+          "{asker} made up {asker_their} mind in the end, and the answer is no.",
+          "You waited too long to answer {asker}, and {asker} took the silence for an answer.",
+          "{asker} will wait and see how it goes for you. From a safe distance."
+        ]
+      },
+      "clock": [4, 8],
+      "meetings": ["plea", "stranger"],
+      "words": {
+        "title": ["The doubter", "Why {asker} will not follow", "One who came back"],
+        "stakes": ["whether {asker} believes you can win", "the one in {town} who has been up there and lived", "{asker}'s spear, and {asker_their} trust"],
+        "plea": [
+          "I've followed people like you before. I came back and they didn't. Why would I do it again?",
+          "You want me up there with you. Everyone does. Give me a reason, a real one.",
+          "Tell me why you're different. Go on. I've heard it all."
+        ],
+        "first": [
+          "{asker} could stand with you, and does not believe you can win.",
+          "{asker} came back from the last band that went up there, alone.",
+          "The one who might stand with you is {asker}, who has followed heroes before."
+        ],
+        "ask": ["They say you're the one who knows the way up there.", "Will you come with me?", "I hear you've been up there."],
+        "take": ["Then I'll show you.", "Give me a chance.", "Watch me, then."],
+        "thanks": ["...I'm watching.", "Show me, then."]
+      }
+    }
+  }
+}

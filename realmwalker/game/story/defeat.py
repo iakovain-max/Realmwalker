@@ -90,6 +90,10 @@ def on_retreat(game, battle) -> list[str]:
     if "ally" in adv["keys"] and rng.chance(float(rs.get("ally_lost", 0.0))):
         adv["keys"].remove("ally")
         out.append(f"<danger>{esc(_say(game, adv, 'retreat_ally'))}</>")
+        if adv.get("ally"):
+            from realmwalker.game.story import beats
+
+            out += beats.OPS["ally"](game, {"adv": adv["id"]}, "home")  # (they go home: F.1)
     _story().journal(adv, esc(_say(game, adv, "journal_retreat")), int(game.moment.total_days))
     return out
 

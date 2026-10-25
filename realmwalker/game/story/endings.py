@@ -94,6 +94,9 @@ def finish(game, adv: dict) -> list[str]:
     from realmwalker.game.story import lieutenants
 
     lieutenants.after_tale(game, adv)  # (their pages, and the promotion of the one with the greatest grudge: E.3)
+    from realmwalker.game.story import stakes
+
+    stakes.after_tale(game, adv)  # (the ally's fate and page: F.1)
     t = threats.records(game.world).get(adv["threat"])
     if t is not None and t.get("adventure") == adv["id"]:
         t["adventure"] = None  # (the threat goes on in the world if it was not ended)

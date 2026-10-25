@@ -137,6 +137,8 @@ def _why(game, cond: str, value) -> str:
         from realmwalker.game.economy import money_text
 
         return f"needs {money_text(int(value))}"
+    if cond == "party_room":
+        return "your company is full"
     return "not now"
 
 
@@ -330,7 +332,12 @@ def _key(game, rec, k: str):
     adv = adventure(game, rec)
     if adv is not None and k not in adv["keys"]:
         adv["keys"].append(k)
-        return [f"<good>Something to remember for the end of this: {_key_words(game, adv, k)}.</>"]
+        out = [f"<good>Something to remember for the end of this: {_key_words(game, adv, k)}.</>"]
+        if k == "ally":
+            from realmwalker.game.story import stakes
+
+            out += stakes.join(game, adv)  # (their stake, and a place in the party or by the patron: F.1)
+        return out
     return []
 
 

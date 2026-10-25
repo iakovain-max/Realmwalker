@@ -1,0 +1,100 @@
+{
+  "_comment": "The three beats of an ally's arc (Expansion 6 F.1, docs/ADVENTURES.md §5.6; game/story/stakes.py offers them on a night at camp or at the inn): the confidence (their stake, told by the fire), a crisis (revenge: they want to go now; doubt: they want to go home; taken: one who rides with the patron is carried off), and the fate (when the tale is won and they live: their oath, or home). The op 'ally' moves their arc (told, held, held_hard, breaks, home, taken, sworn, farewell); the condition 'party_room' asks for a place in your company. Words: the tale's, with {ally}, {ally_full}, {stake}, {confidence} and the ally's {they} {them} {their} {They} {Their} {s} {are} {have}.",
+  "beats": {
+    "ally_confidence": {
+      "family": "ally", "picture": "camp_night", "weight": 0,
+      "title": ["What {ally} came for", "By the fire", "{ally}'s reason"],
+      "text": [
+        [
+          "The fire is low and the others are asleep. {ally} has been sitting up, not sleeping, and at last speaks, quietly, as if to the embers.",
+          "{ally} has said little since {they} joined you. Tonight, with the watch half over, {they} sit{s} down beside you, and stay{s} there.",
+          "It is late, and cold, and {ally} hands you a cup of something hot that you did not ask for. Then {they} stay{s}, and you understand {they} {have} something to say."
+        ],
+        ["{confidence}"]
+      ],
+      "choices": [
+        {"label": ["Listen, and say nothing."], "ops": [["ally", "told", 5]],
+         "result": ["You let the silence be. After a while {ally} nods, as if you had answered, and goes to {their} blanket.", "You say nothing, and it seems to be the right thing. {ally} sleeps, that night, for the first time in days.", "Neither of you says anything more. In the morning {ally} walks beside you, not behind."]},
+        {"label": ["Promise {them} it will be paid for."], "ops": [["ally", "told", 8], ["flag", "ally_promised"]],
+         "result": ["\"Paid for,\" {ally} says. \"Aye. I'll hold you to that.\" {They} mean{s} it.", "{ally} looks at you a long while. \"Don't promise what you can't do,\" {they} say{s}. \"But I'll take it. I'll take it.\"", "\"That's all I wanted to hear,\" {ally} says, and wipes {their} face, and goes to sleep."]},
+        {"label": ["Tell {them} grief makes poor company on a hard road."], "ops": [["ally", "told", -4]],
+         "result": ["{ally} stares at you, and then gets up without a word. In the morning {they} {are} civil, and nothing more.", "\"Aye,\" {ally} says. \"I'll keep it to myself, then.\" And {they} keep{s} it.", "{ally} laughs, not kindly. \"You're a cold one. Well. Cold is what the work wants, maybe.\""]}
+      ]
+    },
+    "ally_crisis_revenge": {
+      "family": "ally", "picture": "camp_night", "weight": 0,
+      "title": ["{ally} will not wait", "Now, or never", "The knife by the fire"],
+      "text": [
+        [
+          "You wake in the dark to find {ally} already up, armed, {their} pack on {their} shoulder. \"I'm going now,\" {they} say{s}. \"Tonight. I've waited long enough for {stake}, and every day we wait it lives.\"",
+          "{ally} has heard something on the road today, and has not spoken since. At the fire {they} stand{s} up at last. \"I'm done waiting. I'm going up there, to {home}. Come or don't.\"",
+          "\"Every night I see it,\" {ally} says, buckling on {their} belt. \"Every night. I'm not sitting another one out. Not for you, not for anyone. I'm going after {villain_short} now.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Talk {them} down. You will go together, and you will go ready."], "check": {"skill": "persuasion", "dc": 13},
+         "success": [["ally", "held", 5]], "failure": [["ally", "breaks"]],
+         "result": ["{ally} stands a long time with {their} hand on the pack. Then {they} let{s} it fall. \"Together,\" {they} say{s}. \"Ready. Aye. But soon.\"", "\"You're right,\" {ally} says at last, and sits. \"I'd only die, and it'd only laugh.\""],
+         "fail_result": ["{ally} hears you out, and shakes {their} head, and goes. You hear {their} steps on the road a long while in the dark.", "\"No,\" {ally} says. \"You've had your chance to be quick about it.\" And {they} {are} gone."]},
+        {"label": ["Take the pack from {them}. {They} {are} not going anywhere."], "check": {"skill": "intimidation", "dc": 12},
+         "success": [["ally", "held_hard", -8]], "failure": [["ally", "breaks"]],
+         "result": ["You take it from {them}. For a moment you think {ally} will fight you. Then {they} sit{s} down, and does not look at you again that night.", "{ally} lets you take the pack, and hates you for it, and stays."],
+         "fail_result": ["{ally} twists out of your grip and is gone into the dark, and you do not follow.", "\"Don't,\" {ally} says, and there is a knife in {their} hand. You let {them} go."]},
+        {"label": ["Let {them} go. It is {their} grief, not yours."], "ops": [["ally", "breaks"]],
+         "result": ["You stand aside. {ally} grips your arm once, hard, and goes.", "\"Thank you,\" {ally} says, of all things, and walks off into the dark towards {home}."]}
+      ]
+    },
+    "ally_crisis_doubt": {
+      "family": "ally", "picture": "camp_night", "weight": 0,
+      "title": ["{ally}'s doubts", "Second thoughts", "Is it worth it?"],
+      "text": [
+        [
+          "{ally} has been slow on the road all day, and at the fire {they} say{s} it straight out: \"I don't know that you can do this. I don't know that anyone can. I've {stake} to think of. Maybe I should go home while there's a home to go to.\"",
+          "\"I keep thinking,\" {ally} says, not looking at you, \"of what happens to {town} if we die out here. Nobody left. Nobody to warn them. I think I should go back.\"",
+          "{ally} counts the days on {their} fingers. \"This long, and {villain_short} still out there. Tell me why I shouldn't go home. Tell me honestly.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Tell {them} what you have seen, and why you will win."], "check": {"skill": "persuasion", "dc": 12},
+         "success": [["ally", "held", 6]], "failure": [["ally", "home"]],
+         "result": ["{ally} listens, and the doubt goes slowly out of {their} face. \"All right,\" {they} say{s}. \"All right. I'll see it through.\"", "\"Aye,\" {ally} says at last. \"Put like that. Aye.\""],
+         "fail_result": ["{ally} hears you out, and is sorry, and is gone home in the morning.", "\"You believe it,\" {ally} says. \"I can see that. I just don't.\" {They} leave{s} at first light."]},
+        {"label": ["Ask what is really frightening {them}."], "check": {"skill": "insight", "dc": 13},
+         "success": [["ally", "held", 10]], "failure": [["ally", "home"]],
+         "result": ["It comes out at last, the real fear, and once it is said aloud it is smaller. {ally} stays, and is better company for it.", "\"It's not dying,\" {ally} says. \"It's dying for nothing.\" You talk until the fire is out. {They} stay{s}."],
+         "fail_result": ["You guess wrong, and {ally} shuts up like a door. In the morning {they} {are} gone home.", "\"That's not it,\" {ally} says. \"You don't understand. Never mind.\" At dawn {they} {are} gone."]},
+        {"label": ["Go home, then, with my thanks."], "ops": [["ally", "home"]],
+         "result": ["{ally} looks almost ashamed of how glad {they} {are}. \"I'll tell them in {town} what you're doing,\" {they} say{s}. \"I'll tell them right.\""]}
+      ]
+    },
+    "ally_crisis_taken": {
+      "family": "ally", "picture": "here", "weight": 0,
+      "title": ["{ally} is taken", "A rider from {town}", "Gone in the night"],
+      "text": [
+        [
+          "A boy on a lathered pony finds you, from {patron}: {ally} has been taken in the night, dragged off towards {home}, and there was blood on the step.",
+          "Word comes from {town}, in {patron}'s own hand: {ally} is gone. Whatever {villain_short} keeps, it has {them} now.",
+          "A rider stops you on the road. \"From {patron},\" he says, and then: \"It's {ally}. They came for {them} in the night. They took {them} up to {home}.\""
+        ]
+      ],
+      "ops": [["ally", "taken"]]
+    },
+    "ally_fate": {
+      "family": "ally", "picture": "camp_night", "weight": 0,
+      "title": ["When it is over", "{ally}'s choice", "The last night"],
+      "text": [
+        [
+          "It is over. {ally} sits a long time by the fire, turning something over in {their} hands. \"I came for {stake},\" {they} say{s}. \"That's done now. And I find I don't want to go home. Not yet. If you'll have me, I'll go where you go.\"",
+          "\"I've been thinking,\" {ally} says, \"what I'll do now. Go back to {town}, I suppose. Or.\" {They} look{s} at you. \"Or not. I'd swear to you, if you'd take it. I've seen what you do. I'd sooner do it with you than sit at home.\"",
+          "{ally} kneels by the fire, which is not a thing {they} {have} ever done before, and holds out {their} blade hilt first. \"You saw {stake} put right. I owe you that. I'd give you my oath, if you want it.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Take {ally}'s oath."], "requires": {"party_room": true}, "ops": [["ally", "sworn"]],
+         "result": ["\"Then that's that,\" {ally} says, and grins, the first time you have seen it. \"Where to?\"", "You take the hilt. {ally} gets up looking taller than {they} did.", "\"Good,\" {ally} says. \"Good. I'll not let you down.\""]},
+        {"label": ["Send {ally} home, with your thanks."], "ops": [["ally", "farewell"]],
+         "result": ["{ally} is disappointed, and hides it, and is glad, and hides that too. You part at the road to {town} as friends.", "\"Home, then,\" {ally} says. \"Aye. Somebody should see to it.\" {They} clasp{s} your arm, and then {they} {are} gone.", "{ally} nods slowly. \"You're right. They'll need me there.\" {They} {are} gone at first light, with a wave from the bend in the road."]}
+      ]
+    }
+  }
+}

@@ -1,0 +1,112 @@
+{
+  "_comment": "Allies with stakes (Expansion 6 F.1, docs/ADVENTURES.md §5.6; game/story/stakes.py). When a tale's ally is won (its key 'ally'), they come with you as a companion under the bond 'oath' (no wage), or, with your company full, ride with the patron and fight beside you in the tale's fights. Each has a stake (by the tale's blueprint and the ally's trade; `crisis` is what their arc's second beat is: revenge, or doubt; an ally who rides with the patron may be taken instead), told in a confidence by the fire, tested in a crisis, and ended in a fate. Words: {ally} (their first name), {ally_full}, {stake}, {confidence}, {they} {them} {their} {They} {Their} {s} {are} {have} for the ally, with the tale's own ({villain}, {villain_short}, {town}, {home}, {patron}...). `classes`: the class and background an ally of a trade fights as. `arc`: days after joining before the confidence, days after it before the crisis may come, its chance a night, and the loyalty an ally needs at the end to offer you their oath.",
+  "allies": {
+    "classes": {
+      "woodcutter": ["fighter", "guide"], "herder": ["rogue", "farmer"], "farmer": ["fighter", "farmer"],
+      "soldier": ["fighter", "soldier"], "guard": ["fighter", "guard"], "smith": ["fighter", "artisan"],
+      "priest": ["cleric", "acolyte"], "preacher": ["cleric", "acolyte"], "monk": ["cleric", "acolyte"],
+      "carter": ["rogue", "farmer"], "labourer": ["fighter", "farmer"]
+    },
+    "default_class": ["fighter", "soldier"],
+    "arc": {"confidence_after": 1, "crisis_after": 2, "crisis_chance": 0.5, "oath_loyalty": 55},
+    "stakes": {
+      "lost_friend": {
+        "blueprints": ["beast"], "crisis": "revenge", "values": ["brave", "honourable"], "want": "revenge",
+        "stake": [
+          "the friend {they} lost to {villain_short}",
+          "the hunting partner {they} came home without",
+          "a friend's bones somewhere in {home}"
+        ],
+        "confidence": [
+          "\"We were two, the last time,\" {ally} says to the fire. \"Me and a lad called Oswy, who could track a hare over stone. We found it, or it found us. I ran. I've told everyone since that I didn't, and I did. I ran, and Oswy didn't.\"",
+          "\"I'll tell you why I came,\" {ally} says, very late. \"There's a woman in {town} who still sets a place at table for her son. I was with him when it took him. She doesn't know that. I've never had the nerve to tell her.\"",
+          "{ally} turns a worn knife over and over by the fire. \"It was my friend's. It's all they found of him. I said I'd give it back to the thing that took him. Point first.\""
+        ]
+      },
+      "lost_kin": {
+        "crisis": "revenge", "values": ["brave", "compassionate"], "want": "revenge",
+        "stake": [
+          "a brother taken by {villain_short}",
+          "the sister {they} buried, or what was left of her",
+          "a father who went out one night and was found in the morning"
+        ],
+        "confidence": [
+          "\"My brother was the clever one,\" {ally} says, not looking at you. \"He'd have known what to do about all this. I keep thinking that, as if it helps. It doesn't. He'd have been here instead of me, that's all.\"",
+          "{ally} has been quiet all evening. At last: \"We buried her with her shawl, because there wasn't enough of her to dress. I put my hand on the box and said I'd see it paid for. That's why I'm here. Not for you. I'm sorry. For her.\"",
+          "\"My father had a way of whistling when he came up the lane,\" {ally} says. \"I heard it, that night. I thought it was him coming home. I've wondered since whether it was.\""
+        ]
+      },
+      "burned_home": {
+        "crisis": "doubt", "values": ["compassionate", "cautious"], "want": "cause",
+        "stake": [
+          "a farm {they} will not see burned again",
+          "the roof over {their} children in {town}",
+          "the house {their} grandfather built, and what is left of it"
+        ],
+        "confidence": [
+          "\"I'm no fighter,\" {ally} says. \"You'll have seen that. I came because I've two little ones in {town}, and I can't sleep for listening at the shutters. I'd rather be out here doing something than in there listening.\"",
+          "\"We'd only just put the new thatch on,\" {ally} says, and laughs, and stops. \"Two summers' work. It went up in the time it takes to say so. I'm not here for glory. I'm here so the next roof stays on.\"",
+          "{ally} draws a house in the ashes with a stick: a door, two windows, a chimney. \"That's it. That's all I want. That, standing, and nobody in the lane at night but neighbours.\""
+        ]
+      },
+      "old_vow": {
+        "blueprints": ["risen"], "crisis": "doubt", "values": ["honourable", "devout"], "want": "cause",
+        "stake": [
+          "a vow {they} made at the barrow-stones as a young soldier",
+          "the old oath of {town}'s militia, which {they} {are} the last to remember",
+          "a promise to the dead of {home}, made long ago"
+        ],
+        "confidence": [
+          "\"When I took the spear,\" {ally} says, \"the old sergeant walked us up to {home} and made us swear on the stones: that we'd keep the dead where they lay. We laughed about it after, in the inn. I've not laughed about it since the graves opened.\"",
+          "{ally} rubs a scar across {their} palm. \"Blood on the barrow-stone. It's how they did it, in my day. I thought it was an old man's foolishness. Now I think it was the only sensible thing anyone ever told me.\"",
+          "\"There were twelve of us swore it,\" {ally} says. \"I'm the last. The rest are in the ground, and some of them, I think, are walking. I'll not let them shame the oath.\""
+        ]
+      },
+      "old_shame": {
+        "crisis": "doubt", "values": ["honourable", "cautious"], "want": "cause",
+        "stake": [
+          "a shame {they} {have} carried in {town} for years",
+          "the night {they} hid while others fought",
+          "a name {they} mean to clear"
+        ],
+        "confidence": [
+          "\"They call me a coward in {town},\" {ally} says. \"Not to my face. I hid, once, when I should have stood, and a man died for it. I've been waiting twenty years for a chance to stand. This is it. I'll not hide again.\"",
+          "\"You've heard what they say of me,\" {ally} says. \"It's true. I was on watch, and I slept, and the fire took the granary. Everyone remembers. I want them to remember something else.\"",
+          "{ally} pokes the fire hard. \"I ran from a fight once. Just the once. You'd be surprised how long they talk about a thing like that, in a small place.\""
+        ]
+      }
+    },
+    "riding": [
+      "Your company is full, so {ally} will ride with {patron} and come wherever this is fought.",
+      "There is no room for {ally} in your company: {they} will wait with {patron}, and come when the fighting comes.",
+      "{ally} will not be a burden on your road. {They} will stay by {patron}, armed, and be there when it matters."
+    ],
+    "fates": {
+      "fell_well": [
+        "{ally} died at the end, facing it, as {they} said {they} would. {Their} name is the first one they say in {town} when they tell it.",
+        "{ally} fell in the last of it, and did not run. They buried {them} in {town} with the stake {they} came for written on the stone.",
+        "{ally} is dead. {They} went down fighting beside you at the end, and {town} will remember that, and so will you."
+      ],
+      "fell": [
+        "{ally} did not live to see the end of it. They say {their} name in {town}, sometimes, and then they are quiet.",
+        "{ally} died on the way, before the end. Nobody in {town} blames you. Not aloud.",
+        "{ally} never saw it finished. {Their} grave is in {town}, and someone keeps it."
+      ],
+      "broke": [
+        "{ally} went off on {their} own road, in the middle of it all, and came back to {town} only when it was over. {They} will not say where {they} went.",
+        "{ally} left your company before the end. Some say {they} went looking for it alone. Whatever {they} found, {they} came home thinner and quieter.",
+        "{ally} could not wait for you, and went. {They} {are} home in {town} now, and {their} door stays shut."
+      ],
+      "home": [
+        "{ally} went home to {town} afterwards, and mends things, and is the one the street asks when there is trouble.",
+        "{ally} went back to {town} and the life {they} had. {They} keep{s} the old blade by the door, oiled.",
+        "{ally} is home in {town}. {They} say{s} {they} would go again, if you asked. You have not asked."
+      ],
+      "sworn": [
+        "{ally} did not go home. {They} swore to you by the fire on the last night, and rides with you still.",
+        "{ally} gave you {their} oath when it was over, and has kept it every day since.",
+        "{ally} stayed. \"There'll be another one of these,\" {they} said. \"There always is. I'd sooner be with you when it comes.\""
+      ]
+    }
+  }
+}

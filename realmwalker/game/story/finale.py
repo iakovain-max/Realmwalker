@@ -196,6 +196,9 @@ def prepare(battle, game) -> list[str]:
     out: list[str] = []
     advs = game.world.politics.get("adventures", {})
     out += _militia(battle, game, advs)
+    from realmwalker.game.story import stakes
+
+    out += stakes.to_battle(battle, game, advs)  # (an ally who rides with the patron comes to the tale's fights: F.1)
     from realmwalker.game.story import lieutenants
 
     for f in battle.side(FOE):
@@ -411,6 +414,11 @@ def _ally_fights(battle, game, adv, boss, *args) -> str:
     leader = next((f for f in battle.side(PARTY) if f.char is not None), None)
     if who is None or not getattr(who, "alive", True) or leader is None:
         return ""
+    from realmwalker.game.story import stakes
+
+    if adv.get("ally"):  # (an ally with a stake is in the party, or came from the patron's side: F.1)
+        here = stakes.fighting(battle, adv) or stakes.companion_of(game, adv, waiting=False) is not None
+        return f"<good>{_say(game, adv, 'ally_with', who=who.name)}</>" if here else ""
     kinds = strength(game.tables).get("ally") or ["scout"]  # (by its tale's tier: E.6)
     kind = kinds[max(0, min(len(kinds) - 1, int(adv["tier"]) - 1))]
     kind = kind if kind in game.tables.creatures else "guard"

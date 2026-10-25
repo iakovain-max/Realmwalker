@@ -25,7 +25,7 @@ HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selector
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
                    "realmwalker.game.story.situations", "realmwalker.game.story.opening",
-                   "realmwalker.game.story.arenas")
+                   "realmwalker.game.story.arenas", "realmwalker.game.story.stakes")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
                  "sit_act", "fav_call", "fav_hide", "contact_ask",  # (situations, C.6; favours and contacts, C.7)
                  "story_recruit", "story_rally", "story_confront", "story_escort"}  # (Part D's steps: story/deeds.py)
@@ -606,6 +606,10 @@ def on_night(game, where: str) -> bool:
 
     if deeds.on_night(game, where):  # (the night a place must be held: D.2)
         return True
+    from realmwalker.game.story import stakes
+
+    if stakes.on_night(game, where):  # (an ally's confidence, crisis or fate: F.1)
+        return True
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
         if beat is not None:
@@ -714,6 +718,9 @@ def on_battle(game, result, actor=None) -> None:
     from realmwalker.game.story import deeds, endings, lieutenants, villain
 
     lieutenants.on_battle(game, result)  # (a lieutenant slain, taken or got away; a nemesis: E.3)
+    from realmwalker.game.story import stakes
+
+    stakes.on_battle(game, result)  # (an ally who rode with the patron and fell; one at the finale: F.1)
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
     seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \
