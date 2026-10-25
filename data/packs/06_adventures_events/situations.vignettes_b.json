@@ -1,0 +1,1191 @@
+{
+  "_comment": "Vignettes b (Expansion 6 C.9): the child's map, the masked feast, the silent village, the tower's scribe, the dragon's tithe, the beast's widow; each with its own meeting scene in scenes.vignettes_b.json.",
+  "meetings": {
+    "v_map_in_the_street": {"scene": "vig_orphans_map", "cast": {"asker": "child"}},
+    "v_white_masks": {"scene": "vig_masked_feast", "cast": {"asker": "servant"}},
+    "v_dusk_hush": {"scene": "vig_silent_village", "cast": {"asker": "child", "elder": "elder"}},
+    "v_scribe_asking": {"scene": "vig_tower_apprentice", "cast": {"asker": "apprentice"}},
+    "v_lot_pot": {"scene": "vig_dragon_tithe", "cast": {"asker": "parent", "other": "headman"}},
+    "v_open_door": {"scene": "vig_beast_widow", "cast": {"asker": "widow"}}
+  },
+  "predicaments": {
+    "v_orphans_map": {
+      "name": "The child's map",
+      "vignette": {"needs": "fallen_hero", "weight": 2.0},
+      "asks": "child",
+      "roles": {
+        "child": {"bind": "given"},
+        "keeper": {"bind": "given"},
+        "place": {"bind": "given"}
+      },
+      "obstacles": [
+        {
+          "id": "keeper",
+          "kind": "honour",
+          "who": "keeper",
+          "note": [
+            "{keeper} took the candle from {child} when the map was shown, and wants {child_their} hopes put to rest.",
+            "{keeper} will not forbid {child} the map, but does not want {child_them} to follow it, and does not want a lie told either."
+          ],
+          "acts": [
+            {
+              "id": "chest",
+              "label": ["Where did the map come from? Tell me true.", "How did the hide come to be in the chapel chest?"],
+              "check": ["history", 12],
+              "unless": ["knows:fell_alone"],
+              "then": [["learn", "fell_alone"]],
+              "say": [
+                "It was sewn in the lining of a cloak that came back from {place} without the man who wore it. That cloak is all that came back. {hero} fell out there, alone, {hero_years} ago, and nobody stayed to bury a hero.",
+                "In the old chest, with the cloak. {hero} drew it, they say, in the last days, so someone could find the way back for the body. No one ever did. That is all the map is: a way to a grave nobody dug."
+              ],
+              "fail_say": ["It was a long time ago. There was a cloak, and a scrap of hide. I do not remember more, and I wish the child did not either."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "plain",
+              "label": ["If I go, I will tell the child plainly what I find.", "Whatever is out there, the child will have the truth of it from me."],
+              "unless": ["flag:kind"],
+              "then": [["flag", "plain"], ["disposition", "keeper", 10]],
+              "say": [
+                "That is all I ask. Not a lie, not even a kind one. A child can bear a thing told plain. What it cannot bear is finding out later.",
+                "Then go, and God keep you. And tell it plain."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "child",
+          "kind": "custom",
+          "who": "child",
+          "note": [
+            "{child} wants {hero}'s things brought home, so that nobody can say the map was made up.",
+            "The others laugh at {child}, and the map is the only proof {child} has."
+          ],
+          "acts": [
+            {
+              "id": "hope",
+              "label": ["What do you hope to find out there?", "Why does it matter so much to you?"],
+              "check": ["insight", 10],
+              "unless": ["knows:hope"],
+              "then": [["learn", "hope"]],
+              "say": [
+                "That somebody wasn't forgotten. He fell and nobody went back for him. If his things come home, then somebody remembers, and then... somebody'd remember me.",
+                "I want it to be true. I want one thing in this town to be true and mine."
+              ],
+              "fail_say": ["I want to be believed. That's all. That's all there is."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "kind",
+              "label": ["I will bring you the best of what I find, and let that be enough.", "I will tell you he died well, whatever I find."],
+              "unless": ["flag:plain"],
+              "then": [["flag", "kind"]],
+              "say": [
+                "Really? You promise? That he died... that it was brave?",
+                "Say it again. That it'll be all right when you come back."
+              ]
+            },
+            {
+              "id": "wait",
+              "label": ["Keep the map safe, and do not go. Not until someone can go with you.", "Leave it a while. The map will keep, and so will {hero}."],
+              "check": ["persuasion", 12],
+              "unless": ["taken"],
+              "then": [["flag", "left"]],
+              "say": [
+                "...All right. I'll hide it. I won't go. But I'll know where it is.",
+                "Someone to go with. Then I'll wait. I'm good at waiting."
+              ],
+              "fail_say": ["You'd say that. They all say that. Nobody ever goes."]
+            }
+          ]
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "child", "site": "place", "item": "things"},
+      "goals": [
+        {"id": "brought", "test": ["flag", "work_done"]},
+        {"id": "left", "test": ["flag", "left"]}
+      ],
+      "endings": [
+        {
+          "id": "brought_plain_known",
+          "when": "brought",
+          "if": ["flag:plain", "knows:fell_alone"],
+          "tone": "good",
+          "ops": [["disposition", "child", 35], ["disposition", "keeper", 20], ["favour", "keeper", "shelter", 2], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "{keeper} read out how {hero} fell at {place}, alone, and {child} listened to the end. The things of {hero} hang in the chapel of {town}, and the map was buried with the cloak.",
+            "Told plain: a man who fell alone, and was brought home at last by a stranger. {child} did not cry. {child} stood very straight and said the name."
+          ]
+        },
+        {
+          "id": "brought_plain",
+          "when": "brought",
+          "if": ["flag:plain"],
+          "tone": "mixed",
+          "ops": [["disposition", "child", 25], ["disposition", "keeper", 15], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "You told {child} what lay at {place}, bones and a belt and nothing else. {child} wept, and then stopped laughing at the others.",
+            "The truth was small and hard, and {child} took it. The things of {hero} are in the chapel of {town}, and the map is in {child}'s shirt."
+          ]
+        },
+        {
+          "id": "brought_kind",
+          "when": "brought",
+          "if": ["flag:kind"],
+          "tone": "mixed",
+          "ops": [["disposition", "child", 30], ["disposition", "keeper", -10], ["xp_story", "small"]],
+          "line": [
+            "You told {child} that {hero} died well. {child} sleeps with the things of {hero} under the pillow and tells the others it was seven men he fought. {keeper} knows better and says nothing.",
+            "A kind lie, and a small one. {child} stopped being laughed at. {keeper} does not meet your eye in the street."
+          ]
+        },
+        {
+          "id": "brought",
+          "when": "brought",
+          "tone": "mixed",
+          "ops": [["disposition", "child", 20], ["xp_story", "small"]],
+          "line": [
+            "The things of {hero} came home from {place}. What you told {child} about them, only the two of you know.",
+            "{child} has the things of {hero}, and the map, and keeps both. What was said between you at the door, nobody asked."
+          ]
+        },
+        {
+          "id": "left",
+          "when": "left",
+          "tone": "bitter",
+          "ops": [["disposition", "child", -5], ["xp_story", "small"]],
+          "line": [
+            "The map stays in {child}'s shirt and {hero} stays at {place}. {child} looks at the road out of {town} every morning.",
+            "Left where it lies. {child} says {child_they} will go when {child_they} is big enough, and {keeper} has stopped saying no."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "child", "gone"], ["news", "news_lapse"]],
+        "line": [
+          "{child} took the map and a heel of bread and went out at first light. Nobody saw which road.",
+          "The map is gone from the chapel chest, and so is {child}. {keeper} stands at the gate most evenings."
+        ]
+      },
+      "clock": [14, 24],
+      "meetings": ["v_map_in_the_street"],
+      "words": {
+        "keep": ["things"],
+        "things": ["the cloak-pin and belt-knife of {hero}", "the dented flask and belt of {hero}", "the broken seal-ring of {hero}"],
+        "title": ["The child's map", "The map of {hero}", "What {child} carries"],
+        "stakes": ["a child's hope, and what lies at {place}", "{child}'s map, and the things of {hero}"],
+        "plea": [
+          "Don't laugh. It's real. It was drawn by {hero}, who fell out at {place}, {hero_years} ago. I found it sewn in the lining of the chapel chest. The line goes all the way. {keeper} says leave it, but at the end of the line there's something, his things. Bring them home, so they'll stop saying I made it up.",
+          "They all say it's a scrap of hide and I'm a liar. It's the map of {hero}, and it leads to {place}. {keeper} took the candle off me when I showed it. Will you go? I've nothing to give you. But somebody ought to bring {hero} home, even if it's only {hero}'s boots.",
+          "Look at it. Please. {hero} drew it, {hero_years} ago, before {place}. Nobody ever went to see. I want {hero}'s things brought back to the chapel, where there's a stone for it. Then they'd know."
+        ],
+        "first": [
+          "{child} found a map drawn by {hero}, who fell at {place}, and wants the things of {hero} brought home.",
+          "{child} carries the map of {hero}. {keeper} wants the child's hopes put to rest."
+        ],
+        "news_lapse": ["{child} of {town} has run off with an old map, toward {place}. Nobody has seen {child_them} since."]
+      }
+    },
+    "v_masked_feast": {
+      "name": "The masked feast",
+      "vignette": {"needs": "lord_and_heir", "weight": 2.0},
+      "asks": "servant",
+      "roles": {
+        "lord": {"bind": "given"},
+        "servant": {"bind": "job", "jobs": ["serving_hand"], "any": true},
+        "heir": {"bind": "kin", "of": "lord", "kinds": ["son", "daughter"], "make": true},
+        "killer": {"bind": "stranger", "jobs": ["minstrel", "wayfarer", "market_trader"]}
+      },
+      "obstacles": [
+        {
+          "id": "masks",
+          "kind": "lie",
+          "who": "servant",
+          "note": [
+            "Every guest at the feast wears the same white mask, so the knife cannot be known by its face.",
+            "Under one white mask {servant}'s hands carry the trays; under another, a knife."
+          ],
+          "acts": [
+            {
+              "id": "heard",
+              "label": ["Tell me what you heard, every word of it.", "Who spoke, and where? Start from the beginning."],
+              "check": ["persuasion", 10],
+              "unless": ["knows:plot"],
+              "then": [["learn", "plot"]],
+              "say": [
+                "At the kitchen door, two nights back. A voice asking which way {heir} goes out at the end, and when the cups are cleared. Not one of the household. A voice with the road in it.",
+                "I was scraping the pots. They didn't see me. A stranger, asking which door {heir} takes, and whether {heir_they} drinks. That's all. That's enough."
+              ],
+              "fail_say": ["I... I can't. It was nothing. I should not have come to you."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "tally",
+              "label": ["Count the masks with me. There will be one that should not be there.", "Who ordered the masks, and how many?"],
+              "check": ["investigation", 13],
+              "unless": ["knows:killer"],
+              "then": [["learn", "killer"]],
+              "say": [
+                "The cook's tally and the mask-maker's count differ by one. The extra went to the stranger lodged at the inn, {killer_full}, who paid in advance for a place at the lord's board.",
+                "One mask more than the guests, and the one who took it is {killer_full}, who sleeps at the inn and asks about the feast and nothing else."
+              ],
+              "fail_say": ["The numbers match. They all match. Or I counted wrong, and it will be on me."],
+              "pass": false,
+              "retry": true
+            }
+          ]
+        },
+        {
+          "id": "feast",
+          "kind": "honour",
+          "who": "lord",
+          "note": [
+            "{lord} will not cancel the feast, which is held for the dead of the house of {house}.",
+            "The feast of {house} was held through war and plague, and {lord} will not be the one to break it."
+          ],
+          "acts": [
+            {
+              "id": "warn",
+              "label": ["Cancel the feast. {heir} will die in it.", "There is a knife coming to your feast. Cancel it."],
+              "check": ["persuasion", 15],
+              "unless": ["flag:warned"],
+              "then": [["flag", "warned"], ["disposition", "lord", 5]],
+              "say": [
+                "I will not cancel it. Not for a whisper from a stranger. But I will double the guard at the doors, and I will keep {heir} near me. That is what I can do.",
+                "A feast cancelled is a house confessing it is afraid. I will not. The guard doubles, and that is all you will have."
+              ],
+              "fail_say": ["Out of my hall. A stranger, telling me my own table is unsafe. The feast goes on as it has always gone."],
+              "fail": [["disposition", "lord", -5]],
+              "retry": true
+            },
+            {
+              "id": "old_wrong",
+              "label": ["Who in the world would want {heir} dead? What is the old wrong?", "What did {house} do that is still owed for?"],
+              "check": ["history", 13],
+              "unless": ["knows:the_wrong"],
+              "then": [["learn", "the_wrong"]],
+              "say": [
+                "The old wrong, the one everybody in {town} knows: {wrong}. The family of the wronged never forgave it. They have waited a long time, and they are patient.",
+                "Everyone remembers it, and nobody says it aloud: {wrong}. That is the blood a knife would be for."
+              ],
+              "fail_say": ["It is a very old story. I do not remember the whole of it. Ask someone who does."],
+              "pass": false,
+              "retry": true
+            }
+          ]
+        },
+        {
+          "id": "heir",
+          "kind": "custom",
+          "who": "heir",
+          "note": [
+            "{heir} thinks the warning a servant's fright, and means to dance.",
+            "{heir} will not be nursed, and has laughed at every warning."
+          ],
+          "acts": [
+            {
+              "id": "guard",
+              "label": ["Let me stay at your shoulder all night. Tell me how you will be dressed.", "I will wear what the others wear and stand where you stand. Do not look for me."],
+              "check": ["persuasion", 11],
+              "unless": ["flag:guarded"],
+              "then": [["flag", "guarded"], ["disposition", "heir", 10]],
+              "say": [
+                "Stay near, then, if you must. I will be the one in white at the lord's right hand. Do not take your eyes off the tray-carriers.",
+                "A guardian in a mask. Why not. All right: at my shoulder, and if nothing comes you owe me a dance."
+              ],
+              "fail_say": ["I have been guarded since I could walk. Not tonight."],
+              "retry": true
+            }
+          ]
+        },
+        {
+          "id": "killer",
+          "kind": "danger",
+          "who": "killer",
+          "note": [
+            "{killer_full}, who calls {killer_them}self a {killer_title}, has a place at the lord's board and a white mask of {killer_their} own.",
+            "The knife is {killer_full}'s, and the grievance is older than {killer_them}."
+          ],
+          "acts": [
+            {
+              "id": "turn_wrong",
+              "label": ["I know what was done, and who did it. {heir} was not born then. Your quarrel is with the dead.", "Your people were wronged. {heir} did not wrong them. Walk out."],
+              "who": "killer",
+              "needs": ["knows:killer", "knows:the_wrong"],
+              "check": ["persuasion", 11],
+              "then": [["flag", "turned"]],
+              "say": [
+                "...You know. Who told you? No: it does not matter. You are right, it was never {heir}'s. I will not do it. I will go, and say a name at a grave on the way.",
+                "You said it like you knew. Nobody has said it aloud in my hearing. All right. All right. I am going."
+              ],
+              "fail_say": ["Fine words. They won't bring back what was taken. Stand aside."],
+              "retry": true
+            },
+            {
+              "id": "turn",
+              "label": ["I know why you are here. Walk away tonight and I tell nobody.", "Leave before the feast. Or the watch learns your name."],
+              "who": "killer",
+              "needs": ["knows:killer"],
+              "unless": ["knows:the_wrong"],
+              "check": ["persuasion", 15],
+              "then": [["flag", "turned"]],
+              "say": [
+                "...You are very sure of yourself. All right. Not tonight. Not for you. But it will not go away, whatever you say.",
+                "Nobody has ever talked me down before. I do not like it. But I will go."
+              ],
+              "fail_say": ["You know nothing. Step aside."],
+              "retry": true
+            },
+            {
+              "id": "drive",
+              "label": ["I know what you carry. Leave {town} today, or I take you to the watch myself.", "You will not set foot in the lord's hall tonight."],
+              "who": "killer",
+              "needs": ["knows:killer"],
+              "check": ["intimidation", 14],
+              "then": [["flag", "driven"], ["disposition", "killer", -20]],
+              "say": [
+                "...You mean it. Fine. I will go. But I know your face now, and I am patient.",
+                "Take your hand off. I am going. You have not seen the end of this."
+              ],
+              "fail_say": ["You have nothing and you know it. Stand aside, or be cut."],
+              "fail": [["disposition", "killer", -10]],
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "turned", "test": ["flag", "turned"]},
+        {"id": "driven", "test": ["flag", "driven"]},
+        {"id": "guarded", "test": ["flag", "guarded"]},
+        {"id": "warned", "test": ["flag", "warned"]}
+      ],
+      "endings": [
+        {
+          "id": "turned_wrong",
+          "when": "turned",
+          "if": ["knows:the_wrong"],
+          "tone": "good",
+          "ops": [["disposition", "heir", 30], ["disposition", "lord", 15], ["favour", "heir", "word", 2], ["contact", "killer", "informant"], ["mark", "memorial"], ["xp_story", "great"]],
+          "line": [
+            "The feast went on under forty white masks, and the knife stayed in {killer}'s sleeve. {killer} left before the last dish, and a grave in the hills had a name said at it. {lord} never learned how close it was. {heir} did.",
+            "The old wrong was named to the one who carried it, and the one who carried it put it down. {heir} danced until midnight and does not know whom to thank, and thanks you."
+          ]
+        },
+        {
+          "id": "turned",
+          "when": "turned",
+          "tone": "good",
+          "ops": [["disposition", "heir", 25], ["disposition", "lord", 10], ["favour", "heir", "word", 1], ["xp_story", "great"]],
+          "line": [
+            "{killer} did not come to the feast. The seat was empty and nobody remarked on it, in a hall of forty masks. {heir} lives, and the reason is still out there.",
+            "Talked down, and gone by dawn. The old wrong goes on, but it did not go on at {lord}'s table."
+          ]
+        },
+        {
+          "id": "driven",
+          "when": "driven",
+          "tone": "mixed",
+          "ops": [["disposition", "heir", 20], ["xp_story", "fair"]],
+          "line": [
+            "{killer} left {town} on the morning road with a bruise and a promise. {heir} lives, and one day {killer} will be back.",
+            "The knife left the inn but not the country. {lord}'s feast went on, quiet, and {servant} did not drop a single cup."
+          ]
+        },
+        {
+          "id": "guarded",
+          "when": "guarded",
+          "tone": "mixed",
+          "ops": [["disposition", "heir", 20], ["law", "killer", "jailed"], ["xp_story", "fair"]],
+          "line": [
+            "The knife came out of a white sleeve at the lord's right hand, and you were there. {heir} bled but lived. {killer} was taken in the dark. The wrong goes on.",
+            "A scream, a white mask on the floor, and {killer} held down by the guard. {heir} lives with a scar to remember it. The old wrong stays where it is."
+          ]
+        },
+        {
+          "id": "warned",
+          "when": "warned",
+          "tone": "bitter",
+          "ops": [["npc_fate", "servant", "dead"], ["disposition", "lord", -5], ["xp_story", "small"]],
+          "line": [
+            "{lord} doubled the guard and kept the feast. The knife found {servant}, carrying a tray in a white mask beside {heir}. {heir} lives. {servant} does not.",
+            "The guard watched the doors and the knife was already inside. A servant died in a white mask that was meant for someone else."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "heir", "dead"], ["grave", "heir"], ["news", "news_lapse"]],
+        "line": [
+          "At the lord's feast a white mask moved through forty others and came out with a knife in it. {heir} died on the floor of the hall, and nobody knows which face it was.",
+          "{heir} was found at midnight at the foot of the stair, the white mask on the stone beside. {lord} has had the feast struck from the book."
+        ]
+      },
+      "clock": [4, 8],
+      "meetings": ["v_white_masks"],
+      "words": {
+        "title": ["The masked feast", "Forty white masks", "A knife at {lord}'s table"],
+        "stakes": ["the life of {heir}, at the feast of {lord}", "a knife among forty white masks"],
+        "plea": [
+          "{lord} gives a feast {due} for the dead of {house}, and everyone is to wear the same white mask, the old custom. I carry the trays. I heard what's to be done under those masks: someone will put a knife in {heir}, and no one will know which white face it was. They will not listen to me. Will you?",
+          "Listen. At {lord}'s feast {due} nobody may show a face, and it is meant for {heir}. I heard it at the kitchen door. A hired hand, someone who is not from {town}. I am only a servant. They would have me whipped. But you are not afraid of the master."
+        ],
+        "first": [
+          "{servant} says a knife is meant for {heir} at the masked feast {lord} gives {due}.",
+          "At the masked feast of {lord}, {heir} will be killed, so {servant} says."
+        ],
+        "news_lapse": ["{heir}, the heir of {lord}, was murdered at the masked feast in {town}. The killer wore a white mask like the rest."]
+      }
+    },
+    "v_silent_village": {
+      "name": "The silent village",
+      "vignette": {"needs": "plague_past", "weight": 2.0},
+      "asks": "child",
+      "roles": {
+        "child": {"bind": "given"},
+        "elder": {"bind": "given"},
+        "priest": {"bind": "priest", "optional": true}
+      },
+      "obstacles": [
+        {
+          "id": "child",
+          "kind": "custom",
+          "who": "child",
+          "note": [
+            "{child} speaks at dusk, and is shushed, and has had a hand put over {child_their} mouth more than once.",
+            "{child} hears something at dusk, and is not allowed to say what."
+          ],
+          "acts": [
+            {
+              "id": "listen",
+              "label": ["Tell me what you hear at dusk.", "Whisper it. Only to me."],
+              "check": ["persuasion", 10],
+              "unless": ["knows:calls"],
+              "then": [["learn", "calls"]],
+              "say": [
+                "A voice at a time, from the field where the pit is, calling. Not angry. Calling names, one by one, and then waiting. Waiting for somebody to say 'here'. And nobody does. Nobody ever does.",
+                "They call the names of everybody, and then they call them again. I think they only want one answer. Just one."
+              ],
+              "fail_say": ["I'm not allowed. They'll put the cloth on me. I can't."],
+              "pass": false,
+              "retry": true
+            }
+          ]
+        },
+        {
+          "id": "elder",
+          "kind": "honour",
+          "who": "elder",
+          "note": [
+            "{elder} keeps the village's silence, and the vow it was made for, and does not speak of either.",
+            "The silence is a vow, and the village has kept it since the plague took {plague_dead}, {plague_years} ago."
+          ],
+          "acts": [
+            {
+              "id": "vow",
+              "label": ["Why does nobody speak after dusk?", "{child} says there is a reason. Tell me."],
+              "check": ["persuasion", 13],
+              "unless": ["knows:vow"],
+              "then": [["learn", "vow"]],
+              "say": [
+                "{plague_dead} died in the plague, {plague_years} ago. At dusk the sick cried out, one voice at a time, and the living went to them, and took it home. So they swore over the pit: after dusk none answers a voice and none speaks, so that the dead may call and find nobody to take.",
+                "It was sworn over the pit, and we keep it. Nobody speaks from the going of the light to the first cock. The dead call, and we do not answer, and so they cannot hold us. That is the whole of it. It has kept us alive."
+              ],
+              "fail_say": ["It is not a stranger's business. Go in before the light goes."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "names",
+              "label": ["Where were they buried? What went into the pit with them?", "Is there a tally of the dead? Where is it?"],
+              "check": ["investigation", 12],
+              "unless": ["knows:names"],
+              "then": [["learn", "names"]],
+              "say": [
+                "The tally-board. Every name of the village was cut on it, and when it was done they broke it across and laid it in the pit, so that nobody could call them back by name. And not one has been said aloud since.",
+                "The names went in with them. The old board, broken in two, in the pit, so no name could be said and so no one would answer one. So I was told, and so I was taught."
+              ],
+              "fail_say": ["Nothing of ours is a stranger's to dig for. Leave the pit be."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "rite",
+              "label": ["Say every name once, aloud, at dusk at the pit, and answer each: 'here'. Then the vow is ended by those who keep it.", "The dead want one answer. Give it, and end the vow."],
+              "check": ["religion", 14],
+              "needs": ["knows:vow"],
+              "then": [["flag", "rite"]],
+              "say": [
+                "...To say them. After all this time. God forgive us, if it is wrong. But if it is not... All right. At dusk, at the pit. I will say the first.",
+                "Say them. Say them all, and let the village hear its own voice again. I am so tired. Yes. Yes."
+              ],
+              "fail_say": ["It is easy to say, when you did not bury them. No. The vow stands."],
+              "retry": true
+            },
+            {
+              "id": "candles",
+              "label": ["I will pay for the candles, the oil and the bread of the burial rite, so the dead are properly seen off."],
+              "price": 1200,
+              "way": "pay",
+              "needs": ["knows:vow"],
+              "then": [["flag", "rite"]],
+              "say": [
+                "Candles. Oil. Bread. They never had those at the pit, I am told, there was no time. ...Yes. It would be right. We will do it at dusk.",
+                "Properly, then. That is more than was given them. Thank you."
+              ]
+            },
+            {
+              "id": "keep",
+              "label": ["Keep your vow, then. I will not ask you to break it.", "Some silences are better kept. Forgive me for asking."],
+              "unless": ["taken"],
+              "then": [["flag", "kept"]],
+              "say": [
+                "You are not the first who asked. You are the first who said sorry. Go in before dusk, stranger.",
+                "Thank you. We have kept it this long. Tell the child nothing. The child will learn."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "priest",
+          "kind": "custom",
+          "who": "priest",
+          "note": [
+            "No rite has been said over the pit, for the vow forbids any word spoken there after dusk.",
+            "The village's priest knows the rite of the dead, and has never been allowed to say it aloud at the pit."
+          ],
+          "acts": [
+            {
+              "id": "priest_rite",
+              "label": ["Say the rite of the dead with me at the pit, and let the names be answered.", "Will you say the rite, if the village agrees?"],
+              "check": ["persuasion", 11],
+              "needs": ["knows:vow"],
+              "then": [["flag", "rite"]],
+              "say": [
+                "I have wanted to for years. I could not, alone. Yes. If the elder agrees, I will say every word of it.",
+                "At the pit, at dusk. I have the words ready. They have been ready a long time."
+              ],
+              "fail_say": ["The elder would never allow it. And I will not stand against the whole village."],
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "rite", "test": ["flag", "rite"]},
+        {"id": "kept", "test": ["flag", "kept"]}
+      ],
+      "endings": [
+        {
+          "id": "rite_full",
+          "when": "rite",
+          "if": ["knows:names", "knows:calls"],
+          "tone": "good",
+          "ops": [["disposition", "child", 35], ["disposition", "elder", 25], ["favour", "elder", "shelter", 2], ["mark", "memorial"], ["xp_story", "great"]],
+          "line": [
+            "At dusk {elder} said the first name at the pit, and {child} said 'here'. Then the village said the rest, name after name, and answered each one, and nobody put a hand on anybody's mouth. The field was quiet after, and a kind quiet.",
+            "Every name said, and every name answered. {child} laughed out loud in the dark, and nobody shushed {child_them}. In the morning someone was singing at the well."
+          ]
+        },
+        {
+          "id": "rite",
+          "when": "rite",
+          "tone": "mixed",
+          "ops": [["disposition", "child", 25], ["disposition", "elder", 15], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "The rite was said at the pit at dusk, and some of the village stayed indoors with their hands over their ears. The dusk is not silent in {town} any more, but not everyone speaks in it.",
+            "The vow was ended by those who keep it, and not all of them would let it end. {child} speaks at dusk. Some turn their faces from {child_them} still."
+          ]
+        },
+        {
+          "id": "kept",
+          "when": "kept",
+          "tone": "bitter",
+          "ops": [["disposition", "elder", 10], ["disposition", "child", -10], ["xp_story", "small"]],
+          "line": [
+            "The silence goes on. {child} sits in the dark with {child_their} mouth shut, learning it. By next year {child_they} will not need the cloth.",
+            "You left the vow as you found it. At dusk the village goes quiet door by door, and something in the pit-field goes on calling to nobody."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "child", "gone"], ["news", "news_lapse"]],
+        "line": [
+          "{elder} tied a cloth over {child}'s mouth each dusk for a month, and then sent {child} downriver to kin who talk. The silence is whole again.",
+          "{child} spoke aloud one dusk once too often, and was sent away at first light. After that, nobody in the village spoke after dark, not one of them."
+        ]
+      },
+      "clock": [10, 18],
+      "meetings": ["v_dusk_hush"],
+      "words": {
+        "title": ["The silent village", "Nobody speaks after dusk", "The dusk in {town}"],
+        "stakes": ["a vow of silence and the child who breaks it", "what the dead call at dusk, and who will answer"],
+        "plea": [
+          "Everybody goes quiet when the light goes. Not a word, not a cough, from dusk until the cock crows. They won't tell me why. It's been so since the plague, and that was {plague_years} ago, when {plague_dead} died. I can't stop talking at night. They put their hands on my mouth. Please find out what it is. I think it listens.",
+          "You've seen. At dusk it all stops, even the dogs, and the elder shuts the shutters. They took {plague_dead} in the plague, {plague_years} ago, and since then nobody says a word after dark. I talk. They shush me. I hear something at night, and nobody will say what it is. Find out. Please."
+        ],
+        "first": [
+          "In {town} nobody speaks after dusk, since the plague of {plague_years} ago took {plague_dead}. {child} does, and wants to know why.",
+          "The village of {town} falls silent at dusk. {child} wants to know what it keeps silent for."
+        ],
+        "news_lapse": ["In {town} a child who spoke at dusk has been sent away. The village keeps its silence."]
+      }
+    },
+    "v_tower_apprentice": {
+      "name": "The scribe and the last book",
+      "vignette": {"needs": "masterless_tower", "weight": 2.0},
+      "asks": "apprentice",
+      "roles": {
+        "tower": {"bind": "given"},
+        "apprentice": {"bind": "stranger", "jobs": ["scribe"]}
+      },
+      "obstacles": [
+        {
+          "id": "apprentice",
+          "kind": "honour",
+          "who": "apprentice",
+          "note": [
+            "{apprentice} wants {master}'s last book out of {tower}, and will not say all that is in it.",
+            "{apprentice} says the book is a scholar's right, and has copied one torn leaf of it and not shown it to anyone."
+          ],
+          "acts": [
+            {
+              "id": "why",
+              "label": ["Why must you have this book? What is it to you?", "What do you mean to do with it?"],
+              "check": ["persuasion", 11],
+              "unless": ["knows:wants"],
+              "then": [["learn", "wants"]],
+              "say": [
+                "My school will turn me out without it. My teacher spent her life looking for it, and she is dead this winter. The book is all that is left of what she hoped, and if I come back without it I have nothing. Nothing at all.",
+                "I have nobody. My teacher is dead, my school is closing, and {master}'s book is the last thing in the world that could make me a scholar. That is what it is to me."
+              ],
+              "fail_say": ["It is a scholar's matter. You would not understand it."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "leaf",
+              "label": ["Show me the torn leaf you copied.", "You are afraid of something in that book. Let me read what you copied."],
+              "check": ["arcana", 14],
+              "unless": ["knows:cost"],
+              "then": [["learn", "cost"]],
+              "say": [
+                "...It is no book of power. Read the margins: each working in it is paid for, line by line, in the one who works it. A year off a life. A sense. A name. {master} wrote down what each one cost, and then wrote them all anyway. It is a ledger of ruin.",
+                "I can read it, and I wish I could not. This is the record of what the workings took from the one who made them, in {master}'s own hand. Each one is cut deeper. The last page is only a list of what is left."
+              ],
+              "fail_say": ["It is cipher. I cannot read it, and the apprentice will not help. Whatever it is, it is guarded."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "give",
+              "label": ["I will bring it to you, whatever it holds.", "If I find it, you shall have it, as you ask."],
+              "unless": ["taken"],
+              "then": [["flag", "give"]],
+              "say": [
+                "You will? You really will? I will pay for it. I will pay all I have. Thank you.",
+                "It is mine by right, and you see that. Thank you. Thank you."
+              ]
+            },
+            {
+              "id": "keep",
+              "label": ["If I find it, it stays with me. It is not safe in anyone's hands.", "Let me carry it. I will see that it is kept, and kept safe."],
+              "check": ["persuasion", 13],
+              "unless": ["taken"],
+              "then": [["flag", "keep"]],
+              "say": [
+                "...Keep it, then. If you are wiser than I am, you will keep it shut. I do not know if I can be that wise. I could not be.",
+                "You will keep it, and not read it? ...Yes. All right. I want you to say you will not read it."
+              ],
+              "fail_say": ["It is mine! You would take it for yourself! No. I will go in alone, if I must."]
+            },
+            {
+              "id": "burn",
+              "label": ["Some books should be burned. Let me bring it back and burn it in front of you.", "A ledger of ruin helps nobody. Let it be ash."],
+              "needs": ["knows:cost"],
+              "check": ["persuasion", 12],
+              "then": [["flag", "burn"]],
+              "say": [
+                "Burn it. It is the thing I came all this way for... Yes. Yes. If it is what you say, then yes. I cannot be the one to light it.",
+                "...My teacher called it the last great book. It is the last bad one. All right. Burn it."
+              ],
+              "fail_say": ["No! I did not come all this way to see it burned by a sellsword!"],
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "apprentice", "site": "tower", "item": "book"},
+      "goals": [
+        {"id": "brought", "test": ["flag", "work_done"]}
+      ],
+      "endings": [
+        {
+          "id": "burned",
+          "when": "brought",
+          "if": ["flag:burn", "knows:cost"],
+          "tone": "good",
+          "ops": [["disposition", "apprentice", 25], ["contact", "apprentice", "scholar"], ["favour", "apprentice", "word", 2], ["xp_story", "great"]],
+          "line": [
+            "The last book of {master} burned in a field outside {town}, page by page, and {apprentice} watched every leaf curl. Afterward {apprentice} wrote down, from memory, only the warning.",
+            "Ash, and a scribe weeping into the wind. {apprentice} copied out the one honest page, the one that says what the workings cost, and left the rest to the fire."
+          ]
+        },
+        {
+          "id": "kept",
+          "when": "brought",
+          "if": ["flag:keep"],
+          "tone": "mixed",
+          "ops": [["item", "book"], ["disposition", "apprentice", -5], ["xp_story", "fair"]],
+          "line": [
+            "You carry the last book of {master} now, shut and bound in cord. {apprentice} watches it every time you pass, and says nothing.",
+            "The book is in your pack and not in the school's hands. {apprentice} left {town} at dawn, and did not say goodbye."
+          ]
+        },
+        {
+          "id": "given_known",
+          "when": "brought",
+          "if": ["flag:give", "knows:cost"],
+          "tone": "mixed",
+          "ops": [["disposition", "apprentice", 20], ["xp_story", "fair"]],
+          "line": [
+            "You gave {apprentice} the book of {master}, knowing what it held, and said so. {apprentice} took it with both hands and a long breath. What a scholar does with it after, nobody can say.",
+            "The book is with {apprentice}, who knows the price now. Perhaps that is enough. Perhaps not."
+          ]
+        },
+        {
+          "id": "given",
+          "when": "brought",
+          "tone": "bitter",
+          "ops": [["npc_fate", "apprentice", "ruined"], ["disposition", "apprentice", 10], ["xp_story", "small"]],
+          "line": [
+            "{apprentice} read the book of {master} through in one night. A month later, you hear, {apprentice} could not tell a day from a night, and did not know a face. The book was true to the last line.",
+            "You gave the book as you were asked. {apprentice} thanked you, and is now a scholar of the first rank, and does not remember your name."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "mixed",
+        "ops": [["npc_fate", "apprentice", "gone"], ["news", "news_lapse"]],
+        "line": [
+          "{apprentice} lost patience and set out for {tower} alone. The road out of {town} is long, and nobody has seen the scribe since.",
+          "{apprentice} paid the innkeeper, asked the road once more, and walked out toward {tower} at first light. Nobody has had word since."
+        ]
+      },
+      "clock": [14, 26],
+      "meetings": ["v_scribe_asking"],
+      "words": {
+        "keep": ["book"],
+        "book": ["the last book of {master}", "{master}'s last book"],
+        "title": ["The apprentice of {master}", "The last book of {master}", "A scribe at the inn"],
+        "stakes": ["{master}'s last book, and the one who wants it", "what {master} wrote last, and who should read it"],
+        "plea": [
+          "I am a scribe of the school that keeps the works of {master}. {master} died {master_years} ago, and left a last book in {tower}, and nobody has been in to fetch it. I am only a scribe, and I cannot go in alone. I will pay what I can. It is not much. But the book belongs to those who keep {master}'s work.",
+          "You are the sort who goes into places. I am looking for {master_first}'s last book, the one {master} wrote in {tower}. My teacher swore it was real, and spent her life on it. It belongs to the school that keeps {master}'s work, and I am what is left of that school. Bring it to me. I will give you everything I have."
+        ],
+        "first": [
+          "{apprentice}, a scribe come in from the road, wants {master}'s last book fetched from {tower}.",
+          "A young scribe at the inn wants the last book of {master}, which lies in {tower}."
+        ],
+        "news_lapse": ["A scribe set out from {town} toward the tower of {master} alone, and did not come back."]
+      }
+    },
+    "v_dragon_tithe": {
+      "name": "The dragon's tithe",
+      "vignette": {"needs": "dragon_near", "weight": 2.0},
+      "asks": "parent",
+      "roles": {
+        "chosen": {"bind": "given"},
+        "headman": {"bind": "given"},
+        "lair": {"bind": "given"},
+        "parent": {"bind": "kin", "of": "chosen", "kinds": ["father", "mother"], "make": true}
+      },
+      "obstacles": [
+        {
+          "id": "headman",
+          "kind": "law",
+          "favour": {"kinds": ["word", "door"], "weight": 2, "then": [["flag", "spared"]]},
+          "who": "headman",
+          "note": [
+            "{headman} has chosen {chosen} to be sent up to {lair} as {dragon}'s tithe, and says the lots were fair.",
+            "{dragon} the {dragon_colour} takes a tithe from {town}, and {headman} has drawn {chosen}'s name."
+          ],
+          "acts": [
+            {
+              "id": "pay",
+              "label": ["I will pay the tithe in coin. Let {dragon} have gold instead.", "Take my coin, and send nobody up."],
+              "price": 5000,
+              "way": "pay",
+              "then": [["flag", "paid"]],
+              "say": [
+                "Coin. Coin the beast will take, I think. It has taken coin before. A great deal of it. All right. Nobody goes up. I will send it up on the first fair day.",
+                "...That is more than the town has seen in ten years. Done. {chosen} stays. Tell the family."
+              ],
+              "fail_say": ["It is not enough. It is never enough."]
+            },
+            {
+              "id": "lots",
+              "label": ["Show me how the lots were drawn. Who drew them?", "Why {chosen}? A hundred names in the pot, and it was {chosen}'s?"],
+              "check": ["insight", 13],
+              "unless": ["knows:lots"],
+              "then": [["learn", "lots"]],
+              "say": [
+                "...The first name out of the pot was my own kin's. I put it back. I drew again. I will not say more. You have asked, and I answered, and now you will leave me alone.",
+                "The first name out was one of mine. Out of respect for the town's trust, I... drew again. That is all. I did not choose {chosen}. The pot did, the second time."
+              ],
+              "fail_say": ["The lots were fair. They were drawn before witnesses. Ask whom you like."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "shame",
+              "label": ["I know whose name came out of the pot first. Draw again, before the whole town.", "Put the lots back in the open, or I tell the town whose name was drawn first."],
+              "needs": ["knows:lots"],
+              "check": ["persuasion", 11],
+              "then": [["flag", "spared"], ["disposition", "headman", -25]],
+              "say": [
+                "...Do not shout it. I will draw it again. In the square. Before everyone. And I will send grain and ewes in the place of a person. You have my word on it, though it galls me.",
+                "Stop. Stop! All right. A fresh draw, in the open. And no person goes up. The town will send beasts and grain. That is what I should have done."
+              ],
+              "fail_say": ["You have no proof. Keep your mouth shut about what you think you know."],
+              "fail": [["disposition", "headman", -10]],
+              "retry": true
+            },
+            {
+              "id": "talk",
+              "label": ["Send no one. {dragon} takes what is sent and asks again. Send grain and sheep.", "A person is the dearest thing you can give; the dragon wants only what glitters. Give it that."],
+              "check": ["persuasion", 16],
+              "unless": ["knows:lots"],
+              "then": [["flag", "spared"]],
+              "say": [
+                "...Grain and sheep, and the winter's cheeses. Maybe. Maybe it will be enough. The old tales say it asked for a person from the first. But I will try, if you will carry the grain up with us.",
+                "Perhaps. Perhaps you are right. We have never asked it for less. Let it be beasts this year, and we will see."
+              ],
+              "fail_say": ["The old custom is a person. It has been a person before. I will not break it for a stranger's guess."],
+              "retry": true
+            }
+          ]
+        },
+        {
+          "id": "chosen",
+          "kind": "custom",
+          "who": "chosen",
+          "favour": {"kinds": ["shelter", "door"], "weight": 2, "then": [["flag", "hidden"]]},
+          "note": [
+            "{chosen} has been marked for {dragon}, and watched day and night.",
+            "{chosen} is to go up to {lair} at the next new moon, and the town watches {chosen} so that no one runs."
+          ],
+          "acts": [
+            {
+              "id": "hide",
+              "label": ["Come away tonight. I will hide you where the headman will not think to look.", "Out through the sheepfold gate, before the watch changes. Trust me."],
+              "check": ["survival", 13],
+              "way": "sneak",
+              "unless": ["flag:hidden"],
+              "then": [["flag", "hidden"]],
+              "say": [
+                "...All right. All right. I am afraid, and I do not want to go up there. I will follow you. Tell {parent} I am not a coward.",
+                "I have heard them whispering about the white dress all week. Yes. Out through the sheepfold, now."
+              ],
+              "fail_say": ["They'd miss me within the hour. They would know it was you. I will not be the cause of that."],
+              "fail": [["disposition", "parent", -5]],
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "go_up",
+          "who": "headman",
+          "label": ["I will go up to {lair} myself, in {chosen}'s place, and treat with {dragon}.", "Send me up instead. I will speak with it."],
+          "check": ["persuasion", 16],
+          "unless": ["flag:went_up"],
+          "then": [["flag", "went_up"], ["disposition", "chosen", 15]],
+          "say": [
+            "You? Up there? ...You are mad. But you are offering, and I will not stop a stranger from going where a child would die. Take the old road up past the cairn.",
+            "A stranger, in place of one of ours. I will not argue. The road is past the cairn. We will say a prayer."
+          ],
+          "fail_say": ["You do not know what you are saying. Nobody goes up and comes back. The lots stand."],
+          "fail": [["disposition", "parent", -5]],
+          "retry": true
+        }
+      ],
+      "goals": [
+        {"id": "paid", "test": ["flag", "paid"]},
+        {"id": "went_up", "test": ["flag", "went_up"]},
+        {"id": "spared", "test": ["flag", "spared"]},
+        {"id": "hidden", "test": ["flag", "hidden"]}
+      ],
+      "endings": [
+        {
+          "id": "paid",
+          "when": "paid",
+          "tone": "good",
+          "ops": [["disposition", "parent", 35], ["disposition", "chosen", 30], ["favour", "parent", "shelter", 2], ["mark", "tribute"], ["xp_story", "fair"]],
+          "line": [
+            "{headman} carried the coin up to {lair} on a cart, and came down alone. {chosen} stood at the gate and watched the road, and did not believe it until dark.",
+            "The tithe was paid in gold, and the {dragon_colour} dragon took it. {chosen} lives. The town does not yet know what it will ask for next year."
+          ]
+        },
+        {
+          "id": "went_up",
+          "when": "went_up",
+          "tone": "mixed",
+          "ops": [["disposition", "parent", 30], ["favour", "parent", "word", 2], ["mark", "tribute"], ["xp_story", "great"]],
+          "line": [
+            "You climbed to {lair} alone, and stood before {dragon}, and came down alive. What was said in that place you tell nobody. {chosen} is not to go, this year.",
+            "Whatever you carried up, whatever you promised, {dragon} let you come down. The town will not look at you, and the parent of {chosen} will not stop thanking you."
+          ]
+        },
+        {
+          "id": "spared_shame",
+          "when": "spared",
+          "if": ["knows:lots"],
+          "tone": "mixed",
+          "ops": [["disposition", "parent", 30], ["disposition", "headman", -10], ["mark", "tribute"], ["xp_story", "fair"]],
+          "line": [
+            "The lots were drawn again in the square, in the open, and no name was read. {headman} sent grain and ten ewes up to {lair}, and keeps out of your way. {dragon} has not yet answered.",
+            "The town sent beasts, not a person, and {headman} paid in more than grain. It was enough this year. Nobody says it will be next."
+          ]
+        },
+        {
+          "id": "spared",
+          "when": "spared",
+          "tone": "mixed",
+          "ops": [["disposition", "parent", 25], ["mark", "tribute"], ["xp_story", "fair"]],
+          "line": [
+            "{headman} sent grain and sheep up to {lair} instead of a person. The {dragon_colour} dragon did not come down, and has not said yet whether that was enough.",
+            "Beasts and grain went up the mountain, and nobody went with them. {chosen} lives, and every night the town looks at the hills."
+          ]
+        },
+        {
+          "id": "hidden",
+          "when": "hidden",
+          "tone": "bitter",
+          "ops": [["npc_fate", "chosen", "gone"], ["disposition", "parent", 25], ["disposition", "headman", -20], ["mark", "tribute"], ["xp_story", "fair"]],
+          "line": [
+            "{chosen} is hidden, and far away by now. The lots were drawn a third time, and the name that came out belonged to someone with no one to ask. The {dragon_colour} dragon has had its tithe.",
+            "You took {chosen} out by the sheepfold, and someone else went up the mountain. The parent of {chosen} weeps in the dark and does not say whom {parent_they} weeps for."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "chosen", "gone"], ["mark", "tribute"], ["news", "news_lapse"]],
+        "line": [
+          "On the new moon {headman} and the elders took {chosen} up the old road to {lair}, with a lamp, and came back without. The parent of {chosen} sat on the doorstep all night, facing the hill.",
+          "{chosen} went up the mountain at dawn, dressed in white. {dragon} the {dragon_colour} has had its tithe, and the town has eaten nothing since."
+        ]
+      },
+      "clock": [6, 12],
+      "meetings": ["v_lot_pot"],
+      "words": {
+        "title": ["The dragon's tithe", "{chosen} for {dragon}", "What goes up to {lair}"],
+        "stakes": ["the life of {chosen}, and the tithe of {dragon}", "a child of {town} for the {dragon_colour} dragon at {lair}"],
+        "plea": [
+          "{headman} has drawn {chosen}'s name. {dragon}, the {dragon_colour} one up at {lair}, has had its tithe from {town}, grain and sheep and, when the harvest is poor, a person. This year the name was my child's. They say the lots were fair. I do not believe it. Please. I will give you everything I have. It is not much.",
+          "They are taking {chosen} up to {lair} {due}. For {dragon}. It takes a person when the barley is poor, they say, and this year the barley was poor. I am {chosen}'s parent. I have no money, no sword, no say. You do. Do something. Anything."
+        ],
+        "first": [
+          "{headman} has chosen {chosen} to be the tithe of {dragon}, the {dragon_colour} dragon of {lair}.",
+          "{chosen} is to go up to {lair} as {dragon}'s tithe, {by_due}. The parent asks for help."
+        ],
+        "news_lapse": ["{chosen} of {town} was sent up to {lair} as the tithe of {dragon}, and has not been seen since."]
+      }
+    },
+    "v_beast_widow": {
+      "name": "The widow's token",
+      "vignette": {"needs": "beast_lair", "weight": 2.0},
+      "asks": "widow",
+      "roles": {
+        "widow": {"bind": "given"},
+        "lair": {"bind": "given"},
+        "beast": {"bind": "given"},
+        "spouse": {"bind": "kin", "of": "widow", "kinds": ["husband", "wife"], "make": true},
+        "lender": {"bind": "merchant", "optional": true}
+      },
+      "forge": [["npc_fate", "spouse", "dead"]],
+      "obstacles": [
+        {
+          "id": "widow",
+          "kind": "honour",
+          "who": "widow",
+          "note": [
+            "{spouse} went to {lair} and was taken by {beast}, and {widow} will not say why {spouse} went.",
+            "Nobody saw {spouse} fall at {lair}. {widow} wants the body, or a token of it, to bury."
+          ],
+          "acts": [
+            {
+              "id": "neighbours",
+              "label": ["Who saw {spouse} last? What did {spouse} say before going?", "What did {spouse} owe, and to whom?"],
+              "check": ["investigation", 14],
+              "unless": ["knows:owed"],
+              "then": [["learn", "owed"]],
+              "say": [
+                "The neighbours say {spouse} had borrowed more than could ever be paid, and that the lender came twice. {spouse} said {spouse_they} knew where there was money, up at {lair}.",
+                "A debt. A bad one. {spouse} was out at night, selling things, and spoke of something at {lair} that could clear it. They say {spouse} went on purpose."
+              ],
+              "fail_say": ["Nobody saw anything. Nobody knows anything. Folk keep their mouths shut about money."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "sake",
+              "label": ["Tell me true. Why did {spouse} go to {lair}?", "I think {spouse} went for you. Am I right?"],
+              "check": ["insight", 12],
+              "unless": ["knows:sake"],
+              "then": [["learn", "sake"]],
+              "say": [
+                "...For me. I was ill, last winter. The healer wanted more than we had, and {spouse} went to find it. Somebody said there was something of value at {lair}. I begged {spouse} not to go. I begged. And {spouse} said it was only a few hours.",
+                "It was my fever. The medicine cost more than the house. {spouse} said {spouse_they} would be back by dark, and went up to {lair} for the one thing that could pay for it. I am alive because of it. That is what I cannot say."
+              ],
+              "fail_say": ["It is not your business. {spouse} is dead and that is all there is to know."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "leave",
+              "label": ["Let {spouse} lie where {spouse_they} fell. Do not send anyone to {lair}, not even me.", "{beast} will take another for it. Let {spouse} rest."],
+              "unless": ["taken"],
+              "then": [["flag", "left"]],
+              "say": [
+                "...I know. I know it is foolish. But a grave with nothing in it. ...Very well. I will make do with a stone.",
+                "Perhaps you are right. Perhaps it would only be one more death. All right."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lender",
+          "kind": "price",
+          "who": "lender",
+          "note": [
+            "Someone in {town} lent {spouse} money, and is owed it still.",
+            "{spouse} owed money in {town}, and {widow} does not know how much."
+          ],
+          "acts": [
+            {
+              "id": "ledger",
+              "label": ["What did {spouse} owe you? Show me the book.", "Was {spouse} in your debt? How deep?"],
+              "check": ["persuasion", 12],
+              "unless": ["knows:owed"],
+              "then": [["learn", "owed"]],
+              "say": [
+                "More than a farm's year. {spouse} came to me three times, and the third time said it was the last. I said so too. {spouse} went off toward {lair}, I heard, to settle it. I did not think {spouse_they} would go alone.",
+                "The sum is in the book, and it is not small. I never pushed. {spouse} said {spouse_they} had a way to pay it all at once, in the hills, at {lair}. I should have asked what way."
+              ],
+              "fail_say": ["A merchant's books are a merchant's. Ask {widow}, who knows well enough."],
+              "pass": false,
+              "retry": true
+            }
+          ]
+        },
+        {
+          "id": "beast",
+          "kind": "danger",
+          "who": "widow",
+          "note": [
+            "{beast} keeps what it takes at {lair}, and has not been driven out by anyone yet.",
+            "{beast} has lain at {lair} a long while, and what it takes, it keeps."
+          ],
+          "acts": [
+            {
+              "id": "lore",
+              "label": ["What do the old tales say of {beast}? What does it do with the ones it takes?", "How does {beast} hunt? When does it sleep?"],
+              "check": ["history", 12],
+              "unless": ["knows:lore"],
+              "then": [["learn", "lore"]],
+              "say": [
+                "It drags what it takes back to its den and leaves what it cannot use: bones, boots, buckles, rings. It sleeps in the heat of the day, the old shepherds say, and a ring would still be there.",
+                "The tales say it sleeps through the noon. What it kills it keeps, with the things the dead had on them, in a heap at the back of its den. Whatever the dead carried would still be there."
+              ],
+              "fail_say": ["Everyone has a tale of it, and none of them agree. I could not tell you which is true."],
+              "pass": false,
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "widow", "site": "lair", "item": "token"},
+      "goals": [
+        {"id": "brought", "test": ["flag", "work_done"]},
+        {"id": "left", "test": ["flag", "left"]}
+      ],
+      "endings": [
+        {
+          "id": "brought_sake",
+          "when": "brought",
+          "if": ["knows:sake"],
+          "tone": "good",
+          "ops": [["grave", "spouse"], ["disposition", "widow", 35], ["favour", "widow", "shelter", 2], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "{widow} buried {token} on the hill above {town}, under a stone that says only that {spouse} went for love. {widow} said the truth aloud at the graveside, and then was able to eat.",
+            "{token}, laid in the ground at last, and the reason said aloud over it. {widow} carries the thing no longer, only the grief, which is lighter than what it was."
+          ]
+        },
+        {
+          "id": "brought_owed",
+          "when": "brought",
+          "if": ["knows:owed"],
+          "tone": "mixed",
+          "ops": [["grave", "spouse"], ["disposition", "widow", 20], ["xp_story", "fair"]],
+          "line": [
+            "{token} is buried, and the debt is not. {widow} knows now that {spouse} went to {lair} for money and not for love, and does not know whether to be angry at the grave.",
+            "You gave {widow} {token} and the truth about the debt. {widow} buried one and is paying the other, a little at a time."
+          ]
+        },
+        {
+          "id": "brought",
+          "when": "brought",
+          "tone": "mixed",
+          "ops": [["grave", "spouse"], ["disposition", "widow", 25], ["xp_story", "fair"]],
+          "line": [
+            "{token} lies in the ground above {town}. {widow} asked nothing about how it was found, and the not-asking is a kindness to both.",
+            "A grave, with a ring and some earth in it. {widow} stands there each morning and has stopped leaving the door open."
+          ]
+        },
+        {
+          "id": "left",
+          "when": "left",
+          "tone": "bitter",
+          "ops": [["disposition", "widow", -5], ["xp_story", "small"]],
+          "line": [
+            "{spouse} lies where {beast} left {spouse_them}. {widow} keeps the door open every night, and the stone in the yard has no name on it yet.",
+            "Left at {lair}. {widow} says it is better so, in the daytime, and by night leaves the door open."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "widow", "dead"], ["news", "news_lapse"]],
+        "line": [
+          "{widow} went up toward {lair} one evening with a lamp and a bread-knife, and did not come back. The door of the house is open still.",
+          "Nobody went to {lair} for {spouse}, so {widow} went. {beast} does not leave anything for burying."
+        ]
+      },
+      "clock": [12, 22],
+      "meetings": ["v_open_door"],
+      "words": {
+        "keep": ["token"],
+        "token": ["{spouse}'s wedding ring", "the knife {spouse} always carried", "{spouse}'s worn belt-buckle"],
+        "title": ["The widow's token", "{spouse} at {lair}", "A grave with nothing in it"],
+        "stakes": ["something of {spouse} to bury, and the truth of why {spouse} went", "the body of {spouse}, taken by {beast} at {lair}"],
+        "plea": [
+          "{beast} took {spouse} at {lair}. I never saw {spouse_them} fall. The shepherds saw. I want {spouse_them} home, not the beast killed, nor a bounty paid. Bring me {token}, or whatever of {spouse_them} lies in that place, and let me put it in the ground. I have a stone ready and nothing to put under it.",
+          "I leave the door open for {spouse} every night. I know it is foolish. {beast} has {spouse_them}, at {lair}, and I cannot sleep. I do not ask you to kill anything. Only to bring back {token} so there is something to bury. You would be doing it for someone who has nothing else."
+        ],
+        "first": [
+          "{beast} took {spouse}, {widow}'s spouse, at {lair}. {widow} wants {token} brought back to bury.",
+          "{widow} wants something of {spouse} brought home from {lair}, where {beast} took {spouse_them}."
+        ],
+        "news_lapse": ["{widow} of {town} went to {lair}, where {beast} took {widow}'s spouse, and did not return."]
+      }
+    }
+  }
+}

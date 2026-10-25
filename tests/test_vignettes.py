@@ -85,6 +85,47 @@ def test_every_vignette_is_found_in_the_world_and_fills_its_words(tables):
     assert len(missing) <= 2, f"almost every vignette's need is met somewhere in two small worlds: {missing}"
 
 
+@pytest.mark.slow
+def test_every_vignette_is_met_in_its_own_scene_and_taken(tables, monkeypatch):
+    monkeypatch.setattr(situations, "maybe_forge", lambda game, s=None: None)  # (no ordinary trouble in the way)
+    met = set()
+    for seed in SEEDS:
+        townlife.forget()
+        game, town = a_life(tables, seed)
+        for vid in sorted(vignettes.vignettes(tables)):
+            if vid in met:
+                continue
+            for s in peopled(game):
+                sit = situations.make(game, s.id, predicament=vid)
+                if sit is None:
+                    continue
+                if game.in_local:
+                    game.leave_local()
+                game.player.x, game.player.y = s.x, s.y
+                game.player.local_key = None
+                game.enter_local()
+                game.world.towns[s.id].flags.pop("scene_day", None)  # (a town stages one scene a day)
+                if sit["state"] == "latent" and any(townlife.asleep(game, game.world.npcs[i])
+                                                    for i in situations._meet_cast(game, sit).values()):
+                    situations._unbind(game, sit)  # (the meeting waits for them to wake: look elsewhere)
+                    situations._undo(game, sit)
+                    del situations.records(game.world)[sit["id"]]
+                    continue
+                assert situations._try_meet(game, s) or sit["state"] == "met", f"{vid}: its meeting plays in {s.name}"
+                scene = situations.data(game)["meetings"][sit["meeting"]["kind"]]["scene"]
+                assert stage.current(game)["id"] == scene and scene.startswith("vig_")
+                stage.skip(game)
+                asker = situations.asker(game, sit)
+                assert game.talk_to == asker.id, f"{vid}: the one who asks comes to talk"
+                talk(game, asker, "sit_take")
+                assert sit["state"] == "taken", vid
+                met.add(vid)
+                situations._unbind(game, sit)
+                sit["state"] = "done"
+                break
+    assert len(set(vignettes.vignettes(tables)) - met) <= 2, set(vignettes.vignettes(tables)) - met
+
+
 def test_seldom_and_one_near_at_a_time(tables):
     townlife.forget()
     game, town = a_life(tables, SEEDS[0])

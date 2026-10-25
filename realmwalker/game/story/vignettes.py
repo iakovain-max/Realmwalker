@@ -513,6 +513,7 @@ def _death_at_the_inn(game, s, rng):
         return None
     yr = _year(game)
     killed = [f for f in _dead_figures(game, s) if f.died_at == f"S{s.id}" and yr - f.died <= 250 and
+              " at " not in (f.cause or "") and  # (not one who fell in a battle: "at the Third Rout at Kok Kum")
               any(w in (f.cause or "") for w in ("murder", "slain", "poison", "knife", "killed", "stabbed", "strangl"))]
     if not killed:
         unknown = _events_here(game, s, ("assassination_unknown",))
