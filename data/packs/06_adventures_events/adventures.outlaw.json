@@ -70,6 +70,10 @@
         "lookout": {"pick": ["band(bandits)"]},
         "innocent": {"pick": ["settlement(town)"]}
       },
+      "lieutenants": [
+        {"as": "raiders", "creature": ["thug"], "titles": ["the Right Hand", "Red-Hand", "the Butcher", "Half-a-Crown", "the Sergeant"], "turns": ["key:backway"]},
+        {"as": "lookout", "creature": ["bandit"], "titles": ["the Crow", "Long-Eyes", "the Weasel", "the Watcher", "Quiet"], "turns": ["clue:inside"]}
+      ],
       "hidden": {},
       "chapters": [
         {
@@ -158,9 +162,11 @@
         "boss": "villain",
         "template": "outlaw",
         "at": "home.deepest",
+        "arenas": ["throne_hall", "bridge", "tower_top"],
+        "endure_field": "burning_village",
         "keys": {
           "backway": ["surprise"],
-          "inside": ["minions(-50)"]
+          "inside": ["minions(-50)", "lieutenant_absent(raiders)"]
         },
         "words": {
           "warning": [
@@ -177,7 +183,43 @@
           ]
         }
       },
+      "early": {"succession": 3, "contingency": 1, "cat_away": 1},
       "endings": [
+        {
+          "id": "bargained",
+          "if": ["flag:bargain_taken"],
+          "ops": [["bargained", 60, 120], ["mark", "town", "extorted"], ["infamy", 3], ["history", "bargained", 2]],
+          "pages": {
+            "place": [
+              "{town} pays now. A cart goes up to {home} at each new moon, and {gang} lets the wagons through for a season, as agreed.",
+              "The wagons leave {town} unmolested, and the carters do not boast of it. Everyone knows whose leave they are riding on.",
+              "{town} has a new line in its books, between the tithe and the toll, and nobody will say aloud what it is for.",
+              "The roads round {town} are quiet, and the quiet has an owner. Strangers are stopped, looked over, and waved on, and the tribute goes up the hill.",
+              "In the inn at {town} they lower their voices when {gang} is mentioned, and look at the door."
+            ],
+            "patron": [
+              "{patron} heard of the bargain from a carter, not from you, and shut the ledger without a word.",
+              "{patron} paid nothing and asked for nothing back. The look said that you were no longer in the town's books at all.",
+              "\"You took their silver,\" {patron} said. \"I would have hanged for less, and been thanked for it.\"",
+              "{patron} pays the tribute now, with the others, and writes it in plain ink. It is worse than if {patron} had hidden it.",
+              "{patron} crosses the street when you come near. It is not fear. It is something colder."
+            ],
+            "carter": [
+              "{carter} drives the road to {dest} with the toll in a purse under the seat, and says nothing of who is owed.",
+              "{carter} was robbed once, and helped you, and now pays the same men every month. {carter} does not blame you aloud.",
+              "{carter} drove to {dest} and back without seeing a face in the trees, and spat in the yard afterwards.",
+              "{carter} will not look at you, and will not speak of the road. Once, at the yard gate, {carter} said: \"I thought you would end them.\"",
+              "{carter} still keeps a knife under the seat. It is no use now, and {carter} keeps it anyway."
+            ],
+            "hero": [
+              "You took {villain}'s price, and the roads are quiet for it. They are quiet the way a held breath is quiet.",
+              "{gang} kept its word, as such men do when it pays. The town pays instead of you, and the town knows it.",
+              "You are not hunted, and you are not thanked. Both are your own doing.",
+              "You told yourself the bargain would end the bleeding. It has only changed who holds the knife.",
+              "In a season {villain_short} will want more, and you will not be asked. That much you have already sold."
+            ]
+          }
+        },
         {
           "id": "pardoned",
           "if": ["flag:pardoned"],

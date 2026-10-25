@@ -11,7 +11,7 @@ from collections.abc import Mapping, Sequence
 
 from realmwalker.core.rng import RNG
 
-_SLOT_RE = re.compile(r"\{([a-z_][a-z0-9_]*)\}")
+_SLOT_RE = re.compile(r"\{([A-Za-z_][a-z0-9_]*)\}")  # ({He}: a capital for the start of a sentence)
 MAX_DEPTH = 6
 
 

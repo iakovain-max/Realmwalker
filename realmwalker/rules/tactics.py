@@ -112,6 +112,9 @@ def take_turn(b: Battle, f: Fighter) -> None:
     if f.state == "fleeing":
         flee(b, f)
         return
+    _out_of_harm(b, f)
+    if b.current is not f or b.outcome is not None:
+        return
     if "frightened" in f.conditions and (f.cond_ends.get("frightened") or {}).get("terror"):
         _terror_turn(b, f)  # (a Mace of Terror: it runs as far from the bearer as it can, and nothing else)
         return
@@ -125,6 +128,28 @@ def take_turn(b: Battle, f: Fighter) -> None:
         _epic_moves(b, f)
     else:
         _monster_turn(b, f)
+
+
+def _out_of_harm(b: Battle, f: Fighter) -> None:
+    """Standing where a boss's great attack is about to fall (its omen on the field, Expansion 6 E.5): step out first,
+    to the nearest square outside it - and beside a foe, if one can be reached as cheaply."""
+    if f.move_left <= 0 or not any(z.kind == "omen" for z in b.zones):
+        return
+    from realmwalker.rules.engine.handlers import bosses
+
+    if not bosses.in_omen(b, f):
+        return
+    bad = bosses.omen_cells(b, f)
+    tree = b.move_tree(f)
+    occ = b.occupied_by_others(f)
+    spots = [sq for sq in tree if not any(c in bad for c in grid.cells(sq[0], sq[1], f.sq))
+             and grid.can_stop(sq, f.sq, occ)]
+    if not spots:
+        return
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    best = min(spots, key=lambda sq: (tree[sq].cost, tree[sq].risk,
+                                      min((b.gap_from(f, sq, e) for e in foes), default=0)))
+    b.walk(f, grid.route(tree, best))
 
 
 def _shift_shapes(b: Battle, f: Fighter) -> None:
@@ -231,9 +256,11 @@ def _monster_turn(b: Battle, f: Fighter) -> None:
             not any(b.gap(f, e) <= 1 for e in b.enemies_of(f) if e.standing):
         f.bonus -= 1  # Aggressive (a bonus action to close in), or a troll's Charge (half its speed)
         f.move_left += f.speed if f.has_trait("aggressive") else f.speed // 2
-    _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
-    _breath_with_blows(b, f)
-    _hew(b, f)
+    if (f.__dict__.get("great") or {}).get("last") != b.round or f.action > 0 or f.attacks_left > 0:
+        # (a boss's great attack fell at the start of this turn and took its action: no blows after it, E.5)
+        _fight(b, f, plain, attacks=max(1, int(f.cdef.get("multiattack", 1))))
+        _breath_with_blows(b, f)
+        _hew(b, f)
     _bonus_blow(b, f)
     if f.has_trait("rampage") and f.bonus > 0 and b.outcome is None and b.current is f and f.active \
             and f.creature.uses.get("rampage", 1) > 0:
@@ -851,6 +878,11 @@ def flee(b: Battle, f: Fighter) -> None:
     if b.can_leave(f):
         b.do_leave(f)
         return
+    if (f.cdef or {}).get("holds_ground"):  # (a boss in its own den runs from what turned it, but never off the field)
+        if not _hold_back(b, f) and b.current is f and b.outcome is None:
+            f.state = "fighting"  # (cornered in its own den, it turns and fights)
+            take_turn(b, f)
+        return
     if f.has_trait("nimble_escape") and f.bonus > 0:
         b.do_disengage(f, bonus=True)
     tree = b.move_tree(f, budget=600, risk=2.0)
@@ -866,6 +898,25 @@ def flee(b: Battle, f: Fighter) -> None:
     _walk_budget(b, f, path, tree)
     if b.current is f and f.active and b.can_leave(f):
         b.do_leave(f)
+
+
+def _hold_back(b: Battle, f: Fighter) -> bool:
+    """Fleeing where it will not leave (a boss at its finale, E.6): a Dash to the square farthest from its foes it can
+    reach. False when it is cornered (nowhere farther, a foe at its side): then it turns and fights."""
+    foes = [e for e in b.enemies_of(f) if e.standing]
+    if not foes or f.speed <= 0 or f.action <= 0:
+        return False
+    tree = b.move_tree(f, budget=f.move_left * 2, risk=0.5)
+    occ = b.occupied_by_others(f)
+    spots = [sq for sq in tree if sq == (f.x, f.y) or grid.can_stop(sq, f.sq, occ)]
+    far = lambda sq: min(grid.gap((sq[0], sq[1], f.sq), e.space) for e in foes)  # noqa: E731
+    goal = max(spots, key=lambda sq: (far(sq), -tree[sq].cost), default=(f.x, f.y))
+    if goal == (f.x, f.y) or far(goal) <= far((f.x, f.y)) or far(goal) <= 1:
+        return False
+    if tree[goal].cost > f.move_left:
+        b.do_dash(f)
+    _walk_budget(b, f, grid.route(tree, goal), tree)
+    return True
 
 
 def _creature_magic(b: Battle, f: Fighter) -> None:
@@ -1241,6 +1292,10 @@ def _party_turn(b: Battle, f: Fighter) -> None:
         if b.current is f and b.outcome is None and f.move_left >= 5:
             _keep_safe(b, f)
         return
+    if f.action > 0 and _throw_flask(b, f):
+        if b.current is f and b.outcome is None and f.move_left >= 5:
+            _keep_safe(b, f)
+        return
     if (spellrules.is_caster(c, b.t) or feats.innate_spells(c, b.t) or _reads_scrolls(b, f)
             or _item_charges(c)) and f.action > 0:
         if _cast_something(b, f):
@@ -1409,6 +1464,36 @@ def _maneuvers_first(b: Battle, f: Fighter, opts: list) -> None:
         for opt, a in _abilities(b, f, "lunge"):
             b.do_ability(f, opt.value)
             return
+
+
+THROW_BAR = 1.3  # (a flask is coin in the pack: thrown only where it does clearly more than the turn's blows)
+
+
+def _throw_flask(b: Battle, f: Fighter) -> bool:
+    """A flask that hurts (alchemist's fire, burning oil, holy water: an item spell with damage) thrown at a foe's
+    square when it is worth clearly more than a turn of blows - a fire flask at a troll, holy water at the dead
+    (Expansion 6 E.6: a weakness learned is a weakness used). Never where it would catch a friend."""
+    from realmwalker.rules.combat import spell_id
+
+    if not any(e.standing for e in b.enemies_of(f)):
+        return False
+    throws = [o for o in actions.options(b, f, only=("item",)) if o.kind == "item" and o.available
+              and str(o.value).startswith("throw:") and o.cost == "action"
+              and spellrules.main_type(b.t.spells[spell_id(o.value)])]
+    if not throws:
+        return False
+    best = None
+    with estimates.thinking():
+        bar = _best_attack_worth(b, f) * THROW_BAR + 1.0
+        foes = {(e.x, e.y) for e in b.enemies_of(f) if e.standing}
+        for o in throws:
+            for point in sorted(foes & set(o.points or ())):
+                w = estimates.spell_value(b, f, o.value, point=point)
+                if w.friendly > 0 or w.total(care=4.0) <= bar:
+                    continue
+                if best is None or w.total(care=4.0) > best[0]:
+                    best = (w.total(care=4.0), o.value, point)
+    return best is not None and bool(b.do_cast(f, best[1], None, point=best[2]))
 
 
 def _coat_blade(b: Battle, f: Fighter, opts) -> bool:

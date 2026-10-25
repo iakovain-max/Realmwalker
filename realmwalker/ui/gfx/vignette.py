@@ -59,6 +59,13 @@ BACKDROPS = {
     "barrow_hall": {"ground": "floor/flagstone", "wall": "wall/stone_gray", "props": ["feature/sarcophagus",
                     "feature/bones", "feature/candles", "feature/skull_post"], "sky": False, "atmosphere": "mist"},
 }
+HALL_PROPS = {  # the villain's own table, as its temper keeps it (its dinner, the beat picture "lair": E.7)
+    "zealous": ["feature/altar_holy", "feature/table", "feature/candles", "feature/brazier"],
+    "cunning": ["feature/bookcase", "feature/table", "feature/lectern", "feature/chest"],
+    "cruel": ["feature/chains", "feature/table", "feature/cage", "feature/skull_post"],
+    "proud": ["feature/banner", "feature/table", "feature/throne", "feature/tapestry"],
+    "grieving": ["feature/tomb_slab", "feature/table", "feature/candles", "feature/statue_small"],
+}
 SKIES = {"day": ((96, 130, 170), (176, 196, 210)), "dawn": ((70, 74, 110), (220, 160, 120)),
          "dusk": ((40, 36, 70), (190, 104, 70)), "night": ((8, 10, 24), (30, 34, 60))}
 HORIZON = 0.55  # the ground begins this far down
@@ -437,6 +444,17 @@ def for_epilogue(game, adv: dict, about: str) -> dict:
                 spec["figures"] = [dolls.npc(person, game.tables)]
             else:
                 spec["props"] = ["feature/grave_fresh_0"]
+        return spec
+    if about.startswith("lieutenant:"):  # (E.3: the lieutenant on the road, or their grave)
+        from realmwalker.game.story import lieutenants
+
+        rec = lieutenants.of(game, adv, about.split(":", 1)[1])
+        spec.update(backdrop="road", time="dusk")
+        if rec is not None and rec["fate"] in ("slain", "taken"):
+            spec["props"] = ["feature/grave_fresh_0"] if rec["fate"] == "slain" else ["feature/gallows"]
+        elif rec is not None and rec.get("creature") in game.tables.creatures:
+            spec["figures"] = [dolls.creature(rec["creature"], game.tables, f"lt/{adv.get('id')}/{rec['name']}",
+                                              culture=rec.get("culture", ""))]
         return spec
     spec.update(backdrop="road", time="dusk", figures=party_figures(game, 3))
     return spec

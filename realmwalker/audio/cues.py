@@ -106,6 +106,10 @@ def battle_sounds(ev: dict) -> list[tuple[str, str]]:
         return [("start", "swing")]
     if k in ("boss", "phase"):  # (a story's villain enters, or turns: its name across the mat)
         return [("start", "villain")]
+    if k == "telegraph":  # (a boss gathers its great attack: E.5)
+        return [("start", "spell")]
+    if k == "great":
+        return [("start", "thunder")]
     return []
 
 

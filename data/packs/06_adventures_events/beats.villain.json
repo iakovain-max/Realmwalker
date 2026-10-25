@@ -1,0 +1,354 @@
+{
+  "_comment": "The villain's moves for any tale (Expansion 6 E.1, docs/ADVENTURES.md §5.4; game/story/villain.py chooses them by attention and temper): a rumour that someone asked after you, a spy seen, a sign, a gift with a warning, a letter, a letter or a nightmare made with what its spy stole, a visit by night (seen beyond the camp's fire, or staged in your room at an inn: E.2), a reprisal on one who helped you, a strike in force, a hunt in person. A kind's own moves (the Risen's letter, the outlaws' toll) are in its own file; invitations, bargains, wedges, frames and kidnaps are beats.schemes.json (E.2).",
+  "beats": {
+    "villain_omen": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        ["{omen}", "You stop on the way, and look, and wish you had not. {omen}", "{omen} Nobody else on the road seems to have seen it, or they will not say."],
+        ["You go on, and the feeling of being watched goes with you.", "{villain_short} is nearer than you would like.", "You go on, faster than before."]
+      ]
+    },
+    "villain_rumour": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["town", "inn"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "\"There was a man in here asking after you,\" the pot-boy says, wiping a cup that does not need wiping. \"Wanted to know which way you went, and who you'd been talking to. Paid in good silver.\"",
+          "An old woman at the well catches your sleeve. \"Somebody's been asking about you,\" she says, low. \"Polite as you please. Asked your name, and your road, and whether you sleep sound.\"",
+          "\"You've a friend,\" says a carter by the gate, not smiling. \"Or the other thing. Fellow came through two days back asking after somebody who looks just like you.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Ask what the stranger looked like, and which way they went."], "check": {"skill": "insight", "dc": 12},
+         "success": [["clue", "villain"]], "failure": [],
+         "result": [
+           "Bit by bit it comes out: a quiet one, a cloak too good for the road, a habit of looking towards {home} when the talk stopped. Whoever sent them, you can guess.",
+           "The answers come slowly, but they come, and every one of them points the same way: back towards {home}."
+         ],
+         "fail_result": [
+           "Nobody remembers anything worth having. A cloak. A voice. Silver. That is all.",
+           "It is all shrugs and half-remembered faces. Whoever it was, they were careful."
+         ]},
+        {"label": ["Thank them, and keep your back to the wall."], "ops": [["flag", "warned_of_asking"]],
+         "result": [
+           "You thank them, and sit where you can see the door, and do not sleep well.",
+           "You nod your thanks. For the rest of the day you watch every face that watches you."
+         ]}
+      ]
+    },
+    "villain_spy_seen": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "town", "camp", "inn"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "{hero} sees it out of the corner of an eye: a figure that stops when you stop, a long way back, and goes on when you go on. When you turn to look straight at it, it is already moving away.",
+          "There is someone among the trees, keeping pace with you a field's width off. Not a hunter. Not a herder. When you stop and stare, they melt back into the green.",
+          "The same face twice in one day is chance. The third time, in a doorway, watching you over a cup that is never lifted, is not. The watcher sees you see, and is up and gone."
+        ]
+      ],
+      "choices": [
+        {"label": ["Go after them."], "check": {"skill": "athletics", "dc": 13},
+         "success": [["clue", "villain"], ["attention", 1]], "failure": [["fatigue", 5]],
+         "result": [
+           "You run them down at a ditch and drag them out of it. They will not say much, but what they will not say tells you enough: it was {villain_short} who sent them. They slip your grip and run, and {villain_short} will know by nightfall that you are not easily watched.",
+           "You catch them by the collar at the second turning. A purse of silver, a scrap of paper with your description on it, and the name {villain_short} spat out like a curse before they twist free and are gone."
+         ],
+         "fail_result": [
+           "You run until your lungs burn, and lose them among the hedges. Whoever they were, they knew the ground better than you.",
+           "They are faster than you, and they know where they are going. You come back winded and empty-handed."
+         ]},
+        {"label": ["Let them go, and remember the face."], "ops": [["flag", "knows_its_spy"]],
+         "result": [
+           "You let them go. But you will know that face again, and next time you will not be the one who is followed.",
+           "You watch them out of sight, and fix the face in your mind. It is something, to know you are watched."
+         ]}
+      ]
+    },
+    "villain_sign": {
+      "family": "villain",
+      "picture": "camp_night",
+      "where": ["camp"],
+      "time": ["dawn", "day"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "In the grey of the morning there is a dead bird on {hero}'s bedroll, its wings spread out and pinned with thorns. Nobody heard anything in the night.",
+          "At first light you find a mark burned into the trunk of the nearest tree, at the height of a man's eyes, fresh and still smelling of smoke. It was not there when you lay down.",
+          "When you wake, a ring of small stones has been laid round the dead fire, and in the middle of it something that was once alive. The watch swears nothing came near."
+        ],
+        [
+          "It is meant for you. There is no other way to read it.",
+          "{villain_short} wants you to know how close it can come.",
+          "Whatever made it knew where you would sleep."
+        ]
+      ],
+      "choices": [
+        {"label": ["Burn it, and break camp."], "ops": [["flag", "burned_its_sign"]],
+         "result": [
+           "You burn it, and kick the ashes apart, and go. Nobody talks for the first mile.",
+           "It burns badly, with a stink, and you are glad to be away from the place."
+         ]},
+        {"label": ["Read what it means."], "check": {"skill": "religion", "dc": 12},
+         "success": [["clue", "villain"]], "failure": [["fatigue", 5]],
+         "result": [
+           "It is an old sign, older than the roads, and you have read of it: a mark of ownership. It says what {villain_short} thinks you are.",
+           "You turn it over and over until you understand it. It is a warning, of a kind, and it tells you more of {villain_short} than it meant to."
+         ],
+         "fail_result": [
+           "You stare at it until your head aches, and it means nothing to you but threat.",
+           "Whatever it says, it does not say it to you. You leave it, uneasy, and go."
+         ]}
+      ]
+    },
+    "villain_gift": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["camp", "inn"],
+      "time": ["dawn", "day"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "There is a purse beside {hero}'s pack in the morning, fat and heavy, tied with black cord. Inside, good gold, and a card in a fine hand: \"For your trouble. Go home.\"",
+          "Someone has left a gift where you would be sure to find it: a small box of polished wood, and in it a heap of coin and a note. \"With the compliments of {villain_short}. There is more where this came from, on the road away from here.\"",
+          "A boy you have never seen brings a parcel to the door, and runs. Gold, a good deal of it, and a few words on a slip of paper: \"Spend it far from {home}.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Keep the gold. It spends the same."], "ops": [["money", 1000], ["flag", "took_its_gold"], ["companions", "greedy"]],
+         "result": [
+           "It does spend the same. It just does not feel the same in the hand.",
+           "You pocket it. If {villain_short} thinks it has bought you, it will learn otherwise."
+         ]},
+        {"label": ["Give it all to the first beggar you see."], "ops": [["flag", "gave_away_its_gold"], ["companions", "charity"]],
+         "result": [
+           "The beggar stares at the purse, and at you, and then is gone before you can change your mind.",
+           "You leave it in the poor-box at the first shrine you pass. Let it do some good, at least."
+         ]},
+        {"label": ["Throw it in the ditch, note and all."], "ops": [["flag", "spurned_its_gold"], ["attention", 1]],
+         "result": [
+           "It lands with a heavy splash. Somewhere, you are sure, {villain_short} will hear of it.",
+           "Gold in the mud. Let {villain_short} come and pick it up."
+         ]}
+      ]
+    },
+    "villain_letter": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["camp", "inn"],
+      "time": ["dawn", "day"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "In the morning there is a letter where nobody could have left it, folded small and sealed. The hand is neat and very sure of itself.",
+          "A letter has been left for you, pinned under a stone where you could not miss it. The seal is pressed hard into the wax, as if in anger.",
+          "You wake to a folded paper lying on your blanket. Nobody was seen near you in the night. Your name is on it, spelled right."
+        ]
+      ],
+      "choices": [
+        {"label": ["Burn it unread."], "ops": [["flag", "burned_its_letter"]],
+         "result": [
+           "The paper curls and blackens, and you watch until nothing is left of it.",
+           "You burn it without opening it. Whatever it says, it will not say it to you."
+         ]},
+        {"label": ["Break the seal and read it."], "ops": [["letter", "villain_letter", "dark"], ["clue", "villain"]],
+         "result": [
+           "You read it twice, and the second time you notice what it does not say.",
+           "You read it slowly. It tells you a good deal about {villain_short}, and most of it is pride."
+         ]}
+      ]
+    },
+    "villain_token_letter": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["camp", "inn"],
+      "time": ["dawn", "day"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "There is a letter in the morning, and folded inside it, so that it falls into your lap, is {token}. {token_of}'s. Gone these last days, and now come back like this.",
+          "A letter has been left for you, sealed, and when you open it {token} slides out of the fold. {token_of} goes white.",
+          "The letter is waiting for you at first light. It is heavier than paper should be, and when you break the seal you see why: {token}, the one {token_of} lost."
+        ]
+      ],
+      "choices": [
+        {"label": ["Read it."], "ops": [["letter", "villain_token_letter", "dark"], ["clue", "villain"], ["fatigue", 5]],
+         "result": [
+           "It is not a long letter. It does not need to be.",
+           "You read it, and then you read it again, and you understand that {villain_short} has been closer than you knew."
+         ]},
+        {"label": ["Burn it, and the thing with it."], "ops": [["flag", "burned_its_token"]],
+         "result": [
+           "You burn both. {token_of} watches the fire without a word until there is nothing left.",
+           "Into the fire with it. Whatever {villain_short} meant by it, it means nothing now."
+         ]}
+      ]
+    },
+    "villain_nightmare": {
+      "family": "villain",
+      "picture": "camp_night",
+      "where": ["camp", "inn"],
+      "time": ["night"],
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "{token_of} wakes in the black hour shouting, and will not say of what for a long time. When it comes out it is a dream of a hand holding {token}, and a voice that knew every name {token_of} ever loved.",
+          "Nobody sleeps well. {token_of} dreams of {home}, and of {token} turning slowly in cold fingers, and of a voice saying, quite kindly, that it is only a matter of time.",
+          "The dream comes to {token_of} as soon as sleep does: {token}, held up in the dark like a lantern, and behind it {villain_short}, patient, waiting."
+        ]
+      ],
+      "choices": [
+        {"label": ["Sit up together, and pray the dream away."], "check": {"skill": "religion", "dc": 12},
+         "success": [], "failure": [["fatigue", 10]],
+         "result": [
+           "You pray, and the dark thins, and at last {token_of} sleeps again, and does not dream.",
+           "The old words work, or the company does. The rest of the night is quiet."
+         ],
+         "fail_result": [
+           "The prayers do not reach it. Nobody sleeps again before dawn.",
+           "Every time {token_of} closes their eyes it is there. The night is long."
+         ]},
+        {"label": ["Build up the fire, and wait for morning."], "ops": [["fatigue", 10]],
+         "result": [
+           "You sit up until the light comes. It is only a dream. It does not feel like one.",
+           "Morning comes at last, grey and late. Nobody speaks of it."
+         ]}
+      ]
+    },
+    "villain_visit": {
+      "family": "villain",
+      "picture": "camp_night",
+      "leaves": "visitor",
+      "stage": "villain_visit_inn",
+      "where": ["camp", "inn"],
+      "time": ["night"],
+      "when": {"cooldown": 6, "adventure": {"at_large": true}},
+      "text": [
+        [
+          "Late, when the fire has burned low, there is someone standing just beyond the edge of its light. You did not hear them come. \"Do not get up,\" says {villain_short}. \"I have only come to look at you.\"",
+          "You wake in the dark to a cold that has nothing to do with the night, and a shape at the foot of your bed, outlined against the window. \"So this is the one,\" says {villain_short}, quietly. \"I thought you would be taller.\"",
+          "A mist comes up out of nowhere, thick and white, and out of the mist walks {villain_short}, as easy as a neighbour. It stops a pace from the fire. \"We should talk, you and I, before one of us has to do something regrettable.\""
+        ],
+        [
+          "It does not come closer. It talks for a while, of {home}, and of you, and of what it wants, and its voice never rises.",
+          "It speaks softly and at length, like someone who has all the time in the world, and you understand that it is telling you what it is.",
+          "It talks, and you listen, because there is nothing else to do. The mist keeps its distance, and so does it."
+        ]
+      ],
+      "choices": [
+        {"label": ["Listen, and learn what you can."], "check": {"skill": "insight", "dc": 13},
+         "success": [["clue", "villain"], ["clue", "villain"]], "failure": [["clue", "villain"]],
+         "result": [
+           "You listen to every word, and to what lies under the words. When it is gone you know {villain_short} better than you did, and you know what it fears to lose.",
+           "You listen. It does not lie to you, quite. It does not need to. You learn a great deal."
+         ],
+         "fail_result": [
+           "You listen, but its voice slides off you like water. When it is gone you remember only the cold.",
+           "It talks, and you try to follow, and by morning most of it is gone like a dream."
+         ]},
+        {"label": ["Go for it with steel."], "ops": [["attention", 1], ["fatigue", 5]],
+         "result": [
+           "Your blade goes through it as through smoke. It laughs, not unkindly, and is gone, and the fire leaps up as if it had been let go.",
+           "You lunge, and there is nothing there but mist and the echo of a laugh. You do not sleep again."
+         ]},
+        {"label": ["Turn your back on it, and say nothing."], "ops": [["flag", "turned_its_back"]],
+         "result": [
+           "You turn over, and pull the blanket up, and wait. After a long while it says, \"As you wish,\" and the cold goes out of the night.",
+           "You give it nothing, not a word, not a look. When you glance round at last it is gone, and you are not sure it was pleased."
+         ]}
+      ]
+    },
+    "villain_reprisal": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "town", "inn", "camp"],
+      "when": {"cooldown": 10, "adventure": {"at_large": true}},
+      "ops": [["reprisal", "hanged"]],
+      "text": [
+        [
+          "The news comes up the road with a carter who will not meet your eye. {helper} of {helper_town} was found hanged from the bridge two mornings ago, and pinned to the body a paper with your name on it.",
+          "A rider from {helper_town} has the news, and gives it quickly, as if it burned: {helper} is dead. Taken in the night, and left in the square at dawn for all to see. People there are saying it was for helping you.",
+          "You hear it in passing, the way bad news always comes: {helper}, who helped you at {helper_town}, is dead, and the manner of it was meant to be talked about. Nobody there will say the name of who did it. Nobody needs to."
+        ]
+      ],
+      "choices": [
+        {"label": ["Swear that it will be paid for."], "ops": [["flag", "swore_for_the_dead"], ["companions", "revenge"]],
+         "result": [
+           "You say it aloud, so that the others hear. {villain_short} will answer for {helper}.",
+           "You make the oath quietly, and mean every word of it."
+         ]},
+        {"label": ["Say nothing, and go on."], "ops": [["flag", "bore_the_reprisal"]],
+         "result": [
+           "There is nothing to say. You go on, and the road is longer than it was.",
+           "You go on. {helper} would have wanted you to, perhaps. You will never know now."
+         ]}
+      ]
+    },
+    "villain_strike": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild"],
+      "when": {"cooldown": 12, "adventure": {"at_large": true}, "villain.minions": true},
+      "text": [
+        [
+          "They come from both sides of the road at once, more of them than you have ever seen together: {villain_short}'s people, sent to finish this.",
+          "A horn, close, and another answering it, and then the hedges are full of {villain_short}'s servants coming at you in force. This is no test.",
+          "The road ahead is blocked, and the road behind. {villain_short} has sent everything it can spare."
+        ]
+      ],
+      "choices": [
+        {"label": ["Stand and fight."], "ops": [["strike"]],
+         "result": [
+           "There is nowhere to go. You put your backs together.",
+           "So be it. You draw, and wait for them."
+         ]},
+        {"label": ["Break through and run for it."], "check": {"skill": "athletics", "dc": 14},
+         "success": [["fatigue", 10], ["flag", "broke_its_strike"]], "failure": [["strike"]],
+         "result": [
+           "You find the one gap in their line and go through it at a dead run, and keep running until the shouting is far behind.",
+           "You hit the weakest of them hard and are past before the rest can close. You do not stop until dark."
+         ],
+         "fail_result": [
+           "They close the gap before you reach it. There is no way out but through them.",
+           "You run, and they are faster. You turn to face them, out of breath."
+         ]}
+      ]
+    },
+    "villain_hunt": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp"],
+      "when": {"cooldown": 12, "adventure": {"at_large": true}, "villain.breaks_off": true},
+      "text": [
+        [
+          "You know it before you see it: the silence, and then the weight of it coming. {villain_short} has come for you itself, and it has chosen the place.",
+          "There is no warning but the birds going up all at once. Then {villain_short} is there, in the open, between you and any shelter, and it has been waiting for you.",
+          "It has hunted you, and now it has found you. {villain_short} stands across your road, and there is no mistaking what it wants."
+        ]
+      ],
+      "choices": [
+        {"label": ["Face it here."], "ops": [["named_fight", "villain"]],
+         "result": [
+           "If it is to be now, it is to be now.",
+           "You set your feet and wait for it."
+         ]},
+        {"label": ["Scatter, and lose it."], "check": {"skill": "survival", "dc": 15},
+         "success": [["fatigue", 10], ["flag", "lost_its_hunt"]], "failure": [["named_fight", "villain"]],
+         "result": [
+           "You split and run and double back through water, and by nightfall you have lost it, for now.",
+           "You know a few tricks, and you use every one of them. It loses your trail at the river."
+         ],
+         "fail_result": [
+           "It is better at this than you are. It is on you before you have gone a mile.",
+           "There is no losing it. It was made for this."
+         ]}
+      ]
+    }
+  }
+}

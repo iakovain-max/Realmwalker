@@ -360,10 +360,133 @@ def _check_adventures(game, fail) -> None:
     if d.get("pending") and d["pending"]["beat"] not in game.tables.beats:
         fail(f"a beat waits that does not exist ({d['pending']['beat']})")
     _check_part_d(game, fail)
+    _check_villains(game, fail)
+    _check_lieutenants(game, fail)
+    _check_early(game, fail)
+    _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
             fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_lieutenants(game, fail) -> None:
+    """Expansion 6 E.3: a lieutenant has a name, a trait the data knows, a fate the game knows and a grudge in bounds;
+    a tale's band led by one points at a record of its threat; a nemesis hunts one hero or is done."""
+    from realmwalker.game import story
+    from realmwalker.game.story import lieutenants
+    from realmwalker.world import threats
+
+    sp = lieutenants.spec(game)
+    if not sp:
+        return
+    fates = ("unmet", "met", "escaped", "spared", "turned", "turncoat", "slain", "taken", "promoted")
+    top = int(sp["grudge"]["max"])
+    for tid, t in threats.records(game.world).items():
+        for rec in t.get("lieutenants", []):
+            where = f"threat {tid}, lieutenant {rec.get('name')}"
+            if not rec.get("name") or rec.get("trait") not in sp["traits"] or rec.get("fate") not in fates:
+                fail(f"{where}: no name, an unknown trait or an unknown fate ({rec})")
+            if not 0 <= int(rec.get("grudge", 0)) <= top or len(rec.get("scars", [])) > len(sp["scars"]):
+                fail(f"{where}: grudge {rec.get('grudge')} or scars {rec.get('scars')} out of bounds")
+    for adv in story.active(game):
+        for role, entry in adv["cast"].items():
+            if "lt" in entry and lieutenants.of(game, adv, role) is None:
+                fail(f"tale {adv['id']}: the {role}'s lieutenant {entry['lt']} is not on its threat")
+    for i, n in enumerate(game.world.politics.get("nemeses", [])):
+        if n.get("state") not in ("hunting", "slain", "taken") or not n.get("life") or                 n.get("band") not in game.tables.creatures.encounters:
+            fail(f"nemesis {i}: a state, a hero or a band missing ({n.get('state')}, {n.get('band')})")
+
+
+def _check_finale(game, fail) -> None:
+    """Expansion 6 E.5: an escape step only in a tale whose villain took the party alive (once), and only optional; a
+    finale's chosen arena is one the game knows and its blueprint names."""
+    from realmwalker.game import story
+    from realmwalker.game.story import arenas
+
+    for adv in story.active(game):
+        where = f"tale {adv['id']}"
+        esc = [st for ch in adv["chapters"] for st in ch["steps"] if st["kind"] == "escape"]
+        if esc and not adv.get("taken_alive"):
+            fail(f"{where}: an escape step, but it never took the party alive")
+        if len(esc) > 1 or any(not st["optional"] for st in esc):
+            fail(f"{where}: more than one escape, or one the tale waits on")
+        aid = (adv.get("finale") or {}).get("arena")
+        if aid and (aid not in arenas.ARENAS or aid not in
+                    game.tables.adventures["blueprints"][adv["blueprint"]]["finale"].get("arenas", ())):
+            fail(f"{where}: its finale's arena '{aid}' is not one its blueprint names")
+
+
+def _check_early(game, fail) -> None:
+    """Expansion 6 E.4: a tale with an early end has its villain dead and its short last chapter last, with one step
+    of the kind it should have (succession: a defeat on a lieutenant's band; contingency: an endure); a threat that
+    returns sleeps with a sequel or has stirred, and remembers a hero; a moved anchor lies under its villain's home."""
+    from realmwalker.game import story
+    from realmwalker.game.story import early
+    from realmwalker.world import threats
+
+    for adv in story.active(game):
+        where = f"tale {adv['id']}"
+        rec = adv.get("early")
+        if rec:
+            last = adv["chapters"][-1]
+            want = {"succession": "defeat", "contingency": "endure"}.get(rec.get("kind"))
+            if rec.get("kind") not in early.KINDS or not adv.get("boss_dead") or rec.get("kind") == "cat_away":
+                fail(f"{where}: an early end '{rec.get('kind')}' with the villain not dead, or still going")
+            elif last.get("id") != "early" or int(adv["chapter"]) != len(adv["chapters"]) - 1 or \
+                    [st["kind"] for st in last["steps"]] != [want]:
+                fail(f"{where}: its short last chapter is not last, or not a {want}")
+        for ch in adv["chapters"]:
+            for st in ch["steps"]:
+                if st.get("moved") and int(st["target"]["place"].get("site", -1)) != \
+                        int((adv["places"].get("home") or {}).get("site", -2)):
+                    fail(f"{where}: its anchor was moved, but not under its home")
+    for tid, t in threats.records(game.world).items():
+        r = t.get("returns")
+        if r and (not r.get("life") or int(r.get("times", 0)) < 1 or
+                  (t.get("sequel") and t["state"] == "active" and t.get("adventure"))):
+            fail(f"threat {tid}: a return with no hero, no count, or a sequel taken and not cleared ({r})")
+
+
+def _check_villains(game, fail) -> None:
+    """Expansion 6 E.1: a live tale's villain keeps its attention within bounds, its moves two days apart and each a
+    move it has; a token stolen has a thing and an owner; whoever paid for helping you is dead."""
+    from realmwalker.game import story
+    from realmwalker.game.story import villain
+
+    s = villain.spec(game)
+    table = game.tables.villains.get("moves", {})
+    for adv in story.active(game):
+        where = f"tale {adv['id']}"
+        if not 0 <= int(adv.get("attention", 0)) <= int(s["max"]):
+            fail(f"{where}: attention {adv.get('attention')} out of bounds")
+        days = [int(m["day"]) for m in adv.get("moves", [])]
+        if any(b - a < int(s["moves_apart_days"]) for a, b in zip(days, days[1:])):
+            fail(f"{where}: two moves too close together ({days})")
+        if any(m["move"] not in table for m in adv.get("moves", [])):
+            fail(f"{where}: a move that is not one ({[m['move'] for m in adv.get('moves', [])]})")
+        tok = adv.get("token")
+        if tok is not None and not (tok.get("what") and tok.get("of")):
+            fail(f"{where}: a stolen token without a thing or an owner ({tok})")
+        for nid in adv.get("reprisals", []):
+            npc = game.world.npcs.get(int(nid))
+            if npc is not None and npc.alive:
+                fail(f"{where}: {npc.name} paid for helping you, and is alive")
+        # (E.2) a safe conduct runs to a day and is going or coming home; a frame is a crime on your record; a kidnap
+        # is an optional rescue whose captive is held or freed or dead
+        inv = adv.get("invited")
+        if inv is not None and (inv.get("state") not in ("going", "home") or "until" not in inv):
+            fail(f"{where}: a safe conduct that is neither going nor coming home ({inv})")
+        crimes = {int(r["id"]) for r in game.renown.crimes if r.get("framed") == adv["id"]}
+        if any(int(c) not in crimes for c in adv.get("frames", [])):
+            fail(f"{where}: a frame with no crime on the record ({adv.get('frames')}, {sorted(crimes)})")
+        for ch in adv["chapters"]:
+            for st in ch["steps"]:
+                if st.get("kidnap") and (st["kind"] != "rescue" or not st.get("optional")):
+                    fail(f"{where}: a kidnap's step is not an optional rescue ({st})")
+    left = (game.world.politics.get("director") or {}).get("left") or {}
+    if left.get("what") not in (None,) + story.LEFT:
+        fail(f"something left at the camp that its picture cannot draw ({left})")
 
 
 def _check_part_d(game, fail) -> None:

@@ -339,24 +339,24 @@ with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
 
 ### Part E – Villains who act; the finale in full
 ADVENTURES.md §5.4, §5.5, §5.8.
-- [ ] E.1 Attention in full and the whole move set with tempers' weights, spies that steal tokens and tailored next
+- [x] E.1 Attention in full and the whole move set with tempers' weights, spies that steal tokens and tailored next
   moves, wrath after a setback; the limits (one move in two days; beasts never write). Tests: `tests/test_villain.py`.
-- [ ] E.2 Visits staged on the map (at camp or inn by night: the fire dims, a figure steps out of the dark; never at
+- [x] E.2 Visits staged on the map (at camp or inn by night: the fire dims, a figure steps out of the dark; never at
   full strength), letters as pages in the villain's own hand, invitations under safe conduct (op `invite`: no
   encounters on the way) and the dinner beat at the villain's hall (its vignette), bargains and wedges (the dark
   endings wired), reprisals that are seen (a helper on the gibbet in the square: a mark and a crowd; a burned
   farmhouse), frames (`law.commit` with false witnesses), kidnaps (`step_add` a rescue).
-- [ ] E.3 Lieutenants who remember: escapes, scars, grudges, promotion, turning; their epilogue lines.
-- [ ] E.4 Escapes once per adventure, anchors, returning villains, early ends (contingencies, a lieutenant's
+- [x] E.3 Lieutenants who remember: escapes, scars, grudges, promotion, turning; their epilogue lines.
+- [x] E.4 Escapes once per adventure, anchors, returning villains, early ends (contingencies, a lieutenant's
   succession, "the cat is away"); step kind `endure`.
-- [ ] E.5 The finale in full: arenas (a burning village with fire that spreads, a ritual circle, a throne hall, a
+- [x] E.5 The finale in full: arenas (a burning village with fire that spreads, a ritual circle, a throne hall, a
   bridge, a tower top), phases with lines that change the arena (`Field.set_terrain`: sarcophagi open, a floor
   falls), telegraphed great attacks, boss entrances, boss templates for tiers 3–4, a "command its minions" legendary
   action (a kernel handler), every key of ADVENTURES.md §8.6, the retreat rule, defeat as content
   (`story.on_defeat` in `fight.finish_battle`'s defeat branch: taken alive, an escape chapter).
-- [ ] E.6 The fairness measure (`tests/test_story_balance.py`, slow): every key ≥80% wins, no key ≤45%, the retreat
+- [x] E.6 The fairness measure (`tests/test_story_balance.py`, slow): every key ≥80% wins, no key ≤45%, the retreat
   works; the careful player's deaths measured before and after (`tools/balance.py`).
-- [ ] E.7 Words for every move and temper *(parallel; floors of §9)*; pictures (villain silhouettes for the journal,
+- [x] E.7 Words for every move and temper *(parallel; floors of §9)*; pictures (villain silhouettes for the journal,
   the letter's seals, the hall); sounds (`villain`); FORMAT_VERSION +1; verify; Part E to `main`.
 
 ### Part F – The cast and the Reading

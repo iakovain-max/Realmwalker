@@ -60,6 +60,10 @@ def offer(game, beat_id: str, *, adv: str | None = None, step: str | None = None
     d["pending"] = rec
     seen = d.setdefault("seen", {})
     seen[beat_id] = int(game.moment.total_days)
+    from realmwalker.game.story import villain
+
+    if beat_id in villain.SEEN_IN and adventure(game, rec) is not None:  # (it showed itself: E.7)
+        villain.seen(game, adventure(game, rec))
     return rec
 
 
@@ -81,7 +85,11 @@ def pages(game, rec: dict) -> list[str]:
     rng = rng_for(game, rec)
     tables = game.tables.adventures.get("words", {})
     words = words_for(game, rec)
-    return [tidy(textgen.fill(rng.choice(page), rng, tables, words)) for page in beat["text"]]
+    text = list(beat["text"])
+    own = (beat.get("tempers") or {}).get(_villain(game, rec).get("temper") or "")
+    if own:  # (a temper's own first page: a zealot's letter does not read like a cruel man's, E.7)
+        text[0] = own
+    return [tidy(textgen.fill(rng.choice(page), rng, tables, words)) for page in text]
 
 
 def title(game, rec: dict) -> str:
@@ -391,6 +399,27 @@ def _named_fight(game, rec, role: str):
     return story.named_encounter(game, adventure(game, rec), role)
 
 
+@op("endure")
+def _endure(game, rec, *args):
+    """A set piece's battle (an endure step's beat): its band, here and now (E.4)."""
+    from realmwalker.game import story
+    from realmwalker.game.story import deeds
+
+    adv = adventure(game, rec)
+    if adv is None or adv["state"] != "active":
+        return []
+    return deeds.endure(game, adv, story.find_step(game, adv["id"], rec.get("step")))
+
+
+@op("move_relic")
+def _move_relic(game, rec, *args):
+    """It takes its anchor into its own hall (the move relic_moved, E.4)."""
+    from realmwalker.game.story import early
+
+    adv = adventure(game, rec)
+    return early.move_relic(game, adv) if adv is not None and adv["state"] == "active" else []
+
+
 @op("item")
 def _item_op(game, rec, item_id: str, n: int = 1):
     from realmwalker.rules.inventory import add_item
@@ -459,7 +488,15 @@ def _letter(game, rec, key: str, hand: str = "dark"):
     tables = game.tables.adventures.get("words", {})
     paragraphs = [tidy(textgen.fill(p, rng, tables, words)) for p in rng.choice(list(lines)).split("\n\n")]
     sender = words.get("villain", "someone who does not sign")
-    lid = letters.write(game, sender=sender, lines=paragraphs, hand=letters.hand_for(hand))
+    adv = adventure(game, rec)
+    if hand in ("dark", "villain") and adv is not None:  # (in the villain's own hand: its temper's ink and seal, E.2)
+        from realmwalker.game.story import villain
+
+        own = villain.hand(game, adv)
+        lid = letters.write(game, sender=sender, lines=paragraphs, hand=own["hand"], seal=own["seal"], ink=own["ink"],
+                            sigil=own["sigil"])
+    else:
+        lid = letters.write(game, sender=sender, lines=paragraphs, hand=letters.hand_for(hand))
     letters.give(game, lid)
     letters.show(game, lid)
     return ["<loot>You keep the letter.</>"]
@@ -478,3 +515,196 @@ def _finish(game, rec, *args):
         if st["kind"] in ("finale", "slay"):
             st["state"] = "done"
     return endings.finish(game, adv)
+
+
+# ---------------------------------------------------------------------------- the villain's moves (E.1)
+@condition("villain.minions")
+def _villain_minions(game, rec, value) -> bool:
+    """Its kind has servants to send without it (threats.json kind `minions`)."""
+    return bool(_minions(game, rec)) == bool(value)
+
+
+def _minions(game, rec) -> str | None:
+    from realmwalker.world import threats
+
+    adv = adventure(game, rec)
+    t = threats.records(game.world).get(adv["threat"]) if adv else None
+    group = game.tables.threats["kinds"].get(t["kind"], {}).get("minions") if t else None
+    return group if group in game.tables.creatures.encounters else None
+
+
+@condition("villain.breaks_off")
+def _villain_breaks_off(game, rec, value) -> bool:
+    """Met before its finale, it breaks off when hurt (its boss template's `before`): it may come in person."""
+    from realmwalker.game.story import finale
+
+    adv = adventure(game, rec)
+    boss = finale.template_for(game.tables, adv) if adv and (adv.get("finale") or {}).get("template") in         game.tables.villains.get("bosses", {}) else None
+    return bool((boss or {}).get("before")) == bool(value)
+
+
+@op("strike")
+def _strike(game, rec, *args):
+    """Its servants in force (a band of its kind's `minions` and half another), each with the story tag: a fight here
+    and now."""
+    from realmwalker.game.encounters import make_encounter
+
+    group = _minions(game, rec)
+    if group is None or game.over is not None:
+        return []
+    rng = rng_for(game, rec).child("strike")
+    enc = make_encounter(game, group, rng)
+    more = make_encounter(game, group, rng.child("more")).creatures
+    enc.creatures += more[:(len(more) + 1) // 2]
+    if not enc.creatures:
+        return []
+    enc.attitude = "hostile"  # (sent to fight: never a band you may pass by)
+    for c in enc.creatures:
+        c.story = {"adv": rec.get("adv"), "role": "minion"}
+    game.encounter = enc
+    game.travel = None
+    return []
+
+
+@op("band")
+def _band(game, rec, group: str):
+    """A band of its servants (a test): a fight with the story tag, so that the villain hears of their deaths."""
+    from realmwalker.game.encounters import make_encounter
+
+    if group not in game.tables.creatures.encounters or game.over is not None:
+        return []
+    enc = make_encounter(game, group, rng_for(game, rec).child(f"band/{group}"))
+    enc.attitude = "hostile"  # (sent to test you)
+    for c in enc.creatures:
+        c.story = {"adv": rec.get("adv"), "role": "minion"}
+    game.encounter = enc
+    game.travel = None
+    return []
+
+
+@op("reprisal")
+def _reprisal(game, rec, how: str = "hanged"):
+    """One who helped you pays for it (villain.due_move chose them: adv["reprisal"]): dead, and the news goes out
+    from their town; their town shows it (villain.pay)."""
+    from realmwalker.game.story import villain
+
+    adv = adventure(game, rec)
+    npc = game.world.npcs.get(int(adv["reprisal"])) if adv and adv.get("reprisal") is not None else None
+    if npc is None or not npc.alive:
+        return []
+    villain.pay(game, adv, npc, how, words_for(game, rec))
+    adv["reprisal"] = None
+    return []
+
+
+# ---------------------------------------------------------------------------- invitations, bargains, wedges, frames
+# and kidnaps (E.2)
+@condition("helper")
+def _has_helper(game, rec, value) -> bool:
+    """One who helped you stands to pay for it (the move chose them: adv["reprisal"])."""
+    adv = adventure(game, rec)
+    npc = game.world.npcs.get(int(adv["reprisal"])) if adv and adv.get("reprisal") is not None else None
+    return (npc is not None and bool(npc.alive)) == bool(value)
+
+
+@op("invite")
+def _invite(game, rec, days: int = 6, beat: str = "villain_dinner"):
+    """Its invitation taken: safe conduct to its hall for `days` (no band troubles you on the road there), and the
+    dinner (`beat`) when you arrive."""
+    adv = adventure(game, rec)
+    if adv is None:
+        return []
+    from realmwalker.game.story import places
+
+    today = int(game.moment.total_days)
+    p = game.player
+    home = adv["places"].get("home")
+    dist = places.dist(game.world, home, {"tile": [p.x, p.y]}) if home else None
+    adv["invited"] = {"day": today, "until": today + int(days), "state": "going", "beat": beat, "dist": dist}
+    hall = words_for(game, rec).get("home", "its hall")
+    return [f"<warn>Safe conduct: nothing will trouble you on the road to {textgen.escape_markup(hall)} for "
+            f"{int(days)} days.</>"]
+
+
+@op("conduct")
+def _conduct(game, rec, days: int = 2):
+    """After the dinner: safe conduct home again for `days`, and then it is over."""
+    adv = adventure(game, rec)
+    if adv is None or not adv.get("invited"):
+        return []
+    if int(days) <= 0:  # (guest-right broken at its table: no conduct at all)
+        adv.pop("invited", None)
+        return []
+    today = int(game.moment.total_days)
+    adv["invited"].update({"state": "home", "until": today + int(days)})
+    adv.setdefault("dined", []).append(today)
+    return [f"<dim>Its safe conduct holds for {int(days)} days more.</>"]
+
+
+@op("loyalty")
+def _loyalty(game, rec, n: int):
+    """The companion its wedge was driven at grows closer to you (or further)."""
+    from realmwalker.game.companions import change_loyalty
+    from realmwalker.game.story import villain
+
+    adv = adventure(game, rec)
+    c = villain.tempted(game, adv) if adv else None
+    if c is not None:
+        change_loyalty(c, float(n))
+    return []
+
+
+@op("betray")
+def _betray(game, rec):
+    """The companion its wedge was driven at goes over to it: gone in the night, and what you knew goes with them (a
+    key of the tale lost)."""
+    from realmwalker.game import companions
+    from realmwalker.game.story import villain
+
+    adv = adventure(game, rec)
+    c = villain.tempted(game, adv) if adv else None
+    if c is None:
+        return []
+    lines = companions.dismiss(game, c, deserted=True)
+    lost = None
+    keys = sorted(adv["keys"])
+    if keys:
+        lost = rng_for(game, rec).child("betray").choice(keys)
+        adv["keys"].remove(lost)
+    adv["turned"] = {"name": c.name, "key": lost, "day": int(game.moment.total_days)}
+    if "betrayed" not in adv["flags"]:
+        adv["flags"].append("betrayed")
+    out = [f"<danger>{textgen.escape_markup(x)}</>" for x in lines]
+    if lost:
+        from realmwalker.game.story import words as wordsmod
+
+        out.append(f"<danger>{textgen.escape_markup(villain.name_of(game, adv))} knows of "
+                   f"{textgen.escape_markup(wordsmod.key_text(game, adv, lost))} now.</>")
+    return out
+
+
+@op("frame")
+def _frame(game, rec, crime: str = "murder"):
+    """It does a murder in a town under a lord's law (villain.due_move chose it: adv["frame"]) and false witnesses
+    swear it was you: the crime is on your record there, reported, with a price on your head until the truth comes
+    out (the tale won: law.clear_framed)."""
+    from realmwalker.game.story import villain
+
+    adv = adventure(game, rec)
+    if adv is not None:
+        villain.frame(game, adv, crime)
+    return []
+
+
+@op("kidnap")
+def _kidnap(game, rec):
+    """One who helped you is taken to its hall (adv["reprisal"]): a rescue step is added to the chapter, with a
+    short time to do it in (villain.kidnap)."""
+    from realmwalker.game.story import villain
+
+    adv = adventure(game, rec)
+    if adv is None:
+        return []
+    name = villain.kidnap(game, adv)
+    hall = words_for(game, rec).get("home", "its hall")
+    return [f"<warn>{textgen.escape_markup(name)} is held in {textgen.escape_markup(hall)}.</>"] if name else []

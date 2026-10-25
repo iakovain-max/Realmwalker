@@ -92,7 +92,7 @@
         ]
       ],
       "choices": [
-        {"label": ["Stand, and put them down again."], "ops": [["fight", "restless_dead"], ["attention", 1]],
+        {"label": ["Stand, and put them down again."], "ops": [["band", "restless_dead"], ["attention", 1]],
          "result": [
            "You draw. They come on without a sound.",
            "You set your feet in the road and wait. They come at you without a word, as if they had been told what to do."

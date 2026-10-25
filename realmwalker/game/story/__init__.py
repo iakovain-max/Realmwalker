@@ -24,7 +24,8 @@ from realmwalker.core.textgen import escape_markup as esc
 HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selectors", "realmwalker.game.story.cast",
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
-                   "realmwalker.game.story.situations", "realmwalker.game.story.opening")
+                   "realmwalker.game.story.situations", "realmwalker.game.story.opening",
+                   "realmwalker.game.story.arenas")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
                  "sit_act", "fav_call", "fav_hide", "contact_ask",  # (situations, C.6; favours and contacts, C.7)
                  "story_recruit", "story_rally", "story_confront", "story_escort"}  # (Part D's steps: story/deeds.py)
@@ -104,7 +105,7 @@ def step_done(game, aid: str, sid: str | None) -> list[str]:
             beats.OPS["flag"](game, rec, what)
         elif kind == "lead":
             adv.setdefault("leads", []).append(what)
-    villain.notice(game, adv, int(villain.spec(game)["step"]))
+    villain.on_step(game, adv, st)
     _chapter_check(game, adv)
     game.dirty = True
     return []
@@ -131,6 +132,12 @@ def _chapter_check(game, adv: dict) -> None:
     for line in experience.award(game, "chapter", f"chapter/{adv['id']}/{adv['chapter']}"):  # (a high budget: C.8)
         game.say(line, "good")
     beats.OPS["clock"](game, {"adv": adv["id"]}, -10)  # (a chapter done holds the villain's scheme a while)
+    if adv.get("early"):
+        from realmwalker.game.story import early
+
+        for line in early.after_chapter(game, adv):  # (the short last chapter after it fell early: E.4)
+            game.say(line, "story")
+        return
     if int(adv["chapter"]) + 1 < len(adv["chapters"]):
         adv["chapter"] = int(adv["chapter"]) + 1
         nxt = chapter(adv)
@@ -261,6 +268,7 @@ def daily(game) -> None:
     favours.daily(game)  # (letters from your contacts, and their warnings: C.7)
     for adv in active(game):
         villain.quiet(game, adv)
+        villain.lapse(game, adv)  # (an invitation never taken up: E.2)
         t = threat_of(game, adv)
         if t is not None and t["state"] == "ended":
             if t.get("outcome") == "slain":
@@ -279,6 +287,9 @@ def daily(game) -> None:
     from realmwalker.game.story import opening
 
     opening.daily(game)  # (the first day gone by and the opening never came: D.4)
+    from realmwalker.game.story import early
+
+    early.daily(game)  # (a villain you put down walks again: you hear of it first, E.4)
     for item in list(d.get("scheduled", [])):
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
@@ -341,6 +352,10 @@ def on_travel(game, minutes: float) -> bool:
     from realmwalker.game.story import opening
 
     if opening.on_travel(game):  # (walking away from the start without going in: D.4)
+        return True
+    from realmwalker.game.story import lieutenants
+
+    if lieutenants.on_travel(game):  # (a nemesis comes for you with the villain's old company: E.3)
         return True
     if int(d.get("travel_beat_day", -10)) >= today:
         return False
@@ -407,6 +422,11 @@ def on_arrive(game) -> bool:
     if beats.pending(game) is not None:
         return False
     for adv in active(game):
+        rec = adv.get("invited")
+        if rec and rec.get("state") == "going" and places.here(game, adv["places"]["home"]):
+            beats.offer(game, rec.get("beat", "villain_dinner"), adv=adv["id"], where=_where(game))
+            return True  # (its invitation taken up: the dinner at its hall, E.2)
+    for adv in active(game):
         for st in open_steps(adv):
             t = st["target"]
             if st["kind"] in ("go", "search") and "place" in t and places.here(game, t["place"]):
@@ -456,6 +476,10 @@ def on_enter_town(game, settlement) -> None:
     if opening.on_enter_town(game, settlement):  # (the crisis at the gate, the runner with the summons: D.4)
         return
     if _show_tale(game, settlement):
+        return
+    from realmwalker.game.story import villain
+
+    if villain.seen_in_town(game, settlement):  # (one who helped you, made an example of: E.2)
         return
     for t in threats.live(game.world):
         if settlement.id in t["stakes"][:6] and t.get("adventure") is None and _can_take(game, t):
@@ -585,11 +609,14 @@ def on_night(game, where: str) -> bool:
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
         if beat is not None:
+            spec = game.tables.beats.get(beat, {})
+            if where == "inn" and spec.get("stage") and _stage_at_inn(game, adv, beat, spec["stage"]):
+                return True  # (played on the town's map: the figure comes to your room, E.2)
             beats.offer(game, beat, adv=adv["id"], where=where)
-            left = game.tables.beats.get(beat, {}).get("leaves")
+            left = spec.get("leaves")
             if left and where == "camp":  # (and there it lies in the camp's picture until you move on)
                 p = game.player
-                beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y,
+                beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y, "adv": adv["id"],
                                                       "day": int(game.moment.total_days)}
                 if left == "dead":
                     game.cue("dead")  # (D.5)
@@ -597,18 +624,42 @@ def on_night(game, where: str) -> bool:
     return False
 
 
-LEFT = ("carcass", "dead")  # what a beat may leave at your camp (beats.json `leaves`; drawn by ui/gfx/scenes.camp:
-#   the beast's carcass, the Risen's dead standing at the edge of the light)
+def _stage_at_inn(game, adv: dict, beat: str, scene: str) -> bool:
+    """The villain's visit to your room at the inn, staged on the town's map (E.2): the lamps gutter, a figure is
+    there by your bed, it speaks (the beat), and it is gone. False when no scene can play here."""
+    from realmwalker.game.story import stage, words as wordsmod
+
+    from realmwalker.world import threats
+
+    words = {k: str(v) for k, v in wordsmod.for_adventure(game, adv).items() if k in ("villain", "villain_short",
+                                                                                      "hero", "home")}
+    t = threats.records(game.world).get(adv["threat"])
+    if t is not None:
+        words["villain_creature"] = t["villain"]["creature"]
+    return stage.start(game, scene, words=words, then={"beat": beat, "adv": adv["id"]}, force=True) is not None
+
+
+LEFT = ("carcass", "dead", "visitor")  # what a beat may leave at your camp (beats.json `leaves`; drawn by
+#   ui/gfx/scenes.camp: the beast's carcass, the Risen's dead standing at the edge of the light, the villain itself
+#   beyond a fire burned low: E.2)
 
 
 def left_at_camp(game) -> str | None:
     """What the villain left at the camp you are in (a carcass), for the camp's picture; None once you move on."""
+    rec = left_record(game)
+    return rec["what"] if rec else None
+
+
+def left_record(game) -> dict | None:
+    """The record of what was left at this camp ({what, adv, x, y, day}); a visitor only while its beat waits."""
     from realmwalker.game.story import beats
 
     rec = beats.director(game.world).get("left") if getattr(game, "camp", None) is not None else None
     if not rec or (rec["x"], rec["y"]) != (game.player.x, game.player.y):
         return None
-    return rec["what"] if int(game.moment.total_days) - int(rec["day"]) <= 1 else None
+    if rec["what"] == "visitor" and (beats.pending(game) or {}).get("adv") != rec.get("adv"):
+        return None  # (gone when the fire flares again)
+    return rec if int(game.moment.total_days) - int(rec["day"]) <= 1 else None
 
 
 def on_descend(game, lm) -> None:
@@ -660,10 +711,11 @@ def finish_off(game, result) -> list[str]:
 
 def on_battle(game, result, actor=None) -> None:
     """After a fight: a story's foe dead, taken or fled (by its story tag, never by its name)."""
-    from realmwalker.game.story import deeds, endings, villain
+    from realmwalker.game.story import deeds, endings, lieutenants, villain
 
+    lieutenants.on_battle(game, result)  # (a lieutenant slain, taken or got away; a nemesis: E.3)
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
-    seen = []
+    seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \
             [(c, "fled") for c in getattr(result, "fled", [])]:
         tag = getattr(c, "story", None)
@@ -674,24 +726,71 @@ def on_battle(game, result, actor=None) -> None:
             continue
         if tag.get("role") == "villain":
             seen.append((adv, how))
-        elif tag.get("role") != "minion" and how == "dead":
-            villain.notice(game, adv, int(villain.spec(game)["lieutenant"]))
+        elif how == "dead":  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
+            h = harm.setdefault(adv["id"], {"servants": 0, "lieutenants": 0})
+            h["servants" if tag.get("role") in ("minion", "wave", "ambush", "endure") else "lieutenants"] += 1
+    for aid, h in harm.items():
+        villain.on_fight(game, adventures(game.world)[aid], servants=min(1, h["servants"]),
+                         lieutenants=h["lieutenants"])
+    battle = getattr(game, "battle", None)
+    for f in getattr(battle, "fighters", ()):  # (its face known: the journal draws it, no longer a shadow, E.7)
+        tag = getattr(getattr(f, "creature", None), "story", None)
+        if tag and tag.get("role") == "villain" and tag.get("adv") in adventures(game.world):
+            villain.seen(game, adventures(game.world)[tag["adv"]])
+    if result.outcome == "fled" and battle is not None:
+        from realmwalker.game.story import defeat
+
+        for line in defeat.on_retreat(game, battle):  # (a retreat from its finale costs: E.5)
+            game.say(line, "story")
+    if battle is not None and int(getattr(battle, "great_magic", 0) or 0):
+        villain.on_magic(game, int(battle.great_magic))  # (great magic cast in its reach)
+    from realmwalker.game.story import early
+
     for adv, how in seen:
+        if adv.get("boss_dead") or adv["state"] != "active":
+            continue  # (what was left of its band in its den, after it fell elsewhere: E.4)
         if how == "dead" or (how == "taken" and _villain_is_person(game, adv)):
+            first = how == "dead" and early.is_early(game, adv)
             adv["boss_dead" if how == "dead" else "boss_taken"] = True  # (a lord of outlaws taken alive: D.3)
             for st in open_steps(adv):
                 if st["kind"] in ("slay", "finale"):
                     st["state"] = "done"
+            if how == "dead" and battle is not None and battle.__dict__.get("rite_allowed") == adv["id"]:
+                from realmwalker.game.story import deeds
+
+                for st in [s for s in open_steps(adv) if s["kind"] == "rite"]:  # (finished over its body: E.5)
+                    if deeds._needs_met(game, adv, st["target"].get("needs", [])):
+                        game.say(f"<good>{esc(deeds.say(game, adv, 'rite_done'))}</>", "story")
+                        _rite_flags(game, adv, st)
+                        step_done(game, adv["id"], st["id"])
             if how == "taken":
                 adv["taken_day"] = int(game.moment.total_days)
                 continue  # (the aftermath judges the captain first: on_fate ends the tale with the fate chosen)
+            if first and early.begin(game, adv):
+                continue  # (dead before its finale: a short last chapter first, E.4)
             for line in endings.finish(game, adv):
                 game.say(line, "story")
         else:
+            if how == "fled":
+                early.on_fled(game, adv)  # (its one escape in this tale: E.4)
             adv["boss_fled"] = how == "fled"
             for st in open_steps(adv):
                 if st["kind"] == "slay" and (st["target"].get("fled_ok") or how == "taken"):
                     step_done(game, adv["id"], st["id"])
+
+
+def _rite_flags(game, adv: dict, st: dict) -> None:
+    """The codewords the rite's own beat sets on success (its first choice with a check), set now: the rite finished
+    over the body counts as the rite done at the threshold."""
+    from realmwalker.game.story import beats
+
+    beat = game.tables.beats.get(st.get("beat") or "") or {}
+    for ch in beat.get("choices", ()):
+        if "check" in ch:
+            for op in ch.get("success", ()):
+                if op and op[0] == "flag":
+                    beats.OPS["flag"](game, {"adv": adv["id"]}, *op[1:])
+            return
 
 
 def _villain_is_person(game, adv: dict) -> bool:
@@ -705,9 +804,10 @@ def on_fate(game, creature, fate: str) -> str | None:
     """A story foe taken alive is judged in the aftermath (fight.decide_captive): what they tell, or None. A tale's
     villain taken alive ends the tale by the fate chosen: spared or robbed and let go (the codeword villain_spared),
     else given to the lord's justice or put to death (D.3)."""
-    from realmwalker.game.story import beats, deeds, endings
+    from realmwalker.game.story import beats, deeds, endings, lieutenants
 
     tag = getattr(creature, "story", None) or {}
+    said = lieutenants.on_fate(game, creature, fate)  # (a lieutenant spared may turn, or go back: E.3)
     adv = adventures(game.world).get(tag.get("adv"))
     if tag.get("role") == "villain" and adv is not None and adv["state"] == "active" and adv.get("boss_taken"):
         adv["villain_fate"] = fate
@@ -718,7 +818,8 @@ def on_fate(game, creature, fate: str) -> str | None:
         for line in endings.finish(game, adv):
             game.say(line, "story")
         return None
-    return deeds.on_fate(game, creature, fate)
+    told = deeds.on_fate(game, creature, fate)
+    return told if told is not None or said is None else said
 
 
 def on_quest_end(game, q: dict, ok: bool) -> None:
@@ -732,6 +833,10 @@ def on_quest_end(game, q: dict, ok: bool) -> None:
             step_done(game, aid, sid)
         else:
             st["state"] = "failed"
+            if st.get("kidnap"):  # (too late: the one it took dies in its hall, E.2)
+                from realmwalker.game.story import villain
+
+                villain.lost(game, adventures(game.world)[aid], st)
 
 
 def on_job_taken(game, q: dict) -> None:
@@ -815,6 +920,8 @@ def _can_take(game, t: dict) -> bool:
     from realmwalker.game.story import forge
 
     cap = int(game.tables.adventures.get("max_active", 3))
+    if float(t.get("bargained", -1)) > float(game.moment.total_days):
+        return False  # (you took its offer, and it keeps its side of it for now: E.2)
     return len(active(game)) < cap and bool(forge.fitting(game, t))
 
 
@@ -1168,6 +1275,12 @@ def fight_finale(game) -> None:
     actor = next((a for a in (lm.actors if lm is not None else []) if a.id == (rec or {}).get("actor")), None)
     if actor is None:
         return
+    adv = adventures(game.world).get((rec or {}).get("adv"))
+    if adv is not None:
+        from realmwalker.game.story import lieutenants
+
+        for line in lieutenants.join_finale(game, adv, actor):  # (its hands still free stand beside it: E.3)
+            game.say(f"<danger>{esc(line)}</>", "story")
     name = actor.creatures[0].name if actor.creatures else "it"
     start_battle(game, actor.creatures, f"{name}!", surprised=None if actor.alert else FOE, actor=actor,
                  title=name)

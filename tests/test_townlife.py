@@ -109,6 +109,39 @@ def test_people_walk_to_work_and_reach_it(town):
         assert max(abs(n.x - n.post[0]), abs(n.y - n.post[1])) <= 1, f"the {n.job} is not at work"
 
 
+def test_two_put_on_one_square_part_at_the_next_step(town, monkeypatch):
+    """Something outside town life (a scene, a trouble sending someone home, a crowded settling) may put two on one
+    square; the next step of time parts them, even two who are where they want to be (autoplay saw a headman and a
+    beggar piled for twenty turns)."""
+    game, s = town
+    lm = game.local
+    at_hour(game, 9)
+    townlife.settle(game, lm)
+    a, b = folk(game, s)[:2]
+    b.x, b.y = a.x, a.y
+    goal = townlife.goal
+    monkeypatch.setattr(townlife, "goal", lambda game, lm, npc, town=None: (
+        (a.x, a.y) if npc in (a, b) else goal(game, lm, npc, town)))
+    townlife.tick(game, lm, s)
+    check_nobody_overlaps(game, s)
+
+
+def test_a_warden_keeps_its_square_when_another_is_put_on_it(town):
+    """E.7: of two on one square, the one who never budges stays; the other is parted, never onto you."""
+    game, s = town
+    lm = game.local
+    at_hour(game, 9)
+    townlife.settle(game, lm)
+    a, b = folk(game, s)[:2]
+    a.flags["stays"] = "gate"
+    spot = (a.x, a.y)
+    b.x, b.y = spot
+    townlife.unpile(game, lm)
+    assert (a.x, a.y) == spot and (b.x, b.y) != spot
+    assert (b.x, b.y) != (game.player.lx, game.player.ly)
+    check_nobody_overlaps(game, s)
+
+
 def test_they_go_in_and_out_through_doors(town):
     game, s = town
     lm = game.local

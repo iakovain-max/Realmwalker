@@ -1,7 +1,9 @@
 """Storyplay (Expansion 6 A.11, docs/ADVENTURES.md §9): a careful party plays the Beast through on real roads, from
 its hook to its epilogue; Part A's measure is that it finishes in at least 90% of 20 runs. Part D's (D.5): the Risen
 and the Outlaw Lord the same, and a new life's opening begins a tale (`tools/storyplay.py --kind risen|outlaw`,
-`--openings`, 20 runs each; here six of each, the slow suite's share)."""
+`--openings`, 20 runs each; here six of each, the slow suite's share). Since E.6 the finale is a real fight set by
+the tier (the bot goes down with about half the keys, and falls back when it is going badly): a life can be lost there,
+so the bars are four in five (the fairness measure is tests/test_story_balance.py)."""
 
 import pytest
 
@@ -14,7 +16,8 @@ pytestmark = [pytest.mark.slow, pytest.mark.story]
 def test_the_beast_is_finished_nine_times_in_ten(data):
     runs = storyplay.play(20, tables=Tables(data))
     done = [r for r in runs if r.finished]
-    assert len(done) >= 18, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert len(done) >= 16, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert all(r.why == "the party died" for r in runs if not r.finished), "a tale is never stuck"
     assert all(r.ending == "slain" for r in done)
     assert sum(1 for r in done if r.fights >= 2) >= len(done) // 2, "most hunts reach the den and its finale"
 
@@ -23,7 +26,8 @@ def test_the_beast_is_finished_nine_times_in_ten(data):
 def test_part_ds_tales_are_finished(data, kind):
     runs = storyplay.play(6, tables=Tables(data), kind=kind)
     done = [r for r in runs if r.finished]
-    assert len(done) >= 5, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert len(done) >= 4, "\n".join(f"{r.world} {r.threat}: {r.why or r.ending}" for r in runs if not r.finished)
+    assert all(r.why == "the party died" for r in runs if not r.finished), "a tale is never stuck"
     assert all(r.ending not in ("doom", "abandoned") for r in done), [r.ending for r in done]
     assert all(r.fights >= 2 for r in done), "every tale is fought for"
 
@@ -31,8 +35,34 @@ def test_part_ds_tales_are_finished(data, kind):
 def test_a_new_life_opens_with_a_tale(data):
     runs = storyplay.openings(6, tables=Tables(data))
     assert sum(r.begun for r in runs) >= 5, "\n".join(f"{r.world} {r.kind}: {r.why}" for r in runs if not r.begun)
-    assert len({r.kind for r in runs}) >= 2, "more than one kind of first hour"
     assert sum(r.finished for r in runs) >= 4, "\n".join(f"{r.world} {r.kind}: {r.why or r.ending}" for r in runs)
+    # (which first hour a life draws follows its dice, keyed by the world's id - which changes with the game's data -
+    # and the hero's name: more than one kind is asked of many draws, not of these six lives)
+    assert len({r.kind for r in runs} | _first_hours(data)) >= 2, "more than one kind of first hour"
+
+
+def _first_hours(data) -> set:
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.game.story import beats, opening
+    from realmwalker.world import threats
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    tables, kinds = Tables(data), set()
+    for wo in storyplay.WORLDS:
+        w = copy.deepcopy(cached_world(WorldOptions(*wo), tables))
+        towns = sorted((s for s in w.settlements if s.kind in ("town", "village", "hamlet", "city")), key=lambda s: s.id)
+        game = new_game(w, tables, start_settlement=towns[0].id)
+        rec = beats.director(w).get("opening")
+        if rec is None:
+            continue
+        t, town = threats.records(w)[rec["threat"]], w.settlements[rec["town"]]
+        for n in range(12):
+            game.leader.name = f"Hero {n}"
+            kinds.add(opening.choose(game, t, town))
+    return kinds
 
 
 def test_the_income_reference_is_kept():

@@ -751,6 +751,7 @@ def update_positions(game, lm) -> None:
 
     townlife.catch_up(game, lm)
     townlife.place_new(game, lm)
+    townlife.unpile(game, lm)  # (one back where they last stood, taken since by another: E.7)
 
 
 def wander(game, lm) -> None:

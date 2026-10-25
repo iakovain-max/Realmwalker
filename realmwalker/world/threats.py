@@ -285,7 +285,10 @@ def advance(pol, days: float) -> None:
             end(w, t, gone_outcome(w, t), day)
             continue
         if t["state"] == "dormant":
-            if pol.rng.chance(float(tables.threats.get("wake", 0.0)) * days / 7.0) and room_for(w, tables, t):
+            if t.get("sequel"):  # (put down without its anchor: it sleeps its weeks and then comes back, E.4)
+                if day >= float(t["scheme"].get("held_until") or 0) and room_for(w, tables, t):
+                    stir(w, tables, t, pol.rng, day=day)
+            elif pol.rng.chance(float(tables.threats.get("wake", 0.0)) * days / 7.0) and room_for(w, tables, t):
                 stir(w, tables, t, pol.rng, day=day)
             continue
         sch = t["scheme"]

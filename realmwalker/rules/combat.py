@@ -627,6 +627,7 @@ class Battle:
         # What happened, for the battle screen to show (who moved where, who struck whom, hit or missed, damage,
         # healing, spells and their areas). Pure record: nothing in the rules reads it.
         self.events: list[dict] = []
+        self.great_magic = 0  # the highest level the party cast here (story/villain.on_magic: E.1)
         self.fighters: list[Fighter] = []
         self.zones: list[Zone] = []
         self.tokens: list[Token] = []
@@ -1434,6 +1435,10 @@ class Battle:
         if not f.active:
             return
         events.emit(self, "turn_start", actor=f)  # regeneration...
+        if f.creature is not None and f.cdef.get("boss_great"):
+            from realmwalker.rules.engine.handlers import bosses
+
+            bosses.turn_start(self, f)  # (a story's boss: its great attack marked, or falling: Expansion 6 E.5)
         f.took_fire = False
         for name in list(f.recharge):
             if not f.recharge[name] and self.rng.randint(1, 6) >= self._recharge_on(f, name):
@@ -1799,7 +1804,11 @@ class Battle:
                     hostile = False  # slipped past (through, never stopping there)
             for c in x.cells:
                 (blocked if hostile else occupied).add(c)
-        fire = {c for z in self.zones if z.kind == "fire" for c in z.cells}
+        fire = {c for z in self.zones if z.kind in ("fire", "rite") for c in z.cells}
+        if any(z.kind == "omen" for z in self.zones):
+            from realmwalker.rules.engine.handlers import bosses
+
+            fire |= bosses.omen_cells(self, f)  # (where a foe's great attack is about to fall)
         if budget is None:
             budget = f.move_left // 2 if self.dragging(f) else f.move_left
         return grid.paths(self.field, (f.x, f.y), f.sq, budget, blocked=blocked,
@@ -2374,6 +2383,8 @@ class Battle:
         self._after_action(f)
 
     def can_leave(self, f: Fighter) -> bool:
+        if (f.cdef or {}).get("holds_ground"):  # (a story's boss at its finale: its own den, where it stands; Expansion 6 E.6)
+            return False
         return f.active and f.speed > 0 and f.move_left >= 5 and any(self.field.exits[c] for c in f.cells
                                                                       if self.field.in_bounds(*c))
 
@@ -3197,6 +3208,10 @@ class Battle:
                     self._check_end()
                     struck = True
                     break
+            if not struck and any(a.get("command") for a in leg.get("actions", ())):
+                from realmwalker.rules.engine.handlers import bosses
+
+                struck = bosses.command(self, f, left)  # (its minions at its word: Expansion 6 E.5)
             if not struck and any(a.get("move") for a in leg.get("actions", ())):
                 self._legendary_move(f, left)
 
@@ -3213,6 +3228,8 @@ class Battle:
         if not spots:
             return
         best = min(spots, key=lambda sq: self.gap_from(f, sq, near))
+        if self.gap_from(f, best, near) >= self.gap(f, near):
+            return  # (no nearer for it: a shuffle in place is no move, and would keep a stand-off from ending)
         f.creature.uses["legendary_actions"] = left - 1
         self.say(f"{f.the_name} moves out of turn. <dim>(Legendary Action)</>", "danger")
         self._event("legendary", by=f.id, what="move")
@@ -5314,6 +5331,8 @@ class Battle:
             return True  # (drunk by a Rod of Absorption or a Staff of the Magi: cast, and nothing comes of it)
         effects.cast(self, f, sid, spell, target, point, up=up, mod=mod, dc=dc, bonus=bonus, mult=mult, level=level,
                      slotted=slotted)
+        if f.side == PARTY and f.bond is None:  # (the party's greatest magic here, felt by a villain near: E.1)
+            self.great_magic = max(self.great_magic, int(level))
         if sid in ("light", "daylight"):
             from realmwalker.rules.engine.handlers import wonders
 
@@ -5714,7 +5733,7 @@ class Battle:
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
                 self._hit(owner, f, dice.roll(z.damage or "2d4", self.rng).total, z.damage_type or "piercing",
                           crit=False, weapon="thorns")
-            elif z.kind in ("fire", "guardians", "guardian", "daggers", "moonbeam", "sphere") and z.damage \
+            elif z.kind in ("fire", "guardians", "guardian", "daggers", "moonbeam", "sphere", "rite") and z.damage \
                     and not z.fail:
                 z.struck.add(f.id)
                 owner = next((x for x in self.fighters if x.id == z.owner), None)
@@ -5725,6 +5744,8 @@ class Battle:
                     self.say(f"Blades whirl around {f.the_name}.", "danger" if f.side == PARTY else "info")
                 elif z.kind == "moonbeam":
                     self.say(f"Pale light sears {f.the_name}.", "danger" if f.side == PARTY else "info")
+                elif z.kind == "rite":  # (a ritual circle flaring: a story's arena, Expansion 6 E.5)
+                    self.say(f"The circle's cold light burns {f.the_name}.", "danger" if f.side == PARTY else "info")
                 if z.save:
                     self._save_damage(owner or f, f, z.save, z.dc, z.damage, z.damage_type, z.on_save)
                 else:  # (no save: a cloud of daggers)

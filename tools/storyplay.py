@@ -31,7 +31,7 @@ from realmwalker.game.people import npcs_in, prepare_town  # noqa: E402
 from realmwalker.game.state import new_game  # noqa: E402
 from realmwalker.game.story import beats, cast, forge, places  # noqa: E402
 from realmwalker.rules import progression  # noqa: E402
-from realmwalker.rules.combat import PARTY  # noqa: E402
+from realmwalker.rules.combat import FOE, PARTY  # noqa: E402
 from realmwalker.rules.inventory import add_item  # noqa: E402
 from realmwalker.world import threats  # noqa: E402
 from realmwalker.world.generator import WorldOptions  # noqa: E402
@@ -41,7 +41,7 @@ PARTY_CLASSES = ("fighter", "cleric", "rogue", "wizard")
 MAX_DAYS = 120
 MAX_ACTIONS = 400
 KINDS = ("beast", "risen", "outlaw")  # (the threats whose tales are written: Parts A and D)
-PART_D = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront")
+PART_D = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront", "endure")
 
 
 @dataclass
@@ -97,7 +97,8 @@ class Player:
             elif beats.director(g.world).get("card"):
                 beats.director(g.world)["card"] = None
             elif getattr(g, "finale", None):
-                self.note("the finale: Fight")
+                self.note("the finale: Fight (" + ", ".join(f"{c.hp}/{c.max_hp} hp L{c.level} ex{c.exhaustion}"
+                                                            for c in g.party if c.alive) + ")")
                 self.moment()
                 story.fight_finale(g)
                 if g.battle is None:
@@ -141,10 +142,10 @@ class Player:
         self.run.beats.append(rec["beat"])
         self.moment()
         self.note(f"beat {rec['beat']}: {pick['label'] if pick else '(none)'}")
-        if pick is None or pick["i"] < 0:
+        if pick is None:
             beats.director(g.world)["pending"] = None
             return
-        beats.choose(g, rec, pick["i"])
+        beats.choose(g, rec, pick["i"])  # (-1: a beat with no choices, its own ops played: a wedge driven home, E.2)
 
     def battle(self) -> None:
         from tools.arena import run as play_out
@@ -152,6 +153,11 @@ class Player:
         g = self.game
         b = g.battle
         enc = g.encounter
+        if b.__dict__.get("finale_of") and not isinstance(self, Finalist):  # (a careful party falls back there: E.6)
+            Finalist.battle(self)
+            if g.over is None:
+                self.recover()
+            return
         for f in b.side(PARTY):
             f.auto = True
         play_out(b, max_steps=6000)
@@ -166,10 +172,50 @@ class Player:
         fight.leave_loot(g)
         self.shed()
         g.aftermath = None
+        if after.outcome == "taken":
+            self.reclaim()
         if g.encounter is enc:  # (a hold's next wave is a new encounter: it stays)
             g.encounter = None
         if g.over is None:
             self.recover()
+
+    def reclaim(self) -> None:
+        """Taken alive at the end (E.5): out of the cell, to the chest they threw your things in, open it (a few tries
+        at the lock), take it all back and arm again. Then the journal's next step leads out (the escape)."""
+        from realmwalker.rules.inventory import add_existing, equip_everything_sensible
+
+        g = self.game
+        lm = g.local
+        if lm is None:
+            return
+        spot = next((xy for xy, f in lm.features.items() if f.get("story") and f.get("kind") == "chest"
+                     and not f.get("opened")), None)
+        if spot is None:
+            return
+        self.note("woke in the cells; after the chest with our things")
+        walk = g.tables.terrain.walk[g.remap_for(lm)[lm.terrain]]
+        near = next(((spot[0] + dx, spot[1] + dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                     if (dx or dy) and lm.in_bounds(spot[0] + dx, spot[1] + dy) and walk[spot[0] + dx, spot[1] + dy]),
+                    None)
+        if near is None:
+            return
+        g.player.lx, g.player.ly = near
+        for _ in range(6):
+            dungeon.open_chest(g, lm, *spot)
+            if lm.features[spot].get("opened"):
+                break
+            g.pass_time(10)
+        for it in lm.items.pop(near, []):
+            add_existing(g.leader, g.tables.items, it)
+        for c in g.party:
+            if c.alive:
+                equip_everything_sensible(c, g.tables.items)
+        self.go((g.player.x, g.player.y))  # (out, and a night's rest or two before going back: a careful party)
+        for _ in range(3):
+            if g.over is not None or not any(c.alive and c.hp < c.max_hp for c in g.party):
+                break
+            fight.rest(g, "long")
+            self.settle()
 
     def shed(self) -> None:
         """Nobody walks laden: the heaviest things nobody wears or the tale needs are left behind."""
@@ -484,6 +530,19 @@ class Player:
                 continue
             g.pass_time(60, "rest")
             self.settle()
+
+    def endure(self, adv: dict, st: dict) -> None:
+        """A set piece (E.4): a night at camp out of town, where its beat finds you once its day has come."""
+        g = self.game
+        if g.world.settlement_at(g.player.x, g.player.y) is not None:
+            home = places.xy(g.world, adv["places"]["home"])
+            self.go(home)
+        for line in fight.rest(g, "long"):
+            pass
+        if beats.pending(g) is None and g.encounter is None:
+            story.on_night(g, "camp")
+        self.settle()
+        self.wait_a_day(st)
 
     def rite(self, adv: dict, st: dict) -> None:
         if self.go(places.xy(self.game.world, st["target"]["place"])):
@@ -1117,6 +1176,9 @@ def play_tale(p: Player, adv: dict, start_day: float, start_levels: int) -> Run:
         if not p.run.log or not p.run.log[-1].endswith(f"step {st['id']} ({st['kind']})"):
             p.note(f"step {st['id']} ({st['kind']})")
         p.act(adv, st)
+        if game.over is not None:
+            run.why = "the party died"
+            break
         if (st["id"], st["state"]) == before[:2] and game.world.time == before[2] and adv["state"] == "active":
             run.why = run.why or f"stuck at {st['id']} ({st['kind']})"
             break
@@ -1127,6 +1189,181 @@ def play_tale(p: Player, adv: dict, start_day: float, start_levels: int) -> Run:
     run.levels = sum(c.level for c in game.party if c.alive) - start_levels
     return run
 
+
+
+# ---------------------------------------------------------------------------- the fairness measure (E.6)
+KEYS = ("all", "half", "none")
+RETREAT_DOWN = 2  # (a careful party falls back when two of it are down, or one is dead...)
+RETREAT_BOSS = 0.35  # (...and the boss still has more than this share of its hit points)
+
+
+@dataclass
+class Finale(Run):
+    kind: str = ""
+    keys: list = field(default_factory=list)
+    tier: int = 0
+    outcome: str = ""  # (the finale's battle: victory, fled, defeat, taken...)
+    won: bool = False  # (the boss fell in that fight)
+    retreated: bool = False  # (the careful party fell back)
+    retreat_ok: bool = False  # (it got away, and the tale goes on with its finale still open)
+    dead: int = 0  # (party members dead after it)
+    rounds: int = 0
+    boss: str = ""  # (its state at the end: dead, fled, surrendered, fighting...)
+    worth: float = 0.0  # (the foes at the start over the party's High budget: the DMG's measure)
+
+
+def finale_keys(adv: dict, which: str, rng: RNG) -> list[str]:
+    """What the party found on the way: every key the finale knows, half of them (by the run's dice), or none. A
+    weakness counts with the means to use it."""
+    found = sorted(adv["finale"]["keys"])
+    if which == "none":
+        return []
+    if which == "half":
+        found = sorted(rng.sample(found, max(1, len(found) // 2)))
+    return found + (["means"] if "weakness" in found else [])
+
+
+class Finalist(Player):
+    """The careful party at the finale: on the battle's Auto, and falling back off the field when it goes badly (two
+    down or one dead while the boss is still strong), if `retreats`."""
+
+    retreats = True
+
+    def battle(self) -> None:
+        from realmwalker.rules import tactics
+
+        g = self.game
+        b = g.battle
+        boss = next((f for f in b.side(FOE) if f.id in (b.__dict__.get("story_bosses") or {})), None)
+        ours = [f for f in b.side(PARTY) if f.bond is None]
+        for f in b.side(PARTY):
+            f.auto = True
+        from realmwalker.rules import encounter
+
+        foes = [f.creature.def_id for f in b.side(FOE) if f.creature is not None and f.state == "fighting"]
+        levels = [f.char.level for f in ours if f.char is not None]
+        self.run.worth = round(encounter.ratio(g.tables, foes, levels), 2)
+        self.note(f"the finale's foes: {', '.join(foes)} ({self.run.worth} of the party's High budget, the boss "
+                  f"{boss.hp if boss else 0} hp)")
+        back = False
+        for _ in range(6000):
+            if b.outcome is not None:
+                break
+            if not back and getattr(self, "retreats", True) and boss is not None and boss.active:
+                down = sum(1 for f in ours if f.state in ("down", "dead"))
+                dead = any(f.state == "dead" for f in ours)
+                if (down >= RETREAT_DOWN or dead) and boss.hp > RETREAT_BOSS * boss.max_hp:
+                    back = True
+                    self.run.retreated = True
+                    self.note(f"falling back (round {b.round}, the boss at {boss.hp}/{boss.max_hp})")
+                    for f in b.side(PARTY):
+                        f.auto = False
+            if b.pending_party() is not None:
+                f = b.pending_party()
+                if back:
+                    tactics.flee(b, f)
+                else:
+                    tactics.take_turn(b, f)
+                if b.current is f and b.outcome is None:
+                    b.end_turn()
+                continue
+            b.step()
+        self.run.rounds = b.round
+        self.run.outcome = b.outcome or "unfinished"
+        taken = boss is not None and (boss.state == "surrendered" or "unconscious" in boss.conditions)
+        self.run.won = boss is not None and (boss.state == "dead" or taken and b.outcome == "victory")
+        self.run.boss = boss.state if boss is None or not taken else "taken"
+        self.run.fights += 1
+        after = fight.finish_battle(g)
+        self.note(f"the finale: {after.outcome}")
+        for c in after.captives:  # (the boss asleep or yielding at the end is taken alive: the aftermath judges it)
+            if getattr(c, "story", None) and g.aftermath is not None:
+                fight.decide_captive(g, c, "interrogate")
+        fight.take_loot(g, [])
+        fight.leave_loot(g)
+        g.aftermath = None
+        if after.outcome == "taken":
+            self.reclaim()
+
+
+def finale_once(tables, made, label: str, i: int, kind: str, keys: str, verbose: bool = False,
+                retreats: bool = True) -> Finale:
+    """The i-th threat of the kind on one world, its tale forged and taken straight to its finale: a party of four at
+    the tier's target level, rested, with the keys of `keys`, goes down to the boss and fights it (each run its own
+    dice: the hour it sets out, the party's make, the half of the keys)."""
+    w = copy.deepcopy(made)
+    run = Finale(world=label, kind=kind)
+    found = [t for t in threats.records(w).values() if t["kind"] == kind and t["state"] != "ended"
+             and (kind == "beast" or t.get("stakes"))]
+    if not found:
+        run.why = f"no {kind} threat"
+        return run
+    t = found[i % len(found)]
+    run.threat, run.tier = t["id"], int(t["tier"])
+    town = min((s for s in w.settlements if s.kind in ("town", "village", "hamlet")),
+               key=lambda s: threats.distance(w, t, s.x, s.y))
+    game = new_game(w, tables, start_settlement=town.id)
+    game.survival = False
+    game.pass_time(60 * (i % 24) + 7 * i, "rest")
+    make_party(game, int(tables.threats.get("target_level", {}).get(str(t["tier"]), 3)), 3000 + i)
+    beats.director(w)["pending"] = None
+    beats.director(w)["scheduled"] = []
+    beats.director(w)["opening"] = None
+    adv = forge.make(game, t)
+    if adv is None:
+        run.why = "no tale forged"
+        return run
+    adv["chapter"] = len(adv["chapters"]) - 1  # (straight to the end: the steps before it are not played)
+    adv["keys"] = finale_keys(adv, keys, RNG(5000 + i, "storyplay/keys"))
+    run.keys = list(adv["keys"])
+    if "means" in adv["keys"]:  # (what it fears, carried: a careful party bought it when it learned the weakness)
+        wid = adv["hidden"].get("weakness", {}).get("weakness")
+        weak = next((x for lst in tables.villains.get("weaknesses", {}).values() for x in lst if x["id"] == wid), None)
+        means = [m for m in (weak or {}).get("means", ()) if m in tables.items]
+        best = max(means, key=lambda m: int(tables.items.get(m).get("value", 0) or 0)) if means else None
+        for c in game.party if best else ():  # (the best of the means: a flask of fire, not a torch)
+            add_item(c, tables.items, best, 2)
+    p = Finalist(game, run, verbose)
+    p.retreats = retreats
+    st = next((s for ch in adv["chapters"] for s in ch["steps"] if s["kind"] == "finale" and s["state"] == "open"),
+              None)
+    if st is None:
+        run.why = "no finale step"
+        return run
+    site = w.sites[adv["places"]["home"]["site"]]
+    game.player.x, game.player.y = site.x, site.y
+    for c in game.party:
+        progression.long_rest(c, tables, RNG(i, "storyplay/rest"))
+        c.hp = c.max_hp
+    p.finale(adv, st)
+    if not run.outcome:
+        run.why = run.why or "no fight"
+        return run
+    p.settle()
+    run.dead = sum(1 for c in game.party if not c.alive)
+    run.retreat_ok = run.retreated and run.outcome == "fled" and adv["state"] == "active" and any(
+        s["kind"] == "finale" and s["state"] == "open" for s in story.open_steps(adv))
+    run.ending = adv.get("ending")
+    return run
+
+
+def finales(runs: int, kind: str, keys: str, verbose: bool = False, tables=None, retreats: bool = True,
+            quiet: bool = False) -> list[Finale]:
+    from tests.worlds import cached_world
+    from tools.balance import load_tables
+
+    tables = tables or load_tables()
+    made = {w: cached_world(WorldOptions(*w), tables) for w in WORLDS}
+    out = []
+    for i in range(runs):
+        w = WORLDS[i % len(WORLDS)]
+        r = finale_once(tables, made[w], w[0], i, kind, keys, verbose, retreats)
+        out.append(r)
+        if not quiet:
+            print(f"run {i + 1:2d} {r.world:<10} {r.threat:<4} tier {r.tier} keys={','.join(r.keys) or '-':<28} "
+                  f"{r.outcome:<10} {'WON' if r.won else '   '} boss={r.boss:<11} xp={r.worth:4.2f}H rounds={r.rounds:2d} dead={r.dead} "
+                  f"{'retreat ' + ('ok' if r.retreat_ok else 'FAILED') if r.retreated else ''} {r.why}")
+    return out
 
 
 # ---------------------------------------------------------------------------- the first hour (D.4)
@@ -1224,7 +1461,18 @@ def main() -> int:
     ap.add_argument("--meet", action="store_true", help="the variety and rarity measures: thirty situations met")
     ap.add_argument("--kind", choices=KINDS, default="beast", help="whose tale is played (Part D: risen, outlaw)")
     ap.add_argument("--openings", action="store_true", help="the first hour: new lives, each with its opening")
+    ap.add_argument("--finale", choices=KEYS, default=None,
+                    help="the fairness measure: straight to the finale with every key, half of them or none")
+    ap.add_argument("--stand", action="store_true", help="with --finale: the party never falls back")
     a = ap.parse_args()
+    if a.finale:
+        res = [r for r in finales(a.runs, a.kind, a.finale, a.verbose, retreats=not a.stand) if r.outcome]
+        won = sum(r.won for r in res)
+        back = [r for r in res if r.retreated]
+        print(f"\n{a.kind} with {a.finale} keys: won {won} of {len(res)} ({100 * won / max(1, len(res)):.0f}%); "
+              f"fell back {len(back)} (got away {sum(r.retreat_ok for r in back)}); "
+              f"party dead {sum(r.dead for r in res)}")
+        return 0
     if a.openings:
         res = openings(a.runs, a.verbose)
         begun = sum(r.begun for r in res)

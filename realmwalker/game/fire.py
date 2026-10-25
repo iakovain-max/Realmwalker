@@ -560,11 +560,17 @@ def on_battle_start(battle, game) -> list[str]:
 
     if fld is not None and fld.__dict__.get("fires"):  # (a story's field laid out burning: the ford's carts, D.3)
         cells = {tuple(c) for c in fld.__dict__["fires"] if fld.in_bounds(*c)}
+        village = bool(fld.__dict__.get("village"))  # (a burning village: its houses' timbers catch, E.5)
+        if village:
+            fld.__dict__["burning"] = True
+            _widen(game, fld)
         battle._add_zone(Zone(battle._zone_id(), "fire", cells, owner=None, rounds=-1, save="dex", dc=10,
                               damage="1d6", damage_type="fire", on_save="none"))
         _smoke(battle, cells)
         battle.__dict__.setdefault("walls_burning", {})
         battle.round_hooks.append(_round)
+        if village:
+            return ["<danger>The houses are burning round you, roof after roof, and the fire is spreading.</>"]
         return ["<danger>The carts burn across the road, and the grass is catching.</>"]
     if lm is None or fld is None or getattr(fld, "cut_from", None) != lm.key or not lm.meta.get("fire"):
         return []
@@ -577,16 +583,22 @@ def on_battle_start(battle, game) -> list[str]:
             cells.add((x - ox, y - oy))
     if not cells:
         return []
-    T = game.tables.terrain
-    burns_here = np.array([T.ids[i] in HOUSE_BURNS for i in range(len(T.ids))], bool)
-    fld.flammable = fld.flammable | burns_here[fld.terrain]
     fld.__dict__["burning"] = True
+    _widen(game, fld)
     battle._add_zone(Zone(battle._zone_id(), "fire", set(cells), owner=None, rounds=-1, save="dex", dc=10,
                           damage="1d6", damage_type="fire", on_save="none"))
     _smoke(battle, cells)
     battle.__dict__.setdefault("walls_burning", {})
     battle.round_hooks.append(_round)
     return ["<danger>The fire is all round you: smoke rolls along the ground, and the heat beats at your face.</>"]
+
+
+def _widen(game, fld) -> None:
+    """On a field marked burning, houses' timbers, floors and furniture catch too (worked out again whenever the
+    field's terrain changes: Field._derive starts from grid.FLAMMABLE)."""
+    T = (game.tables if game is not None else fld.t).terrain
+    burns_here = np.array([T.ids[i] in HOUSE_BURNS for i in range(len(T.ids))], bool)
+    fld.flammable = fld.flammable | burns_here[fld.terrain]
 
 
 def _fire_zone(battle):
@@ -644,6 +656,8 @@ def _round(battle) -> None:
             fld.terrain[c] = battle.t.terrain.index["scorched"]
     if out:
         fld._derive()
+        if fld.__dict__.get("burning"):
+            _widen(None, fld)
     if new:
         z.cells |= new
         battle.say("The fire spreads.", "danger")

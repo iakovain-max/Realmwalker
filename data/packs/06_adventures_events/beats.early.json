@@ -1,0 +1,88 @@
+{
+  "_comment": "Early ends and returns (Expansion 6 E.4, game/story/early.py): a contingency's set piece, an endure step's beat (the letter it left to be delivered on its death, for a villain that speaks; the thing it kept caged and let loose, for one that does not), the word that a villain you put down walks again (it takes the tale on), and the villain moving its anchor into its own hall.",
+  "beats": {
+    "early_last_letter": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp"],
+      "text": [
+        [
+          "A rider you do not know comes up the road at a walk, holds out a sealed letter at arm's length, and turns back the way he came without a word. The seal is {villain_short}'s.",
+          "A boy brings it, paid in advance by somebody who is dead now: a letter, sealed with {villain_short}'s seal, to be put in your hand on the day {he} died.",
+          "It is left where you will find it, pinned under a stone on the road ahead: a letter in {villain_short}'s hand, written before {he} died, and meant for you."
+        ],
+        [
+          "When you look up from it, there are figures on the rise, spreading out. They have been waiting for the letter to reach you.",
+          "You are still reading when you hear them: {villain_short}'s people, come to carry out the last of {his} orders.",
+          "There is a whistle from the trees. The letter was to keep you standing still."
+        ]
+      ],
+      "choices": [
+        {"label": ["Read it, and face them."], "ops": [["letter", "villain_last_letter", "dark"], ["endure"]],
+         "result": ["You put the letter away and draw.", "There will be time to think about what it said, after."]},
+        {"label": ["Drop it and run for it."], "check": {"skill": "athletics", "dc": 14},
+         "success": [["fatigue", 10], ["step_done"]], "failure": [["endure"]],
+         "result": ["You are away before they close, and you do not stop until dark. They do not follow.",
+                    "You run, and keep running, and when you finally stop there is nobody behind you."],
+         "fail_result": ["They are faster than you, and they know the ground. You turn to face them.",
+                         "You do not get far. There is no way out but through them."]}
+      ]
+    },
+    "early_loosed": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp"],
+      "text": [
+        [
+          "{villain_short} is dead, and what it kept is not kept any more. You hear them before you see them: things that were held for this, let loose to find you.",
+          "Whatever {villain_short} kept close to it is loose now that it is gone, and hungry, and it has your scent.",
+          "There is a sound in the dark that you have heard before, near {home}. What {villain_short} gathered around it did not die with it."
+        ]
+      ],
+      "choices": [
+        {"label": ["Stand and meet them."], "ops": [["endure"]],
+         "result": ["You set your feet.", "If they want you, they will have to come and take you."]},
+        {"label": ["Break the trail and lose them."], "check": {"skill": "survival", "dc": 14},
+         "success": [["fatigue", 10], ["step_done"]], "failure": [["endure"]],
+         "result": ["Through water and over stone, and back on yourselves twice. By dawn there is nothing on your trail.",
+                    "You know the old tricks, and they are enough. They lose you at the river."],
+         "fail_result": ["They will not be shaken off. They are on you before you have gone a mile.",
+                         "Every trick you know, and it is not enough. They come out of the dark all at once."]}
+      ]
+    },
+    "villain_returns": {
+      "family": "hook",
+      "picture": "here",
+      "title": ["{villain}"],
+      "text": [
+        [
+          "The news finds you on the road, and it is the news you were afraid of: {villain} walks again. They say it was seen at {home}, and that it asked for you by name.",
+          "You hear it twice in one day, from people who do not know each other: {villain} is back. What you put down did not stay down.",
+          "A carter from {town} tells you, as if you would not believe it: {villain} has come back. The old women were right to keep the iron on their doors."
+        ]
+      ],
+      "choices": [
+        {"label": ["Then I will finish it. (A tale begins: the journal keeps it.)"], "ops": [["take_hook"]],
+         "result": ["You have done it once. You can do it again, and this time do it properly.",
+                    "This time you will find what binds it, before you go in."]},
+        {"label": ["Not now."], "ops": [["decline_hook"]],
+         "result": ["It will still be there. That is the trouble with it.",
+                    "Someone else, perhaps. Or you, later."]}
+      ]
+    },
+    "villain_relic_moved": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "camp", "town"],
+      "when": {"adventure": {}},
+      "text": [
+        [
+          "Word comes from those who watch for you: something was carried out of its hiding place by night, under guard, and taken to {home}.",
+          "A shepherd saw them pass in the dark, a long line of them, carrying something between them with great care, towards {home}.",
+          "You dream of a dark hall, and of hands laying something down in it, and you wake knowing that {villain_short} has moved what binds {him}."
+        ]
+      ],
+      "ops": [["move_relic"]]
+    }
+  }
+}

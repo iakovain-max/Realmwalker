@@ -713,6 +713,56 @@ def test_a_letter_opens_as_a_page_and_again_from_the_pack(pictured):
     assert app.error_count == 0
 
 
+def test_a_villain_is_a_shadow_in_the_journal_until_seen_and_seals_with_its_sigil(pictured):
+    """Expansion 6 E.7: the journal draws a tale's villain beside its page, a dark shape until the hero has seen it
+    (a visit, its table, a fight), then its own figure; its letters carry its temper's sigil in the wax."""
+    from realmwalker.game import letters
+    from realmwalker.game.story import beats, forge, villain
+    from realmwalker.ui.screens.journal import SHADOW, JournalScreen
+    from realmwalker.world import threats
+
+    app, game = pictured
+    t = next((t for t in threats.records(game.world).values() if t["state"] != "ended" and forge.fitting(game, t)
+              and t["villain"].get("creature") in app.tables.creatures), None)
+    if t is None:
+        pytest.skip("no tale to forge in this world")
+    if t["state"] == "dormant":
+        threats.stir(game.world, app.tables, t, game.world.rng, day=0)
+    adv = forge.make(game, t)
+    beats.director(game.world)["pending"] = None
+    beats.director(game.world)["card"] = None
+
+    def figure():
+        app.push(JournalScreen(app, game))
+        canvas = render(app, (120, 44))
+        app.pop()
+        key = ("fig", dolls.figure_key(dolls.creature(t["villain"]["creature"], app.tables, f"villain/{t['id']}",
+                                                      app.gfx.atlas)))
+        return [c for c in commands(canvas, Image) if isinstance(c.key, tuple) and c.key[:2] == key]
+
+    shown = figure()
+    assert shown and shown[0].rgba[:3] == tuple(int(255 * v) for v in SHADOW), "a shape, not yet a face"
+    beats.offer(game, "villain_visit", adv=adv["id"], where="camp")
+    beats.director(game.world)["pending"] = None
+    assert villain.known_face(adv)
+    shown = figure()
+    assert shown and shown[0].rgba[:3] == (255, 255, 255), "seen with your own eyes"
+    lid = letters.write(game, sender="x", lines=["y"], hand="dark", sigil=villain.hand(game, adv)["sigil"])
+    assert letters.records(game.world)[lid].get("sigil", "mark") in letters.SIGILS
+    zealous = letters.write(game, sender="x", lines=["y"], hand="dark", sigil="sun")
+    letters.show(game, zealous)
+    render(app)
+    canvas = render(app)
+    assert any(c.key == ("wax_seal", "sun") for c in commands(canvas, Image))
+    from realmwalker.ui.gfx import vignette
+
+    assert set(vignette.HALL_PROPS) == set(app.tables.villains["tempers"]) - {"bestial"}, "every hall that dines"
+    for temper, props in vignette.HALL_PROPS.items():
+        for p in props:
+            assert app.gfx.atlas.family(p) or app.gfx.atlas.family(f"{p}_0"), f"{temper}'s hall: {p}"
+    assert app.error_count == 0
+
+
 def test_a_villain_s_name_crosses_the_battle_mat(pictured):
     """Expansion 6 B.2: a story's boss enters with its name and its tale across the mat (the villain sound, a shake);
     its second phase the same with its line."""

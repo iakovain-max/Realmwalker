@@ -1,0 +1,35 @@
+{
+  "_comment": "The words of early ends (Expansion 6 E.4, game/story/early.py and deeds.py's endure): the letter a villain left to be delivered on its death (signed by the villain; paragraphs split by a blank line), and an endure step's set piece: its band here, lived through, lost, or passed by.",
+  "words": {
+    "villain_last_letter": [
+      "To the one who killed me,\n\nIf you are reading this, you were quicker than I thought, or luckier. It does not matter which.\n\nI do not leave a thing unfinished. The ones who bring you this have their orders, and they have had them a long time.\n\n{villain}",
+      "To {hero},\n\nI told them that if I fell they were to find you, and they will. They are not clever, but they are many, and they loved me.\n\nYou took everything. Let us see what you have left at the end of it.\n\n{villain}",
+      "To my death,\n\nI wrote this the night I first heard your name, and gave it to a man who would know when to deliver it.\n\nYou have won, if you call this winning. Look up from the page.\n\n{villain}",
+      "To the meddler,\n\nI do not ask you to grieve for me. I ask only that you look over your shoulder for the rest of your life, and I have made sure you will have reason to.\n\n{villain}"
+    ],
+    "endure_here": [
+      "They come for you as they were told to, long ago.",
+      "There is no talking to them. They have their orders.",
+      "They spread out to take you from every side at once.",
+      "Whatever was left behind has found you."
+    ],
+    "endure_won": [
+      "The last of it is done, and you are still standing.",
+      "You came through it. There is nothing more behind them.",
+      "It is over, and you are alive to see it over.",
+      "The last thing it left for you is lying in the road."
+    ],
+    "endure_lost": [
+      "You live, and that is all: what it left behind had its way with you.",
+      "You come to with the worst of it over, and nothing to show for it but the bruises.",
+      "You did not come through it as you meant to. But you came through.",
+      "They had their way. The road is quiet now, and you are glad only to be on it."
+    ],
+    "endure_passed": [
+      "Whatever was meant to find you never did. The days go by, and the danger with them.",
+      "You hear, later, that they came looking and went away again. It has passed you by.",
+      "Nobody comes. Its last order has gone the way of everything else it built.",
+      "The week goes by without them. Perhaps there was nobody left to carry out its orders after all."
+    ]
+  }
+}

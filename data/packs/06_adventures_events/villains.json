@@ -3,10 +3,29 @@
   "attention": {
     "step": 1,
     "lieutenant": 2,
+    "servants": 1,
+    "great_magic": 1,
+    "great_level": 6,
     "fortnight": -1,
-    "max": 9,
+    "max": 5,
     "moves_apart_days": 2,
-    "per_chapter": 1
+    "per_chapter": 2,
+    "levels": [
+      "unaware",
+      "has heard of you",
+      "watching",
+      "testing",
+      "wrathful",
+      "obsessed"
+    ],
+    "chance": [
+      0.5,
+      0.6,
+      0.75,
+      1.0,
+      1.0,
+      1.0
+    ]
   },
   "tempers": {
     "bestial": {
@@ -14,7 +33,9 @@
       "moves": {
         "omen": 3,
         "carcass": 2,
-        "test": 1
+        "test": 1,
+        "sign": 2,
+        "hunt": 2
       },
       "first_words": [
         "It does not roar. It breathes, long and slow, and the sound fills the dark.",
@@ -34,6 +55,58 @@
         "The horses will not settle. They stare at the treeline with their ears flat.",
         "A trail of blood crossing the road, still wet, going nowhere you can see."
       ]
+    },
+    "zealous": {
+      "speaks": true,
+      "moves": {
+        "villain_omen": 3,
+        "sign": 3,
+        "letter": 2,
+        "rumour": 1,
+        "spy": 1,
+        "token_letter": 2,
+        "nightmare": 2,
+        "visit": 2,
+        "reprisal": 2,
+        "strike": 2,
+        "reprisal_fire": 2,
+        "kidnap": 1,
+        "bargain": 1,
+        "invitation": 1,
+        "relic_moved": 1
+      },
+      "first_words": [
+        "\"You have come,\" it says, as if it had sent for you. \"Good. Kneel, and it will be quicker.\"",
+        "\"Everything that is happening was promised long ago,\" it says. \"You are only the last line of the prophecy.\"",
+        "\"I do not hate you,\" it says. \"The fire does not hate the field. It only burns.\"",
+        "It lifts both hands, and its voice fills the place like a bell. \"Witness!\"",
+        "\"There is still time to be saved,\" it says, and it means it, and that is the worst of it.",
+        "\"You are an offering,\" it says gently. \"You were always going to be an offering.\""
+      ],
+      "omens": [
+        "A shrine by the road has been broken open, and its saint's face scratched out.",
+        "Someone has painted a sign in red on the milestone, an eye with no lid.",
+        "The bells of a chapel far off ring the hour wrong, and then fall silent.",
+        "A crowd of birds circles over the hills, always the same way round, and none of them lands.",
+        "A dead goat hangs from a roadside tree, its throat cut neatly and its blood caught in a bowl.",
+        "A beggar at the crossroads looks up as you pass and says your name, and then forgets he said it.",
+        "Candles burn in a ruined chapel at noon, and nobody is inside.",
+        "A child is singing a hymn you have never heard, and stops when you look at her."
+      ],
+      "hand": {
+        "face": "dark",
+        "ink": [
+          22,
+          20,
+          24
+        ],
+        "seal": [
+          150,
+          112,
+          40
+        ],
+        "sigil": "sun"
+      }
     }
   },
   "moves": {
@@ -41,23 +114,194 @@
       "beat": "beast_omen",
       "attention": [
         0,
-        9
+        5
       ]
     },
     "carcass": {
       "beat": "beast_carcass",
       "attention": [
         1,
-        9
+        5
       ]
     },
     "test": {
       "beat": "beast_test_night",
       "attention": [
         2,
-        9
+        5
+      ]
+    },
+    "villain_omen": {
+      "beat": "villain_omen",
+      "attention": [
+        0,
+        5
+      ]
+    },
+    "rumour": {
+      "beat": "villain_rumour",
+      "attention": [
+        1,
+        5
+      ],
+      "speaks": true
+    },
+    "spy": {
+      "beat": "villain_spy_seen",
+      "attention": [
+        1,
+        5
+      ],
+      "speaks": true,
+      "spy": true
+    },
+    "sign": {
+      "beat": "villain_sign",
+      "attention": [
+        2,
+        5
+      ]
+    },
+    "gift": {
+      "beat": "villain_gift",
+      "attention": [
+        2,
+        5
+      ],
+      "speaks": true
+    },
+    "letter": {
+      "beat": "villain_letter",
+      "attention": [
+        2,
+        5
+      ],
+      "speaks": true
+    },
+    "token_letter": {
+      "beat": "villain_token_letter",
+      "attention": [
+        1,
+        5
+      ],
+      "speaks": true,
+      "tailored": true
+    },
+    "nightmare": {
+      "beat": "villain_nightmare",
+      "attention": [
+        2,
+        5
+      ],
+      "speaks": true,
+      "tailored": true
+    },
+    "visit": {
+      "beat": "villain_visit",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true
+    },
+    "reprisal": {
+      "beat": "villain_reprisal",
+      "attention": [
+        4,
+        5
+      ],
+      "needs": [
+        "helper"
+      ]
+    },
+    "strike": {
+      "beat": "villain_strike",
+      "attention": [
+        4,
+        5
+      ]
+    },
+    "hunt": {
+      "beat": "villain_hunt",
+      "attention": [
+        5,
+        5
+      ]
+    },
+    "reprisal_fire": {
+      "beat": "villain_reprisal_fire",
+      "attention": [
+        4,
+        5
+      ],
+      "needs": [
+        "helper"
+      ]
+    },
+    "invitation": {
+      "beat": "villain_invitation",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true
+    },
+    "bargain": {
+      "beat": "villain_bargain",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true
+    },
+    "wedge": {
+      "beat": "villain_wedge",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true,
+      "needs": [
+        "companion"
+      ],
+      "disloyal": "villain_wedge_taken"
+    },
+    "frame": {
+      "beat": "villain_frame",
+      "attention": [
+        4,
+        5
+      ],
+      "speaks": true,
+      "needs": [
+        "town"
+      ]
+    },
+    "kidnap": {
+      "beat": "villain_kidnap",
+      "attention": [
+        4,
+        5
+      ],
+      "needs": [
+        "helper",
+        "lair"
       ]
     }
+  },
+  "boss_words": {
+    "fizzle": [
+      "What {name} was gathering breaks apart and is gone.",
+      "{name} loses hold of it: the gathered force spills away to nothing.",
+      "Whatever {name} was making ready dies before it can be loosed.",
+      "The moment passes. {name} cannot finish what it began."
+    ],
+    "command": [
+      "{name} snaps an order, and {man} strikes.",
+      "\"Now!\" {name} barks, and {man} lunges.",
+      "At a gesture from {name}, {man} attacks.",
+      "{name} points, and {man} obeys at once."
+    ]
   },
   "bosses": {
     "beast": {
@@ -75,9 +319,42 @@
         "move",
         "strike"
       ],
+      "entrance": [
+        "Out of the dark of its den {name} comes, and the ground takes its weight with a sound like a dropped sack of stones.",
+        "{name} lifts its head from what it was eating, and the light finds its eyes, and it comes.",
+        "Something huge unfolds from the shadows at the back of the den. {name} is awake, and you are in its home."
+      ],
+      "great": {
+        "name": "the rampage",
+        "area": {"size": 10, "range": 0},
+        "save": "dex",
+        "dc": [12, 14, 16],
+        "damage": ["2d10", "4d10", "6d10"],
+        "type": "bludgeoning",
+        "every": 3,
+        "first": 3,
+        "warn": [
+          "{name} drops low and gathers itself, every muscle bunching. Whatever is near it when it moves will be under it.",
+          "{name} goes still and coils, head down, tail lashing. It is about to throw its whole weight round.",
+          "A long rumble comes out of {name}, and it braces its feet wide. Get clear of it."
+        ],
+        "go": [
+          "{name} explodes into motion, whirling through everything round it.",
+          "{name} lunges and spins, and the ground round it is a storm of claws and bulk.",
+          "{name} throws itself round in a great sweep, smashing at everything in reach."
+        ]
+      },
+      "might": {"min_hp": 130, "min_ac": 14, "min_hit": 6, "min_attacks": 2},
+      "by_tier": {
+        "2": {"might": {"min_hp": 270, "min_ac": 16, "min_hit": 9, "min_attacks": 3, "damage": "1d6"}},
+        "3": {"resistances": 2, "actions": 3,
+              "might": {"min_hp": 320, "min_ac": 17, "min_hit": 10, "min_attacks": 3, "damage": "2d8"}}
+      },
       "phase": {
         "at": 0.5,
         "kind": "frenzy",
+        "damage": "2d6",
+        "attacks": 1,
         "lines": [
           "Cornered and bleeding, it stops being careful.",
           "It howls, and when it comes again it comes like a landslide.",
@@ -208,5 +485,62 @@
         ]
       }
     ]
+  },
+  "wrath": {
+    "jump": 2,
+    "min": 3,
+    "weight": 3.0,
+    "days": 7,
+    "steps": [
+      "fetch",
+      "rescue"
+    ],
+    "moves": [
+      "test",
+      "risen_test",
+      "outlaw_test",
+      "carcass"
+    ]
+  },
+  "spy": {
+    "dc": 12,
+    "tailored": 3.0,
+    "tokens": [
+      "a glove",
+      "a ribbon",
+      "a button off a coat",
+      "a handkerchief",
+      "a page torn from a journal",
+      "a comb with a few hairs still in it",
+      "a ring of plain brass",
+      "a lucky stone"
+    ],
+    "missing": [
+      "Later, {token_of} goes looking for {token}, and cannot find it anywhere.",
+      "Somewhere on the way {token_of} has lost {token}, or thinks so. Nobody saw anyone come near.",
+      "{token_of} turns the pack out twice that evening. {token} is gone, and nobody can say where.",
+      "It is only {token}, and {token_of} laughs about losing it. Nobody else laughs."
+    ]
+  },
+  "reprisal_roles": [
+    "witness",
+    "carter"
+  ],
+  "wedge": {
+    "loyal": 50,
+    "offers": [
+      "a pardon for an old crime, and the name cleared",
+      "enough gold to buy a farm and never be found",
+      "the life of a brother who is dying",
+      "word of the child they lost, and where she is now",
+      "a place at its side when the country is its own",
+      "a cure for the sickness that runs in their blood"
+    ]
+  },
+  "invitation": {
+    "snub": 1
+  },
+  "kidnap": {
+    "days": 12
   }
 }

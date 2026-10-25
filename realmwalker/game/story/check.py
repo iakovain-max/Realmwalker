@@ -127,6 +127,24 @@ def problems(tables) -> list[str]:
                         _selector(f"{sw}, {field}", st[field], bound, out)
                 for route in st.get("routes", []):
                     _selector(f"{sw}, routes", route, bound | {"lore", "town"}, out)
+        for lt in bp.get("lieutenants", []):  # (E.3: a band's named head)
+            lw = f"{where}, lieutenant {lt['as']}"
+            picks = (bp["cast"].get(lt["as"]) or {}).get("pick", [])
+            if not picks or not all(p.startswith("band(") for p in picks):
+                out.append(f"{lw}: a lieutenant leads a cast role that is a band (band(...)).")
+            for cid in lt.get("creature", []):
+                if creatures is not None and cid not in creatures:
+                    out.append(f"{lw}: there is no creature '{cid}'.")
+            known = {g for ch in bp["chapters"] for st in ch["steps"] for g in st.get("gives", [])}
+            known |= {f"key:{k}" for k in bp["finale"].get("keys", {})}
+            for g in lt.get("turns", []):
+                if g.partition(":")[0] not in ("clue", "key") or g not in known:
+                    out.append(f"{lw}: one who turns gives a clue or a key the tale knows, not '{g}'.")
+        from realmwalker.game.story import early
+
+        for kind in bp.get("early", {}):  # (E.4: the short last chapters of a villain dead before its finale)
+            if kind not in early.KINDS:
+                out.append(f"{where}: the early end '{kind}' is not one the game knows ({', '.join(early.KINDS)}).")
         fin = bp["finale"]
         if fin["template"] not in bosses:
             out.append(f"{where}: the finale's boss template '{fin['template']}' is not in villains.json.")
@@ -134,6 +152,16 @@ def problems(tables) -> list[str]:
         for k, keys in fin.get("keys", {}).items():
             for key in keys:
                 _key(f"{where}, finale.keys.{k}", key, out)
+        from realmwalker.game import arena as arenamod
+        from realmwalker.game.story import arenas
+
+        for a in fin.get("arenas", ()):  # (E.5: the finale's arenas, code and words)
+            if a not in arenas.ARENAS or a not in arenas.CHANGES:
+                out.append(f"{where}: the finale's arena '{a}' is not one the game knows ({', '.join(arenas.ARENAS)}).")
+            elif a not in tables.adventures.get("arenas", {}):
+                out.append(f"{where}: the finale's arena '{a}' has no words in adventures.json \"arenas\".")
+        if fin.get("endure_field") and fin["endure_field"] not in arenamod.FIELDS:
+            out.append(f"{where}: the set piece's field '{fin['endure_field']}' is not one the game knows.")
         for e in bp["endings"]:
             if not _built(e):
                 continue
@@ -150,8 +178,14 @@ def problems(tables) -> list[str]:
             if cond not in beatlang.CONDITIONS:
                 out.append(f"{where}: the condition '{cond}' is not one the game knows.")
         _ops(where, beat.get("ops"), beatlang.OPS, out, "op")
+        known_tempers = tables.villains.get("tempers") or {}
+        for temper in (beat.get("tempers") or {}) if known_tempers else ():  # (E.7: a temper's own first page)
+            if temper not in known_tempers:
+                out.append(f"{where}: it has words for the temper '{temper}', which there is not.")
         if beat.get("leaves") and beat["leaves"] not in LEFT:
             out.append(f"{where}: it leaves '{beat['leaves']}', which the camp's picture cannot draw.")
+        if beat.get("stage") and getattr(tables, "scenes", None) and beat["stage"] not in tables.scenes:
+            out.append(f"{where}: it is staged as the scene '{beat['stage']}', which there is not.")
         words = tables.adventures.get("words") or None  # (tables with no words at all: a test's, nothing to check)
         for op in (beat.get("ops") or []) if words is not None else []:
             if op and op[0] == "letter" and (len(op) < 2 or op[1] not in words):
@@ -170,6 +204,10 @@ def problems(tables) -> list[str]:
                 out.append(f"{cw}: '{ch['check']['skill']}' is not a skill.")
             if "check" in ch and not ("success" in ch and "failure" in ch):
                 out.append(f"{cw}: a choice with a check says what success and failure do.")
+    tempers = tables.villains.get("tempers", {})
+    for temper in (tables.adventures.get("defeat") or {}).get("tempers", ()):  # (E.5: who takes the beaten alive)
+        if temper not in tempers:
+            out.append(f"adventures.json defeat: the temper '{temper}' is not in villains.json.")
     for tid, boss in bosses.items():
         if tid.startswith("_"):
             continue
@@ -182,12 +220,56 @@ def problems(tables) -> list[str]:
         if "phase" in boss and boss["phase"]["kind"] not in finale.PHASES:
             out.append(f"villains.json: boss {tid}: the second phase '{boss['phase']['kind']}' is not one the game "
                        f"knows.")
+        for tier, over in (boss.get("by_tier") or {}).items():  # (E.5: its numbers at the tiers above)
+            for m in over.get("menu", ()):
+                if m not in finale.LEGENDARY:
+                    out.append(f"villains.json: boss {tid} at tier {tier}: the legendary action '{m}' is not one the "
+                               f"game knows.")
         if boss.get("phase", {}).get("creature") and boss["phase"]["creature"] not in tables.creatures:
             out.append(f"villains.json: boss {tid}: there is no creature '{boss['phase']['creature']}' to come at its "
                        f"second phase.")
+    strength = tables.adventures.get("strength") or {}  # (E.6: the finale's guards and the ally, by tier)
+    for kind, tiers in (strength.get("guards") or {}).items():
+        for tier, ids in tiers.items():
+            for cid in ids:
+                if creatures is not None and cid not in creatures:
+                    out.append(f"adventures.finale.json: strength guards for {kind} at tier {tier}: there is no "
+                               f"creature '{cid}'.")
+    for cid in strength.get("ally") or ():
+        if creatures is not None and cid not in creatures:
+            out.append(f"adventures.finale.json: strength ally: there is no creature '{cid}'.")
+    from realmwalker.rules.combat import MORALE_HP, FEARLESS
+
+    for trait, tr in (tables.villains.get("lieutenants") or {}).get("traits", {}).items():
+        if tr["morale"] not in set(MORALE_HP) | FEARLESS:
+            out.append(f"villains.json: lieutenants' trait {trait}: the morale '{tr['morale']}' is not one the game "
+                       f"knows.")
+    for kind, group in (tables.villains.get("lieutenants") or {}).get("nemesis", {}).get("band", {}).items():
+        if creatures is not None and group not in creatures.encounters:
+            out.append(f"villains.json: lieutenants' nemesis band for {kind}, '{group}', is not an encounter.")
+    from realmwalker.game.story import early, villain
+
+    for b in early.BEATS:  # (E.4: the beats the code plays by name)
+        if b not in beats:
+            out.append(f"story/early.py: there is no beat called '{b}'.")
     for mid, move in tables.villains.get("moves", {}).items():
-        if move["beat"] not in beats:
-            out.append(f"villains.json: move {mid}: there is no beat called '{move['beat']}'.")
+        for b in (move["beat"], move.get("disloyal")):
+            if b and b not in beats:
+                out.append(f"villains.json: move {mid}: there is no beat called '{b}'.")
+        for need in move.get("needs", []):
+            if need not in villain.NEEDS:
+                out.append(f"villains.json: move {mid}: it needs '{need}', which is not one the game knows.")
+    for how, (mark, scene) in villain.SEEN.items():
+        if getattr(tables, "scenes", None) and scene not in tables.scenes:
+            out.append(f"story/villain.py: a reprisal by '{how}' is shown as the scene '{scene}', which there is not.")
+    moves = tables.villains.get("moves", {})
+    for tid, tem in tables.villains.get("tempers", {}).items():  # (E.1: a temper's weights name real moves)
+        for mid in tem.get("moves", {}):
+            if mid not in moves:
+                out.append(f"villains.json: temper {tid}: there is no move called '{mid}'.")
+    for mid in (tables.villains.get("wrath") or {}).get("moves", []):
+        if mid not in moves:
+            out.append(f"villains.json: wrath: there is no move called '{mid}'.")
     for kind, lst in tables.villains.get("weaknesses", {}).items():
         for w in lst:
             for key in w["keys"]:

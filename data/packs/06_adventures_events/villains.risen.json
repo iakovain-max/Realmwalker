@@ -3,7 +3,8 @@
   "tempers": {
     "proud": {
       "speaks": true,
-      "moves": {"risen_omen": 3, "risen_letter": 3, "risen_at_camp": 2, "risen_test": 2},
+      "moves": {"risen_omen": 3, "risen_letter": 3, "risen_at_camp": 2, "risen_test": 2, "rumour": 1, "gift": 1, "visit": 3, "spy": 1, "token_letter": 1, "nightmare": 1, "strike": 2, "reprisal": 1, "invitation": 3, "bargain": 1, "relic_moved": 2},
+      "hand": {"face": "dark", "ink": [44, 22, 58], "seal": [104, 88, 40], "sigil": "crown"},
       "first_words": [
         "\"Kneel,\" says {villain}, in a voice like a door in a tomb. \"I was a king before your grandfathers' grandfathers were born.\"",
         "\"Do you know what you stand on?\" says {villain}. \"My hall. My floor. You are here by my leave, and my leave is withdrawn.\"",
@@ -28,7 +29,8 @@
     },
     "grieving": {
       "speaks": true,
-      "moves": {"risen_omen": 3, "risen_letter": 2, "risen_at_camp": 3, "risen_test": 1},
+      "moves": {"risen_omen": 3, "risen_letter": 2, "risen_at_camp": 3, "risen_test": 1, "gift": 2, "visit": 3, "spy": 1, "token_letter": 1, "nightmare": 2, "strike": 1, "invitation": 2, "bargain": 2, "relic_moved": 1},
+      "hand": {"face": "fine", "ink": [62, 64, 84], "seal": [86, 88, 104], "sigil": "tear"},
       "first_words": [
         "\"They buried me under the hill and forgot my name,\" says {villain}. \"You will remember it.\"",
         "\"It was so quiet in the hill,\" says {villain_short}. \"So long. Nobody came. Why did nobody come?\"",
@@ -53,10 +55,10 @@
     }
   },
   "moves": {
-    "risen_omen": {"beat": "risen_omen", "attention": [0, 9]},
-    "risen_letter": {"beat": "risen_letter", "attention": [1, 9]},
-    "risen_at_camp": {"beat": "risen_at_camp", "attention": [1, 9]},
-    "risen_test": {"beat": "risen_test_road", "attention": [2, 9]}
+    "risen_omen": {"beat": "risen_omen", "attention": [0, 5]},
+    "risen_letter": {"beat": "risen_letter", "attention": [1, 5], "speaks": true},
+    "risen_at_camp": {"beat": "risen_at_camp", "attention": [1, 5]},
+    "risen_test": {"beat": "risen_test_road", "attention": [2, 5]}
   },
   "bosses": {
     "risen": {
@@ -66,6 +68,37 @@
       "resistances": 2,
       "actions": 2,
       "menu": ["move", "strike"],
+      "entrance": [
+        "{name} rises from the seat, slow as a tide, and the cold of the grave comes off it like breath off ice.",
+        "Dust pours from {name} as it stands. Old gold glints on its brow, and the dark in the hall leans towards it.",
+        "{name} lifts one hand, and every flame in the place bows low and burns blue."
+      ],
+      "great": {
+        "name": "the grave-cold",
+        "area": {"size": 10, "range": 60},
+        "save": "con",
+        "dc": [12, 14, 16, 18],
+        "damage": ["2d10", "4d10", "6d10", "8d10"],
+        "type": "necrotic",
+        "every": 3,
+        "first": 3,
+        "warn": [
+          "{name} points, and frost creeps out across the floor in a ring. The air there grows thick and grey. Something is coming to that place.",
+          "The crown on {name} burns cold, and a circle of rime spreads on the ground, white and widening. Do not be standing in it.",
+          "{name} whispers a word older than the barrow, and the shadows pool on the floor in a circle, deepening."
+        ],
+        "go": [
+          "The grave-cold falls where the frost was, and it bites to the bone.",
+          "The circle of rime goes black, and the cold in it is the cold of the long dark under the hill.",
+          "{name} closes its hand, and the pooled shadow drinks the warmth from everything inside it."
+        ]
+      },
+      "by_tier": {
+        "2": {"menu": ["move", "strike", "command"]},
+        "3": {"resistances": 3, "actions": 3,
+              "might": {"min_hp": 300, "min_ac": 17, "min_hit": 10, "min_attacks": 3, "damage": "2d6"}},
+        "4": {"hp": 2.0, "might": {"min_hp": 450, "min_ac": 19, "min_hit": 12, "min_attacks": 4, "damage": "3d6"}}
+      },
       "phase": {
         "at": 0.5,
         "kind": "raise",

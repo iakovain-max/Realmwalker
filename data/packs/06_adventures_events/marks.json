@@ -171,6 +171,30 @@
       "moments": ["A fiddler plays for a ring of dancers who keep losing the step.", "Children run under the garlands with ribbons in their hair.", "A whole sheep turns on a spit in the square, and a crowd stands round it."],
       "description": ["It is decked for a feast, garlands across its streets."]
     },
+    "gibbet": {
+      "_comment": "Expansion 6 E.2: one who helped you hanged in the square by the villain, for all to see (story/villain.pay).",
+      "form": "record", "label": "a gibbet in the square", "colour": "warn", "lasts": [14, 24],
+      "dress": {"props": [["gallows", 1]], "props_near": "square"},
+      "troubles": [
+        "<warn>A gibbet stands in the square of {town}.</> Nobody will say whose it was, and everybody knows.",
+        "<warn>Someone was hanged in {town} for helping a stranger.</> The rope is still on the beam.",
+        "<warn>{town} has a new gibbet.</> People cross the square the long way round."
+      ],
+      "moments": ["A woman leaves a sprig of rosemary at the foot of the gibbet and hurries off.", "Crows sit along the gibbet's beam and watch the square.", "A boy throws a stone at the gibbet, and his mother slaps him for it, and then holds him."],
+      "description": ["A gibbet stands in its square, and the town walks round it."]
+    },
+    "burned_out": {
+      "_comment": "Expansion 6 E.2: the house of one who helped you burned by the villain, the doors barred from outside (story/villain.pay).",
+      "form": "record", "label": "a house burned", "colour": "warn", "lasts": [30, 60],
+      "dress": {"share": 0.04, "roofless": 1.0, "floor": "ash", "furniture": "ash", "walls": [["ruin_wall", 0.3]], "doors": "doorway", "look": {"walls": "charred", "roof": "charred"}, "shut": true},
+      "troubles": [
+        "<warn>A house in {town} was burned with its people in it.</> The shell still smokes when it rains.",
+        "<warn>{town} smells of old smoke.</> One house is a black shell, and the neighbours will not look at it.",
+        "<warn>Somebody fired a house in {town} and barred the doors.</> The watch says it found nothing."
+      ],
+      "moments": ["Someone has propped a little wooden doll against the burned doorpost.", "Two men rake through the ashes of the burned house, slowly, and say nothing.", "A dog sits by the burned house and will not be called away."],
+      "description": ["One of its houses is a burned shell, and nobody has touched it since."]
+    },
     "memorial": {
       "form": "record", "label": "remembering", "colour": "dim",
       "dress": {"props": [["statue", 1]], "props_near": "square"},

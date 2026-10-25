@@ -369,7 +369,8 @@ def _pick(game, lm, rec, c) -> bool:
 @cue("arrive")
 def _arrive(game, lm, rec, c) -> bool:
     """Someone comes in at the gate (or `at` a role's side) for this scene: a person of the trade `job`, who goes
-    again when it ends (unless `keep`)."""
+    again when it ends (unless `keep`). `as` "villain": drawn and named as the scene's words `villain_creature` and
+    `villain_short` say."""
     from realmwalker.game import people
 
     role = c["role"]
@@ -390,6 +391,9 @@ def _arrive(game, lm, rec, c) -> bool:
     npc.x, npc.y = spot
     npc.present = True
     npc.flags.update({"visitor": True, "placed": True})
+    if c.get("as") and rec["words"].get(f"{c['as']}_creature"):  # (the villain itself at your bedside: E.2)
+        npc.flags["as_creature"] = rec["words"][f"{c['as']}_creature"]
+        npc.name = rec["words"].get(f"{c['as']}_short") or npc.name
     people.add(game.world, town, npc)
     rec["cast"][role] = npc.id
     rec["made"].append(npc.id)

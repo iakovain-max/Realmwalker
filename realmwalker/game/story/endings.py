@@ -77,7 +77,10 @@ def finish(game, adv: dict) -> list[str]:
     for op in e["ops"]:
         lines += OPS[op[0]](game, adv, *op[1:]) or []
     adv["state"] = "won" if e["id"] in WON else "abandoned" if e["id"] == "abandoned" else "lost"
-    if adv["state"] == "won":
+    if adv["state"] == "won" or (adv.get("boss_dead") and e["id"] != "bargained"):
+        from realmwalker.game import law
+
+        lines += law.clear_framed(game, adv["id"])  # (its frames come to light with its fall: E.2)
         from realmwalker.game.story import experience
 
         lines += experience.award(game, "finale", f"finale/{adv['id']}")  # (on top of the finale fight's own: C.8)
@@ -88,6 +91,9 @@ def finish(game, adv: dict) -> list[str]:
     adv["epilogue"] = [{"about": about, "text": textgen.fill(rng.choice(lst), rng, tables, words)}
                        for about, lst in e.get("pages", {}).items() if about == "hero" or about == "place"
                        or adv["cast"].get(about)]
+    from realmwalker.game.story import lieutenants
+
+    lieutenants.after_tale(game, adv)  # (their pages, and the promotion of the one with the greatest grudge: E.3)
     t = threats.records(game.world).get(adv["threat"])
     if t is not None and t.get("adventure") == adv["id"]:
         t["adventure"] = None  # (the threat goes on in the world if it was not ended)
@@ -114,6 +120,11 @@ def _boss_dead(game, adv, arg) -> bool:
 @ending_if("boss_fled")
 def _boss_fled(game, adv, arg) -> bool:
     return bool(adv.get("boss_fled"))
+
+
+@ending_if("rite_done")
+def _rite_done(game, adv, arg) -> bool:
+    return any(st["kind"] == "rite" and st["state"] == "done" for ch in adv["chapters"] for st in ch["steps"])
 
 
 @ending_if("scheme_done")
@@ -278,6 +289,9 @@ def _sequel(game, adv, kind: str = "returns", lo: int = 28, hi: int = 56) -> lis
     t["state"] = "dormant"
     t["adventure"] = None
     t["sequel"] = kind
+    from realmwalker.game.story import early
+
+    early.returns(game, adv, t)  # (whom it comes back for, and how often it has: E.4)
     t["scheme"]["held_until"] = float(news.now_days(game.world)) + rng.randint(int(lo), int(hi))
     return []
 
@@ -290,6 +304,42 @@ def _threat_free(game, adv, *args) -> list[str]:
     t = threats.records(game.world).get(adv["threat"])
     if t is not None:
         t["adventure"] = None
+    return []
+
+
+@consequence("mark")
+def _mark(game, adv, place: str, mark: str) -> list[str]:
+    """A mark on the tale's settlement (marks.json): haunted, paying outlaws, remembering..."""
+    from realmwalker.world import marks, news
+
+    p = _place(adv, place)
+    if not p or "settlement" not in p or mark not in marks.table(game.tables):
+        return []
+    s = game.world.settlements[int(p["settlement"])]
+    marks.add(game.world, s, mark, float(news.now_days(game.world)), game.tables, by=_villain_short(game, adv))
+    return []
+
+
+def _villain_short(game, adv) -> str:
+    from realmwalker.game.story import words as wordsmod
+
+    return str(wordsmod.for_adventure(game, adv).get("villain_short", "it"))
+
+
+@consequence("bargained")
+def _bargained(game, adv, lo: int = 60, hi: int = 120) -> list[str]:
+    """You took its offer (E.2: a bargain, or a wedge driven home): it keeps its word for a while - its scheme waits
+    lo-hi days, and then goes on as before, with nobody against it."""
+    from realmwalker.world import news, threats
+
+    t = threats.records(game.world).get(adv["threat"])
+    if t is None or t["state"] == "ended":
+        return []
+    rng = game.world.rng.child(f"bargained/{adv['id']}")
+    t["adventure"] = None
+    until = float(news.now_days(game.world)) + rng.randint(int(lo), int(hi))
+    t["scheme"]["held_until"] = until
+    t["bargained"] = until  # (no one offers you its tale again while its word holds: story._can_take)
     return []
 
 

@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part E (villains who act; the finale in full) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part F (the cast and the Reading) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -27,14 +27,16 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   favours and contacts; experience from stories; twenty vignettes; the Beast's witness and hunter as situations;
   saves format 21) · Part D (2026-10-25: the Risen and the Outlaw Lord from hook to epilogue, ten new kinds of step,
   the first hour of every new life; the dead at the camp's edge, the hideout and the barrow's halls shown; saves
-  format 22)
+  format 22) · Part E (2026-10-25: villains who act - attention, schemes staged on the map, letters in
+  their hands, lieutenants who remember, nemeses, escapes, returns and early ends; the finale in full - arenas,
+  phases, great attacks, every key, retreat and defeat, measured fair; every move in its temper's words, seals,
+  the villain's shadow in the journal; saves format 23)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
   30 adapted); Expansion 5: all 72 settled (39 done, 32 adapted, 1 omitted). PHB 69% · DMG 21% · MM 17%
-Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's checks (2026-10-18) saw two townsfolk on
-  one square of a town for seven turns (town life, untouched by the part; the other eight runs, on main and on the
-  branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
+Known, not yet chased: (the townsfolk piled on one square that autoplay saw now and then since Expansion 5 were
+  parted in E.7: townlife._unpile.) The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
 - Expansion 6 C.6 (situations): a trouble's acts open once taken on; a failed check may be tried the next day
@@ -567,11 +569,180 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.1 (*attention in full and the whole
-move set with tempers' weights, spies that steal tokens and tailored next moves, wrath after a setback; the limits
-(one move in two days; beasts never write). Tests: `tests/test_villain.py`*), on branch `dlc/06-adventures-events`.
-Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.4, §5.5, §5.8, game/story/villain.py, and
-the D.5 note below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.1 (*allies with stakes, join
+conditions (often a situation of their own) and three-beat arcs; the new bond `oath` (companions.json); the full party
+case (`Battle.add_ally`); their fates; tests/test_cast.py*), on branch `dlc/06-adventures-events` (Part E is on main).
+Read docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.3 and §5.6, game/story/cast.py, the E.3 note
+below (a turned lieutenant as an ally waits for F) and rules/allies.py's `add_ally`.
+E.7 (2026-10-25, realmwalker-a): a beat's `tempers` {temper: [first-page variants]} replace its text[0] when its tale's
+villain has that temper (beats.pages); fragments beats.voices_a/b/c.json (`_merge`; named to sort after
+beats.villain.json: fragments merge in name order) give every move of every temper three (77 pairs; floor test
+test_every_villain_move_has_its_tempers_voice: two); story/check reports an unknown temper. Letters: `sigil`
+(letters.SIGILS mark/sun/key/skull/crown/tear; temper `hand.sigil`; villain.hand; drawn by letter._seal(sigil)).
+`villain.seen(game, adv)` sets adv["seen"] (beats.offer of villain.SEEN_IN: visit, hunt, dinner; story.on_battle for a
+fighter tagged villain); `villain.known_face`; the journal draws the villain's figure beside a tale
+(journal.villain_portrait: SHADOW tint until known). `vignette.HALL_PROPS` by temper replace the "lair" picture's
+props. Sound `villain_move` (villain_1.wav quieter) is a villain-family beat's sound_open. textgen's slot pattern takes
+a capital first letter ({He}, {His}, {They} in story words were never filled). FORMAT_VERSION 23.
+The fresh review's fixes: omen lines no longer point back at the omen as a thing (some omens are sounds); seals in
+the words as drawn (sun in yellow, crown in old gold, tear in grey); a rider's horse, not the villain's pronoun; tests
+that every temper line fills in a real tale of each kind, a villain fought is seen, and a warden keeps its square.
+Town piles: `townlife.unpile` also after `people.update_positions` (one back from fleeing or from your company
+stands where they last stood). The story check skips beat tempers when the villains table has none (test fakes).
+E.6 (2026-10-25, realmwalker-b): the fairness measure. `tools/storyplay.py --finale all|half|none --kind K` (Finalist,
+finale_once, finales): a tale forged and taken straight to its finale (chapter set to the last, adv["keys"] set,
+"means" with a weakness and the party carrying the best of its means), a party of four at the target level, rested,
+on Auto, falling back (RETREAT_DOWN 2 down or one dead while the boss is above RETREAT_BOSS 35%) through
+tactics.flee; reports won (boss dead, or taken: asleep/yielding), retreat_ok (fled, tale active, finale open), worth
+(foes over the party's High budget). tests/test_story_balance.py (slow, 6 tests, 30 lives each, ~70 s): every key
+>=80%, none <=45%, most retreats get away. The finale's strength: `finale.strengthen` (from dungeon.populate's story
+villain band, after tag_band) adds adventures.finale.json `strength` guards by kind and tier to the band up to `share`
+of a party of max(4, n) at the target level's `difficulty` budget, `most` bodies (then a guard replaces the weakest
+minion); `by_kind` overrides (outlaw 0.7, 6); picked evenly from the list (duplicates weight). Boss template `might`
+(base and by_tier): ac, hit (attack bonus and DCs), damage (an extra die of the blow's type), multiattack, and floors
+min_hp/min_ac/min_hit/min_attacks (finale._might; min_hp in make_boss). Frenzy phase `damage`, `attacks`. Strength
+`ally` by tier (finale._ally_fights; words ally_with). The minions key sends away every other one by xp, strongest
+first, never a lieutenant. A finale boss `holds_ground` (Battle.can_leave false; tactics.flee -> _hold_back) unless
+its phase is an escape/breaks_off; no_escape sets it. A finale field is lit (arena.FINALE_LIGHT at the boss and
+halfway; the arena record only when an arena was laid). The Auto throws damaging flasks (tactics._throw_flask, THROW_BAR
+1.3 times the blows' worth). Data changed: the beast blueprint's weakness key + no_phase_two, the risen's name key
+frightened(2). Measures (48 lives): beast all 88% / none 38%, outlaw 88/38, risen 98/29; tiers 3-4 not measured (no
+test world has them). Whole tales (storyplay's Player now falls back at a finale through Finalist.battle; play_tale checks game.over before 'stuck'): before E.6 36/36 finished, 0 died; after beast 17/20, outlaw 10/12, risen 10/12, every miss a death (the bot holds about half the keys). test_storyplay's bars lowered to four in five (beast 16/20, D's tales 4/6), every miss a death and never a stuck tale. balance.py unchanged. Tests: tests/test_finale_strength.py (6), tests/test_story_balance.py (6, slow); test_tactics_coverage's boss test meets the boss hurt on odd seeds (the might floors put half its hit points beyond the arena party).
+E.5 (2026-10-25, realmwalker-a; one session for both halves): arenas `game/story/arenas.py` (ARENAS lay on the terrain
+before the Field is made: game/arena._finale_arena for a dungeon finale's band, via story.finale_band; CHANGES run at
+the second phase as a battle `phase_hooks` hook from bosses.after_damage; choice once in adv["finale"]["arena"] by the
+level's style, adventures.json "arenas" {styles, wild, enter, change}; blueprint finale `arenas`); burning_village is
+a wild FIELDS entry (field `village`: fire._widen keeps timbers catching after `_derive`), used by the outlaw's
+contingency endure (finale `endure_field` -> early._contingency_step target field -> deeds.endure enc.field).
+Great attacks: template `great` {name, area {size, range}, save, dc[], damage[], type, every, first, warn, go} ->
+cdef boss_great (finale.great_at by tier) -> bosses.turn_start (from Battle's turn engine after turn_start): an "omen"
+zone (owner the boss; harmless; drawn red; a hazard in move_tree for its foes; tactics._out_of_harm steps out; gone if
+the boss falls), then `_fall` next turn (save for half, takes the action, fizzles if it cannot act). Entrance: template
+`entrance` said by finale.prepare. Tiers: `by_tier` {"3": {...}} via finale.at_tier. Legendary "command"
+(bosses.command from Battle._legendary_window when it has no blow of its own). New keys (finale.py): rival_arrives(n)
+(a round hook: two scouts, the cast "rival" named if any), party_buff(bless|courage|warded) (PARTY_BUFFS),
+rite_allowed (battle flag; story.on_battle on the boss's death does open rite steps whose needs are met and sets the
+rite beat's success flags: `_rite_flags`), lieutenant_absent(role) (off the field and out of its band before the
+fight). Ending condition rite_done. Retreat and defeat: `game/story/defeat.py` (battle `finale_of` set where the boss
+is made; on_retreat from story.on_battle on "fled"; on_defeat from fight.finish_battle's defeat branch before the
+robbers; adventures.finale.json retreat {attention, ally_lost}, defeat {tempers, lock}; outcome "taken"; step kind
+"escape", optional, done by defeat.on_leave from GameState.leave_local; adv["taken_alive"] once). Blueprint keys: the
+risen's name += party_buff(courage), rite_allowed; the outlaw's inside += lieutenant_absent(raiders). Not in E.5:
+places that seal (no blueprint says so yet; the retreat is always open), rival bands (Part F's cast: the key works,
+nothing uses it yet), the party blessed by a beacon (the key works with "bless"/"warded"; only "courage" is used).
+Tests: tests/test_finale_arenas.py (16), tests/test_finale_end.py (8); autoplay `_check_finale`; storyplay
+`reclaim` (after "taken": open the chest, arm again, out and rest). Defeat leaves the boss's wounds (only a retreat heals
+it). Fixed on the way: `Battle._legendary_move` only when it brings the boss nearer (its shuffle kept QUIET_ROUNDS
+from ending a stand-off); `game/arena._connect` floods without squeezing diagonally between two walls and digs along
+the axes. Arenas are laid on a copy (`arenas.lay`) and `_way_off` keeps an edge reachable. The captain's `command` is
+from tier 2; great attacks first on round 3. Measures: storyplay six each: outlaw 6/6, risen 5/6 (as before E.5).
+E.4 (2026-10-25, realmwalker-b): `game/story/early.py` (docstring has it all). Escapes: `may_escape` (not after
+adv["escaped"], kept by `on_fled` from story.on_battle; not with a found key whose finale effects include the new KEYS
+`no_escape`: the risen's anchor) gates the template `before` in finale.prepare; else `no_flight` (morale fanatic, the
+`spent` line). Early ends: story.on_battle, villain dead while `is_early` (its finale step open but not in the
+current chapter) -> `begin`: blueprint `early` weights (risen 2/2/1, outlaw 3/1/1; default cat_away) over `available`
+KINDS succession (a FREE lieutenant with a band, the finale step's level), contingency (the kind's `minions`),
+cat_away; the current chapter's open steps "dropped", later chapters cut (adv["early"]["chapters"] keeps the count),
+the finale's story_sites record unbound (`_unbind_finale`), a last chapter "early" with one step (succession: defeat on
+the heir's role at the finale level; contingency: `endure` with beat early_last_letter if the villain speaks, else
+early_loosed). `after_chapter` (from story._chapter_check) finishes the tale. story.on_battle skips villain-tagged
+leftovers once boss_dead; villain.due_move makes no moves while boss_dead/early. Step kind `endure` (steps.py fields
+beat, group, after; deeds.py `_setup_endure` sets `due`, `_endure_due` offers its beat from deeds.on_travel off towns
+and deeds.on_night at camp, op `endure` -> `deeds.endure` -> a band all tagged role "endure" (deeds.LOOSE), on_battle:
+won or got away done, defeat/surrendered failed, deeds.daily passes it after ENDURE_WAIT days). Returns: endings
+`_sequel` -> `early.returns` (threat["returns"] {adv, life, times}); threats.advance wakes a `sequel` dormant threat
+for sure once held_until passes (never by chance before); `early.daily` (story.daily) offers the hero beat
+villain_returns once (rec["told"]); `on_forge` (forge._record) pops `sequel`, sets adv["returning"] and attention
+villains.early.json returning.attention; `on_boss` (finale.prepare after make_boss) +hp per return. Relic moved: move
+relic_moved (attention 5, needs "anchor": `relic_movable`, an open fetch step giving key:anchor, not placed, not at
+home) -> beat villain_relic_moved -> op `move_relic` (target to home level 1, its step quest remade). Words:
+villains.early.json, beats.early.json, adventures.early.json. check.py: blueprint early kinds, early.BEATS. Autoplay
+`_check_early`; storyplay plays endure (camps out of town). Not in E.4: an early end's own epilogue page (the journal
+keeps it), a fled finale (the retreat rule is E.5's), anchors for kinds other than the Risen (Part K's tales).
+Measures (storyplay, 20 lives): outlaw 18/20 (18 before), risen 18/20 (19 before); all lost lives died, none stuck.
+The fresh review's fixes: an endure's band left without a battle (evade, talk, pay) is lived through the next day
+(st["fighting"] = the day; deeds.daily); words.for_adventure gives beasts it/its; `is_early` is false with an open
+slay step (the beast's planned kill); finale.prepare skips a villain-tagged band once boss_dead; on_fled not in the
+finale; dropped steps' quests removed; a return's attention only for the same hero's life. Checks: full suite (only the known enemy-casters timing test
+missed under load; passes alone), autoplay OK, smoke OK. test_storyplay's openings test asked six lives for two
+kinds of first hour; the dice follow the world's id, which follows the data, and E.4's data drew six summonses: it
+now also draws the choice for twelve heroes in each test world (`_first_hours`).
+E.3 (2026-10-25, realmwalker-a): `game/story/lieutenants.py` (docstring has it all). Blueprint `lieutenants` [{as,
+creature, titles, turns}] (risen: waker; outlaw: raiders, lookout) on cast roles that are bands; `forge` (from
+forge._record, after the cast is bound) keeps records on `threat["lieutenants"]` and the cast entry's "lt" index (the
+living come back with a returning villain: AGAIN fates); `cast.describe` and `deeds.role_name` name the band for a
+FREE lieutenant. `on_spawn` (deeds.band, dungeon populate's story band) dresses the band's head (its creature, name,
+tag {role, lt}); `arm` (finale.prepare, every foe) sets the trait's morale, boss_phase kind "escape" (kernel
+handlers/bosses.py: gone with nobody adjacent and not held, else fleeing) and grudge numbers (villains.lieutenants.json
+grudge: ac, hp, a "grudge" buff damage_die). `on_battle` (first in story.on_battle): dead -> slain (grief or rage line
+by temper; villain.on_fight counts it as before), taken, fled -> escaped (grudge, a scar if hurt). `on_fate` (story.
+on_fate): execute -> slain + villain.on_fight; spare/rob -> trait `turn` (rob x0.5) -> turned (blueprint `turns`
+through beats.OPS clue/key) or turncoat (`betray`: nothing given), else spared (grudge); capture/interrogate -> taken.
+`join_finale` (story.fight_finale, once: adv["lt_joined"]) adds FREE lieutenants to the boss's actor, each in the place of one of its minions. `after_tale`
+(endings.finish, after the ops): epilogue pages about "lieutenant:<role>" (epilogue screen ABOUT "lieutenant";
+vignette.for_epilogue: figure, grave or gallows), and the greatest grudge (>= nemesis.grudge) still free when the
+villain fell (dead or taken, not let go, not bargained) is promoted: `politics["nemeses"]` [{lt (a copy), threat,
+villain, life, band, next, state hunting|slain|taken}], met by `on_travel` (from story.on_travel, out of towns; its
+men are tagged {nemesis, role minion} and are not it). Journal "Its hands" (`journal_lines`). check.py: lieutenant on
+a band role, creatures, turns a clue/key the tale knows; trait morale; nemesis bands. Autoplay `_check_lieutenants`.
+Fixed: waves and ambushes counted as lieutenants slain (story.on_battle harm). Not in E.3: a turned lieutenant as an
+ally who fights (the ally keys are E.5's), grief and rage differ only in words (both are wrath), a lieutenant as the
+villain of a whole sequel tale (the nemesis is its road form; E.4's succession may grow it), the weakness is words.
+Measures (storyplay, 20 lives): outlaw 18/20 (19 before; both lost lives died; at first the joining lieutenants
+swelled the finale and one life lost it over and over: they now take the place of one of its men each), risen
+19/20 (18 before; the lost life died). tests/test_risen_outlaw._tale now sets the first hour aside, as storyplay
+does (the first hour's dice follow the hero's name and the world's id, and a terror opening left a beat waiting).
+Checks: full suite (only the known tactics-coverage timing test missed under load; passes alone), autoplay OK, smoke OK.
+E.2 (2026-10-25, realmwalker-b): the schemes. villains.json moves may say `needs` (villain.NEEDS: helper, companion,
+town, lair; `able`) and `disloyal` (the wedge's beat for a companion under villains.json wedge `loyal` 50); due_move
+fills adv["reprisal"] (helper; the wedge too, for its darkest choice), adv["wedge"] {name, loyalty, offer} (`_tempted`,
+words {tempted} {offer}), adv["frame"] {settlement, victim, name} (`_frame_plan`, words {frame_town} {frame_victim}).
+New moves invitation, bargain, wedge, frame, kidnap, reprisal_fire, beats in beats.schemes.json (words by a sonnet
+helper); temper weights and a temper `hand` {face, ink, seal} (letters.write `ink`, LetterScreen; beats op `letter`
+"dark" with a tale uses `villain.hand`). Visits: beat `leaves` "visitor" (story.LEFT; `story.left_record` {what, adv},
+a visitor only while its beat waits; scenes.camp `_visitor`: the fire low, the villain's doll dark at the light's
+edge) and beat `stage` (at an inn `story._stage_at_inn` plays scenes.villain.json villain_visit_inn: stage `arrive`
+`as: "villain"` -> npc.flags["as_creature"], dolls.npc draws the creature). `fight.rest(inn=True)` (services._room)
+calls story.on_night(game, "inn") at midnight and morning. Ops: `invite` (adv["invited"] {state going|home, until,
+beat}; `villain.invited` stops encounters.roll_encounter; story.on_arrive at its home plays villain_dinner, picture
+"lair" = its hall with its figure; `conduct`; `villain.lapse` from story.daily: a slight), `loyalty`, `betray` (the
+companion dismissed deserted, a key lost: adv["turned"]), `frame` (villain.frame -> law.framed: a reported crime with
+`framed` = the tale; endings.finish clears them when won: law.clear_framed), `kidnap` (villain.kidnap: an optional
+rescue step `kidnap` on lair() level 1, its quest villains.json kidnap days 12; failed -> villain.lost kills them),
+condition `helper`. `villain.pay` (the reprisal's death, now shared): marks.json `gibbet`/`burned_out` (SEEN by how) and
+director["reprisals"] -> `villain.seen_in_town` (from story.on_enter_town) plays reprisal_gibbet/reprisal_ashes.
+Endings: `bargained` first in risen and outlaw (flag:bargain_taken; consequence `bargained` lo hi: the threat's scheme
+held, t["bargained"] = until, story._can_take refuses it; consequence `mark` place mark; pages by a sonnet helper).
+check.py: beat `stage`, move `needs`/`disloyal`, SEEN scenes. Autoplay `_check_villains` checks the schemes; storyplay
+plays a beat with no choices through choose(-1). Not in E.2: the "relic moved", "pays the rival" (E.4, Part F); the
+guest-right fight uses named_fight villain (needs the boss's `before`). tests/test_villain_schemes.py (14).
+The fresh review's fixes: safe conduct holds only on the way there (no further from its hall than when taken, +3;
+adv["invited"]["dist"]) and home again; guest-right broken ends the conduct at once; the wedge's companion is the least
+loyal (`_weakest`), and the beat it would play is the one checked for its hour (`_beat_of`: a turned companion is
+found gone in the morning); a kidnap needs an open chapter; frames are struck off when the villain dies too (not on a
+bargain), with the town's lord's standing given back; names escaped. Measures (storyplay, 20 lives): outlaw 19/20
+(19 before), risen 18/20 (18 before; both lost lives died, none stuck). Checks: full suite (only the known timing
+tests of enemy casters and tactics coverage missed, run beside two storyplay measures; they pass alone), autoplay OK,
+smoke OK.
+E.1 (2026-10-25, realmwalker-a): `game/story/villain.py` (docstring has it all). villains.json `attention` (max 5,
+`levels`, `servants`, `great_magic`/`great_level`, `chance` by attention, `per_chapter` 2), `wrath` {jump, min, weight,
+days, steps: fetch, rescue}, `spy` {dc, tailored, tokens, missing}, `reprisal_roles` (witness, carter); moves carry
+`speaks` (never a beast's: `villain.speaks`), `tailored` (needs adv["token"] unused; marks it used), `spy`. Hooks:
+`villain.on_step` (story.step_done), `on_fight` (story.on_battle: minions dead +1 once, each other non-villain dead a
+lieutenant +2 and wrath), `on_magic` (magic.cast_on_road unless hired; `Battle.great_magic`, the party's highest cast
+level, read in story.on_battle). Generic move beats in beats.villain.json (villain_omen, rumour, spy_seen, sign, gift,
+letter, token_letter, nightmare, visit, reprisal, strike, hunt; cooldowns on the heavy ones) and letters in
+adventures.villain.json; temper `zealous` (no kind uses it yet). Ops `strike` (two bands of threats.json kind
+`minions`, all tagged minion), `band` (a tagged test band: the Risen's and outlaws' tests now use it), `reprisal`
+(adv["reprisal"] = the npc chosen by due_move; dead, npc.flags["reprisal"], news, adv["reprisals"]); conditions
+`villain.minions`, `villain.breaks_off` (boss template `before`). Words {token}, {token_of}, {companion}, {helper},
+{helper_town} (defaults when none, for the storybook). Journal "Its eye". Autoplay `_check_villains`. storyplay notes
+the party's state at the finale. Not in E.1 (E.2 builds them, add their moves and temper weights then): invitation,
+bargain, wedge, frame, kidnap; the Reading's +1 is Part F, Legend's +1 a tier Part J; "relic moved" waits for E.4's
+anchors, "pays the rival" for Part F's rivals. Wrath `moves` (beast and kind tests below `min`); while wrath waits
+no other move is made; `_helper` needs a done step naming the role; story/check.py checks temper and wrath move ids.
+Measures (storyplay, 20 lives): outlaw 20/20, risen 18/20 (base 20/20: more fights now; a strike is 1.5 bands, with
+a 12-day cooldown). Checks: full suite (only the known timing tests under load; pass alone), autoplay OK, smoke OK.
 D.5 (2026-10-25, realmwalker-b; Part D merged into main): `tools/storyplay.py --kind risen|outlaw` (Player methods
 per Part D kind: `delve` goes down a site level by level, climbs out to a long rest when pressed and comes back;
 `shed` drops the heaviest loose things when laden - a party once stood still for 60 days under barrow loot;
@@ -1255,6 +1426,7 @@ casting time. A spell aimed at something chosen lists Subjects (game/divining.Su
 | 2026-10-18 | Schools & Domains Part D: the eleven wands, seven staffs and four rods of the DMG, one store of charges a thing | `dlc/05-schools-domains` |
 | 2026-10-18 | Schools & Domains Part E: crystal balls, the Enduring Spellbook, Enspelled Armor and Weapon, the Hat of Many Spells and the Hat of Wizardry, the Pearl of Power, the Ring of Spell Storing, the five robes, the Ruby of the War Mage; the icon; **released as v1.5.0** | `dlc/05-schools-domains` |
 | 2026-10-25 | Adventures & Events Part B: the stage and its scenes, pictures for stories, title cards and letters, marks stamped on towns, the fallen and graves, eavesdropping and tailing, live fire, signs on the world map, the Beast shown (the survivor, the hunter's note, the carcass at camp, the epilogue's pictures); saves format 20 | `dlc/06-adventures-events` |
+| 2026-10-25 | Adventures & Events Part E: villains who act (attention, moves by temper, spies and tokens, wrath; visits, letters, invitations, bargains, wedges, reprisals, frames, kidnaps; lieutenants, grudges and nemeses; escapes, anchors, returns, early ends) and the finale in full (arenas, phases, great attacks, every key, retreat and defeat, the fairness measure); every move in its temper's words; saves format 23 | `dlc/06-adventures-events` |
 
 ## Notes for the next session
 

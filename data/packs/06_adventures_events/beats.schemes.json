@@ -1,0 +1,312 @@
+{
+  "_comment": "The villain's schemes (Expansion 6 E.2, docs/ADVENTURES.md §5.4; game/story/villain.py chooses them, beats.py's ops do them): an invitation to dinner under safe conduct and the dinner at its hall, a bargain (take it, and the tale ends darkly: the ending 'bargained'), a wedge driven at a companion (loyal, they tell you; not, they go over to it with what you knew), a reprisal by fire, a frame (a murder laid at your door through false witnesses), a kidnap (a rescue step added to the chapter). Words: the tale's, with {tempted} and {offer} (the wedge), {frame_town} and {frame_victim} (the frame), {helper} and {helper_town} (one who helped you).",
+  "beats": {
+    "villain_invitation": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["camp", "inn", "town", "road"],
+      "time": ["dawn", "day", "dusk"],
+      "when": {"cooldown": 10, "adventure": {"at_large": true}},
+      "text": [
+        [
+          "A rider in good black comes up the road at an easy walk, and stops a respectful distance off, and holds out a letter on the flat of a gloved hand. \"From {villain_short},\" the rider says. \"An answer is not required. Your company is.\"",
+          "The rider is waiting when you come round the bend, sitting a good horse in the middle of the road as if the road were theirs. Black coat, black gloves, a sealed letter held out at arm's length. \"For you, from {villain_short},\" the rider says. \"I am to wait only until you have read it.\"",
+          "A man in dark livery steps out from the shade of the wall, and bows, and holds out a letter without once looking at your hands. \"{villain_short} sends its compliments,\" he says. \"It does not ask for an answer. It asks for you.\"",
+          "Someone has followed you for the better part of a mile, keeping to the verge, and now overtakes you and turns the horse across your way. A black cloak, a polite face, and a letter with a heavy seal. \"{villain_short} would be honoured,\" the rider says, and waits."
+        ],
+        [
+          "It is an invitation, written as if between equals: dinner at {home}, and safe conduct there and back, sworn on whatever {villain_short} still holds sacred.",
+          "You break the seal. A good hand, even and unhurried. Dinner at {home}; the road there and back to be free of harm; the oath given on whatever {villain_short} still holds sacred.",
+          "The letter is brief and courteous. You are asked to dine at {home}. Your safety on the road, going and returning, is pledged by {villain_short} on the only things it still holds sacred.",
+          "It reads like an invitation between old acquaintances: a table at {home}, a safe road both ways, and an oath on whatever {villain_short} still holds sacred to bind it. There is no threat in it anywhere. That is the threat."
+        ]
+      ],
+      "choices": [
+        {"label": ["Accept. Nobody on that road will touch you while you are its guest."],
+         "ops": [["letter", "villain_invitation", "dark"], ["invite", 6]],
+         "result": [
+           "You fold the letter away. Whatever waits at {home}, the road there will be quiet.",
+           "You tell the rider you will come. The rider nods, as if it had never been in doubt, and the road to {home} is yours for the asking.",
+           "You tuck the letter inside your coat. Whatever else {villain_short} is, it keeps its word to guests, and for a few days the way is safe."
+         ]},
+        {"label": ["Send the rider back with nothing."], "ops": [["attention", 1], ["flag", "refused_invitation"]],
+         "result": [
+           "The rider bows as if you had said something gracious, and turns, and rides away at the same easy walk.",
+           "You hand the letter back unopened. The rider takes it without a flicker, and goes, and does not once look over a shoulder.",
+           "You say nothing at all, and after a while the rider understands that, and bows, and goes. It will be reported exactly as it happened."
+         ]}
+      ]
+    },
+    "villain_dinner": {
+      "family": "villain",
+      "picture": "lair",
+      "when": {"adventure": {"at_large": true}},
+      "text": [
+        [
+          "They are expecting you. The way into {home} is lit, and nobody bars it, and at the end of it there is a long table laid for two, and {villain_short} rising from the far end of it.",
+          "The doors of {home} stand open, and every lamp along the passage is lit, and no one stops you. The hall at the end holds a single table, set for two, and {villain_short} is already standing behind its chair.",
+          "Nobody challenges you at the gate of {home}. Servants who do not meet your eye show you in, down a lit corridor, to a long table with two places laid, and {villain_short} rising to receive you.",
+          "{home} has been made ready. The passage is swept, the candles are new, and the table at the end is laid with silver for two. {villain_short} waits at the far end of it, and inclines its head."
+        ],
+        [
+          "The dinner is long and very correct. {villain_short} talks of {area} and of old times and of nothing at all, and every question you ask is turned aside so smoothly that you hardly feel it go.",
+          "Course follows course. {villain_short} speaks of the weather in {area}, of its harvests, of people long dead, and it is never rude and never says anything. Each question you put is answered with another, so gently you cannot say where it went.",
+          "It is a perfect meal and a perfect silence in the middle of talk. {villain_short} asks after your health and your road, and tells you nothing in return, and every time you press, the conversation slides away like water off oiled cloth.",
+          "The talk goes round {area}, and round old quarrels, and round nothing, for what seems hours. You ask what you came to ask. {villain_short} answers kindly, and at length, and you leave each answer knowing no more than before."
+        ],
+        [
+          "At the end, {villain_short} sets down the cup. \"You have eaten at my table,\" it says, \"so tonight you will leave by my door. Do not come back uninvited. The next time, there will be no table.\"",
+          "When the last dish is cleared, {villain_short} sets down its cup with great care. \"You have been my guest,\" it says. \"You will leave by my door, tonight, unharmed. Do not return unasked. A guest is a courtesy. An intruder is not.\"",
+          "{villain_short} rises, and so, by custom, do you. \"The table is finished,\" it says. \"You go out by the door you came in, and the oath holds until you are clear of my land. After that, do not come back without being sent for. I will not set a second place.\"",
+          "The candles have burned low when {villain_short} speaks again, quietly. \"My hospitality ends with the night. Go out by my door. And remember that you were let in, and let out, and that this will not be done twice.\""
+        ]
+      ],
+      "choices": [
+        {"label": ["Eat, drink, and watch it over the rim of the cup."], "check": {"skill": "insight", "dc": 13},
+         "success": [["flag", "read_its_table"], ["conduct", 2]], "failure": [["fatigue", 5], ["conduct", 2]],
+         "result": [
+           "You learn nothing you could use. But you learn how it sits, and how it smiles, and when it stops smiling.",
+           "Nothing it says is worth keeping. But the way it holds its hands, and what it does not eat, and what makes it go still, you will remember.",
+           "No secret is given up. Still, you leave knowing the shape of its patience, and where, very slightly, it wears thin."
+         ],
+         "fail_result": [
+           "The wine is stronger than it looked. You leave with a sore head and the feeling of having been weighed.",
+           "You watch it all night and see nothing. The wine does the rest, and you walk out into the cold with a thick head and a certainty that you were read like a page.",
+           "Whatever you were meant to see, you did not see it. You stagger out, heavy with food and drink, and the feeling that it learned more of you than you of it."
+         ]},
+        {"label": ["Touch nothing on its table."], "ops": [["attention", 1], ["conduct", 2]],
+         "result": [
+           "Your plate goes away untouched. {villain_short} notices, as it was meant to, and its courtesy grows colder by the course.",
+           "You sit with your hands in your lap while the courses come and go. {villain_short} makes no remark, and the warmth goes out of its voice a little at a time.",
+           "The food is carried away as it came. {villain_short} eats alone, and pleasantly, and with each dish its manner grows more formal and more thin."
+         ]},
+        {"label": ["Break guest-right: draw steel across the table."], "requires": {"villain.breaks_off": true},
+         "ops": [["flag", "broke_guest_right"], ["conduct", 0], ["named_fight", "villain"]],
+         "result": [
+           "The cups go over. {villain_short} is on its feet before the wine has reached the edge of the table, and it is not surprised.",
+           "The steel is out and the table is between you, and then it is not. {villain_short} has moved before you finished moving, and there is no anger in its face at all.",
+           "Silver rings on stone, and a chair goes back. {villain_short} does not cry out. It only stands, and looks at you, as at a debt come due."
+         ]}
+      ]
+    },
+    "villain_bargain": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["camp", "inn", "town"],
+      "when": {"cooldown": 14, "adventure": {"at_large": true}},
+      "text": [
+        [
+          "The one who brings the offer is nobody: a clerk's face, a clerk's voice. \"{villain_short} has no quarrel with you,\" the clerk says, \"and would like to keep it so. Name a sum.\"",
+          "The go-between is a small grey man with ink on his cuffs, whom you would not remember in an hour. \"{villain_short} bears you no ill will,\" he says, sitting without being asked. \"It would prefer to keep things so. What would be fair?\"",
+          "Someone sits down across from you whom nobody saw come in: plain coat, plain face, a voice like a ledger being turned. \"I speak for {villain_short},\" the stranger says. \"It would rather buy than fight. Name your figure.\"",
+          "A quiet person in a clerk's coat finds you, and says what he has come to say without lowering his voice. \"{villain_short} has no wish to quarrel with you. It has a wish to settle. It leaves the sum to you.\""
+        ],
+        [
+          "The terms are simple. Leave {town} to its fate, and go, and be paid for it handsomely. Or stay, and take its part, and be paid better.",
+          "It is put plainly. Walk away from {town}, and let what happens happen, and be well paid. Or turn round and stand with {villain_short}, and be paid a good deal better.",
+          "There are two roads, the clerk explains. On the first you leave {town} to whatever comes, and carry away a heavy purse. On the second you stay, on its side, and the purse is heavier.",
+          "The matter is set out like a contract. You abandon {town}, and take your payment, and go. Or you remain, and serve, and the payment is larger. Either way the clerk will wait for your answer."
+        ]
+      ],
+      "choices": [
+        {"label": ["Refuse it, to the clerk's face."], "ops": [["attention", 1], ["flag", "refused_bargain"]],
+         "result": [
+           "The clerk writes something down, as if your answer were a figure in a ledger, and goes.",
+           "The clerk does not argue. A note is made in a small book, a nod is given, and the chair is empty before you have drawn breath.",
+           "\"I shall say so,\" the clerk says, and rises, and brushes down his coat, and is gone. It is the manner of it that stays with you."
+         ]},
+        {"label": ["Take the gold, and walk away from {town}."],
+         "ops": [["money", 8000], ["flag", "bargain_taken"], ["finish"]],
+         "result": [
+           "The purse is very heavy. You do not count it in front of the clerk, and you do not look back at the road to {town}.",
+           "The gold changes hands. It weighs more than it ought to, and you are on the road before the clerk has finished his wine, and you do not turn towards {town} again.",
+           "You take it. It is a great deal of money. You put it away without looking at it, and go, and the road you leave behind is the one to {town}."
+         ]},
+        {"label": ["Ask what it would pay you to stand at its side."],
+         "ops": [["money", 4000], ["flag", "joined_it"], ["flag", "bargain_taken"], ["finish"]],
+         "result": [
+           "The clerk smiles for the first time. \"More,\" the clerk says. \"A great deal more. Come.\"",
+           "For the first time something moves in the clerk's face. \"Ah,\" he says softly. \"That is a different conversation. Come. I will show you.\"",
+           "The clerk's pen stops. \"Better,\" he says. \"Much better. There is a place for you, and a wage to go with it. Walk with me.\""
+         ]}
+      ]
+    },
+    "villain_wedge": {
+      "family": "villain",
+      "picture": "camp_night",
+      "where": ["camp", "inn"],
+      "time": ["night", "dusk"],
+      "when": {"cooldown": 14, "adventure": {"at_large": true}},
+      "text": [
+        [
+          "{tempted} waits until the others are asleep, and then comes and sits by you, and does not speak for a long time. \"Someone came to me,\" {tempted} says at last. \"From {villain_short}.\"",
+          "You wake to find {tempted} sitting at the edge of the firelight, hands between the knees, looking at nothing. It takes a long time. \"I was approached today,\" {tempted} says. \"By someone from {villain_short}.\"",
+          "Late in the night {tempted} touches your shoulder, and sits, and cannot begin. The fire settles twice. \"A man found me,\" {tempted} says. \"He said he spoke for {villain_short}. I let him finish.\"",
+          "{tempted} has not slept. You can tell by the way {tempted} sits down, close and careful, and by the long silence before the first word. \"I have to tell you something,\" {tempted} says. \"{villain_short} sent someone.\""
+        ],
+        [
+          "The offer was {offer}. The price was small, the messenger said: only tell it where {helper} sleeps, and keep out of the way after.",
+          "They offered {offer}. And the price, the messenger said, was hardly anything: only where {helper} lays down at night, and then to look the other way.",
+          "It was {offer}, {tempted} says. For that, only one thing was asked: the place where {helper} sleeps. After that, {tempted} was to stay clear, and ask nothing.",
+          "The messenger named the reward first: {offer}. Then the price, as lightly as one might ask the time: where {helper} can be found asleep, and an evening's absence."
+        ]
+      ],
+      "choices": [
+        {"label": ["Thank {tempted} for telling you, and refuse it together."],
+         "ops": [["loyalty", 10], ["attention", 1], ["flag", "refused_wedge"]],
+         "result": [
+           "\"I knew you would say that,\" {tempted} says, and looks easier than you have seen in days.",
+           "{tempted} lets out a long breath. \"Then it is done,\" {tempted} says, and for the first time in a while sits straight, like someone who has put a weight down.",
+           "You take {tempted}'s hand, and nothing more is needed. \"I did not want it,\" {tempted} says. \"I only wanted you to know that I was asked.\""
+         ]},
+        {"label": ["Have {tempted} take the offer, and feed it lies."], "check": {"skill": "deception", "dc": 13},
+         "success": [["clue", "villain"], ["attention", -1]], "failure": [["loyalty", -5], ["attention", 1]],
+         "result": [
+           "{tempted} plays it well. What comes back down the line tells you more of {villain_short} than it meant to.",
+           "The lie takes. {tempted} gives the messenger a false bed and a false hour, and in return the messenger lets slip more than was ever meant to be said.",
+           "It works, though not easily. {tempted} comes back from the meeting pale and steady, and what was said there shows you the edge of {villain_short}'s plans."
+         ],
+         "fail_result": [
+           "The lie is not believed. Nothing comes back, and {tempted} will not meet your eye for a day.",
+           "It was too clumsy, or too late. The messenger does not return, and nothing is sent, and {tempted} says nothing for a day and a night.",
+           "Somewhere the thing went wrong. No answer comes, and {tempted} sits apart from you, and is quiet in a way you do not like."
+         ]},
+        {"label": ["Let it have {helper}."], "requires": {"helper": true},
+         "ops": [["reprisal", "hanged"], ["flag", "sacrificed"], ["flag", "bargain_taken"], ["companions", "cruelty"],
+                 ["finish"]],
+         "result": [
+           "{tempted} goes out into the dark to give the answer. Neither of you speaks of it again.",
+           "You say yes. {tempted} stands and goes out of the firelight to give the word. When {tempted} comes back, nobody asks anything, and nobody sleeps.",
+           "It is said quietly, and it is done as quietly. {tempted} is gone for the length of a short walk, and returns, and sits down, and the fire is the only thing that makes any sound."
+         ]}
+      ]
+    },
+    "villain_wedge_taken": {
+      "family": "villain",
+      "picture": "camp_night",
+      "where": ["camp", "inn"],
+      "time": ["dawn", "day"],
+      "when": {"adventure": {"at_large": true}},
+      "ops": [["betray"]],
+      "text": [
+        [
+          "In the morning {tempted}'s bedroll is cold, and {tempted}'s pack is gone with it. There is no note.",
+          "{tempted}'s place by the fire is empty when you wake. The blanket is folded, the pack is gone, and nothing has been left behind to explain it.",
+          "At dawn you call for {tempted} and get no answer. The bedroll has been rolled and taken, and the ground beneath it is already cold. Nobody heard a thing.",
+          "You count the sleepers at first light, and come up one short. {tempted}'s things are gone, and so is {tempted}, and there is no word and no mark to say which way."
+        ],
+        [
+          "Later you hear that {tempted} was seen on the road to {home}, walking fast, like someone who has been promised {offer}.",
+          "By noon a drover tells you of a traveller who answers to {tempted} on the road to {home}, going quickly and not once looking back, as if sure of {offer}.",
+          "The word reaches you at the next crossing. {tempted} was seen heading for {home}, alone and in a hurry, the way a person walks who has been promised {offer}.",
+          "A pedlar saw {tempted}, he says, a day's walk down the road to {home}, head down, pace hard, like someone going to collect {offer}."
+        ]
+      ]
+    },
+    "villain_reprisal_fire": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "town", "inn", "camp"],
+      "when": {"cooldown": 10, "adventure": {"at_large": true}},
+      "ops": [["reprisal", "burned"]],
+      "text": [
+        [
+          "There is smoke on the sky towards {helper_town}, and later a carter with the news: {helper}'s house was fired in the night, with the doors barred from outside.",
+          "A smudge stands on the sky above the road to {helper_town}, black and slow. A carter coming the other way gives you the rest: {helper}'s house burned in the night, and the doors were found barred on the outside.",
+          "You see the smoke before you hear anything. A traveller from {helper_town} stops, and tells it flatly: {helper}'s house is a shell, and the doors were barred from without before the fire was set.",
+          "The wind brings the smell first, and then a boy on a mule with the news from {helper_town}. {helper}'s house was burned in the night. Someone had nailed the doors shut."
+        ]
+      ],
+      "choices": [
+        {"label": ["Swear that it will be paid for."], "ops": [["flag", "swore_for_the_dead"], ["companions", "revenge"]],
+         "result": [
+           "You say it aloud, so the others hear it. {villain_short} will answer for {helper}.",
+           "You say it where all can hear: that {helper} will be answered for, and that {villain_short} will do the answering.",
+           "\"It will be paid,\" you say, and nobody contradicts you. {villain_short} has made a debt, and you intend to collect."
+         ]},
+        {"label": ["Say nothing, and go on."], "ops": [["flag", "bore_the_reprisal"]],
+         "result": [
+           "There is nothing to say. The smoke is a long time going out of the sky.",
+           "You say nothing, and walk on. The column of smoke stays behind you on the sky for most of the day.",
+           "No words come, and none would help. You walk on, and the smoke is still there in the evening, thin and grey, when you look back."
+         ]}
+      ]
+    },
+    "villain_frame": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "town", "inn", "camp"],
+      "when": {"cooldown": 14, "adventure": {"at_large": true}},
+      "ops": [["frame", "murder"]],
+      "text": [
+        [
+          "The news is two days old when it reaches you. {frame_victim} was found dead in {frame_town}, and two good neighbours have sworn before the watch that they saw {hero} do it.",
+          "It reaches you stale and cold from a passing tinker. {frame_victim} is dead in {frame_town}, and two respectable neighbours have taken an oath before the watch that {hero} was the one who did it.",
+          "A notice nailed to a post, two days after the fact, tells it plainly: {frame_victim} was murdered in {frame_town}, and witnesses of good name swear they saw {hero} do the deed.",
+          "A traveller from {frame_town} tells it as gossip, not knowing whom he tells. {frame_victim} was killed there, and two neighbours, sober and believed, have named {hero} to the watch."
+        ],
+        [
+          "You were nowhere near {frame_town}. That will not matter to the hangman. {villain_short} has found a way to hunt you with the law.",
+          "You were miles from {frame_town} when it happened. A rope does not weigh that. {villain_short} has found a way to hunt you with the law and not its own hands.",
+          "It is a lie, and a good one. You were nowhere near {frame_town}, and no judge will care. {villain_short} has set the law on your heels.",
+          "You never set foot in {frame_town}. That will make no difference to the gallows. {villain_short} has found that the law will hunt you for it, and for free."
+        ]
+      ],
+      "choices": [
+        {"label": ["Swear to clear your name."], "ops": [["flag", "framed_swore"]],
+         "result": [
+           "The truth will come out when {villain_short} is finished. Until then, keep away from the watch of {frame_town}.",
+           "You swear it to the others. The truth will keep, and so will you, if you stay clear of the watch of {frame_town} until {villain_short} is dealt with.",
+           "You say it plainly, and mean it: your name will be cleared. But not by walking into {frame_town} to be hanged, and not before {villain_short} is answered."
+         ]},
+        {"label": ["Pull your hood up, and keep off the roads by day."], "ops": [["flag", "framed_hid"]],
+         "result": [
+           "You will travel by the back ways for a while, and trust no one who looks at you twice.",
+           "The hood goes up, and the high roads are done with. For a time you will keep to lanes and field-edges and look away from anyone who looks too long.",
+           "You turn off the road at the next gap in the hedge. For a while now it will be night walking, back lanes, and distrust of anyone with a good memory for faces."
+         ]}
+      ]
+    },
+    "villain_kidnap": {
+      "family": "villain",
+      "picture": "here",
+      "where": ["road", "wild", "town", "inn", "camp"],
+      "when": {"cooldown": 14, "adventure": {"at_large": true}},
+      "ops": [["kidnap"]],
+      "text": [
+        [
+          "A boy from {helper_town} has run all night to find you. {helper} was taken from the house before dawn, he says, by men who did not trouble to hide their faces, and carried off towards {home}.",
+          "A boy staggers up to you, spent, feet bleeding. He ran the whole way from {helper_town}. {helper} was dragged from bed before light, he says, by men who made no effort to hide themselves, and taken off towards {home}.",
+          "A child from {helper_town} is waiting at the door when you come out, grey with running. \"They took {helper},\" he gets out. \"Before light. Openly. They went towards {home}.\"",
+          "He is hardly more than a boy, and he has been on his feet since midnight. {helper} was taken out of the house in the dark, he tells you, by men with their faces bare, and the cart went the way of {home}."
+        ],
+        [
+          "If {villain_short} wanted {helper} dead, {helper} would be dead. It wants you to come for them.",
+          "{helper} has not been killed. If {villain_short} had wanted that, it would have been done in the house. This is a bait, and you are the fish.",
+          "Nothing was done to {helper} on the spot. That is the message: {villain_short} wants {helper} alive, and wants you to follow.",
+          "A killing would have been quick and quiet. This was neither. {helper} has been taken so that you will hear of it, and come."
+        ]
+      ],
+      "choices": [
+        {"label": ["Swear to bring {helper} home."], "ops": [["flag", "swore_to_rescue"], ["companions", "mercy"]],
+         "result": [
+           "You will go. It is what it wants, and you will go anyway.",
+           "You tell the boy you will bring {helper} back. You know exactly what you are walking into, and you are going to walk into it.",
+           "You promise it, and the boy believes you, which is worse. It is a trap, and you will spring it, because there is nothing else to do."
+         ]},
+        {"label": ["Ask the boy everything he saw."], "check": {"skill": "insight", "dc": 12},
+         "success": [["clue", "villain"]], "failure": [],
+         "result": [
+           "Bit by bit it comes out: how many, which way, who gave the orders. Enough to go on.",
+           "You sit him down and take it slowly, a piece at a time: the numbers, the horses, the colours they wore, the one who spoke. It is a good deal more than he knows he knows.",
+           "The boy is steadied and drawn out, until he can tell you the men, the road, the voice that gave the orders. It is enough to start with."
+         ],
+         "fail_result": [
+           "The boy is too frightened to tell it straight. You learn only that they went towards {home}.",
+           "He cannot hold it in order. It all comes in pieces and tears, and the only thing you can be sure of is that they took the road to {home}.",
+           "Fear has scrambled it all. He knows there were men, and a cart, and that {home} was the word he heard. That is all there is."
+         ]}
+      ]
+    }
+  }
+}

@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-D on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; Parts E-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-E on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; villains who act and the finale in full; Parts F-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,279 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-10-25 (night): Adventures & Events Part E, task E.7 — every villain in its own voice — **Part E merged into `main`**
+
+- **Words.** Each kind of villain now makes its moves in its own way. A zealot's letter comes folded like an
+  altar-cloth and smelling of incense; a schemer's spy is gone before you are sure you saw him; a cruel outlaw's
+  people shout what they will do to you; a proud dead king's herald reads out your offence; a grieving one leaves a
+  purse and begs you to go home. Every move every villain can make (77 of them across the six tempers) opens with
+  three openings written for that temper; the rest of the scene and its choices are as before. A beast never writes:
+  its moves are what it leaves and how it hunts.
+- **Pictures.** A villain's letter is sealed with its sign pressed into the wax: a sun for the zealot, a key for the
+  schemer, a skull for the cruel, a crown for the proud, a falling tear for the grieving. In the Journal, a tale shows
+  its villain beside its page as a black shape until you have seen it with your own eyes (it came to your camp, you
+  sat at its table, or you fought it); then its own figure. Its dinner hall is kept the way its temper would keep it
+  (an altar and braziers, books and a lectern, chains and a cage, banners and a throne, a tomb and candles).
+- **Sound.** A low sting as one of the villain's moves reaches you (its omen, its letter, its people on the road).
+- **Fixed:** the words "He" and "His" at the start of a sentence were never filled in (a line could read "{He} will
+  be glad"); they are now.
+- **Saves: format 23.** Old saves are refused with the friendly message; start a new world.
+- Try it: take a tale and let the villain's attention grow (do it harm); read its letters from the pack; open the
+  Journal (j) on the tale before and after it shows itself.
+
+Decisions (Anton may want to change): a temper's own words replace only a move's first page (the choices and what
+follows stay shared); the hero has "seen" the villain after its visit by night, its hunt, its dinner or any fight it
+stood in; the seals' signs and the halls' furniture are my choice per temper; the move's sting is the villain's
+entrance sound, quieter (not a new recording).
+
+### Session, 2026-10-25 (evening, later): Adventures & Events Part E, task E.6 — the fairness measure — branch `dlc/06-adventures-events`
+
+- **What you found on the way now decides the last fight.** Until now a party of the tale's level beat every finale
+  whether it had found anything or not. Measured over 48 lives each: walk in prepared, with every key the tale hides
+  (its weakness learned and the means carried, the back way, the inside man, the true name, the anchor, the ally),
+  and a careful party wins about nine times in ten (the Beast 88%, the outlaw captain 88%, the Risen king 98%); walk
+  in with nothing, and it wins about one time in three (38%, 38%, 29%) — the rest of the time it has to fall back.
+- **The boss's den is set by the tale's tier, not by your level or the land.** Its band fills out with guards fit for
+  the tier (the dead king's barrow-wights and walking dead; the captain's berserkers, lieutenants and, from tier 2, a
+  hired mage) until it is a real fight for four heroes of the tier's level. Bosses also have *might* by tier: the least
+  hit points, armour, aim and blows a boss of that tier has. For beasts at every tier, so a giant spider at the heart
+  of a tale is as much a foe as a troll (tier 1: 130 hit points, armour 14, two blows; tier 2: 270, armour 16, three
+  blows); for the outlaw captain from tier 2 (140, armour 15, two blows), for the dead king from tier 3 (below that
+  his barrow and its wights are the danger).
+- A boss that cannot get farther from the cleric who turned it turns and fights.
+- **Each key does more.** "Fewer of them" now sends away half of each kind of its guards, the strongest first (it used
+  to send away the cheap ones and leave the wights). A beast whose weakness you learned never reaches its frenzy (and
+  its frenzy is now worse: harder blows and one more of them). The dead king's true name holds him in fear for two
+  rounds, not one. The ally you recruited fights like a seasoned warrior.
+- **A finale is never fought blind.** The boss's end of the hall is lit (candles, braziers, the glow of what it keeps)
+  and the way to it: before, a party in a dark barrow was fighting things that could see it and it could not see.
+- **A boss stands its ground in its own den.** Turned by a cleric or frightened, it backs away but never runs off the
+  field (before, Turn Undead could send the Risen king off the edge of the map and leave the tale hanging; holding
+  his crown now really means he cannot get away). A boss put to sleep or yielding at the end is taken, and counts as
+  beaten.
+- **Your companions throw flasks.** On Auto they throw alchemist's fire, burning oil or holy water where it does
+  clearly more than their blows (in any fight, not only finales): fire at a troll, holy water at the dead.
+- Try it: take the Beast's tale, learn what it fears and carry it (alchemist's fire for a troll), find the bait or the
+  quiet way, bring the hunter; then try the same den without them.
+
+Decisions (Anton may want to change): the den's band is filled to the High budget of four heroes at the tier's level
+(outlaws: 70% of it, at most six of them; others at most eight); the might numbers above (tier 3: 320 hit points,
+armour 17); the frenzy +2d6 and one more blow; the ally a berserker at every tier; a careful party falls back when two
+of it are down (or one dead) while the boss still has more than a third of its hit points. Higher-tier numbers
+(3 and 4) are set but not yet measured: no world in the tests has a tale of those tiers yet.
+
+Measured: the fairness measure (`tools/storyplay.py --finale all|half|none --kind beast|risen|outlaw`, new) as above;
+the careful player playing whole tales (`tools/storyplay.py --kind K`, which now falls back from a losing finale too): before E.6, 36 of 36 finished and nobody died (the finales were a formality); after, the Beast 17 of 20, the outlaw captain 10 of 12, the Risen 10 of 12, and every unfinished tale was a life lost, most often the hero left behind in a retreat. The bot goes down with about half the keys (it baits and creeps in, but rarely learns the weakness or brings an ally), so this is the price of an unprepared finale; if it feels too harsh in play, the first numbers to turn down are the guards' share (adventures.finale.json strength) and the might floors (the whole-tale test now asks four tales in five finished, not nine in ten). Ordinary fights unchanged (`tools/balance.py --runs 60`: identical before and after).
+
+### Session, 2026-10-25 (evening): Adventures & Events Part E, task E.5 — the finale in full — branch `dlc/06-adventures-events`
+
+- **The last fight has a place.** Where the villain waits at the bottom of its den, the ground is dressed for the end,
+  picked once for each tale by what kind of place it is: a **throne hall** (a seat behind the boss, braziers either
+  side, pillars down the hall, stone coffins along the walls), a **ritual circle** cut in the floor round it with
+  standing stones at the quarters, a **chasm** across the way with one narrow bridge over it, or, in a wizard's tower,
+  the **tower top** (a ring of old parapet and the long drop beyond). The outlaw captain's last orders, if you killed
+  him early, can now be carried out in a **burning village**: timber houses alight on both sides of the lane, the
+  fire jumping from roof to roof.
+- **The place changes when the boss does.** At half its hit points the boss turns, and the ground turns with it: the
+  coffins grind open and the dead climb out of them; or two pillars crack and come down; the circle fills with a cold
+  light that burns whoever crosses it; the chasm's edge falls away; the parapet crumbles; the fire leaps to the next
+  roof. Each with its own line.
+- **Great attacks are warned a turn ahead.** Every boss now has one: the beast's rampage round itself, the captain's
+  volley of arrows from the dark, the dead king's grave-cold. On its turn it marks the ground (a red, pulsing patch on
+  the battle mat, and a line: "drops low and gathers itself... get clear of it"); on its next turn the blow falls
+  there, a save for half. Step out and it misses you. Your companions on Auto step out by themselves. Stun it or hold
+  it down in between and it fizzles.
+- **Bosses enter with words** ("Out of the dark of its den it comes...") and their name crosses the mat.
+- **Stronger bosses for the higher tiers** (3 and 4): more Legendary Resistances, more legendary actions, and a
+  harder great attack. The Risen king at tier 2 and up, and the outlaw captain from the start, can use a legendary
+  action to **command their men**: one of the gang standing next to you strikes at once, out of turn.
+- **Everything you found matters, in all the ways the design lists.** New: speaking the dead king's true name gives
+  your party courage (he cannot frighten you) and, with his crown in your hands too, lets you finish the rite over his
+  body when he falls (the "laid to rest" ending instead of the "destroyed" one). The captain's inside man keeps the
+  Right Hand away from the last fight. A rival band that comes on a later round, and blessings for the party, are
+  ready for the tales that will use them.
+- **You can always run from the finale, but it costs.** The boss is whole again when you come back, its scheme moves
+  on a stage, its eye on you hardens, and an ally who came with you may lose heart and go home. The tale goes on.
+- **Losing the finale need not be death.** A proud, cruel or cunning villain (the dead king, the outlaw captain) takes
+  the beaten alive: you wake in a cell at the far end of its den, at 1 hit point, your weapons, armour and money
+  thrown into a locked chest in a room nearby. It keeps the wounds you gave it. Get them back, get out (a new line in the journal: "Get out of ...
+  alive"), and come back for the end when you are ready. It does this once in a tale; a beast never does.
+- Try it: take the Risen tale, go down to the barrow's last level and fight the king; watch for the frost ring on the
+  floor and step out of it; let him beat you once.
+
+Decisions (Anton may want to change): great attacks come first on round 2 and then every 3 rounds; save DC 12/14/16/18
+and damage 2d10/4d10/6d10/8d10 by tier (the captain's volley 2d8 per tier step); the circle's burning ground is 2d6
+necrotic (Constitution save, the great attack's DC); a retreat loses the ally one time in three; the chest with your
+things has a DC 12 lock; the cells are the room farthest from the boss; all arenas fit only where there is room (a
+cramped level stays as it is). The captain commands his men only from tier 2 (at tier 1 it tipped the fight too far).
+
+Fixed on the way (older faults the new finales brought out): a boss's out-of-turn move that brought it no nearer kept
+a stand-off going for ever (now the fight breaks off as it should); a battlefield could be cut in two where two walls
+met at a corner (the check that joins the two sides let a path squeeze between them, which nobody can walk).
+
+Measured (a careful party playing whole tales, six of each): the outlaw captain's 6 of 6 (twice taken alive in the
+finale, got out, came back and won), the Risen's 5 of 6; the same as before E.5. Checks: tests/test_finale_arenas.py
+(16), tests/test_finale_end.py (8), the full suite (only the known timing tests under load, which pass alone),
+autoplay, smoke test; a fresh review (its finds fixed: an arena that did not fit wrecked the ground, a tower top could
+leave no way off for a retreat, names unescaped, lines with one variant).
+
+
+- **A villain gets away from you once.** Meet the outlaw captain (or the beast) before its den and hurt it badly,
+  and it breaks off as before; but only once in a tale. The journal notes it ("It will not get away a second
+  time"), and the next time you meet it out in the land it plants its feet and fights to the end. Hold it fast
+  (grappled, restrained) or kill it in one blow, and it does not get away even the first time. With what binds the
+  Risen king in your hands (his crown), he cannot flee at all.
+- **Killed before its finale, it is not quite over.** The kill counts (the ending is the one a slain villain earns),
+  but a short last chapter comes first, one of three:
+  - *The Heir*: one of its lieutenants still free takes its place and holds its den with what was left (the outlaw
+    captain's right hand, the Risen's waker). Go down and finish them; there is no finale card, it is a smaller
+    fight.
+  - *The Last Order*: it planned for its own death. Within a day or two, on the road or at your camp, a rider brings
+    you its last letter (a page in its own hand) while its people close in, or the things it kept caged are let
+    loose on your trail. Stand and fight, or try to slip away (Athletics or Survival). Come out alive and it is over.
+  - *The cat is away*: nothing is left behind it; its servants scatter, its den stands open, and the tale ends at
+    once.
+- **Put down without its anchor, it comes back.** The Risen king killed without his crown broken "returns in weeks"
+  as before, but now he really does: after four to eight weeks he stirs again, and the hero who put him down hears
+  of it first ("the news you were afraid of: he walks again"), with the choice to take the tale on at once. That
+  tale begins with his eye already hard on you, and in its finale he has more hit points for each time he has come
+  back.
+- **It moves its anchor.** At the height of its anger the Risen king may have his crown carried out of the crypt
+  where it lay and into his own barrow, while nobody has laid a hand on it yet: the journal tells you where, and now
+  you must go under his roof for it.
+- A new kind of step for any tale, *endure*: live through a set piece (a beat, then a battle); missed for a week, it
+  passes by itself so no tale can get stuck.
+- Try it: take on the outlaw tale; when the captain hunts you on the road, grapple him as he breaks off, and kill
+  him there.
+
+Decisions (Anton may want to change): the outlaw tale's early ends are weighted heir 3, last order 1, nothing left 1;
+the Risen's 2, 2, 1 (the Beast's is always "nothing left"); the last order's set piece comes 0-2 days after the
+death, and passes by itself a week later; a villain come back starts at attention 3 ("testing") with +15% hit points
+in its finale for each return (at most three); the crown is moved only into the barrow's first level.
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 18 of 20 finished (18
+before), the Risen's 18 of 20 (19 before); every lost life died in a fight, none was stuck. Checks:
+tests/test_early_ends.py (12), the full suite, autoplay, smoke test.
+
+Fixed after the fresh review: a set piece whose band you slipped past, talked down or paid off is lived through the
+next day (it could have left a tale waiting for ever); a beast's lines say "it" and "its" (they showed "{he}"); a
+beast killed where its tale meant it to be (at the bait) is no early end; what is left of a dead villain's band at
+its den is not a boss.
+
+### Session, 2026-10-25 (afternoon, later): Adventures & Events Part E, task E.3 — lieutenants who remember — branch `dlc/06-adventures-events`
+
+- The villain's bands now have named heads. In the Risen's tale the cultists who woke the dead are led by someone
+  like "Wessel the grave-robber"; the outlaw captain has a right hand at the head of the raiders and a lookout
+  watching the road. Each has a look, a trait (cruel, vain, devout, cowardly, loyal, greedy, bitter) and a weakness,
+  and the journal lists those you have met under "Its hands" (the weakness once you have met them twice, or held
+  them).
+- **They remember.** Hurt badly, a lieutenant tries to get away: with nobody beside them they are gone at once (a
+  horse waiting, smoke, a ditch they knew); with one of you at their side, or held, they must run for it, and you can
+  cut them down. One who gets away comes back with a grudge and a scar you gave them ("a notched ear", "a burn down
+  one cheek"), and better armed each time: harder to hit, more hit points, a better blade.
+- **Mercy matters.** Spare or rob one you have beaten and they may come over to you (the cowardly and the greedy
+  most often, the loyal and the cruel hardly ever): they tell you what they know (the Risen's waker points to the
+  anchor, the right hand knows the back way into the hideout, the lookout names the inside man). Some of those who
+  turn are lying: they give you nothing, and you meet them again at the end, at the villain's side. One who will not
+  turn goes straight back to the villain, angrier.
+- **One slain is mourned or avenged**: the villain grieves (the proud and the grieving) or rages (the rest), its eye
+  on you jumps, and its wrath follows. Every lieutenant still free stands beside the villain in the finale; the ones
+  you dealt with are not there.
+- **What became of them**: each lieutenant has a page in the epilogue, with a picture (on the road, or a fresh grave,
+  or the gallows). And when the villain falls, the one with the greatest grudge who is still free takes up what is
+  left of its company and swears to find you: weeks later they step into the road at the head of a band, and keep
+  coming every few weeks until you kill or take them.
+- Try it: take on the outlaw tale and meet the raiders on the road; let the right hand get away (stand back from
+  them when they are hurt), then meet them again the next day.
+
+Decisions (Anton may want to change): the traits' numbers (flee at 25-50% of their hit points, the devout never; a
+spared one turns 10-60% of the time, robbed half that; 15-60% of those who turn are lying); each grudge +1 armour (at
+most +2), +25% hit points and a better blade (1d4, then 1d6 extra damage); at most three grudges; a nemesis comes
+10-30 days after the tale and again every 20-45 days while beaten off; a lieutenant's weakness is words for now (the
+finale's keys of E.5 may use it). The outlaw tale has two lieutenants (the raiders' right hand and the lookout), the
+Risen one (the waker); the Beast has none.
+
+At the end each lieutenant still free takes the place of one of the villain's men (the band is led, not made
+bigger).
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 18 of 20 finished, the
+Risen's 19 of 20 (19 and 18 before; every lost life died in a fight, none was stuck). Checks: tests/test_lieutenants.py
+(8), the full suite, autoplay OK, smoke test OK.
+
+Fixed on the way: in a held place, each creature of a wave you killed counted as a lieutenant slain (the villain's eye
+jumped by two for each); waves and ambushes now count as its servants.
+
+
+- The villain's night visit is now seen. At camp, the fire burns low and the villain stands beyond it at the edge of
+  the light, dark against the dark, until it has said its piece. In a room at an inn (a night's room from the
+  innkeeper), the villain is suddenly there by your bed on the town's map, speaks, and is gone; nights at inns now
+  bring the villain's moves at all (letters by morning, nightmares, visits), as nights at camp did.
+- Its letters are in its own hand: each kind of villain has its ink, its writing and its seal colour (the proud dead
+  king in old purple and gold, the cunning outlaw a neat green-black, the cruel one red).
+- New moves, chosen by its temper: an **invitation** to dine at its hall (accept, and nothing on the road troubles you
+  for six days there and two days back; at its table you learn nothing you can use, and leave with a threat; draw
+  steel at the table if you dare, and it fights, and breaks off when hurt; never go, and it takes the slight); a
+  **bargain** (refuse, or take its gold and walk away, or join it: the tale ends darkly - the town is spared for a
+  season but haunted by the dead or paying the gang, you are infamous, and nobody offers you that tale again while
+  its word holds); a **wedge** driven at a companion (a loyal one brings you the offer: refuse it together, feed it
+  lies through them, or let it have one who helped you - a dark ending too; one who is not loyal is simply gone in the
+  morning, and something you knew about the villain goes with them); a **reprisal by fire**; a **frame** (a murder in
+  a nearby town, sworn to by two false witnesses: a real price on your head there, struck off when you win the tale);
+  a **kidnap** (one who helped you is carried off to the first level of its hall: an extra rescue in your journal, with
+  twelve days to do it, or they die there).
+- Reprisals are seen: the town of the one who paid has a gibbet in its square (or a burned house) for some weeks, and
+  the first time you walk in, a crowd stands round it and someone tells you what you cost them.
+- Try it: take on the Risen or the outlaw tale, push the villain's eye to "testing" (do its steps, kill its servants),
+  and camp, sleep at inns and travel; a companion makes the wedge possible.
+
+Decisions (Anton may want to change): a wedge works on a companion below 50 loyalty; the bargain pays 80 gold pieces
+to walk away and 40 to join (with the dark ending either way); its word holds 60-120 days; a kidnap gives twelve
+days; an invitation not taken up within six days is a slight (+1 attention). A villain visits an inn only when the
+town's stage is free; otherwise its visit is told as at camp. The dinner's picture is its hall (the barrow's halls,
+the outlaws' hideout, or a hall).
+
+Safe conduct is for the road to the villain's hall and back: wander off elsewhere and the roads are as dangerous as
+ever. A frame is struck off your record when you win the tale or the villain dies.
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 19 of 20 finished, the
+Risen's 18 of 20 (as before E.2; the lost lives died in fights). Checks: tests/test_villain_schemes.py (14), the full
+suite (only the known timing tests missed while other measures ran; they pass alone), autoplay OK, smoke test OK.
+
+### Session, 2026-10-25 (midday): Adventures & Events Part E, task E.1 — villains who act — branch `dlc/06-adventures-events`
+
+- The villain of a tale now notices you, and how much it cares is shown in the journal ("Its eye": unaware, has heard
+  of you, watching, testing, wrathful, obsessed). It notices every step you take against it, its servants you kill,
+  its lieutenants you slay, and great magic (a spell of 6th level or more) cast in its country. Leave it alone for a
+  fortnight and it thinks of you a little less.
+- It answers with moves that fit how much it cares and what sort of villain it is (proud, cunning, cruel, grieving,
+  zealous, bestial): a stranger asking after you at the inn; a spy following you (seen, you can run them down; unseen,
+  they steal something small from one of you, a glove or a ribbon); a sign left at your camp; a purse of gold with a
+  warning; a letter; a letter with the stolen thing folded inside it, or a nightmare built from it; the villain itself
+  at the edge of your firelight by night, talking; one of the people who helped you found hanged, told in the news; its
+  servants coming at you in force; and, for the beast and the outlaw captain, a hunt in person. The Risen's letters,
+  the outlaws' toll and the beast's carcass are still there, among the rest.
+- Limits: never two moves within two days, two a chapter, and fewer while it hardly knows you. A beast never writes
+  or talks. A heavy move (a strike, a hunt, a reprisal) does not come again for a week and more.
+- Wrath: slay one of its lieutenants, take back what it holds or rescue the one it took, and it lashes out within the
+  week, whatever the chapter: a strike, a reprisal or a visit.
+- Try it: take on a tale, do a few of its steps, then open the journal (j) to see its eye, and travel and camp a few
+  nights.
+
+Decisions (Anton may want to change): attention goes up to 5, as the design says (it was 9); a step done +1, its
+servants killed +1 a fight, a lieutenant +2, great magic +1; a quiet fortnight -1. Invitations, bargains, wedges,
+frames and kidnaps are not in yet: they need E.2's staging (a dinner at its hall, the dark endings, the law's false
+witnesses, a rescue added to the tale). A reprisal falls only on a witness or a carter who has told you all they know.
+The spy is seen with the party's best passive Perception against 12 + its attention. The gift is 10 gold pieces. A
+strike is a band of its servants and half another, and they never arrive peaceful. In its wrath a villain makes no
+other move until it can lash out (a beast's wrath is a test by night).
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 20 of 20 finished (19
+before); the Risen's 18 of 20 (20 before; one party died in a finale at full strength, one in a fight right after a
+strike, without resting between). The villain fights back now; E.5 and E.6 rebuild the finale and measure its
+fairness. Checks: the full suite (only the known timing tests missed, run beside the other checks; they pass alone),
+autoplay OK, smoke test OK. The fresh review's fixes: strikes and tests always hostile; wrath waits for its place;
+a reprisal only on someone who helped you; their kin mourn them; a start-up check that every temper's move exists.
 
 ### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.5 — the Risen and the Outlaw Lord shown, heard and played through — **Part D merged into `main`**
 

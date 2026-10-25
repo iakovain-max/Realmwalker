@@ -3,7 +3,8 @@
   "tempers": {
     "cunning": {
       "speaks": true,
-      "moves": {"outlaw_omen": 3, "outlaw_warning": 3, "outlaw_test": 2},
+      "moves": {"outlaw_omen": 3, "outlaw_warning": 3, "outlaw_test": 2, "rumour": 2, "spy": 3, "token_letter": 2, "gift": 2, "visit": 1, "strike": 2, "hunt": 1, "reprisal": 1, "bargain": 3, "wedge": 3, "frame": 3, "invitation": 1},
+      "hand": {"face": "fine", "ink": [30, 44, 34], "seal": [44, 76, 52], "sigil": "key"},
       "first_words": [
         "\"I wondered when you'd come,\" says {villain}, and does not get up. \"Sit. We can do this the clever way, or the other way.\"",
         "\"Do come in,\" says {villain}, pouring two cups. \"Drink. We have been expecting you since the ford, and there is no hurry.\"",
@@ -28,7 +29,8 @@
     },
     "cruel": {
       "speaks": true,
-      "moves": {"outlaw_omen": 2, "outlaw_warning": 3, "outlaw_test": 3},
+      "moves": {"outlaw_omen": 2, "outlaw_warning": 3, "outlaw_test": 3, "spy": 1, "sign": 1, "token_letter": 1, "nightmare": 1, "reprisal": 3, "strike": 3, "hunt": 2, "kidnap": 3, "reprisal_fire": 2, "frame": 1},
+      "hand": {"face": "dark", "ink": [74, 14, 12], "seal": [128, 24, 20], "sigil": "skull"},
       "first_words": [
         "\"You've cost me men,\" says {villain}. \"I'm going to take it out of you slowly.\"",
         "\"I hear you hurt my people,\" says {villain}. \"I will hurt yours. I have not yet decided which of them first.\"",
@@ -53,9 +55,9 @@
     }
   },
   "moves": {
-    "outlaw_omen": {"beat": "outlaw_omen", "attention": [0, 9]},
-    "outlaw_warning": {"beat": "outlaw_warning", "attention": [1, 9]},
-    "outlaw_test": {"beat": "outlaw_test_road", "attention": [2, 9]}
+    "outlaw_omen": {"beat": "outlaw_omen", "attention": [0, 5]},
+    "outlaw_warning": {"beat": "outlaw_warning", "attention": [1, 5], "speaks": true},
+    "outlaw_test": {"beat": "outlaw_test_road", "attention": [2, 5]}
   },
   "bosses": {
     "outlaw": {
@@ -65,6 +67,37 @@
       "resistances": 1,
       "actions": 1,
       "menu": ["move", "strike"],
+      "entrance": [
+        "{name} kicks back the chair and stands, and every hand in the room goes to a hilt.",
+        "{name} comes forward into the light, easy, smiling, and the gang spreads out on either side without being told.",
+        "\"Well,\" says {name}, and draws. \"You came all this way. Let us not waste it.\""
+      ],
+      "great": {
+        "name": "the volley",
+        "area": {"size": 10, "range": 60},
+        "save": "dex",
+        "dc": [12, 14, 16],
+        "damage": ["2d8", "4d8", "6d8"],
+        "type": "piercing",
+        "every": 3,
+        "first": 3,
+        "warn": [
+          "{name} raises a hand and points. In the dark behind, bowstrings creak as they are drawn. They are aiming at that patch of ground.",
+          "\"There!\" {name} shouts, pointing, and somewhere unseen the archers nock and draw.",
+          "{name} whistles twice, short, and from the shadows comes the soft sound of many arrows being nocked."
+        ],
+        "go": [
+          "{name}'s hand drops, and the arrows come down like hail.",
+          "\"Loose!\" The air fills with shafts, thudding into everything where the captain pointed.",
+          "The volley falls all at once, a hiss and a hammering of arrows."
+        ]
+      },
+      "by_tier": {
+        "2": {"actions": 2, "menu": ["move", "strike", "command"],
+              "might": {"min_hp": 140, "min_ac": 15, "min_hit": 7, "min_attacks": 2}},
+        "3": {"resistances": 2, "actions": 3,
+              "might": {"min_hp": 280, "min_ac": 17, "min_hit": 10, "min_attacks": 4, "damage": "2d6"}}
+      },
       "phase": {
         "at": 0.5,
         "kind": "raise",

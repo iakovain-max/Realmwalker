@@ -151,6 +151,8 @@ def test_a_story_s_boss_uses_its_legendary_actions_and_its_second_phase(tables, 
             b = arena.setup(tables, creature, scenario, seed, boss=template, tier=1)
             boss = b.side(FOE)[0]
             assert boss.cdef.get("legendary") and boss.cdef.get("boss_phase")
+            if seed % 2:  # (met already hurt, above half: its second phase within the arena party's reach, E.6 might)
+                boss.hp = int(boss.max_hp * 0.55)
             r = arena.run(b, clock=time.thread_time, check=lambda bb, f, where=where: broken.extend(
                 f"{where}, round {bb.round}, after {f.name}: {p}" for p in problems(bb)))
             assert b.outcome is not None, f"{where}: the fight did not end"

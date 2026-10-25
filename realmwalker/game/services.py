@@ -351,7 +351,7 @@ def _room(game, npc, svc, arg):
     charge(game, npc, price)
     rng = game.world.rng.child(f"inn/{npc.id}/{game.world.time}")
     msgs = [f"You pay {money_text(price)}: {ROOM_WORDS[grade]}."]
-    msgs += rest(game, "night")  # a bed for the night is until morning, not until two in it
+    msgs += rest(game, "night", inn=True)  # a bed for the night is until morning, not until two in it
     return msgs + _night(game, npc, grade, rng)
 
 

@@ -79,7 +79,7 @@ def test_the_boss_template_and_the_keys_in_a_real_fight(made, tables):
     assert b is not None and game.finale is None
     boss = next(f for f in b.side(FOE) if f.creature is not None and (f.creature.story or {}).get("role") == "villain")
     assert boss.max_hp > base_hp and boss.cdef.get("legendary_resistance") and boss.cdef.get("legendary")
-    assert boss.cdef.get("boss_phase")
+    assert not boss.cdef.get("boss_phase"), "its weakness known, its frenzy never comes (E.6)"
     weak = adv["hidden"]["weakness"]["weakness"]
     if weak.endswith("_fire") and "fire" in str(game.tables.villains["weaknesses"]):
         assert "fire" in boss.cdef.get("vulnerable", []) or "frightened" in boss.conditions

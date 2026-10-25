@@ -15,8 +15,8 @@ PICTURE_ROWS = 9  # (a beat's picture above its words: `picture` in beats.json)
 
 def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, float], rec: dict | None = None) -> bool:
     """Draw a beat's (or an event's) picture in a rect of cells: "camp_night" (the party round their own camp), a
-    vignette's backdrop (ui/gfx/vignette.BACKDROPS), "place" (the backdrop of the step's place) or "here" (of where you
-    stand). False when there is none by that name."""
+    vignette's backdrop (ui/gfx/vignette.BACKDROPS), "place" (the backdrop of the step's place), "here" (of where you
+    stand) or "lair" (inside the villain's hall, the villain at its table: E.2). False when there is none by that name."""
     px = tuple(int(v) for v in canvas.cell_rect(*rect))
     if name == "camp_night":
         from realmwalker.ui.gfx import scenes
@@ -30,7 +30,26 @@ def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, fl
         return False
     spec = {"backdrop": backdrop, "figures": vignette.party_figures(game, 1),
             "seed": int((rec or {}).get("n", 0))}
+    if name == "lair":  # (at its own table: the villain across from you, E.2; its hall kept as its temper keeps it, E.7)
+        host = _host(game, rec)
+        if host:
+            spec["figures"] = spec["figures"] + [host]
+        adv = beats.adventure(game, rec or {})
+        props = vignette.HALL_PROPS.get(beats._villain(game, rec).get("temper") or "") if adv else None
+        if props:
+            spec["props"] = list(props)
     return vignette.compose(canvas, px, spec, canvas.now, game)
+
+
+def _host(game, rec: dict | None):
+    """The villain of a beat's tale as a figure (its dinner)."""
+    from realmwalker.game import story
+    from realmwalker.ui.gfx import dolls
+    from realmwalker.world import threats
+
+    adv = story.adventures(game.world).get((rec or {}).get("adv") or "")
+    t = threats.records(game.world).get(adv["threat"]) if adv else None
+    return dolls.creature(t["villain"]["creature"], game.tables, f"villain/{t['id']}") if t else None
 
 
 def backdrop_for(game, name: str | None, rec: dict | None = None) -> str | None:
@@ -49,6 +68,13 @@ def backdrop_for(game, name: str | None, rec: dict | None = None) -> str | None:
         if place:
             return vignette.for_place(game, place)
         name = "here"
+    if name == "lair" and rec is not None:  # (inside the villain's own hall: E.2)
+        from realmwalker.game import story
+
+        adv = story.adventures(game.world).get(rec.get("adv") or "")
+        home = (adv or {}).get("places", {}).get("home")
+        outside = vignette.for_place(game, home) if home else None
+        return {"barrow": "barrow_hall", "hideout": "hideout"}.get(outside or "", "hall")
     if name == "here":
         p = game.player
         if game.in_local and game.local is not None and game.local.kind == "dungeon":
@@ -67,6 +93,8 @@ class BeatScreen(Screen):
         super().__init__(app)
         self.game = game
         self.rec = beats.pending(game)
+        if self.rec and game.tables.beats.get(self.rec["beat"], {}).get("family") == "villain":
+            self.sound_open = "villain_move"  # (its move reaches you: E.7)
         self.pages = beats.pages(game, self.rec) if self.rec else []
         self.page = 0
         self.result: list[str] | None = None

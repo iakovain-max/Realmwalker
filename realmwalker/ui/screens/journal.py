@@ -14,6 +14,41 @@ GROUPS = (("In hand", quests.LIVE), ("Finished", ("finished",)), ("Failed or giv
 TABS = ("Adventures", "Work", "People")
 ADVENTURES, WORK, PEOPLE = 0, 1, 2
 TALE_GROUPS = (("Under way", ("active",)), ("Ended", ("won", "lost", "abandoned", "orphaned")))
+PORTRAIT_COLS, PORTRAIT_ROWS = 12, 8  # the villain's figure beside its tale (E.7)
+SHADOW = (0.07, 0.06, 0.08)  # a villain not yet seen: its shape only
+
+
+def villain_portrait(canvas: Canvas, game, adv: dict, x: int, y: int, w: int, rows: int) -> bool:
+    """The tale's villain beside its page: a dark shape until the hero has seen it (villain.known_face), then its
+    own figure (Expansion 6 E.7). False when the tale has no villain to draw."""
+    from realmwalker.game.story import villain
+    from realmwalker.ui.gfx import dolls, theme
+    from realmwalker.ui.gfx.scene import Rect
+    from realmwalker.world import threats
+
+    t = threats.records(game.world).get(adv.get("threat"))
+    creature = ((t or {}).get("villain") or {}).get("creature")
+    if not creature or creature not in game.tables.creatures:
+        return False
+    atlas = canvas.gfx.atlas
+    parts = dolls.creature(creature, game.tables, f"villain/{t['id']}", atlas)
+    if not parts:
+        return False
+    cw, ch = canvas.cell_w, canvas.cell_h
+    px, py, pw, ph = x * cw, y * ch, w * cw, rows * ch
+    canvas.clear_cells(x, y, w, rows)
+    canvas.under(Rect(px, py, pw, ph, (40, 32, 30, 255), bottom=(16, 12, 12, 255)))
+    canvas.under(*theme.panel(px, py, pw, ph, "inset", ornaments=False))
+    tile = atlas.tile or 32
+    size = tile * max(1, int(min(pw - 12, ph - 12)) // tile)
+    known = villain.known_face(adv)
+    cmd = dolls.draw(atlas, parts, px + (pw - size) / 2, py + (ph - size) / 2, size,
+                     (1.0, 1.0, 1.0) if known else SHADOW)
+    if cmd is not None:
+        canvas.under(cmd)
+    canvas.hit(x, y, w, rows, tooltip="You have seen it with your own eyes." if known else
+               "You have not seen it yet: only what people say of it.")
+    return True
 
 
 def met_people(game) -> list:
@@ -33,7 +68,9 @@ STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left
               "defeat": "Overcome {who}, at {place}.", "capture": "Take {who} alive, at {place}.",
               "recruit": "Win {who} to your side.", "rally": "Raise the people of {place} to stand.",
               "hold": "Hold {place} on the night of {night}.", "rite": "Perform the rite at {place}.",
-              "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know."}
+              "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know.",
+              "endure": "Live through what {villain} left behind.",
+              "escape": "Get out of {place} alive, and your things with you."}
 ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic",
                "tail": "follow someone by night"}
 CHECK_WORDS = {"nature": "study its kill", "history": "read the place's past", "religion": "read the signs of the dead",
@@ -92,6 +129,11 @@ def tale_lines(game, adv) -> str:
     known = [r for r in ("patron", "ally", "witness") if r in adv["cast"]]
     if known:
         lines += ["", "<title>People</> " + "; ".join(f"{esc(cast.describe(game, adv, r))} ({r})" for r in known)]
+    from realmwalker.game.story import lieutenants
+
+    hands = lieutenants.journal_lines(game, adv)  # (its lieutenants as far as you know them: E.3)
+    if hands:
+        lines += ["", "<title>Its hands</>"] + hands
     if adv["keys"]:
         lines += ["", "<title>Found</> " + "; ".join(esc(wordsmod.key_text(game, adv, k)) for k in adv["keys"])]
     th = threats.records(w).get(adv["threat"])
@@ -99,6 +141,16 @@ def tale_lines(game, adv) -> str:
         n = len(th["scheme"]["stages"])
         clock = "".join("#" if i <= th["scheme"]["stage"] else "." for i in range(n))
         lines += ["", f"<title>Its time</> <danger>{clock}</> <dim>(when the last mark is filled, it has won)</>"]
+    if adv["state"] == "active" and not adv.get("boss_dead"):  # (how much the villain cares about you: E.1)
+        from realmwalker.game.story import villain
+
+        top = int(villain.spec(game)["max"])
+        att = max(0, min(top, int(adv.get("attention", 0))))
+        eye = "#" * att + "." * (top - att)
+        lines.append(f"<title>Its eye</> <warn>{eye}</> {esc(words.get('villain_short', 'it'))}: "
+                     f"{esc(villain.level(game, adv))}")
+        if "used" in (adv.get("token") or {}):  # (once it has shown you what its spy took)
+            lines.append(f"<dim>It holds {esc(adv['token']['what'])}, {esc(adv['token']['of'])}'s.</>")
     if adv.get("journal"):
         lines += ["", "<title>Your notes</>"] + [f"<dim>{esc(j['text'])}</>" for j in adv["journal"][-6:]]
     if adv.get("ending"):
@@ -381,7 +433,12 @@ class JournalScreen(Screen):
                                      trouble_lines(game, sel) if self.tab == ADVENTURES and "predicament" in sel else
                                      tale_lines(game, sel) if self.tab == ADVENTURES else details(game, sel))
                 self._shown = key
-            self.detail.render(canvas, dx, top, w - dx - 2, bottom - top)
+            text_w = w - dx - 2
+            if self.tab == ADVENTURES and "predicament" not in sel and text_w >= 40:
+                pw = PORTRAIT_COLS
+                if villain_portrait(canvas, game, sel, w - 2 - pw, top, pw, PORTRAIT_ROWS):
+                    text_w -= pw + 1
+            self.detail.render(canvas, dx, top, text_w, bottom - top)
         bx = canvas.button(2, h - 2, "Close", self.close, hotkey="Esc")
         bx = canvas.button(bx + 2, h - 2, TABS[(self.tab + 1) % len(TABS)],
                            lambda: self.handle_key(KeyEvent("tab")), hotkey="Tab")

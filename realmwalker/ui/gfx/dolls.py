@@ -246,6 +246,8 @@ NPC_KEPT = 4096
 def npc(npc, tables, atlas=None) -> list[Part]:
     """A townsperson dressed for their trade, in the manner of their people (kept by everything it is made from)."""
     atlas = atlas or _atlas()
+    if npc.flags.get("as_creature"):  # (one who only wears a townsperson's place: the villain in a scene, E.2)
+        return creature(npc.flags["as_creature"], tables, f"npc{npc.id}", atlas=atlas)
     key = (npc.id, npc.race, npc.sex, npc.age, npc.job, npc.culture, npc.flags.get("holding"), npc.flags.get("dress"),
            (npc.profile or {}).get("appearance", ""), id(tables), id(atlas))
     parts = _NPC_PARTS.get(key)

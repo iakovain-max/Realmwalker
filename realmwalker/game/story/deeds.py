@@ -12,6 +12,9 @@ Their binding (what a blueprint's step becomes) is story/steps.py; story/__init_
   story foe taken alive and judged), `on_travel(game)` (an escort's ambush), `on_night(game, where)`, `daily(game)`
   (a hold's night missed fails it), `on_goal(game)` (a step's goal-language test, from goals.notify: the step is done
   however the hero made it true).
+- endure (E.4): its day set when its chapter opens; its beat waits for the road or a night at camp (`_endure_due`),
+  its op `endure` starts the battle (`endure`), and coming out of it alive does it (on_battle); a week unmet, it
+  passes by itself.
 - `talk_choices(conv)` / `talk_choose(conv, choice)`: recruit, rally, confront and setting out on an escort; the first
   three may become a situation (situations.for_step), which then finishes the step.
 
@@ -23,7 +26,9 @@ from __future__ import annotations
 
 from realmwalker.core.textgen import escape_markup as esc
 
-KINDS = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront")
+KINDS = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront", "endure")
+LOOSE = ("wave", "ambush", "endure")  # (a band with no named head: every one of it carries the role)
+ENDURE_WAIT = 7  # days an endure's set piece waits for the road or a camp before it passes by itself
 BAND_KINDS = ("defeat", "capture")
 TALK_CHOICES = {"story_recruit", "story_rally", "story_confront", "story_escort"}
 
@@ -51,6 +56,10 @@ DEFAULT_WORDS = {
     "captive_talks": ["{who} talks, as the taken often do, and it is worth hearing."],
     "ambush": ["They were waiting for you on the road, as if they knew you would come this way."],
     "band_here": ["{who} is here, waiting for you."],
+    "endure_here": ["They come for you as they were told to."],
+    "endure_won": ["You came through it."],
+    "endure_lost": ["You live, and that is all."],
+    "endure_passed": ["Whatever was meant to find you never did."],
 }
 
 
@@ -87,7 +96,13 @@ def role_name(game, adv: dict, role: str) -> str | None:
     """The name of the person a role is bound to (None: a band, a village, or someone not yet placed)."""
     from realmwalker.game.story import cast
 
-    return cast.describe(game, adv, role) if cast.person(game.world, adv["cast"].get(role)) is not None else None
+    entry = adv["cast"].get(role) or {}
+    if "lt" in entry:  # (a band's lieutenant names it while they are still the villain's: E.3)
+        from realmwalker.game.story import lieutenants
+
+        rec = lieutenants.of(game, adv, role)
+        return lieutenants.full(rec) if rec is not None and rec["fate"] in lieutenants.FREE else None
+    return cast.describe(game, adv, role) if cast.person(game.world, entry) is not None else None
 
 
 def _place_words(game, place: dict) -> str:
@@ -234,8 +249,14 @@ def _setup_hold(game, adv: dict, st: dict) -> None:
     game.say(f"<warn>{esc(line)}</>", "story")
 
 
+def _setup_endure(game, adv: dict, st: dict) -> None:
+    lo, hi = st["target"].get("after", [0, 1])
+    rng = game.world.rng.child(f"endure/{adv['id']}/{st['id']}")
+    st["target"]["due"] = _today(game) + rng.randint(int(lo), int(hi))
+
+
 SETUP = {"rescue": _setup_rescue, "fetch": _setup_fetch, "defeat": _setup_band, "capture": _setup_band,
-         "hold": _setup_hold}
+         "hold": _setup_hold, "endure": _setup_endure}
 
 
 def cap(text: str) -> str:
@@ -243,22 +264,27 @@ def cap(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------- the story's bands
-def band(game, adv: dict, st: dict, role: str, group: str, rng) -> list:
+def band(game, adv: dict, st: dict, role: str, group: str, rng, said: list | None = None) -> list:
     """A band of the story spawned now (a step's foe, a wave): tagged with the tale, its first named for the role's
-    person when there is one."""
+    person when there is one, or made the lieutenant at its head (what one who got away says goes in `said`)."""
     from realmwalker.game.encounters import land_budget
     from realmwalker.rules.creatures import spawn_group
 
     creatures = spawn_group(game.tables, group, rng, now=game.world.time, party_size=len(game.party),
                             budget=land_budget(game, rng.child("budget"), difficulty="high"))
-    name = role_name(game, adv, role) if role not in ("wave", "ambush") else None
+    name = role_name(game, adv, role) if role not in LOOSE else None
     for i, c in enumerate(creatures):
-        c.story = {"adv": adv["id"], "role": role if i == 0 or role in ("wave", "ambush") else "minion",
+        c.story = {"adv": adv["id"], "role": role if i == 0 or role in LOOSE else "minion",
                    "step": st["id"]}
         if i == 0 and st["kind"] == "capture":
             c.story["alive"] = True  # (wanted alive: a beaten blow knocks them out, on Auto too)
     if creatures and name:
         creatures[0].name, creatures[0].named = name, True
+    from realmwalker.game.story import lieutenants
+
+    back = lieutenants.on_spawn(game, adv, role, creatures, rng) if role not in LOOSE else ""
+    if back and said is not None:
+        said.append(back)
     return creatures
 
 
@@ -267,8 +293,9 @@ def _encounter(game, adv: dict, st: dict, role: str, group: str, intro: str):
 
     rng = game.world.rng.child(f"deed-fight/{adv['id']}/{st['id']}/{game.world.time}")
     enc = make_encounter(game, group, rng)
-    enc.creatures = band(game, adv, st, role, group, rng.child("band")) or enc.creatures
-    enc.intro = intro
+    said: list[str] = []
+    enc.creatures = band(game, adv, st, role, group, rng.child("band"), said) or enc.creatures
+    enc.intro = " ".join(said + [intro])
     enc.attitude = "hostile"
     game.encounter = enc
     game.travel = None
@@ -343,10 +370,40 @@ def _rite(game, adv: dict, st: dict) -> bool:
     return False
 
 
+def _endure_due(game) -> bool:
+    """An endure's set piece whose day has come: its beat waits now (from the road and from a night at camp)."""
+    from realmwalker.game.story import beats
+
+    if beats.pending(game) is not None:
+        return False
+    for adv, st in _open(game, ("endure",)):
+        due = st["target"].get("due")
+        if due is None or st.get("offered") or _today(game) < int(due):
+            continue
+        st["offered"] = _today(game)
+        beats.offer(game, st["target"]["beat"], adv=adv["id"], step=st["id"], where=_story()._where(game))
+        return True
+    return False
+
+
+def endure(game, adv: dict, st: dict | None) -> list[str]:
+    """The set piece's battle (the beat's op `endure`): a band of its group, every one of them tagged with the step."""
+    if st is None or st["state"] != "open" or st["kind"] != "endure":
+        return []
+    st["fighting"] = _today(game)
+    enc = _encounter(game, adv, st, "endure", st["target"]["group"], say(game, adv, "endure_here"))
+    if enc is not None:
+        enc.field = st["target"].get("field", "")  # (a set piece's own battlefield: the burning village, E.5)
+    return []
+
+
 def on_night(game, where: str) -> bool:
-    """A night at camp or at the inn where a hold is to be fought: its first wave comes."""
+    """A night at camp or at the inn where a hold is to be fought: its first wave comes. At camp, a set piece whose
+    day has come."""
     from realmwalker.game.story import places
 
+    if where == "camp" and _endure_due(game):
+        return True
     for adv, st in _open(game, ("hold",)):
         if places.here(game, st["target"]["place"]) and st["target"].get("night") is not None and \
                 _today(game) >= int(st["target"]["night"]) and int(st.get("wave", 0)) == 0:
@@ -417,6 +474,22 @@ def on_battle(game, result) -> None:
             story.step_done(game, adv["id"], st["id"])
         else:
             _wave(game, adv, st)
+    battle = getattr(game, "battle", None)
+    fought = {((f.creature.story or {}).get("adv"), (f.creature.story or {}).get("step"))
+              for f in getattr(battle, "fighters", [])
+              if getattr(f, "creature", None) is not None and getattr(f.creature, "story", None)}
+    for adv, st in _open(game, ("endure",)):
+        if st.get("fighting") in (None, False) or not ((adv["id"], st["id"]) in fought or
+                                                       (adv["id"], st["id"], "endure") in seen):
+            continue
+        st["fighting"] = False
+        if result.outcome in ("defeat", "surrendered"):
+            step_failed(game, adv, st, say(game, adv, "endure_lost"))
+        else:
+            line = say(game, adv, "endure_won")
+            story.journal(adv, line, _today(game))
+            game.say(f"<good>{esc(line)}</>", "story")
+            story.step_done(game, adv["id"], st["id"])
     for adv, st in _open(game, BAND_KINDS):
         states = seen.get((adv["id"], st["id"], st["target"]["role"]))
         if not states:
@@ -459,9 +532,12 @@ def on_fate(game, creature, fate: str) -> str | None:
 
 
 def on_travel(game) -> bool:
-    """On the road with someone you escort: the step's ambush falls on you once, a few tiles out."""
+    """On the road with someone you escort: the step's ambush falls on you once, a few tiles out. A set piece whose
+    day has come (endure) meets you on the road."""
     from realmwalker.game import quests
 
+    if game.world.settlement_at(game.player.x, game.player.y) is None and _endure_due(game):
+        return True
     p = game.player
     for adv, st in _open(game, ("escort",)):
         q = quests.by_id(game, st.get("quest"))
@@ -486,6 +562,21 @@ def daily(game) -> None:
         if night is not None and _today(game) > int(night) + 1:  # (missed, or its waves left unfought)
             key = "hold_missed" if int(st.get("wave", 0)) == 0 else "hold_lost"
             step_failed(game, adv, st, say(game, adv, key, place=_place_words(game, st["target"]["place"])))
+    for adv, st in _open(game, ("endure",)):  # (its band got past without a fight - slipped, talked, paid - is lived
+        fought = st.get("fighting")           # through; never on the road nor at camp all that while: it passed you by)
+        if fought not in (None, False) and _today(game) > int(fought) and game.encounter is None and \
+                game.battle is None:
+            st["fighting"] = False
+            line = say(game, adv, "endure_won")
+            story.journal(adv, line, _today(game))
+            story.step_done(game, adv["id"], st["id"])
+            continue
+        due = st["target"].get("due")
+        if due is not None and _today(game) > int(due) + ENDURE_WAIT and not st.get("fighting"):
+            line = say(game, adv, "endure_passed")
+            story.journal(adv, line, _today(game))
+            game.say(f"<dim>{esc(line)}</>", "story")
+            story.step_done(game, adv["id"], st["id"])
 
 
 def on_goal(game) -> None:

@@ -1445,6 +1445,7 @@ THREAT_KIND = Obj({
     "ask": Str(max_len=120, optional=True),  # what you say to a town's notable about it (the talk's hook choice)
     "learn_ask": Str(max_len=120, optional=True),  # asking someone who knows its secret ({villain})
     "band": Str(max_len=40, optional=True),  # its villain's band when the figure is no beast (story.villain_group)
+    "minions": Str(max_len=40, optional=True),  # its servants without it, sent in force (the strike move: E.1)
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
     "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
     # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
@@ -1486,7 +1487,9 @@ BEAT = Obj({
     "title": List(Str(max_len=80), optional=True),
     "picture": Str(max_len=60, optional=True),
     "leaves": Str(max_len=30, optional=True),  # what it leaves at your camp, in the camp's picture (story.LEFT)
+    "stage": Str(max_len=60, optional=True),  # at an inn, a scene (scenes.json) plays it on the town's map (E.2)
     "text": List(word_list(1, 600), min_items=1),  # pages, each a list of variants
+    "tempers": Map(word_list(1, 600), optional=True),  # a villain temper's own first page (Expansion 6 E.7)
     "choices": List(CHOICE, optional=True),
     "ops": ops_list(optional=True),  # what it does when it has no choices
 })
@@ -1529,9 +1532,18 @@ BLUEPRINT = Obj({
     "chapters": List(CHAPTER, min_items=2, max_items=6),
     "finale": Obj({"boss": Str(max_len=60), "template": Str(max_len=40), "at": Str(max_len=80),
                    "with": List(Str(max_len=60), optional=True), "keys": Map(List(Str(max_len=60)), optional=True),
-                   "words": Map(word_list(1, 600), optional=True)}),
+                   "words": Map(word_list(1, 600), optional=True),
+                   # (E.5) the arenas it may be fought in (story/arenas.py), and the field of a set piece on the land
+                   "arenas": List(Str(max_len=30), optional=True), "endure_field": Str(max_len=30, optional=True)}),
     "endings": List(ENDING, min_items=2),
     "epithets": List(Str(max_len=40), optional=True),  # tags of the epithets its epilogue offers
+    # (E.3) the cast roles led by a named lieutenant: the creature at the band's head, their byname, and what one
+    # who turns gives you ("clue:anchor", "key:inside")
+    "lieutenants": List(Obj({"as": Str(max_len=30), "creature": List(Str(max_len=40), optional=True),
+                             "titles": word_list(3, 60), "turns": List(Str(max_len=60), optional=True)}),
+                        optional=True),
+    # (E.4) the villain dead before its finale: the weights of the short last chapters (story/early.KINDS)
+    "early": Map(Int(min=0, max=20), optional=True),
 })
 ADVENTURES = Obj({
     "max_active": Int(min=1, max=10, optional=True),
@@ -1543,8 +1555,43 @@ ADVENTURES = Obj({
     "openings": Map(Obj({"weight": Int(min=0, max=20), "kinds": List(Str(max_len=30), optional=True),
                          "near": Bool(optional=True), "backgrounds": Map(Int(min=0, max=20), optional=True)}),
                     optional=True),
+    # (E.5) a finale's arenas (story/arenas.py): the dungeon styles each fits, or the land; said as the fight begins
+    # and when the boss's second phase changes it
+    "arenas": Map(Obj({"styles": List(Str(max_len=30), optional=True), "wild": Bool(optional=True),
+                       "enter": word_list(3, 300), "change": word_list(3, 300)}), optional=True),
+    # (E.5) what a retreat from a finale costs (story/defeat.py), and who takes the beaten alive at its end
+    "retreat": Obj({"attention": Int(min=0, max=5), "ally_lost": Float(min=0, max=1)}, optional=True),
+    "defeat": Obj({"tempers": List(Str(max_len=30)), "lock": Int(min=0, max=30)}, optional=True),
+    # (E.6) fairness rule 1: the finale's band set by its tier (story/finale.strengthen): guards by threat kind and
+    # tier join the boss's band until it is worth `share` of a party's `difficulty` budget at the target level; the
+    # creature the recruited ally fights as, by tier (finale._ally_fights); a kind's own share and size (`by_kind`)
+    "strength": Obj({"difficulty": Str(choices=["low", "moderate", "high"]), "share": Float(min=0, max=5),
+                     "most": Int(min=1, max=16), "guards": Map(Map(List(Str(max_len=40)))),
+                     "ally": List(Str(max_len=40), min_items=1, max_items=4, optional=True),
+                     "by_kind": Map(Obj({"share": Float(min=0, max=5, optional=True),
+                                         "most": Int(min=1, max=16, optional=True)}), optional=True)},
+                 optional=True),
 })
 
+GREAT_ATTACK = Obj({
+    "name": Str(max_len=40),
+    "area": Obj({"size": Int(min=5, max=60), "range": Int(min=0, max=120)}),  # feet; range 0: round itself
+    "save": Str(choices=["str", "dex", "con", "int", "wis", "cha"]),
+    "dc": List(Int(min=8, max=25), min_items=1, max_items=4),  # by tier
+    "damage": List(Str(max_len=20), min_items=1, max_items=4),  # by tier
+    "type": Str(max_len=20),
+    "every": Int(min=2, max=10, optional=True),  # rounds between one and the next (default 3)
+    "first": Int(min=1, max=10, optional=True),  # the first round it may be marked (default 2)
+    "warn": word_list(3, 300),  # said as it is marked ({name})
+    "go": word_list(3, 300),  # said as it falls ({name})
+}, optional=True)
+# (E.6) a boss template's might at its tier (story/finale._might): AC, its attacks' bonus and DCs, a die more on each
+# blow, more blows; and the least a boss of the tier has (hit points, AC, attack bonus, blows)
+MIGHT = Obj({"ac": Int(min=0, max=10, optional=True), "hit": Int(min=0, max=10, optional=True),
+             "damage": Str(max_len=20, optional=True), "multiattack": Int(min=0, max=4, optional=True),
+             "min_hp": Int(min=1, max=2000, optional=True), "min_ac": Int(min=5, max=30, optional=True),
+             "min_hit": Int(min=0, max=20, optional=True), "min_attacks": Int(min=1, max=6, optional=True)},
+            optional=True)
 BOSS = Obj({
     "tiers": TIER_BAND,
     "roles": List(Str(max_len=30), min_items=1),  # what it makes a boss of (a beast, a dead king, a captain...)
@@ -1553,14 +1600,30 @@ BOSS = Obj({
     "actions": Int(min=0, max=5),  # legendary actions a round
     "menu": List(Str(max_len=30), min_items=1),  # what those actions may be (story/finale.LEGENDARY)
     "phase": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300),
-                  "creature": Str(max_len=40, optional=True), "count": Int(min=1, max=6, optional=True)},
-                 optional=True),  # (kind "raise": `count` of the `creature` come to its side)
+                  "creature": Str(max_len=40, optional=True), "count": Int(min=1, max=6, optional=True),
+                  "damage": Str(max_len=20, optional=True), "attacks": Int(min=1, max=3, optional=True)},
+                 optional=True),  # (kind "raise": `count` of the `creature` come to its side; "frenzy": `damage` a blow)
     # met before its finale it fights as itself, and does this when it falls to `at` of its hit points (breaks off)
     "before": Obj({"at": Float(min=0.05, max=0.95), "kind": Str(max_len=30), "lines": word_list(3, 300)},
                   optional=True),
+    # (E.5) its entrance (words as it enters), its telegraphed great attack (rules/engine/handlers/bosses.py: dc and
+    # damage by tier), and its numbers at the tiers above (any of the keys here but `tiers`, `roles`, `by_tier`)
+    "entrance": List(Str(max_len=300), min_items=3, optional=True),
+    "great": GREAT_ATTACK,
+    "might": MIGHT,
+    "by_tier": Map(Obj({"hp": Float(min=1, max=10, optional=True), "resistances": Int(min=0, max=5, optional=True),
+                        "might": MIGHT,
+                        "actions": Int(min=0, max=5, optional=True),
+                        "menu": List(Str(max_len=30), min_items=1, optional=True),
+                        "great": GREAT_ATTACK, "entrance": List(Str(max_len=300), min_items=3, optional=True)}), optional=True),
 })
 TEMPER = Obj({
     "speaks": Bool(),
+    # (E.2) its own hand: the letters' face (letters.HANDS), ink and seal colours
+    "hand": Obj({"face": Str(choices=["plain", "fine", "dark"]), "ink": List(Int(min=0, max=255), min_items=3,
+                max_items=3), "seal": List(Int(min=0, max=255), min_items=3, max_items=3),
+                 # (E.7) what is pressed into its wax (game/letters.SIGILS)
+                 "sigil": Str(choices=["mark", "sun", "key", "skull", "crown", "tear"], optional=True)}, optional=True),
     "moves": Map(Int(min=0, max=100), min_items=1),  # move id: weight
     "first_words": word_list(6, 300),
     "omens": word_list(8, 300),
@@ -1569,13 +1632,67 @@ WEAKNESS = Obj({"id": Str(max_len=30), "name": Str(max_len=60), "keys": List(Str
                 "for": List(Str(max_len=40), optional=True), "lore": word_list(3, 400),
                 "means": List(Str(max_len=40), optional=True)})
 VILLAINS = Obj({
+    # (E.5) a boss's lines in a fight: a great attack that fizzles, an order to its men ({name}, {man})
+    "boss_words": Obj({"fizzle": word_list(3, 300), "command": word_list(3, 300)}, optional=True),
     "attention": Obj({"step": Int(min=0, max=5), "lieutenant": Int(min=0, max=5), "fortnight": Int(min=-5, max=0),
                       "max": Int(min=1, max=20), "moves_apart_days": Int(min=0, max=30),
-                      "per_chapter": Int(min=0, max=10)}, optional=True),
+                      "per_chapter": Int(min=0, max=10),
+                      # (E.1: the rest of what it notices, the names of its levels, a move's chance by attention)
+                      "servants": Int(min=0, max=5, optional=True), "great_magic": Int(min=0, max=5, optional=True),
+                      "great_level": Int(min=1, max=9, optional=True),
+                      "levels": List(Str(max_len=30), min_items=2, optional=True),
+                      "chance": List(Float(min=0, max=1), min_items=1, optional=True)}, optional=True),
+    # a major setback: attention jumps, and its next move is one needing at least `min` (by `weight` times)
+    "wrath": Obj({"jump": Int(min=0, max=5), "min": Int(min=0, max=20), "weight": Float(min=0, max=20),
+                  "days": Int(min=1, max=60), "steps": List(Str(max_len=30)),
+                  "moves": List(Str(max_len=40), optional=True)}, optional=True),  # (angry moves below `min`)
+    # its spy: seen by the party's best passive Perception against dc + attention; unseen, it steals a token
+    "spy": Obj({"dc": Int(min=1, max=30), "tailored": Float(min=0, max=20), "tokens": word_list(6, 80),
+                "missing": word_list(3, 300)}, optional=True),
+    "reprisal_roles": List(Str(max_len=30), optional=True),  # the cast who may pay for helping you
+    # (E.2) a wedge's offers and the loyalty that holds against it, an invitation's slight, a kidnap's days
+    "wedge": Obj({"loyal": Int(min=0, max=100), "offers": word_list(4, 160)}, optional=True),
+    "invitation": Obj({"snub": Int(min=0, max=5)}, optional=True),
+    "kidnap": Obj({"days": Int(min=1, max=60)}, optional=True),
     "tempers": Map(TEMPER),
-    "moves": Map(Obj({"beat": Str(max_len=60), "attention": List(Int(min=0, max=20), min_items=2, max_items=2)})),
+    "moves": Map(Obj({"beat": Str(max_len=60), "attention": List(Int(min=0, max=20), min_items=2, max_items=2),
+                      "speaks": Bool(optional=True),  # it needs words: never a beast's, never the bestial's
+                      "tailored": Bool(optional=True),  # made with a token its spy stole (one move a token)
+                      "spy": Bool(optional=True),  # the spy: its beat plays only when it is seen
+                      # (E.2) what it needs (story/villain.NEEDS), and the beat for a companion not loyal enough
+                      "needs": List(Str(max_len=20), optional=True), "disloyal": Str(max_len=60, optional=True)})),
     "bosses": Map(BOSS),
     "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
+    # (E.3) lieutenants who remember (story/lieutenants.py): traits, grudges, scars, the nemesis, their words
+    "lieutenants": Obj({
+        "grudge": Obj({"max": Int(min=1, max=10), "hp": Float(min=0, max=2), "ac": Int(min=0, max=5),
+                       "ac_max": Int(min=0, max=10), "blade": List(Str(max_len=10), min_items=1)}),
+        "nemesis": Obj({"grudge": Int(min=0, max=10), "first": List(Int(min=0, max=365), min_items=2, max_items=2),
+                        "again": List(Int(min=1, max=365), min_items=2, max_items=2),
+                        "band": Map(Str(max_len=40))}),
+        "traits": Map(Obj({"words": Str(max_len=40), "morale": Str(max_len=20), "flee_at": Float(min=0, max=0.95),
+                           "turn": Float(min=0, max=1), "betray": Float(min=0, max=1)}), min_items=3),
+        "weaknesses": word_list(6, 200), "looks": word_list(6, 200), "scars": word_list(6, 100),
+        "lines": Obj({k: word_list(3, 300) for k in (
+            "escape", "escaped", "returns", "spared_back", "turned", "slain_grief", "slain_rage", "joins",
+            "joins_grudge", "turncoat", "nemesis", "nemesis_slain", "nemesis_fled")}),
+        "epilogue": Obj({k: word_list(3, 300) for k in ("slain", "taken", "turned", "turncoat", "free", "promoted")}),
+    }, optional=True),
+    # (E.4) escapes, early ends and returning villains (story/early.py): its words, a return's attention and hit
+    # points, a contingency's days, and each early end's short last chapter
+    "early": Obj({
+        "spent": word_list(3, 300), "escaped": word_list(3, 300), "back": word_list(3, 300),
+        "relic": word_list(3, 300),
+        "returning": Obj({"attention": Int(min=0, max=5), "hp": Float(min=0, max=2), "max": Int(min=1, max=10)}),
+        "after": List(Int(min=0, max=30), min_items=2, max_items=2),
+        "kinds": Obj({
+            "succession": Obj({"title": word_list(3, 80), "goal": word_list(3, 200), "opening": word_list(3, 600),
+                               "reveal": word_list(3, 600)}),
+            "contingency": Obj({"title": word_list(3, 80), "goal": word_list(3, 200), "opening": word_list(3, 600),
+                                "reveal": word_list(3, 600)}),
+            "cat_away": Obj({"lines": word_list(3, 600)}),
+        }),
+    }, optional=True),
 })
 CUE = Obj({"cue": Str(max_len=20)}, strict=False)  # its other keys are its cue's own (story/stage.py CUES)
 SCENE = Obj({

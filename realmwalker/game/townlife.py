@@ -484,9 +484,7 @@ def tick(game, lm, s) -> None:
     if not people:
         return
     me = _you(game, lm)
-    occupied = {(n.x, n.y): n for n in people}
-    for a in lm.actors:
-        occupied.setdefault((a.x, a.y), None)
+    occupied = _unpile(town, people, me, lm)
     budget = [PATHS_PER_TICK]
     start = town.ticks % len(people)  # who goes first goes round, so nobody is always last
     for npc in people[start:] + people[:start]:
@@ -500,6 +498,32 @@ def tick(game, lm, s) -> None:
         _murmur(game, lm, town, people)
         _brawl(game, lm, town, people)
         _call_out(game, lm, town, people)
+
+
+def unpile(game, lm) -> None:
+    """Part anyone sharing a square (people.update_positions: one back from fleeing or from your company stands where
+    they last stood, which someone else may have taken since)."""
+    from realmwalker.game.people import settlement_of
+
+    s = settlement_of(game, lm)
+    if s is not None:
+        _unpile(_town(game, lm), _people(game, s), _you(game, lm), lm)
+
+
+def _unpile(town: _Town, people, me, lm) -> dict:
+    """Who stands where, the beasts' squares too; two put on one square (sent home, placed by a scene or a trouble, a
+    crowded settling) part to the nearest free square, so the town never keeps them piled."""
+    occupied: dict = {}
+    for a in lm.actors:
+        occupied.setdefault((a.x, a.y), None)
+    for n in sorted(people, key=lambda n: not n.flags.get("stays")):  # (a warden at a gate keeps its square)
+        if (n.x, n.y) in occupied:
+            spot = _free_near(town, (n.x, n.y), set(occupied) | {me})
+            if spot is not None:
+                n.x, n.y = spot
+                town.paths.pop(n.id, None)
+        occupied.setdefault((n.x, n.y), n)
+    return occupied
 
 
 def _step(game, lm, town: _Town, npc, occupied, me, budget: list[int]) -> None:

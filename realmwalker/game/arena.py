@@ -107,6 +107,9 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
     x0 = max(0, min(lm.width - W, x0))
     y0 = max(0, min(lm.height - H, y0))
     terrain = game.remap_for(lm)[lm.terrain[x0:x0 + W, y0:y0 + H]].astype(np.uint16)
+    dressed = _finale_arena(game, lm, actor, terrain, (me[0] - x0, me[1] - y0),
+                            None if them is None else (max(0, min(W - 1, them[0] - x0)), max(0, min(H - 1, them[1] - y0))),
+                            rng)
     lights = _terrain_lights(game, terrain)
     under = lm.under_rock(*me)
     indoors = under or lm.building_at(*me) is not None
@@ -114,6 +117,14 @@ def _local(game, lm, party, creatures, env, rng, *, actor, near, situation, numb
                        key=f"{lm.key}/battle{number}", base_light=env.light, indoors=indoors, underground=under,
                        ground=env.ground, lights=lights, origin=(x0, y0))
     field.cut_from = lm.key  # (its dead and blood are written back there: game/remains.py)
+    if dressed is not None:
+        field.lights = list(field.lights) + [tuple(x) for x in dressed["lights"] if tuple(x) not in field.lights]
+        if dressed["id"]:
+            field.__dict__["arena"] = dressed  # (the finale's arena: game/story/arenas.py)
+        if dressed["fires"]:
+            field.__dict__["fires"] = sorted(dressed["fires"])
+            field.__dict__["village"] = bool(dressed.get("burning"))
+        field._derive()
     lead = (me[0] - x0, me[1] - y0)
     if them is not None:
         foe_at = (max(0, min(W - 1, them[0] - x0)), max(0, min(H - 1, them[1] - y0)))
@@ -221,6 +232,7 @@ def _wild(game, party, creatures, env, rng, *, situation, number):
                        ground=env.ground, lights=lights)
     if fires:
         field.__dict__["fires"] = sorted(fires)  # (lit by fire.on_battle_start: the carts burning)
+        field.__dict__["village"] = story_field == "burning_village"  # (its houses' timbers catch: E.5)
     taken: set = set()
     spots = _place_party(field, party, lead, forward, taken)
     mode = {"ambushed": "surround", "camp": "surround", "unaware": "cluster"}.get(situation, "line")
@@ -275,7 +287,36 @@ def _captors(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
     return [(fire[0], fire[1], 4)], set()
 
 
-FIELDS = {"ford": _ford, "captors": _captors}  # a story's own battlefields (the hold step's `field`: Expansion 6 D.3)
+def _village(terrain, tables, lead, foe_at, nrng) -> tuple[list, set]:
+    from realmwalker.game.story import arenas
+
+    return arenas.village_field(terrain, tables, lead, foe_at, nrng)
+
+
+# a story's own battlefields (the hold step's `field`: Expansion 6 D.3; a set piece's: E.5)
+FIELDS = {"ford": _ford, "captors": _captors, "burning_village": _village}
+
+
+def _finale_arena(game, lm, actor, terrain, lead, foe_at, rng) -> dict | None:
+    """A story's finale fought here: its arena laid on the terrain (game/story/arenas.py), the two sides joined."""
+    if actor is None or foe_at is None or lm.kind != "dungeon":
+        return None
+    from realmwalker.game import story
+    from realmwalker.game.story import arenas
+
+    adv = story.finale_band(game, actor)
+    if adv is None:
+        return None
+    out = arenas.lay(game, adv, lm.meta.get("style", ""), terrain, lead, foe_at, rng.numpy("arena-dress"))
+    if out is not None:
+        _connect(terrain, game.tables, lead, foe_at)
+    out = out or {"id": "", "lights": [], "fires": set(), "marks": {}}
+    mid = ((lead[0] + foe_at[0]) // 2, (lead[1] + foe_at[1]) // 2)
+    out["lights"] = list(out["lights"]) + [(foe_at[0], foe_at[1], FINALE_LIGHT[0]), (mid[0], mid[1], FINALE_LIGHT[1])]
+    return out
+
+
+FINALE_LIGHT = (4, 3)  # (squares) a finale is never fought blind: its heart is lit, and the way to it (E.6, law 5)
 
 
 def _robbers(game, creatures) -> bool:
@@ -325,16 +366,20 @@ def _connect(terrain, tables, a, b) -> None:
         for (x, y) in frontier:
             for dx, dy in grid.DIRS8:
                 n = (x + dx, y + dy)
-                if 0 <= n[0] < W and 0 <= n[1] < H and n not in seen and walk[n]:
-                    seen.add(n)
-                    nxt.append(n)
+                if not (0 <= n[0] < W and 0 <= n[1] < H) or n in seen or not walk[n]:
+                    continue
+                if dx and dy and not walk[x + dx, y] and not walk[x, y + dy]:
+                    continue  # (no squeezing diagonally between two walls: grid.paths does not let anyone)
+                seen.add(n)
+                nxt.append(n)
         frontier = nxt
     if b in seen:
         return
-    steps = max(abs(b[0] - a[0]), abs(b[1] - a[1]))
-    for i in range(steps + 1):
-        x = round(a[0] + (b[0] - a[0]) * i / max(1, steps))
-        y = round(a[1] + (b[1] - a[1]) * i / max(1, steps))
+    # (along the one axis, then the other: a way dug corner to corner would still squeeze between walls)
+    sx = 1 if b[0] >= a[0] else -1
+    sy = 1 if b[1] >= a[1] else -1
+    cells = [(x, a[1]) for x in range(a[0], b[0] + sx, sx)] + [(b[0], y) for y in range(a[1], b[1] + sy, sy)]
+    for x, y in cells:
         if not walk[x, y]:
             terrain[x, y] = tables.terrain.index["ford" if "water" in tables.terrain.tags[int(terrain[x, y])] else "dirt"]
 

@@ -45,6 +45,8 @@ def _tale(made, tables, kind):
                    key=lambda s: threats.distance(w, t, s.x, s.y))
         game = new_game(w, tables, start_settlement=town.id)
         game.survival = False
+        beats.director(game.world)["pending"] = None  # (the first hour is tested on its own: test_first_hour)
+        beats.director(game.world)["opening"] = None
         t = threats.records(game.world)[t["id"]]
         if t["state"] == "dormant":
             threats.stir(game.world, tables, t, game.world.rng, day=0)
