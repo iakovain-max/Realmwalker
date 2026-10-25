@@ -578,6 +578,7 @@ and refs (`scar` for the op `lay_scar`). Roots kind "vignette" (situations ROOTS
 [ids]` forges each in two test worlds and fills every line. Tests: tests/test_vignettes.py (two slow); test_situations'
 counts read `plain()` (the twenty ordinary predicaments). Autoplay: a vignette once a world, from its own root. For the
 C.10 variety measure: the vignettes are predicaments too (twenty more ids). No save format change.
+C.9 checks: suite green but for the turn-time tests (each passing alone, as before); smoke clean; autoplay clean in 13 of 14 runs; one run (seed 1, after the review fixes) reported "save/load round trip differs in ['world.json']" at turn 2505 and ten more runs (seeds 1-7) did not repeat it; if it comes back, run build/autoplay_debug.py-style dumping (write both world.json texts on a difference) to find the key. A fresh review's fifteen points fixed in 81753e0.
 C.8 (2026-10-25, realmwalker-b): `game/story/experience.py` (docstring has the API): `award(game, size, key,
 no_fight=)` gives `amount` to the living (encounter.budget of the living's levels x share / count; x `no_fight` when
 asked; x `stories_only` when `game.experience == "stories"`), data situations.json `experience` {sizes: {small, fair,
