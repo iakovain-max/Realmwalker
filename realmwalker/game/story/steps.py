@@ -10,9 +10,10 @@ A step record: {"id": "killings.2", "kind", "state" (open, done, failed), "targe
 sets one of its "flag:a|flag:b" itself).
 
 Part A's kinds: go, search, witness, read, learn, prepare, choose, slay, finale. Part D's: rescue, fetch, defeat,
-capture, recruit, rally, hold, rite, escort, confront (their game side, setup and listeners, is story/deeds.py). A kind
-may say `goal(st)`: a test of the goal language (story/goals.py) that finishes it however it was made true. A step's
-`fails_to` is the codeword a failed step leaves (a failed step still moves its chapter on: law 6).
+capture, recruit, rally, hold, rite, escort, confront, and E.4's endure (their game side, setup and listeners, is
+story/deeds.py). A kind may say `goal(st)`: a test of the goal language (story/goals.py) that finishes it however it
+was made true. A step's `fails_to` is the codeword a failed step leaves (a failed step still moves its chapter on: law
+6).
 """
 
 from __future__ import annotations
@@ -425,3 +426,22 @@ class Confront(Step):
             forge.fail(f"no band '{group}' for the one confronted")
         t["group"] = group
         return t
+
+
+@step("endure")
+class Endure(Step):
+    """Live through a set piece (the villain's standing orders carried out after its death, a caged thing let loose,
+    a storm, a night in the haunted house): its `beat` comes on the road or at camp `after` [lo, hi] days, and the
+    battle it leads to (a band of `group`) is done once you come out of it alive, won or got away (story/deeds.py).
+    Its beat may also let you slip it with a check. Never there, it passes by itself in a week (law 6)."""
+    fields = frozenset({"beat", "group", "after"})
+    fight = True
+
+    @classmethod
+    def bind(cls, forge, spec):
+        group = spec.get("group") or forge.tables.threats["kinds"].get(forge.threat["kind"], {}).get("minions")
+        if not group or group not in forge.tables.creatures.encounters:
+            forge.fail(f"no band for the set piece ({group})")
+        if spec.get("beat") not in forge.tables.beats:
+            forge.fail(f"no beat '{spec.get('beat')}' for the set piece")
+        return {"beat": spec["beat"], "group": group, "after": [int(d) for d in spec.get("after", [0, 1])]}

@@ -284,6 +284,9 @@ def _sequel(game, adv, kind: str = "returns", lo: int = 28, hi: int = 56) -> lis
     t["state"] = "dormant"
     t["adventure"] = None
     t["sequel"] = kind
+    from realmwalker.game.story import early
+
+    early.returns(game, adv, t)  # (whom it comes back for, and how often it has: E.4)
     t["scheme"]["held_until"] = float(news.now_days(game.world)) + rng.randint(int(lo), int(hi))
     return []
 

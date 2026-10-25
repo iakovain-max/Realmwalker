@@ -181,6 +181,7 @@
           ]
         }
       },
+      "early": {"succession": 3, "contingency": 1, "cat_away": 1},
       "endings": [
         {
           "id": "bargained",

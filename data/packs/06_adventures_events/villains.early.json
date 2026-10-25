@@ -1,0 +1,86 @@
+{
+  "_comment": "Escapes, early ends and returning villains (Expansion 6 E.4, docs/ADVENTURES.md §5.4; game/story/early.py). `spent`: said when a villain met again before its finale will not run a second time; `escaped`: the journal's line when it got away; `back`: said at the finale of a villain come back from the dead; `relic`: the journal's line when it takes its anchor home. `returning`: a tale forged on a villain come back starts at this attention, and its boss has `hp` more of its hit points for each return (up to `max`). `after`: the days before a contingency's set piece. `kinds`: the short last chapter of each early end (succession: {heir} is the lieutenant who takes its place; cat_away has only `lines`). The relic_moved move is at the end.",
+  "early": {
+    "spent": [
+      "{villain_short} does not look for a way out this time. It got away from you once, and it does not mean to run from you again.",
+      "There is no breaking off now. {villain_short} has run from you once, and whatever it is, it is too proud to run twice.",
+      "This time {villain_short} plants itself and stays. It knows, as you do, that there will be no getting away.",
+      "It does not glance at the way out. Whatever let it slip away before, it has spent it, and it knows."
+    ],
+    "escaped": [
+      "{villain_short} got away from you, hurt. It will not get away a second time.",
+      "It broke off and was gone before you could close. Next time there will be no breaking off.",
+      "{villain_short} escaped you once. It cannot do it again: the next meeting ends one way or the other.",
+      "It slipped away, bleeding. Whatever trick it used, it has used it."
+    ],
+    "back": [
+      "It is the same {villain_short} you put down, and it is not the same: it has come back from that, and it remembers every blow.",
+      "You killed {him} once. {villain_short} looks at you across the dark as if to say that it did not take.",
+      "{villain_short} has been dead, and is not, and it has had a long time in the dark to think of you.",
+      "It knows your face. It came back for it."
+    ],
+    "relic": [
+      "{villain_short} has taken what binds {him} out of its hiding place and into {home} itself. If you want it now, you will have to go under {his} roof for it.",
+      "Whatever was hidden is hidden no longer: {villain_short} has moved it into {home}, where {he} can watch over it.",
+      "The thing you were looking for is gone from where it lay. {villain_short} has carried it home to {home}.",
+      "{villain_short} knew you were close. What binds {him} lies in {home} now, under {his} own eye."
+    ],
+    "returning": {"attention": 3, "hp": 0.15, "max": 3},
+    "after": [0, 2],
+    "kinds": {
+      "succession": {
+        "title": ["The Heir", "Who Comes After", "The Empty Seat", "A New Master"],
+        "goal": [
+          "{heir} has taken up what {villain_short} left behind. Finish it.",
+          "Put an end to {heir}, who sits in {villain_short}'s place now.",
+          "Deal with {heir}, the last of {villain_short}'s hands, before {heir} grows into the part."
+        ],
+        "opening": [
+          "{villain_short} is dead, but not everything that served {him} died with {him}. {heir} has gathered what was left and gone to ground at {home}, and the word on the road is that {heir} means to carry on.",
+          "The news comes within the day: {heir} has taken {villain_short}'s place at {home}, and what was left of {his} following has gone with {heir}. It is smaller now. It will not stay small for long.",
+          "Somebody always steps into a dead master's boots. At {home} it is {heir}, and the ones who served {villain_short} serve {heir} now.",
+          "{villain_short} fell before {his} time, and left a gap. {heir} has filled it, at {home}, with what was left."
+        ],
+        "reveal": [
+          "{heir} is finished, and with {heir} the last of what {villain_short} built.",
+          "There is nobody left to take {villain_short}'s place. It is over.",
+          "The heir is gone, and there is no other. What {villain_short} began ends here."
+        ]
+      },
+      "contingency": {
+        "title": ["The Last Order", "What It Left Behind", "Dead Hands", "After the Fall"],
+        "goal": [
+          "Live through what {villain_short} set to happen on {his} death.",
+          "Come through the last thing {villain_short} arranged for you.",
+          "Survive {villain_short}'s parting gift."
+        ],
+        "opening": [
+          "{villain_short} is dead, and you would think it was over. But a thing like {villain_short} does not die without making arrangements, and some of them were for you.",
+          "It fell sooner than it meant to. Those who served {him} were told, long ago, what to do if that day came, and the day has come.",
+          "Dead, and still not finished with you: {villain_short} left orders, and there are those who mean to carry them out.",
+          "{villain_short} planned for its own death, as such things do. Somewhere, something is already on its way to you."
+        ],
+        "reveal": [
+          "The last of {villain_short}'s orders is carried out, and failed. There is nothing more behind it.",
+          "Whatever {villain_short} left behind, you have lived through it. It is over now.",
+          "Its dead hands have reached for you one last time, and missed."
+        ]
+      },
+      "cat_away": {
+        "lines": [
+          "With {villain_short} dead, what {he} held lies open: the way to {home} is clear, and nothing waits there now but what {he} left behind.",
+          "The word goes round within the day: {villain_short} is dead, and those who served {him} have scattered. {home} stands empty.",
+          "{villain_short} fell before {his} hour, and there is nobody to take {his} place. Its servants are gone like smoke, and {home} lies open to anyone.",
+          "Nothing comes after {villain_short}. Its people break and scatter, and {town} breathes again."
+        ]
+      }
+    }
+  },
+  "moves": {
+    "relic_moved": {
+      "beat": "villain_relic_moved",
+      "attention": [5, 5],
+      "needs": ["anchor"]
+    }
+  }
+}

@@ -391,6 +391,27 @@ def _named_fight(game, rec, role: str):
     return story.named_encounter(game, adventure(game, rec), role)
 
 
+@op("endure")
+def _endure(game, rec, *args):
+    """A set piece's battle (an endure step's beat): its band, here and now (E.4)."""
+    from realmwalker.game import story
+    from realmwalker.game.story import deeds
+
+    adv = adventure(game, rec)
+    if adv is None or adv["state"] != "active":
+        return []
+    return deeds.endure(game, adv, story.find_step(game, adv["id"], rec.get("step")))
+
+
+@op("move_relic")
+def _move_relic(game, rec, *args):
+    """It takes its anchor into its own hall (the move relic_moved, E.4)."""
+    from realmwalker.game.story import early
+
+    adv = adventure(game, rec)
+    return early.move_relic(game, adv) if adv is not None and adv["state"] == "active" else []
+
+
 @op("item")
 def _item_op(game, rec, item_id: str, n: int = 1):
     from realmwalker.rules.inventory import add_item

@@ -139,6 +139,8 @@ def due_move(game, adv: dict, where: str) -> str | None:
     its move without a beat."""
     from realmwalker.game.story import beats
 
+    if adv.get("boss_dead") or adv.get("early"):
+        return None  # (the dead make no moves: what it left behind is its last chapter's, E.4)
     s = spec(game)
     day = int(game.moment.total_days)
     moves = adv.setdefault("moves", [])
@@ -247,7 +249,7 @@ def _helper(game, adv: dict) -> int | None:
 
 
 # ---------------------------------------------------------------------------- what a move needs (E.2)
-NEEDS = ("helper", "companion", "town", "lair")
+NEEDS = ("helper", "companion", "town", "lair", "anchor")
 
 
 def _needs(move: dict) -> list[str]:
@@ -256,7 +258,8 @@ def _needs(move: dict) -> list[str]:
 
 def able(game, adv: dict, need: str) -> bool:
     """Whether what a move needs is there: one who helped you (a reprisal, a kidnap), a companion to tempt (a wedge),
-    a town under a lord's law in its reach (a frame), a hall under its home to hold a captive in (a kidnap)."""
+    a town under a lord's law in its reach (a frame), a hall under its home to hold a captive in (a kidnap), its
+    anchor still where it was hidden (the relic moved)."""
     if need == "helper":
         return _helper(game, adv) is not None
     if need == "companion":
@@ -267,6 +270,10 @@ def able(game, adv: dict, need: str) -> bool:
         from realmwalker.game import story
 
         return lair(game, adv) is not None and story.chapter(adv) is not None
+    if need == "anchor":  # (its anchor not yet in anyone's hands, and not in its own hall already: E.4)
+        from realmwalker.game.story import early
+
+        return early.relic_movable(game, adv) is not None
     return False
 
 

@@ -131,6 +131,12 @@ def _chapter_check(game, adv: dict) -> None:
     for line in experience.award(game, "chapter", f"chapter/{adv['id']}/{adv['chapter']}"):  # (a high budget: C.8)
         game.say(line, "good")
     beats.OPS["clock"](game, {"adv": adv["id"]}, -10)  # (a chapter done holds the villain's scheme a while)
+    if adv.get("early"):
+        from realmwalker.game.story import early
+
+        for line in early.after_chapter(game, adv):  # (the short last chapter after it fell early: E.4)
+            game.say(line, "story")
+        return
     if int(adv["chapter"]) + 1 < len(adv["chapters"]):
         adv["chapter"] = int(adv["chapter"]) + 1
         nxt = chapter(adv)
@@ -280,6 +286,9 @@ def daily(game) -> None:
     from realmwalker.game.story import opening
 
     opening.daily(game)  # (the first day gone by and the opening never came: D.4)
+    from realmwalker.game.story import early
+
+    early.daily(game)  # (a villain you put down walks again: you hear of it first, E.4)
     for item in list(d.get("scheduled", [])):
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
@@ -718,15 +727,20 @@ def on_battle(game, result, actor=None) -> None:
             seen.append((adv, how))
         elif how == "dead":  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
             h = harm.setdefault(adv["id"], {"servants": 0, "lieutenants": 0})
-            h["servants" if tag.get("role") in ("minion", "wave", "ambush") else "lieutenants"] += 1
+            h["servants" if tag.get("role") in ("minion", "wave", "ambush", "endure") else "lieutenants"] += 1
     for aid, h in harm.items():
         villain.on_fight(game, adventures(game.world)[aid], servants=min(1, h["servants"]),
                          lieutenants=h["lieutenants"])
     battle = getattr(game, "battle", None)
     if battle is not None and int(getattr(battle, "great_magic", 0) or 0):
         villain.on_magic(game, int(battle.great_magic))  # (great magic cast in its reach)
+    from realmwalker.game.story import early
+
     for adv, how in seen:
+        if adv.get("boss_dead") or adv["state"] != "active":
+            continue  # (what was left of its band in its den, after it fell elsewhere: E.4)
         if how == "dead" or (how == "taken" and _villain_is_person(game, adv)):
+            first = how == "dead" and early.is_early(game, adv)
             adv["boss_dead" if how == "dead" else "boss_taken"] = True  # (a lord of outlaws taken alive: D.3)
             for st in open_steps(adv):
                 if st["kind"] in ("slay", "finale"):
@@ -734,9 +748,13 @@ def on_battle(game, result, actor=None) -> None:
             if how == "taken":
                 adv["taken_day"] = int(game.moment.total_days)
                 continue  # (the aftermath judges the captain first: on_fate ends the tale with the fate chosen)
+            if first and early.begin(game, adv):
+                continue  # (dead before its finale: a short last chapter first, E.4)
             for line in endings.finish(game, adv):
                 game.say(line, "story")
         else:
+            if how == "fled":
+                early.on_fled(game, adv)  # (its one escape in this tale: E.4)
             adv["boss_fled"] = how == "fled"
             for st in open_steps(adv):
                 if st["kind"] == "slay" and (st["target"].get("fled_ok") or how == "taken"):

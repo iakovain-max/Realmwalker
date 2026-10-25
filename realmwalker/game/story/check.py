@@ -140,6 +140,11 @@ def problems(tables) -> list[str]:
             for g in lt.get("turns", []):
                 if g.partition(":")[0] not in ("clue", "key") or g not in known:
                     out.append(f"{lw}: one who turns gives a clue or a key the tale knows, not '{g}'.")
+        from realmwalker.game.story import early
+
+        for kind in bp.get("early", {}):  # (E.4: the short last chapters of a villain dead before its finale)
+            if kind not in early.KINDS:
+                out.append(f"{where}: the early end '{kind}' is not one the game knows ({', '.join(early.KINDS)}).")
         fin = bp["finale"]
         if fin["template"] not in bosses:
             out.append(f"{where}: the finale's boss template '{fin['template']}' is not in villains.json.")
@@ -209,8 +214,11 @@ def problems(tables) -> list[str]:
     for kind, group in (tables.villains.get("lieutenants") or {}).get("nemesis", {}).get("band", {}).items():
         if creatures is not None and group not in creatures.encounters:
             out.append(f"villains.json: lieutenants' nemesis band for {kind}, '{group}', is not an encounter.")
-    from realmwalker.game.story import villain
+    from realmwalker.game.story import early, villain
 
+    for b in early.BEATS:  # (E.4: the beats the code plays by name)
+        if b not in beats:
+            out.append(f"story/early.py: there is no beat called '{b}'.")
     for mid, move in tables.villains.get("moves", {}).items():
         for b in (move["beat"], move.get("disloyal")):
             if b and b not in beats:

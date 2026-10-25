@@ -72,7 +72,8 @@
         "reprisal_fire": 2,
         "kidnap": 1,
         "bargain": 1,
-        "invitation": 1
+        "invitation": 1,
+        "relic_moved": 1
       },
       "first_words": [
         "\"You have come,\" it says, as if it had sent for you. \"Good. Kneel, and it will be quicker.\"",

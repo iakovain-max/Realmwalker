@@ -103,10 +103,22 @@ def prepare(battle, game) -> list[str]:
         if not _is_finale(adv) and not story.at_its_den(adv, game.local.key if game.local is not None else None):
             # Met before its den it fights as itself, and breaks off when it is hurt (its template's "before"):
             # the template and the keys are for the end (law 5: the finale is where it stands and fights).
-            if template.get("before"):
+            # It gets away once in a tale, and never with what binds it in your hands (E.4).
+            from realmwalker.game.story import early
+
+            if template.get("before") and early.may_escape(game, adv):
                 f.cdef = dict(f.cdef, boss_phase=dict(template["before"]))
+            elif template.get("before"):
+                line = early.no_flight(battle, game, adv, f)
+                if line:
+                    out.append(line)
             continue
         make_boss(battle, f, template, int(adv["tier"]))
+        from realmwalker.game.story import early
+
+        line = early.on_boss(battle, game, adv, f)  # (come back from the dead, and harder to put down: E.4)
+        if line:
+            out.append(line)
         battle.events.append({"kind": "boss", "who": f.id, "name": f.name, "line": adv["title"]})  # (its entrance)
         for found, keys in adv["finale"]["keys"].items():
             if found not in adv["keys"]:
@@ -241,6 +253,18 @@ def _minions(battle, game, adv, boss, percent: str = "-50") -> str:
 def _no_phase(battle, game, adv, boss, *args) -> str:
     d = dict(boss.cdef)
     d.pop("boss_phase", None)
+    boss.cdef = d
+    return ""
+
+
+@key("no_escape")
+def _no_escape(battle, game, adv, boss, *args) -> str:
+    """It cannot get away (what binds it is in your hands): a phase that would take it off the field never comes,
+    and it does not run (E.4; before its finale, early.may_escape reads the same key)."""
+    d = dict(boss.cdef)
+    if (d.get("boss_phase") or {}).get("kind") in ("escape", "breaks_off"):
+        d.pop("boss_phase", None)
+    d["morale"] = "fanatic"
     boss.cdef = d
     return ""
 

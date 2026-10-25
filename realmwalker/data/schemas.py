@@ -1539,6 +1539,8 @@ BLUEPRINT = Obj({
     "lieutenants": List(Obj({"as": Str(max_len=30), "creature": List(Str(max_len=40), optional=True),
                              "titles": word_list(3, 60), "turns": List(Str(max_len=60), optional=True)}),
                         optional=True),
+    # (E.4) the villain dead before its finale: the weights of the short last chapters (story/early.KINDS)
+    "early": Map(Int(min=0, max=20), optional=True),
 })
 ADVENTURES = Obj({
     "max_active": Int(min=1, max=10, optional=True),
@@ -1622,6 +1624,21 @@ VILLAINS = Obj({
             "escape", "escaped", "returns", "spared_back", "turned", "slain_grief", "slain_rage", "joins",
             "joins_grudge", "turncoat", "nemesis", "nemesis_slain", "nemesis_fled")}),
         "epilogue": Obj({k: word_list(3, 300) for k in ("slain", "taken", "turned", "turncoat", "free", "promoted")}),
+    }, optional=True),
+    # (E.4) escapes, early ends and returning villains (story/early.py): its words, a return's attention and hit
+    # points, a contingency's days, and each early end's short last chapter
+    "early": Obj({
+        "spent": word_list(3, 300), "escaped": word_list(3, 300), "back": word_list(3, 300),
+        "relic": word_list(3, 300),
+        "returning": Obj({"attention": Int(min=0, max=5), "hp": Float(min=0, max=2), "max": Int(min=1, max=10)}),
+        "after": List(Int(min=0, max=30), min_items=2, max_items=2),
+        "kinds": Obj({
+            "succession": Obj({"title": word_list(3, 80), "goal": word_list(3, 200), "opening": word_list(3, 600),
+                               "reveal": word_list(3, 600)}),
+            "contingency": Obj({"title": word_list(3, 80), "goal": word_list(3, 200), "opening": word_list(3, 600),
+                                "reveal": word_list(3, 600)}),
+            "cat_away": Obj({"lines": word_list(3, 600)}),
+        }),
     }, optional=True),
 })
 CUE = Obj({"cue": Str(max_len=20)}, strict=False)  # its other keys are its cue's own (story/stage.py CUES)

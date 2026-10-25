@@ -171,7 +171,7 @@
         "template": "risen",
         "at": "home.deepest",
         "keys": {
-          "anchor": ["no_legendary_resistance"],
+          "anchor": ["no_legendary_resistance", "no_escape"],
           "name": ["frightened(1)"],
           "ally": ["ally_fights"],
           "ford": ["minions(-50)"]
@@ -191,6 +191,7 @@
           ]
         }
       },
+      "early": {"succession": 2, "contingency": 2, "cat_away": 1},
       "endings": [
         {
           "id": "bargained",
