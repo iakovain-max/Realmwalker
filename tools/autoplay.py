@@ -362,12 +362,41 @@ def _check_adventures(game, fail) -> None:
     _check_part_d(game, fail)
     _check_villains(game, fail)
     _check_lieutenants(game, fail)
+    _check_allies(game, fail)
     _check_early(game, fail)
     _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
             fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_allies(game, fail) -> None:
+    """Expansion 6 F.1: a tale's ally has a stake the data knows and a state the game knows; one with you is in the
+    company (or told to wait), one beside you in a live tale under the bond "oath"; a dead one is not with you."""
+    from realmwalker.game import companions, story
+    from realmwalker.game.story import stakes
+
+    sp = stakes.spec(game)
+    if not sp:
+        return
+    states = ("joined", "riding", "taken", "broke", "home", "fell", "sworn")
+    for adv in story.adventures(game.world).values():
+        rec = adv.get("ally")
+        if not rec:
+            continue
+        where = f"tale {adv['id']}, ally {rec.get('npc')}"
+        if rec.get("stake") not in sp["stakes"] or rec.get("state") not in states:
+            fail(f"{where}: an unknown stake or state ({rec.get('stake')}, {rec.get('state')})")
+        npc = stakes.npc_of(game, adv)
+        c = stakes.companion_of(game, adv)
+        carried = any(b["char"].companion.get("adv") == adv["id"] for b in getattr(game, "fallen", None) or ()
+                      if b["char"].companion)
+        if adv["state"] == "active" and rec.get("state") == "joined" and not carried and (
+                c is None or companions.bond_of(c) != "oath"):
+            fail(f"{where}: joined, but not in the company under oath (nor carried, fallen)")
+        if c is not None and (npc is None or not npc.alive):
+            fail(f"{where}: with you, and dead")
 
 
 def _check_lieutenants(game, fail) -> None:
