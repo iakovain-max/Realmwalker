@@ -32,6 +32,13 @@ STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left
 ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic"}
 
 
+def trouble_lines(game, sit) -> str:
+    """A trouble (a situation) in the journal, in the hero's own notes (game/story/situations.py)."""
+    from realmwalker.game.story import situations
+
+    return situations.journal_lines(game, sit)
+
+
 def tale_lines(game, adv) -> str:
     """A tale in the journal: its chapters (done, now, to come), what is to be done now and where, the people of it,
     what you have found, and what you have written of it."""
@@ -177,8 +184,11 @@ class JournalScreen(Screen):
         if tab is None:  # (the tales first, when there are any; else the work in hand)
             from realmwalker.game.story import forge
 
+            from realmwalker.game.story import situations
+
             life = forge.life_of(game)
-            tales = any(a["hero"]["life"] == life for a in game.world.politics.get("adventures", {}).values())
+            tales = any(a["hero"]["life"] == life for a in game.world.politics.get("adventures", {}).values()) or \
+                bool(situations.troubles(game))
             tab = ADVENTURES if tales else WORK
         self.tab = tab
         self.sel = 0
@@ -198,6 +208,12 @@ class JournalScreen(Screen):
                 if members:
                     out.append(("group", label))
                     out += [("quest", a) for a in members]
+            from realmwalker.game.story import situations
+
+            troubles = situations.troubles(self.game)  # (the people's troubles you have met: C.6)
+            if troubles:
+                out.append(("group", "Troubles"))
+                out += [("quest", s) for s in troubles]
             return out
         if self.tab == PEOPLE:
             out: list[tuple[str, object]] = []
@@ -295,7 +311,14 @@ class JournalScreen(Screen):
                 if chosen:
                     canvas.fill(2, y, list_w - 2, 1, colors.HILITE_BG)
                 canvas.hit(2, y, list_w - 2, 1, lambda i=qi: self.pick(i))
-                if self.tab == ADVENTURES:
+                if self.tab == ADVENTURES and "predicament" in q:
+                    from realmwalker.game.story import situations
+
+                    live = q["state"] in situations.LIVE
+                    mark = "!" if q["state"] == "met" else "·" if live else ("*" if q["state"] == "done" else "-")
+                    color = colors.SELECT_FG if chosen else (colors.FG if live else colors.DIM)
+                    canvas.text(3, y, f"{mark} {situations.title(game, q)}"[: list_w - 4], color)
+                elif self.tab == ADVENTURES:
                     mark = "·" if q["state"] == "active" else ("*" if q["state"] == "won" else "-")
                     color = colors.SELECT_FG if chosen else (colors.FG if q["state"] == "active" else colors.DIM)
                     canvas.text(3, y, f"{mark} {q['title']}"[: list_w - 4], color)
@@ -323,6 +346,7 @@ class JournalScreen(Screen):
             key = (self.tab, id(sel), game.world.time)
             if self._shown != key:
                 self.detail.set_text(person_lines(game, sel) if self.tab == PEOPLE else
+                                     trouble_lines(game, sel) if self.tab == ADVENTURES and "predicament" in sel else
                                      tale_lines(game, sel) if self.tab == ADVENTURES else details(game, sel))
                 self._shown = key
             self.detail.render(canvas, dx, top, w - dx - 2, bottom - top)

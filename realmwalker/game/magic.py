@@ -483,8 +483,9 @@ def cast_on_road(game, caster, spell_id: str, target=None, slot_level: int | Non
                  hired: bool = False, charge=None) -> list[str]:
     """See `_cast_on_road`; a spell cast may reach a situation's goal (a charm, Knock, a truth read: C.5)."""
     out = _cast_on_road(game, caster, spell_id, target, slot_level, scroll, hired, charge)
-    from realmwalker.game.story import goals
+    from realmwalker.game.story import goals, situations
 
+    out += situations.on_magic(game, spell_id)  # (a curse lifted, a sickness cured: C.6)
     goals.notify(game, "magic")
     return out
 

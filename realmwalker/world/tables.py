@@ -138,4 +138,5 @@ class Tables:
         self.fire = data["marks.json"].get("fire") or {}  # (game/fire.py)
         self.work = data["work.json"]  # commissions and pleas (game/story/work.py)
         self.lives = data["lives.json"]  # townsfolk's lives (game/story/lives.py)
+        self.situations = data["situations.json"]  # predicaments, roots, meetings, turns (game/story/situations.py)
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

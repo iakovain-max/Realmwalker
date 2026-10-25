@@ -1244,8 +1244,8 @@ def on_arrive_dungeon(game, lm) -> None:
             t["placed"] = place_in_room(game, lm, {"kind": "chest", "locked": 0, "treasure": 2, "quest": q["id"]},
                                         "chest")
         elif tpl == "rescue" and not t.get("placed"):
-            t["placed"] = place_in_room(game, lm, {"kind": "captive", "quest": q["id"], "name": t["captive"]},
-                                        "captive")
+            t["placed"] = place_in_room(game, lm, {"kind": "captive", "quest": q["id"], "name": t["captive"],
+                                                   "npc": t.get("npc")}, "captive")
     if deepest(lm) and lm.populated and not lm.actors and site.id not in cleared(game):
         site_cleared(game, site.id)  # nothing left alive down here
 
@@ -1599,6 +1599,10 @@ def reward(game, q, *, share: float = 1.0, text: str | None = None) -> list[str]
         change_disposition(giver, 20)
         giver.remember(f"the traveller did the work they asked ({title(game, q)})")
     freed = q["template"] == "rescue" and target.get("freed") and share >= 1.0
+    if q.get("situation"):
+        from realmwalker.game.story import situations
+
+        situations.on_quest_end(game, q, share >= 1.0)  # (a trouble's work done: C.6)
     if text:
         line = text
     else:
@@ -1635,6 +1639,10 @@ def fail(game, q, why: str | None = None) -> None:
         story.on_quest_end(game, q, False)
 
     q["state"] = "failed"
+    if q.get("situation"):
+        from realmwalker.game.story import situations
+
+        situations.on_quest_end(game, q, False)  # (C.6)
     line = why or fill(game, q, "failed")
     q["journal"].append(line)
     game.say(f"<warn>Journal: {title(game, q)} has failed.</> {line}", "warn")

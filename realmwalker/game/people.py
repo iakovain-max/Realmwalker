@@ -742,8 +742,9 @@ def update_positions(game, lm) -> None:
     if s is None:
         return
     for npc in npcs_in(game.world, s.id):
-        if not npc.alive or npc.flags.get("companion") or npc.flags.get("escort") is not None:
-            npc.present = False  # (those travelling with you are with you, not here as well)
+        if not npc.alive or npc.flags.get("companion") or npc.flags.get("escort") is not None or \
+                npc.flags.get("captive") or npc.flags.get("with_party") or npc.flags.get("gone"):
+            npc.present = False  # (those travelling with you are with you, not here as well; nor those away)
             continue
         npc.present = npc.flags.get("fled_until", -1) <= game.world.time
     from realmwalker.game import townlife

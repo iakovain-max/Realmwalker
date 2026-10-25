@@ -1567,6 +1567,8 @@ SCENE = Obj({
     "about": Str(max_len=300, optional=True),
     "cues": List(CUE, min_items=1),
     "words": Map(word_list(1, 300), optional=True),  # lines for its cues' `key`
+    "cast": List(Str(max_len=30), optional=True),  # roles cast by whoever starts it (a situation's people)
+    "given": List(Str(max_len=30), optional=True),  # words given by whoever starts it (a situation's plea)
 })
 SCENES = Obj({"scenes": Map(SCENE)})
 DAY_SPAN = List(Int(min=0, max=3650), min_items=2, max_items=2)
@@ -1637,6 +1639,47 @@ LIVES = Obj({  # townsfolk's lives (game/story/lives.py, C.4)
 }, optional=True)
 DATA_FILES.update({"lives.json": LIVES})
 PACK_ONLY.update({"lives.json": {}})
+_SIT_ACT = Obj({"id": Str(max_len=40), "who": Str(max_len=30, optional=True), "label": word_list(1, 160),
+                "check": List(Any_(), min_items=2, max_items=2, optional=True), "price": Int(min=0, max=100000, optional=True),
+                "way": Str(max_len=20, optional=True), "needs": List(Str(max_len=60), optional=True),
+                "unless": List(Str(max_len=60), optional=True), "then": List(List(Any_(), min_items=1), optional=True),
+                "fail": List(List(Any_(), min_items=1), optional=True), "say": List(Str(max_len=300), optional=True), "fail_say": List(Str(max_len=300), optional=True),
+                "note": List(Str(max_len=300), optional=True), "pass": Bool(optional=True), "retry": Bool(optional=True)})
+_SIT_OBSTACLE = Obj({"id": Str(max_len=40), "kind": Str(max_len=30), "who": Str(max_len=30, optional=True),
+                     "note": word_list(1, 300), "acts": List(_SIT_ACT, optional=True), "chance": Float(min=0, max=1, optional=True),
+                     "spells": List(Str(max_len=40), optional=True), "by_magic": List(List(Any_(), min_items=1), optional=True),
+                     "magic_note": List(Str(max_len=300), optional=True)})
+_SIT_ENDING = Obj({"id": Str(max_len=40), "when": Str(max_len=40, optional=True), "if": List(Str(max_len=60), optional=True),
+                   "tone": Str(choices=["good", "mixed", "bitter"]), "ops": List(List(Any_(), min_items=1)),
+                   "line": word_list(1, 300)})
+SITUATIONS = Obj({  # situations (game/story/situations.py, C.6)
+    "rarity": Obj({"gap": DAY_SPAN, "first": DAY_SPAN, "per_town": Int(min=0, max=5), "per_great": Int(min=0, max=5),
+                   "near": Int(min=0, max=12), "turn_chance": Float(min=0, max=1)}, optional=True),
+    "roots": Map(List(Str(max_len=40), min_items=1), optional=True),
+    "meetings": Map(Obj({"scene": Str(max_len=40), "cast": Map(Str(max_len=30), min_items=1), "letter": Bool(optional=True)}),
+                    optional=True),
+    "turns": Map(Obj({"when": Str(max_len=10), "for": List(Str(max_len=40), min_items=1),
+                      "needs": List(Str(max_len=30), optional=True), "threat": Bool(optional=True),
+                      "ops": List(List(Any_(), min_items=1), optional=True), "obstacle": Obj({"id": Str(max_len=40), "kind": Str(max_len=30)}, strict=False, optional=True), "line": word_list(1, 300)}), optional=True),
+    "predicaments": Map(Obj({
+        "name": Str(max_len=80), "asks": Str(max_len=30, optional=True),
+        "roles": Map(Obj({"bind": Str(max_len=20)}, strict=False), min_items=1),
+        "parts": Map(Str(max_len=30), optional=True), "base": Str(max_len=40, optional=True),
+        "forge": List(List(Any_(), min_items=1), optional=True),
+        "obstacles": List(_SIT_OBSTACLE, optional=True), "acts": List(_SIT_ACT, optional=True),
+        "work": Obj({"kind": Str(max_len=30)}, strict=False, optional=True),
+        "goals": List(Obj({"id": Str(max_len=40), "test": List(Any_(), min_items=1),
+                           "then": List(List(Any_(), min_items=1), optional=True)}), min_items=1),
+        "endings": List(_SIT_ENDING, min_items=1),
+        "lapse": Obj({"tone": Str(choices=["good", "mixed", "bitter"]), "ops": List(List(Any_(), min_items=1)),
+                      "line": word_list(1, 300)}),
+        "clock": DAY_SPAN, "meetings": List(Str(max_len=30), min_items=1),
+        "words": Obj({"title": word_list(1, 120), "stakes": word_list(1, 200), "plea": word_list(1, 400),
+                      "first": word_list(1, 300)}, strict=False),
+    })),
+}, optional=True)
+DATA_FILES.update({"situations.json": SITUATIONS})
+PACK_ONLY.update({"situations.json": {}})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
                    "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},

@@ -172,6 +172,9 @@ def problems(tables) -> list[str]:
 
     out.extend(goals.self_problems())
     out.extend(goals.data_problems(tables))
+    from realmwalker.game.story import situations
+
+    out.extend(situations.problems(tables))
     return out
 
 
@@ -181,13 +184,14 @@ def scene_problems(tables) -> list[str]:
 
     out = []
     for sid, scene in getattr(tables, "scenes", {}).items():
-        roles = {"you"}
+        roles = {"you"} | set(scene.get("cast", []))
+        given = set(scene.get("given", []))
         for i, c in enumerate(scene["cues"]):
             where = f"scenes.json: {sid}, cue {i + 1}"
             if c["cue"] not in stage.CUES:
                 out.append(f"{where}: the cue '{c['cue']}' is not one the stage knows.")
             for k in ("key", "letter"):
-                if c.get(k) and c[k] not in scene.get("words", {}):
+                if c.get(k) and c[k] not in scene.get("words", {}) and c[k] not in given:
                     out.append(f"{where}: there are no words called '{c[k]}'.")
             if c["cue"] == "beat" and c.get("id") and c["id"] not in tables.beats:
                 out.append(f"{where}: there is no beat called '{c['id']}'.")

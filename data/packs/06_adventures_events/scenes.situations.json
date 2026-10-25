@@ -1,0 +1,301 @@
+{
+  "_comment": "How a situation is met (Expansion 6 C.6, ADVENTURES.md §6.10): always shown, played on the town's map by its own people. The roles are the situation's (situations.json meetings name which); {plea} is the one who asks's own words, written once.",
+  "scenes": {
+    "sit_quarrel": {
+      "about": "Two people quarrel in the street, loud enough for half the town; one of them sees you, breaks off and comes to you.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "other", "to": "asker"},
+        {"cue": "shout", "who": "asker", "key": "one", "ticks": 3},
+        {"cue": "shout", "who": "other", "key": "two", "ticks": 3},
+        {"cue": "shout", "who": "asker", "key": "three", "ticks": 3},
+        {"cue": "walk", "who": "other", "to": "home"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "one": [
+          "You knew! You knew and you said nothing!",
+          "Don't you walk away from me!",
+          "That is not what was promised!",
+          "Say it to my face, then!",
+          "I'll not stand for it, do you hear?"
+        ],
+        "two": [
+          "Lower your voice. People are looking.",
+          "It is done. There is nothing to be done.",
+          "Mind your own house before you mind mine.",
+          "You'll regret this. Both of you will.",
+          "Go home. Go home and pray."
+        ],
+        "three": [
+          "Then I'll find someone who will!",
+          "We'll see. We'll see about that.",
+          "God sees you. Remember that.",
+          "You'll not hear the end of it.",
+          "Go on, then. Run."
+        ]
+      },
+      "cast": ["asker", "other"],
+      "given": ["plea"]
+    },
+    "sit_plea": {
+      "about": "Someone has been waiting for a stranger with a sword; they come to you through the street, cap in hand, and ask.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "open": [
+          "A word, if you would. Only a word.",
+          "You are not from here. Good. Please.",
+          "Forgive me. They said you might listen.",
+          "I have waited all morning for someone like you.",
+          "Please. I have nobody else to ask."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_runner": {
+      "about": "A child runs up with a folded note from someone who could not come themself; then they come after it.",
+      "cues": [
+        {
+          "cue": "pick",
+          "role": "runner",
+          "jobs": ["child", "serving_hand", "porter"],
+          "within": 40,
+          "holding": "letter"
+        },
+        {"cue": "hold"},
+        {"cue": "focus", "at": "runner"},
+        {"cue": "run", "who": "runner", "to": "you"},
+        {"cue": "say", "who": "runner", "key": "breath", "ticks": 3},
+        {"cue": "give", "who": "runner", "letter": "letter"},
+        {"cue": "read"},
+        {"cue": "walk", "who": "runner", "to": "home"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "after", "always": true}
+      ],
+      "words": {
+        "breath": [
+          "This is for you. I'm to wait.",
+          "From - from somebody. They said you'd know.",
+          "I didn't read it. Honest.",
+          "Take it, quick. Before anyone sees."
+        ],
+        "letter": [
+          "To the stranger,\n\n{hook}\n\nI will find you. Please wait for me.\n\n{sender}",
+          "Forgive a stranger's hand.\n\n{hook}\n\nI could not say it in the street.\n\n{sender}",
+          "You do not know me.\n\n{hook}\n\nI am coming to you now.\n\n{sender}"
+        ],
+        "after": ["You read it. Then you know.", "I sent the boy. I could not face asking out loud.", "Well? Will you?"]
+      },
+      "cast": ["asker"]
+    },
+    "sit_weeping": {
+      "about": "Someone weeps at the well, neighbours round them; seeing you, they wipe their face and come over.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "kneel", "who": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 5, "radius": 2, "key": "murmur", "ticks": 12},
+        {"cue": "say", "who": "asker", "key": "sob", "ticks": 3},
+        {"cue": "rise", "who": "asker"},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "Poor soul.",
+          "Leave them be.",
+          "It's a hard thing.",
+          "Somebody should do something.",
+          "Hush, now.",
+          "There's a stranger watching."
+        ],
+        "sob": [
+          "What am I to do? What am I to do?",
+          "It isn't right. It isn't right.",
+          "I asked everyone. Everyone.",
+          "God help me, God help us."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_stocks": {
+      "about": "Someone kneels in the square under the jeers of a crowd; one who loves them stands apart, and comes to you.",
+      "cues": [
+        {"cue": "focus", "at": "accused"},
+        {"cue": "kneel", "who": "accused"},
+        {"cue": "crowd", "at": "accused", "count": 7, "radius": 2, "key": "jeer", "ticks": 14},
+        {"cue": "say", "who": "accused", "key": "plead", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "rise", "who": "accused"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "jeer": [
+          "Thief!",
+          "Hang them and be done!",
+          "Shame on your house!",
+          "They had it coming.",
+          "Look at them now.",
+          "I always said so."
+        ],
+        "plead": [
+          "I did nothing. I did nothing!",
+          "Ask anyone. I was home.",
+          "Please. Please, I swear it.",
+          "Mother, tell them!"
+        ]
+      },
+      "cast": ["accused", "asker"],
+      "given": ["plea"]
+    },
+    "sit_funeral": {
+      "about": "A small funeral passes; one of the mourners leaves it and comes to you.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 5, "radius": 1, "key": "dirge", "ticks": 14},
+        {"cue": "walk", "who": "asker", "to": "square"},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {"dirge": ["Rest now.", "Gone too soon.", "The gods keep them.", "Walk slow.", "Hush."]},
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_notice": {
+      "about": "Someone nails a notice to a door and stands back; a passer-by reads it aloud for the rest; the one who nailed it sees you reading.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "say", "who": "asker", "key": "nail", "ticks": 2},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 2, "key": "read", "ticks": 10},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "nail": ["There. Let them all see it.", "Somebody will read it. Somebody.", "Hold still, you."],
+        "read": ["What does it say?", "Read it out, then.", "Poor devil.", "Reward, it says. How much?", "Well, I never."]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_crier": {
+      "about": "The town's crier cries the news in the square; someone at the edge of the crowd catches your eye.",
+      "cues": [
+        {"cue": "pick", "role": "crier", "jobs": ["crier", "guard", "headman", "elder"], "within": 60},
+        {"cue": "focus", "at": "crier"},
+        {"cue": "shout", "who": "crier", "key": "cry", "ticks": 4},
+        {"cue": "crowd", "at": "crier", "count": 6, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "cry": ["Hear ye! Hear ye! {stakes}!", "Oyez! Let it be known: {stakes}!", "By order of the town: {stakes}!"],
+        "murmur": ["Did you hear that?", "Shame.", "It'll come to blood.", "Not here. Not in our town.", "The poor family."]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_shut_shop": {
+      "about": "A crowd mutters round a shut door; the one whose door it is comes out and speaks to the stranger in the street.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 5, "radius": 2, "key": "mutter", "ticks": 12},
+        {"cue": "say", "who": "asker", "key": "away", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "mutter": ["Shut again.", "What's wrong in there?", "Third day now.", "Somebody knock.", "Leave them be."],
+        "away": ["Go home, all of you. There's nothing to see.", "I'll open when I open.", "Leave me be!"]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_sermon": {
+      "about": "A priest speaks of it to a crowd in the street; the one the sermon is about comes to you afterwards.",
+      "cues": [
+        {"cue": "pick", "role": "preacher", "jobs": ["priest", "preacher", "monk", "acolyte"], "within": 70},
+        {"cue": "focus", "at": "preacher"},
+        {"cue": "crowd", "at": "preacher", "count": 6, "radius": 2, "key": "amen", "ticks": 10},
+        {"cue": "say", "who": "preacher", "key": "preach", "ticks": 4},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "amen": ["Amen.", "So it is.", "Mercy on us.", "Hear him.", "The gods see."],
+        "preach": [
+          "There is a trouble in this town, and the gods see it: {stakes}.",
+          "Who among you will help? For the gods see: {stakes}.",
+          "Pray, all of you, for {asker_full}. And if you can do more than pray, do it."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_stranger": {
+      "about": "Someone you do not know follows you through the streets, and at last makes up their mind to speak.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "wait", "ticks": 4},
+        {"cue": "hold"},
+        {"cue": "say", "who": "asker", "key": "caught", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "caught": [
+          "Yes. I was following you. Forgive me.",
+          "I've been working up the nerve. Here goes.",
+          "Don't reach for that. I only want to talk."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "sit_seal": {
+      "about": "The watch stands at a door; the one who lives there argues with them on the step, and turns to you.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "watch", "to": "asker"},
+        {"cue": "say", "who": "watch", "key": "order", "ticks": 3},
+        {"cue": "shout", "who": "asker", "key": "back", "ticks": 3},
+        {"cue": "walk", "who": "watch", "to": "home"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "order": [
+          "By order of the town. Stand aside.",
+          "Nobody goes in or out. Those are my orders.",
+          "Don't make this harder than it is."
+        ],
+        "back": ["This is my house! Mine!", "You've no right. No right at all!", "Wait until the lord hears of this!"]
+      },
+      "cast": ["asker", "watch"],
+      "given": ["plea"]
+    }
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "_comment": "Situations (Expansion 6 C.6; game/story/situations.py, ADVENTURES.md §5.16, §6.7-6.10, §8.10). The predicaments are in situations.predicaments.json. Roots: what in a town can give rise to which predicaments. Meetings: how one is met, a scene of scenes.situations.json with the situation's roles cast in it. Turns: at most one a situation, fired at a time (forge, meet, take, half the clock, a good end).",
+  "rarity": {"gap": [10, 20], "first": [0, 2], "per_town": 1, "per_great": 2, "near": 3, "turn_chance": 0.45},
+  "roots": {
+    "life:debt_due": ["promise_unkept", "precious_wrong_hands", "truth_buried"],
+    "life:secret_debt": ["promise_unkept"],
+    "life:sickness": ["sickness_with_cause", "curse_on_house", "child_in_danger"],
+    "life:quarrel": ["two_want_one", "gone_where_not", "wrong_awaits_revenge", "innocent_accused", "guilty_protected", "blood_owed"],
+    "life:theft": ["precious_wrong_hands", "innocent_accused", "guilty_protected"],
+    "life:secret_theft": ["precious_wrong_hands"],
+    "life:love_found_out": ["love_not_to_be", "truth_buried"],
+    "life:secret_lover": ["love_not_to_be", "truth_buried"],
+    "life:marriage": ["love_not_to_be", "two_want_one"],
+    "life:birth": ["child_in_danger"],
+    "life:death_of_age": ["rite_to_be_done", "dead_do_not_rest", "truth_to_prove"],
+    "life:levy": ["fugitive_at_door", "gone_where_not"],
+    "life:secret_crime": ["truth_buried", "guilty_protected", "wrong_awaits_revenge", "fugitive_at_door"],
+    "life:secret_buried": ["truth_buried"],
+    "life:secret_false_name": ["stranger_not_himself"],
+    "life:secret_child": ["truth_to_prove", "truth_buried"],
+    "life:secret_informer": ["truth_buried", "stranger_not_himself"],
+    "life:secret_faith": ["truth_buried", "rite_to_be_done"],
+    "life:secret_guild": ["two_want_one"],
+    "threat": ["the_lost", "gone_where_not", "child_in_danger", "dead_do_not_rest", "sickness_with_cause"],
+    "politics:war": ["fugitive_at_door", "ruler_needs", "gone_where_not", "stranger_not_himself"],
+    "politics:plague": ["sickness_with_cause", "rite_to_be_done", "curse_on_house"],
+    "faction:bandit_gang": ["gone_where_not", "child_in_danger", "precious_wrong_hands", "innocent_accused"],
+    "faction:cult": ["gone_where_not", "stranger_not_himself", "truth_buried"],
+    "faction:temple": ["rite_to_be_done", "curse_on_house", "ruler_needs"],
+    "history:grudge": ["blood_owed", "wrong_awaits_revenge"],
+    "history:scar": ["dead_do_not_rest", "curse_on_house"],
+    "land": ["the_lost", "dead_do_not_rest", "ruler_needs", "two_want_one", "curse_on_house"],
+    "companion": ["stranger_not_himself", "gone_where_not"]
+  },
+  "meetings": {
+    "quarrel": {"scene": "sit_quarrel", "cast": {"asker": "asker", "other": "other"}},
+    "plea": {"scene": "sit_plea", "cast": {"asker": "asker"}},
+    "runner": {"scene": "sit_runner", "cast": {"asker": "asker"}, "letter": true},
+    "weeping": {"scene": "sit_weeping", "cast": {"asker": "asker"}},
+    "stocks": {"scene": "sit_stocks", "cast": {"asker": "asker", "accused": "accused"}},
+    "funeral": {"scene": "sit_funeral", "cast": {"asker": "asker"}},
+    "notice": {"scene": "sit_notice", "cast": {"asker": "asker"}},
+    "crier": {"scene": "sit_crier", "cast": {"asker": "asker"}},
+    "shut_shop": {"scene": "sit_shut_shop", "cast": {"asker": "asker"}},
+    "sermon": {"scene": "sit_sermon", "cast": {"asker": "asker"}},
+    "stranger": {"scene": "sit_stranger", "cast": {"asker": "asker"}},
+    "seal": {"scene": "sit_seal", "cast": {"asker": "asker", "watch": "watch"}}
+  },
+  "turns": {
+    "clock_shorter": {
+      "when": "take",
+      "for": [
+        "innocent_accused",
+        "promise_unkept",
+        "fugitive_at_door",
+        "sickness_with_cause",
+        "child_in_danger",
+        "ruler_needs"
+      ],
+      "ops": [["clock", 0.5]],
+      "line": [
+        "The day has been brought forward. It is {due} now, not later.",
+        "Word comes that there is less time than they said: {due}."
+      ]
+    },
+    "asker_dies": {
+      "when": "half",
+      "for": ["two_want_one", "truth_to_prove", "rite_to_be_done", "curse_on_house"],
+      "needs": ["asker"],
+      "ops": [["npc_fate", "asker", "dead"], ["grave", "asker"]],
+      "line": [
+        "{asker} is dead. Their heart, they say. Whatever comes of this now, they will not see it.",
+        "{asker} died in the night. The trouble did not die with them."
+      ]
+    },
+    "asker_lying": {
+      "when": "meet",
+      "for": ["gone_where_not", "wrong_awaits_revenge", "stranger_not_himself", "guilty_protected"],
+      "needs": ["asker"],
+      "obstacle": {
+        "id": "lie",
+        "kind": "lie",
+        "who": "asker",
+        "note": ["{asker} is not telling you all of it."],
+        "acts": [
+          {
+            "id": "doubt",
+            "label": ["That is not the whole of it, is it?"],
+            "check": ["insight", 14],
+            "then": [["learn", "lie"]],
+            "say": [
+              "...No. No, it isn't. I was ashamed to say. It was my fault as much as anyone's.",
+              "You see a lot. All right. I struck the first blow. There."
+            ],
+            "fail_say": ["That is all of it. Why would I lie to you?"],
+            "note": ["{asker} admitted it was more their own fault than they said."]
+          }
+        ]
+      },
+      "line": ["Something in how {asker} tells it does not sit right."]
+    },
+    "lost_unwilling": {
+      "when": "take",
+      "for": ["gone_where_not"],
+      "needs": ["lost"],
+      "ops": [["flag", "would_go"]],
+      "obstacle": {
+        "id": "unwilling",
+        "kind": "unwilling",
+        "who": "lost",
+        "note": ["{lost} may not want to stay home."],
+        "acts": [
+          {
+            "id": "stay",
+            "label": ["Stay. They need you here more than out there."],
+            "check": ["persuasion", 14],
+            "then": [["unflag", "would_go"], ["flag", "stays_home"]],
+            "say": ["...Maybe. Maybe you're right. For a while.", "I'll stay. Not for them. For you, because you came."],
+            "fail_say": ["You don't know what it's like here. I'm going back.", "No. I'm sorry. I won't stay."],
+            "fail": [["flag", "let_go"]]
+          },
+          {
+            "id": "let",
+            "label": ["Go, then, if you must. It is your life."],
+            "then": [["flag", "let_go"]],
+            "say": ["Thank you. Somebody finally said it."]
+          }
+        ]
+      },
+      "line": ["{lost} did not want to be found. Bringing them home may not be the end of it."]
+    },
+    "threats_hand": {
+      "when": "meet",
+      "for": ["the_lost", "gone_where_not", "child_in_danger", "sickness_with_cause", "dead_do_not_rest"],
+      "threat": true,
+      "line": [
+        "There is more behind this. Folk say {town} has worse trouble than one family's, and that it began about the same time."
+      ]
+    },
+    "victim_culprit": {
+      "when": "meet",
+      "for": ["innocent_accused"],
+      "needs": ["accused"],
+      "obstacle": {
+        "id": "other_guilt",
+        "kind": "lie",
+        "who": "accused",
+        "note": ["{accused} is hiding something else."],
+        "acts": [
+          {
+            "id": "press",
+            "label": ["You did not do this. But you did something. What?"],
+            "check": ["insight", 14],
+            "then": [["learn", "other_guilt"]],
+            "say": [
+              "Not this. But I sold the lord's deer to a man from the hills. That's what they really want me for.",
+              "I took coin from the temple box. Once. Years ago."
+            ],
+            "note": ["{accused} is guilty of something, if not of this."]
+          }
+        ]
+      },
+      "line": ["{accused} will not meet your eye. Innocent of this, maybe; of everything, no."]
+    },
+    "thief_took_back": {
+      "when": "meet",
+      "for": ["precious_wrong_hands"],
+      "needs": ["holder"],
+      "obstacle": {
+        "id": "claim",
+        "kind": "lie",
+        "who": "holder",
+        "note": ["{holder} says it was never {asker}'s to begin with."],
+        "acts": [
+          {
+            "id": "hear",
+            "label": ["Why do you say it is yours?"],
+            "check": ["insight", 12],
+            "then": [["learn", "claim"]],
+            "say": ["Because it was my grandmother's, before {asker}'s family took it for a debt that was paid twice over."],
+            "note": ["{holder} says the thing was theirs first, taken for a debt."]
+          }
+        ]
+      },
+      "line": ["{holder}, folk whisper, only took back what was theirs."]
+    },
+    "it_was_a_test": {
+      "when": "end",
+      "for": ["stranger_not_himself", "ruler_needs", "promise_unkept"],
+      "needs": ["asker"],
+      "ops": [["favour", "asker", "word", 2]],
+      "line": ["Afterwards {asker} admits it: it was a test, of whether you could be trusted. You could."]
+    },
+    "family_turns": {
+      "when": "end",
+      "for": ["gone_where_not", "love_not_to_be", "fugitive_at_door", "child_in_danger"],
+      "needs": ["asker"],
+      "ops": [["disposition", "asker", -35]],
+      "line": ["And for all of it, {asker}'s family will not have you in the house. You meddled; you saw them weak."]
+    },
+    "price_lie": {
+      "when": "take",
+      "for": ["precious_wrong_hands", "promise_unkept", "fugitive_at_door"],
+      "ops": [["price", 2]],
+      "line": ["The price was a lie. Now that someone with a sword is asking, it is twice what it was."]
+    },
+    "witness_hidden_hand": {
+      "when": "meet",
+      "for": ["truth_to_prove", "guilty_protected"],
+      "needs": ["witness"],
+      "obstacle": {
+        "id": "hand",
+        "kind": "watcher",
+        "who": "witness",
+        "note": ["{witness} knows more than a witness should."],
+        "acts": [
+          {
+            "id": "corner",
+            "label": ["You were not only there. You were part of it."],
+            "check": ["investigation", 15],
+            "then": [["learn", "hidden_hand"], ["law", "witness", "accused"]],
+            "say": ["...Keep your voice down. Please. I'll tell you everything.", "How did you - all right. All right."],
+            "note": ["{witness} had a hand in it. The watch knows now."]
+          }
+        ]
+      },
+      "line": ["The witness is too sure of what they saw."]
+    },
+    "cure_worse": {
+      "when": "end",
+      "for": ["sickness_with_cause", "curse_on_house"],
+      "needs": ["asker"],
+      "ops": [["shop", "asker", "shut", 20]],
+      "line": ["The cure was dear: {asker} sold the tools of their trade for it, and the house is shut while they find more."]
+    },
+    "prize_false": {
+      "when": "end",
+      "for": ["precious_wrong_hands", "two_want_one"],
+      "needs": ["asker"],
+      "line": [
+        "It is not the real one, {asker} says quietly, turning it over. The real one went south long ago. But this will do."
+      ]
+    },
+    "enemy_help": {
+      "when": "meet",
+      "for": ["sickness_with_cause"],
+      "needs": ["healer"],
+      "ops": [["disposition", "healer", -40]],
+      "line": ["The help {asker} needs is {healer}'s, and {healer} and {asker} have not spoken in years."]
+    },
+    "dead_alive": {
+      "when": "take",
+      "for": ["the_lost"],
+      "needs": ["lost"],
+      "ops": [["flag", "alive"]],
+      "line": [
+        "A shepherd swears he saw {lost} by {place_site} not three days ago, alive, and thin as a rake.",
+        "Someone has seen {lost} alive near {place_site}. The dead may not be dead."
+      ]
+    }
+  }
+}
