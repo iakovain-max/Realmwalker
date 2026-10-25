@@ -68,7 +68,11 @@
         "nightmare": 2,
         "visit": 2,
         "reprisal": 2,
-        "strike": 2
+        "strike": 2,
+        "reprisal_fire": 2,
+        "kidnap": 1,
+        "bargain": 1,
+        "invitation": 1
       },
       "first_words": [
         "\"You have come,\" it says, as if it had sent for you. \"Good. Kneel, and it will be quicker.\"",
@@ -87,7 +91,20 @@
         "A beggar at the crossroads looks up as you pass and says your name, and then forgets he said it.",
         "Candles burn in a ruined chapel at noon, and nobody is inside.",
         "A child is singing a hymn you have never heard, and stops when you look at her."
-      ]
+      ],
+      "hand": {
+        "face": "dark",
+        "ink": [
+          22,
+          20,
+          24
+        ],
+        "seal": [
+          150,
+          112,
+          40
+        ]
+      }
     }
   },
   "moves": {
@@ -190,6 +207,9 @@
       "attention": [
         4,
         5
+      ],
+      "needs": [
+        "helper"
       ]
     },
     "strike": {
@@ -204,6 +224,66 @@
       "attention": [
         5,
         5
+      ]
+    },
+    "reprisal_fire": {
+      "beat": "villain_reprisal_fire",
+      "attention": [
+        4,
+        5
+      ],
+      "needs": [
+        "helper"
+      ]
+    },
+    "invitation": {
+      "beat": "villain_invitation",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true
+    },
+    "bargain": {
+      "beat": "villain_bargain",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true
+    },
+    "wedge": {
+      "beat": "villain_wedge",
+      "attention": [
+        3,
+        5
+      ],
+      "speaks": true,
+      "needs": [
+        "companion"
+      ],
+      "disloyal": "villain_wedge_taken"
+    },
+    "frame": {
+      "beat": "villain_frame",
+      "attention": [
+        4,
+        5
+      ],
+      "speaks": true,
+      "needs": [
+        "town"
+      ]
+    },
+    "kidnap": {
+      "beat": "villain_kidnap",
+      "attention": [
+        4,
+        5
+      ],
+      "needs": [
+        "helper",
+        "lair"
       ]
     }
   },
@@ -396,5 +476,22 @@
   "reprisal_roles": [
     "witness",
     "carter"
-  ]
+  ],
+  "wedge": {
+    "loyal": 50,
+    "offers": [
+      "a pardon for an old crime, and the name cleared",
+      "enough gold to buy a farm and never be found",
+      "the life of a brother who is dying",
+      "word of the child they lost, and where she is now",
+      "a place at its side when the country is its own",
+      "a cure for the sickness that runs in their blood"
+    ]
+  },
+  "invitation": {
+    "snub": 1
+  },
+  "kidnap": {
+    "days": 12
+  }
 }

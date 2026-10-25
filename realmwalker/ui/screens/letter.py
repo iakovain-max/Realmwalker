@@ -89,7 +89,7 @@ class LetterScreen(Screen):
         pw = int(min(W * 0.62, 760))
         size = max(16, int(pw / 30))
         face = FACE.get(rec["hand"], "hand")
-        ink = INK.get(rec["hand"], INK["plain"])
+        ink = (*rec["ink"][:3], 255) if rec.get("ink") else INK.get(rec["hand"], INK["plain"])
         margin = pw * 0.1
         lines: list[tuple[str, int]] = []  # (words, which of the letter's lines)
         for i, para in enumerate(rec["lines"]):

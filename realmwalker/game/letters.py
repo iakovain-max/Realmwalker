@@ -1,7 +1,8 @@
 """Letters as pages (Expansion 6 B.2, docs/ADVENTURES.md §8.12): a letter, a note or an order that the story puts in
 your hand is a page in its writer's hand, sealed in their colours, kept so it opens again from the pack.
 
-A letter is a record in `world.politics["letters"]` {id: {"from", "hand", "seal", "lines", "key", "read", "day"}}
+A letter is a record in `world.politics["letters"]` {id: {"from", "hand", "seal", "lines", "key", "read", "day",
+"ink" (a writer's own: a villain's, E.2)}}
 (JSON-native, saved with the world) and an item carrying the tag `letter:<id>` (the `quest:<id>` pattern: items have
 tags, not free data). `game.letter` (not saved) is the letter waiting to be shown: the game screen opens its page.
 
@@ -32,7 +33,8 @@ def hand_for(kind: str) -> str:
     return "plain"
 
 
-def write(game, *, sender: str, lines: list[str], hand: str = "plain", seal=None, key: int | None = None) -> str:
+def write(game, *, sender: str, lines: list[str], hand: str = "plain", seal=None, key: int | None = None,
+          ink=None) -> str:
     recs = records(game.world)
     lid = f"L{len(recs) + 1}"
     while lid in recs:
@@ -40,6 +42,8 @@ def write(game, *, sender: str, lines: list[str], hand: str = "plain", seal=None
     hand = hand if hand in HANDS else "plain"
     recs[lid] = {"from": sender, "hand": hand, "seal": list(seal or SEALS[hand]), "lines": [str(x) for x in lines],
                  "key": key, "read": False, "day": int(game.moment.total_days)}
+    if ink:  # (a writer's own ink: the villain's, Expansion 6 E.2)
+        recs[lid]["ink"] = [int(v) for v in ink][:3]
     return lid
 
 

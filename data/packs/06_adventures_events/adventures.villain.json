@@ -1,11 +1,17 @@
 {
-  "_comment": "The letters of any tale's villain (Expansion 6 E.1; beats.villain.json): its plain letter, and the one made with what its spy stole ({token}, {token_of}, {companion}). Paragraphs split by a blank line; signed by the villain (the beat op `letter`).",
+  "_comment": "The letters of any tale's villain (Expansion 6 E.1; beats.villain.json): its plain letter, the one made with what its spy stole ({token}, {token_of}, {companion}), and its invitation to dinner (E.2, beats.schemes.json). Paragraphs split by a blank line; signed by the villain (the beat op `letter`).",
   "words": {
     "villain_letter": [
       "To the one who follows me,\n\nI know your name now, and the road you took to {town}, and the inn where you slept. I tell you this so that you understand how little you are hidden.\n\nThis is not your quarrel. Go home while it is still a home to go to.\n\n{villain}",
       "To the stranger at {town},\n\nYou have been asking questions in my country. Every one of them has been answered to me before it was answered to you.\n\nI am patient, and I am not cruel without need. Do not give me need.\n\n{villain}",
       "To the meddler,\n\nI have watched you a while. You are brave, I think, and you are foolish, and the two so often go together.\n\nThere is nothing at {home} for you but an ending. Choose another road.\n\n{villain}",
       "To the one who will not leave,\n\nI have let you walk where you like. Do not think it was because I could not stop you.\n\nThe next time I write, it will not be to you.\n\n{villain}"
+    ],
+    "villain_invitation": [
+      "To {hero},\n\nYou have come a long way to find me, and I have watched you come. Let us stop pretending we are strangers.\n\nDine with me at {home}. You have my word that no one on the road will lift a hand against you, there or back. I keep my word. You may ask anyone who has had it.\n\n{villain}",
+      "To {hero},\n\nThere is a table laid at {home}, and a chair at it with your name on it, if I may say so. I would sooner talk across bread than across swords.\n\nCome, and go again, and no one will touch you on the road. You have my safe conduct for both. It has never yet been broken, and I should be sorry to start with you.\n\n{villain}",
+      "To {hero},\n\nI hear you are in {town} and are well. I am glad of it. I would like you to remain so.\n\nCome and dine at {home}. The road there is yours, and so is the road back. I give my word for each mile of it. There is much we might say, and little of it will keep until a worse day.\n\n{villain}",
+      "To the one who has troubled me so long,\n\nLet us have an evening. Supper at {home}, a fire, and an hour's honest talk. No one will stop you coming, and no one will stop you leaving.\n\nI ask only that you come alone and hear me out. It would be a pity for us both to part without having once spoken.\n\n{villain}"
     ],
     "villain_token_letter": [
       "To {hero},\n\nYou will know this. {token_of} carried it, and does not carry it now, and never noticed my friend close enough to take it.\n\nThat is how close I can come. Think on it, the next time {token_of} lies down to sleep.\n\n{villain}",

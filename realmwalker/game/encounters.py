@@ -116,6 +116,10 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
 
     if waymagic.everyone(game, "wind") or waymagic.everyone(game, "ethereal"):
         return None  # (clouds high on the wind, or walkers on the grey border of the world: nothing meets them)
+    from realmwalker.game.story import villain
+
+    if villain.invited(game) is not None:
+        return None  # (a villain's safe conduct: nothing dares trouble its guest on the road, Expansion 6 E.2)
     danger = int(w.danger[p.x, p.y])
     night = game.light < 0.5
     on_road = bool(w.road[p.x, p.y])

@@ -173,6 +173,49 @@ def commit(game, cid: str, *, victim=None, value: int = 0, witnesses=None, repor
     return rec
 
 
+def framed(game, s, cid: str, *, victim=None, witnesses=(), by: str = "") -> dict | None:
+    """A crime laid at your door by another (a villain's frame, Expansion 6 E.2): in `s`, sworn to by false
+    `witnesses`, reported at once. The record's `framed` names who did it, so the truth coming out settles it
+    (`clear_framed`). None where no lord's law runs."""
+    w = game.world
+    lord = fx.owner_of(w, s)
+    if lord is None or lord.kind == "tribe":
+        return None
+    realm = fx.top_liege(w, lord)
+    spec = crime_def(game, cid)
+    rec = {
+        "id": int(game.renown.flags.get("next_crime", 0)), "crime": cid, "realm": realm.id, "owner": lord.id,
+        "place": s.id, "x": s.x, "y": s.y, "time": w.time, "day": game.moment.total_days,
+        "witnesses": [n.id for n in witnesses], "reported": False, "settled": False, "bounty": int(spec["fine"]),
+        "victim": victim.name if victim is not None else "", "disguised": False, "framed": by,
+        "text": spec["news"].format(victim=victim.name if victim is not None else "a stranger", place=s.name),
+    }
+    game.renown.flags["next_crime"] = rec["id"] + 1
+    game.renown.crimes.append(rec)
+    for n in witnesses:
+        n.remember(f"swore that the traveller did {spec['name']}")
+    report(game, rec)
+    game.dirty = True
+    return rec
+
+
+def clear_framed(game, by: str) -> list[str]:
+    """The truth comes out (its tale won): the crimes it laid at your door are struck off, and their price with
+    them."""
+    out = []
+    for rec in game.renown.crimes:
+        if rec.get("framed") != by or rec.get("settled"):
+            continue
+        rec["settled"] = True
+        if rec.get("reported"):
+            realm = int(rec["realm"])
+            game.renown.bounties[realm] = max(0, int(game.renown.bounties.get(realm, 0)) - int(rec["bounty"]))
+            reputation.change_standing(game, realm, float(crime_def(game, rec["crime"])["standing"]) * -1)
+        out.append(f"<good>The truth is out: you never did {crime_def(game, rec['crime'])['name']} in "
+                   f"{place_for(game, rec)}. It is struck from the record.</>")
+    return out
+
+
 def report(game, rec: dict) -> None:
     """A crime reaches the watch: a price on your head, lost standing, and talk."""
     if rec.get("reported"):

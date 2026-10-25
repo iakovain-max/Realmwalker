@@ -1,5 +1,5 @@
 {
-  "_comment": "The villain's moves for any tale (Expansion 6 E.1, docs/ADVENTURES.md §5.4; game/story/villain.py chooses them by attention and temper): a rumour that someone asked after you, a spy seen, a sign, a gift with a warning, a letter, a letter or a nightmare made with what its spy stole, a visit by night, a reprisal on one who helped you, a strike in force, a hunt in person. A kind's own moves (the Risen's letter, the outlaws' toll) are in its own file. Staging on the map, invitations, bargains, wedges, frames and kidnaps are E.2.",
+  "_comment": "The villain's moves for any tale (Expansion 6 E.1, docs/ADVENTURES.md §5.4; game/story/villain.py chooses them by attention and temper): a rumour that someone asked after you, a spy seen, a sign, a gift with a warning, a letter, a letter or a nightmare made with what its spy stole, a visit by night (seen beyond the camp's fire, or staged in your room at an inn: E.2), a reprisal on one who helped you, a strike in force, a hunt in person. A kind's own moves (the Risen's letter, the outlaws' toll) are in its own file; invitations, bargains, wedges, frames and kidnaps are beats.schemes.json (E.2).",
   "beats": {
     "villain_omen": {
       "family": "villain",
@@ -224,6 +224,8 @@
     "villain_visit": {
       "family": "villain",
       "picture": "camp_night",
+      "leaves": "visitor",
+      "stage": "villain_visit_inn",
       "where": ["camp", "inn"],
       "time": ["night"],
       "when": {"cooldown": 6, "adventure": {"at_large": true}},

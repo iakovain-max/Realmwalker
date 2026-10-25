@@ -1487,6 +1487,7 @@ BEAT = Obj({
     "title": List(Str(max_len=80), optional=True),
     "picture": Str(max_len=60, optional=True),
     "leaves": Str(max_len=30, optional=True),  # what it leaves at your camp, in the camp's picture (story.LEFT)
+    "stage": Str(max_len=60, optional=True),  # at an inn, a scene (scenes.json) plays it on the town's map (E.2)
     "text": List(word_list(1, 600), min_items=1),  # pages, each a list of variants
     "choices": List(CHOICE, optional=True),
     "ops": ops_list(optional=True),  # what it does when it has no choices
@@ -1562,6 +1563,9 @@ BOSS = Obj({
 })
 TEMPER = Obj({
     "speaks": Bool(),
+    # (E.2) its own hand: the letters' face (letters.HANDS), ink and seal colours
+    "hand": Obj({"face": Str(choices=["plain", "fine", "dark"]), "ink": List(Int(min=0, max=255), min_items=3,
+                max_items=3), "seal": List(Int(min=0, max=255), min_items=3, max_items=3)}, optional=True),
     "moves": Map(Int(min=0, max=100), min_items=1),  # move id: weight
     "first_words": word_list(6, 300),
     "omens": word_list(8, 300),
@@ -1586,11 +1590,17 @@ VILLAINS = Obj({
     "spy": Obj({"dc": Int(min=1, max=30), "tailored": Float(min=0, max=20), "tokens": word_list(6, 80),
                 "missing": word_list(3, 300)}, optional=True),
     "reprisal_roles": List(Str(max_len=30), optional=True),  # the cast who may pay for helping you
+    # (E.2) a wedge's offers and the loyalty that holds against it, an invitation's slight, a kidnap's days
+    "wedge": Obj({"loyal": Int(min=0, max=100), "offers": word_list(4, 160)}, optional=True),
+    "invitation": Obj({"snub": Int(min=0, max=5)}, optional=True),
+    "kidnap": Obj({"days": Int(min=1, max=60)}, optional=True),
     "tempers": Map(TEMPER),
     "moves": Map(Obj({"beat": Str(max_len=60), "attention": List(Int(min=0, max=20), min_items=2, max_items=2),
                       "speaks": Bool(optional=True),  # it needs words: never a beast's, never the bestial's
                       "tailored": Bool(optional=True),  # made with a token its spy stole (one move a token)
-                      "spy": Bool(optional=True)})),  # the spy: its beat plays only when it is seen
+                      "spy": Bool(optional=True),  # the spy: its beat plays only when it is seen
+                      # (E.2) what it needs (story/villain.NEEDS), and the beat for a companion not loyal enough
+                      "needs": List(Str(max_len=20), optional=True), "disloyal": Str(max_len=60, optional=True)})),
     "bosses": Map(BOSS),
     "weaknesses": Map(List(WEAKNESS, min_items=1)),  # by what the villain is (a creature type, or a creature id)
 })

@@ -261,6 +261,7 @@ def daily(game) -> None:
     favours.daily(game)  # (letters from your contacts, and their warnings: C.7)
     for adv in active(game):
         villain.quiet(game, adv)
+        villain.lapse(game, adv)  # (an invitation never taken up: E.2)
         t = threat_of(game, adv)
         if t is not None and t["state"] == "ended":
             if t.get("outcome") == "slain":
@@ -407,6 +408,11 @@ def on_arrive(game) -> bool:
     if beats.pending(game) is not None:
         return False
     for adv in active(game):
+        rec = adv.get("invited")
+        if rec and rec.get("state") == "going" and places.here(game, adv["places"]["home"]):
+            beats.offer(game, rec.get("beat", "villain_dinner"), adv=adv["id"], where=_where(game))
+            return True  # (its invitation taken up: the dinner at its hall, E.2)
+    for adv in active(game):
         for st in open_steps(adv):
             t = st["target"]
             if st["kind"] in ("go", "search") and "place" in t and places.here(game, t["place"]):
@@ -456,6 +462,10 @@ def on_enter_town(game, settlement) -> None:
     if opening.on_enter_town(game, settlement):  # (the crisis at the gate, the runner with the summons: D.4)
         return
     if _show_tale(game, settlement):
+        return
+    from realmwalker.game.story import villain
+
+    if villain.seen_in_town(game, settlement):  # (one who helped you, made an example of: E.2)
         return
     for t in threats.live(game.world):
         if settlement.id in t["stakes"][:6] and t.get("adventure") is None and _can_take(game, t):
@@ -585,11 +595,14 @@ def on_night(game, where: str) -> bool:
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
         if beat is not None:
+            spec = game.tables.beats.get(beat, {})
+            if where == "inn" and spec.get("stage") and _stage_at_inn(game, adv, beat, spec["stage"]):
+                return True  # (played on the town's map: the figure comes to your room, E.2)
             beats.offer(game, beat, adv=adv["id"], where=where)
-            left = game.tables.beats.get(beat, {}).get("leaves")
+            left = spec.get("leaves")
             if left and where == "camp":  # (and there it lies in the camp's picture until you move on)
                 p = game.player
-                beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y,
+                beats.director(game.world)["left"] = {"what": left, "x": p.x, "y": p.y, "adv": adv["id"],
                                                       "day": int(game.moment.total_days)}
                 if left == "dead":
                     game.cue("dead")  # (D.5)
@@ -597,18 +610,42 @@ def on_night(game, where: str) -> bool:
     return False
 
 
-LEFT = ("carcass", "dead")  # what a beat may leave at your camp (beats.json `leaves`; drawn by ui/gfx/scenes.camp:
-#   the beast's carcass, the Risen's dead standing at the edge of the light)
+def _stage_at_inn(game, adv: dict, beat: str, scene: str) -> bool:
+    """The villain's visit to your room at the inn, staged on the town's map (E.2): the lamps gutter, a figure is
+    there by your bed, it speaks (the beat), and it is gone. False when no scene can play here."""
+    from realmwalker.game.story import stage, words as wordsmod
+
+    from realmwalker.world import threats
+
+    words = {k: str(v) for k, v in wordsmod.for_adventure(game, adv).items() if k in ("villain", "villain_short",
+                                                                                      "hero", "home")}
+    t = threats.records(game.world).get(adv["threat"])
+    if t is not None:
+        words["villain_creature"] = t["villain"]["creature"]
+    return stage.start(game, scene, words=words, then={"beat": beat, "adv": adv["id"]}, force=True) is not None
+
+
+LEFT = ("carcass", "dead", "visitor")  # what a beat may leave at your camp (beats.json `leaves`; drawn by
+#   ui/gfx/scenes.camp: the beast's carcass, the Risen's dead standing at the edge of the light, the villain itself
+#   beyond a fire burned low: E.2)
 
 
 def left_at_camp(game) -> str | None:
     """What the villain left at the camp you are in (a carcass), for the camp's picture; None once you move on."""
+    rec = left_record(game)
+    return rec["what"] if rec else None
+
+
+def left_record(game) -> dict | None:
+    """The record of what was left at this camp ({what, adv, x, y, day}); a visitor only while its beat waits."""
     from realmwalker.game.story import beats
 
     rec = beats.director(game.world).get("left") if getattr(game, "camp", None) is not None else None
     if not rec or (rec["x"], rec["y"]) != (game.player.x, game.player.y):
         return None
-    return rec["what"] if int(game.moment.total_days) - int(rec["day"]) <= 1 else None
+    if rec["what"] == "visitor" and (beats.pending(game) or {}).get("adv") != rec.get("adv"):
+        return None  # (gone when the fire flares again)
+    return rec if int(game.moment.total_days) - int(rec["day"]) <= 1 else None
 
 
 def on_descend(game, lm) -> None:
@@ -739,6 +776,10 @@ def on_quest_end(game, q: dict, ok: bool) -> None:
             step_done(game, aid, sid)
         else:
             st["state"] = "failed"
+            if st.get("kidnap"):  # (too late: the one it took dies in its hall, E.2)
+                from realmwalker.game.story import villain
+
+                villain.lost(game, adventures(game.world)[aid], st)
 
 
 def on_job_taken(game, q: dict) -> None:
@@ -822,6 +863,8 @@ def _can_take(game, t: dict) -> bool:
     from realmwalker.game.story import forge
 
     cap = int(game.tables.adventures.get("max_active", 3))
+    if float(t.get("bargained", -1)) > float(game.moment.total_days):
+        return False  # (you took its offer, and it keeps its side of it for now: E.2)
     return len(active(game)) < cap and bool(forge.fitting(game, t))
 
 

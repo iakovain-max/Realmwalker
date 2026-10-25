@@ -1056,10 +1056,10 @@ def _rustlers(game, fire: bool) -> list[str]:
             f"Someone on watch might have stopped it."]
 
 
-def rest(game, kind: str) -> list[str]:
+def rest(game, kind: str, *, inn: bool = False) -> list[str]:
     """Rest: 'short' (1 hour), 'long' (8 hours) or 'night' (sleep until first light: at least 8 hours, at most 14; an
     8-hour sleep begun at dusk wakes you at three in the morning, in the dark, with the night's cold still to come).
-    A long rest in the wilds may be interrupted."""
+    A long rest in the wilds may be interrupted; a night in a room at an inn (`inn`) may bring the villain to it."""
     from realmwalker.game.encounters import roll_encounter
 
     from realmwalker.game import spellwork
@@ -1093,10 +1093,10 @@ def rest(game, kind: str) -> list[str]:
         if woke is not None:
             notes.append(f"<danger>{woke}</> Your night is broken after {hour + 1} hour{'s' if hour else ''}.")
             return notes
-        if lm is None and kind == "long" and hour == hours // 2:
+        if (lm is None or inn) and kind == "long" and hour == hours // 2:
             from realmwalker.game import story
 
-            if story.on_night(game, "camp"):  # (the villain answers in the dark: Expansion 6)
+            if story.on_night(game, "inn" if inn else "camp"):  # (the villain answers in the dark: Expansion 6)
                 notes.append(f"<danger>Your rest is broken after {hour + 1} hour{'s' if hour else ''}.</>")
                 return notes
         if lm is None and kind == "long":
@@ -1140,10 +1140,10 @@ def rest(game, kind: str) -> list[str]:
                 return notes
     if kind == "long" and lm is None and game.over is None and game.leader.animals:
         notes += _rustlers(game, fire)
-    if kind == "long" and lm is None and game.over is None:
+    if kind == "long" and (lm is None or inn) and game.over is None:
         from realmwalker.game import story
 
-        story.on_night(game, "camp")  # (what was left at the camp's edge by morning: Expansion 6)
+        story.on_night(game, "inn" if inn else "camp")  # (what was left at the camp's edge by morning: Expansion 6)
     if kind == "long" and game.over is None:
         from realmwalker.game.gear import check_snares
 

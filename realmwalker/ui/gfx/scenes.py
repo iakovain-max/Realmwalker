@@ -74,17 +74,24 @@ def camp(canvas, game, rect, now: float) -> None:
         canvas.under(Image("camp_tent" if cp.tent else "camp_leanto", _tent if cp.tent else _lean_to,
                            (fx + size * 1.1, fy - tw * 0.72, tw, tw * 0.72), rgba=(*(int(120 + 135 * k),) * 3, 255)))
     fire = cp is not None and cp.fire
-    if fire:
-        flick = 0.85 + 0.15 * math.sin(now * 11) * math.sin(now * 7.3 + 1) if ambient else 1.0
-        g = size * 4.5 * flick
-        canvas.under(Image("camp_glow", _glow, (fx - g / 2, fy - g * 0.55, g, g), rgba=(255, 150, 70, int(150 * flick))))
-        frame = int(now * 8) % 3 if ambient else 0
-        canvas.under(Sprite(f"feature/campfire_{frame}", fx - size / 2, fy - size * 0.8, size, size))
-    else:
-        canvas.under(Sprite("feature/campfire_0", fx - size / 2, fy - size * 0.8, size, size, (90, 80, 80, 255)))
     from realmwalker.game import story
 
-    left = story.left_at_camp(game)
+    left_rec = story.left_record(game)
+    left = left_rec["what"] if left_rec else None
+    low = 0.4 if left == "visitor" else 1.0  # (the fire burns low while the villain stands beyond it: E.2)
+    if fire:
+        flick = 0.85 + 0.15 * math.sin(now * 11) * math.sin(now * 7.3 + 1) if ambient else 1.0
+        g = size * 4.5 * flick * (0.6 + 0.4 * low)
+        canvas.under(Image("camp_glow", _glow, (fx - g / 2, fy - g * 0.55, g, g),
+                           rgba=(255, int(150 * low + 40 * (1 - low)), int(70 * low), int(150 * flick * low))))
+        frame = int(now * 8) % 3 if ambient else 0
+        dim = int(255 * (0.55 + 0.45 * low))
+        canvas.under(Sprite(f"feature/campfire_{frame}", fx - size / 2, fy - size * 0.8, size, size,
+                            (dim, int(dim * (0.7 + 0.3 * low)), int(dim * (0.7 + 0.3 * low)), 255)))
+    else:
+        canvas.under(Sprite("feature/campfire_0", fx - size / 2, fy - size * 0.8, size, size, (90, 80, 80, 255)))
+    if left == "visitor":
+        _visitor(canvas, game, left_rec, (x, y, w, h), fx, fy, size, now)
     if left == "dead":  # (the Risen's dead, standing in a ring at the edge of the light, very still: Expansion 6 D.5)
         dw = size * 1.15
         pale = int(70 + 110 * k)
@@ -114,6 +121,32 @@ def camp(canvas, game, rect, now: float) -> None:
             canvas.under(cmd)
     canvas.under(Clip(None))
     canvas.under(*theme.panel(x, y, w, h, "inset", ornaments=False, border=True)[2:])
+
+
+def _visitor(canvas, game, rec: dict, rect, fx: float, fy: float, size: float, now: float) -> None:
+    """The villain come to talk (Expansion 6 E.2): a figure at the edge of the light, a pace beyond the fire, dark
+    against the dark with only its edges lit, and a breath of mist at its feet."""
+    from realmwalker.game import story
+    from realmwalker.world import threats
+
+    x, y, w, h = rect
+    adv = story.adventures(game.world).get(rec.get("adv") or "")
+    t = threats.records(game.world).get(adv["threat"]) if adv else None
+    if t is None:
+        return
+    atlas = canvas.gfx.atlas
+    parts = dolls.creature(t["villain"]["creature"], game.tables, f"villain/{t['id']}", atlas=atlas)
+    vs = 64 if size >= 48 else 32
+    cid = t["villain"]["creature"]
+    cdef = game.tables.creatures[cid] if cid in game.tables.creatures else {}
+    vs *= 2 if str(cdef.get("size", "")).lower() in ("large", "huge", "gargantuan") else 1
+    sway = math.sin(now * 0.6) * size * 0.02 if canvas.gfx.ambient else 0.0
+    vx, vy = x + w * 0.2 + sway, fy - size * 0.25
+    canvas.under(Image("camp_glow", _glow, (vx - vs * 0.2, vy - vs * 0.25, vs * 1.4, vs * 0.6),
+                       rgba=(190, 200, 220, 60)))  # (mist where it stands)
+    cmd = dolls.draw(atlas, parts, vx, vy - vs, vs, (0.32, 0.3, 0.38), alpha=0.92)
+    if cmd is not None:
+        canvas.under(cmd)
 
 
 def figure(canvas, char, tables, rect, most: int = 224) -> tuple[float, float, int] | None:

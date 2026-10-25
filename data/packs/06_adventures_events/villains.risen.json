@@ -3,7 +3,8 @@
   "tempers": {
     "proud": {
       "speaks": true,
-      "moves": {"risen_omen": 3, "risen_letter": 3, "risen_at_camp": 2, "risen_test": 2, "rumour": 1, "gift": 1, "visit": 3, "spy": 1, "token_letter": 1, "nightmare": 1, "strike": 2, "reprisal": 1},
+      "moves": {"risen_omen": 3, "risen_letter": 3, "risen_at_camp": 2, "risen_test": 2, "rumour": 1, "gift": 1, "visit": 3, "spy": 1, "token_letter": 1, "nightmare": 1, "strike": 2, "reprisal": 1, "invitation": 3, "bargain": 1},
+      "hand": {"face": "dark", "ink": [44, 22, 58], "seal": [104, 88, 40]},
       "first_words": [
         "\"Kneel,\" says {villain}, in a voice like a door in a tomb. \"I was a king before your grandfathers' grandfathers were born.\"",
         "\"Do you know what you stand on?\" says {villain}. \"My hall. My floor. You are here by my leave, and my leave is withdrawn.\"",
@@ -28,7 +29,8 @@
     },
     "grieving": {
       "speaks": true,
-      "moves": {"risen_omen": 3, "risen_letter": 2, "risen_at_camp": 3, "risen_test": 1, "gift": 2, "visit": 3, "spy": 1, "token_letter": 1, "nightmare": 2, "strike": 1},
+      "moves": {"risen_omen": 3, "risen_letter": 2, "risen_at_camp": 3, "risen_test": 1, "gift": 2, "visit": 3, "spy": 1, "token_letter": 1, "nightmare": 2, "strike": 1, "invitation": 2, "bargain": 2},
+      "hand": {"face": "fine", "ink": [62, 64, 84], "seal": [86, 88, 104]},
       "first_words": [
         "\"They buried me under the hill and forgot my name,\" says {villain}. \"You will remember it.\"",
         "\"It was so quiet in the hill,\" says {villain_short}. \"So long. Nobody came. Why did nobody come?\"",

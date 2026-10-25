@@ -146,7 +146,8 @@ def test_wrath_lashes_out_at_once_whatever_the_chapter(made, tables):
             break
     assert beat is not None, "it lashes out"
     made_move = adv["moves"][-1]
-    assert made_move.get("wrath") and tables.villains["moves"][made_move["move"]]["attention"][0] >= 3
+    assert made_move.get("wrath") and (tables.villains["moves"][made_move["move"]]["attention"][0] >= 3
+                                       or made_move["move"] in tables.villains["wrath"]["moves"]), "an angry move"
     assert "wrath" not in adv
 
 

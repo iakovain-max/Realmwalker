@@ -152,6 +152,8 @@ def problems(tables) -> list[str]:
         _ops(where, beat.get("ops"), beatlang.OPS, out, "op")
         if beat.get("leaves") and beat["leaves"] not in LEFT:
             out.append(f"{where}: it leaves '{beat['leaves']}', which the camp's picture cannot draw.")
+        if beat.get("stage") and getattr(tables, "scenes", None) and beat["stage"] not in tables.scenes:
+            out.append(f"{where}: it is staged as the scene '{beat['stage']}', which there is not.")
         words = tables.adventures.get("words") or None  # (tables with no words at all: a test's, nothing to check)
         for op in (beat.get("ops") or []) if words is not None else []:
             if op and op[0] == "letter" and (len(op) < 2 or op[1] not in words):
@@ -185,9 +187,18 @@ def problems(tables) -> list[str]:
         if boss.get("phase", {}).get("creature") and boss["phase"]["creature"] not in tables.creatures:
             out.append(f"villains.json: boss {tid}: there is no creature '{boss['phase']['creature']}' to come at its "
                        f"second phase.")
+    from realmwalker.game.story import villain
+
     for mid, move in tables.villains.get("moves", {}).items():
-        if move["beat"] not in beats:
-            out.append(f"villains.json: move {mid}: there is no beat called '{move['beat']}'.")
+        for b in (move["beat"], move.get("disloyal")):
+            if b and b not in beats:
+                out.append(f"villains.json: move {mid}: there is no beat called '{b}'.")
+        for need in move.get("needs", []):
+            if need not in villain.NEEDS:
+                out.append(f"villains.json: move {mid}: it needs '{need}', which is not one the game knows.")
+    for how, (mark, scene) in villain.SEEN.items():
+        if getattr(tables, "scenes", None) and scene not in tables.scenes:
+            out.append(f"story/villain.py: a reprisal by '{how}' is shown as the scene '{scene}', which there is not.")
     moves = tables.villains.get("moves", {})
     for tid, tem in tables.villains.get("tempers", {}).items():  # (E.1: a temper's weights name real moves)
         for mid in tem.get("moves", {}):

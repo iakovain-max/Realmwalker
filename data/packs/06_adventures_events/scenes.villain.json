@@ -1,0 +1,96 @@
+{
+  "_comment": "The villain's scenes (Expansion 6 E.2, docs/ADVENTURES.md §5.4, §5.18): its visit to your room at the inn (story._stage_at_inn; the beat it brings is the scene's `then`), and the example it made of one who helped you, seen when you next walk into their town (villain.seen_in_town: the crowd at the gibbet, or at the ashes of their house). Words given: {villain}, {villain_short}, {hero}, {home} (the visit); {helper}, {helper_first}, {villain} (the example).",
+  "scenes": {
+    "villain_visit_inn": {
+      "about": "In the black hour the lamp gutters, and there is someone in the room who did not come in by the door: the villain, come to talk. It speaks, and the beat opens; then it is gone.",
+      "given": ["villain", "villain_short", "hero", "home"],
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "arrive", "role": "visitor", "job": "pilgrim", "at": "you", "as": "villain"},
+        {"cue": "focus", "at": "visitor"},
+        {"cue": "say", "who": "visitor", "key": "first", "ticks": 4},
+        {"cue": "beat", "always": true},
+        {"cue": "say", "who": "visitor", "key": "last", "ticks": 3},
+        {"cue": "flee", "who": "visitor"}
+      ],
+      "words": {
+        "first": [
+          "Do not get up. I have only come to look at you.",
+          "Sit. We are both too tired for anything else tonight.",
+          "Quietly, now. The house is asleep, and so should you be.",
+          "Keep your hands where they are. I have not come to harm you.",
+          "I thought it time we spoke, you and I, without an audience.",
+          "The door was locked. I know. Do not trouble to look at it."
+        ],
+        "last": [
+          "Sleep, if you can.",
+          "Until the next time, then.",
+          "Remember that I came, and that I went.",
+          "You will find the door still locked. Good night.",
+          "Think on what I said. I shall ask again.",
+          "No need to see me out."
+        ]
+      }
+    },
+    "reprisal_gibbet": {
+      "about": "A gibbet stands in the square where none stood before, and on it what is left of one who helped you; a crowd round it, murmuring, and then it breaks up.",
+      "given": ["helper", "helper_first", "villain"],
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "square"},
+        {"cue": "crowd", "at": "square", "count": 10, "radius": 3, "key": "murmur", "ticks": 14},
+        {"cue": "pick", "role": "mourner", "any": true, "near": "square", "within": 12},
+        {"cue": "say", "who": "mourner", "key": "mourner", "ticks": 4},
+        {"cue": "disperse", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "Poor soul.",
+          "They left a paper on the body. With a name on it.",
+          "Who will cut them down? Nobody dares.",
+          "It was for helping the stranger, they say.",
+          "Don't look. Don't let the children look.",
+          "Three days it will hang, by order."
+        ],
+        "mourner": [
+          "That was {helper_first}. They only helped you. That was all they did.",
+          "Look at it. Look what {villain} does to those who help you.",
+          "Cut them down, someone. Please. Somebody.",
+          "{helper_first} gave you a bed. This is what the bed cost.",
+          "Go on, look. Take a good look, and then take it away from us.",
+          "They had no quarrel with anyone. Until you came."
+        ]
+      }
+    },
+    "reprisal_ashes": {
+      "about": "The burned shell of the house of one who helped you, still smoking; the neighbours stand about it, and one of them turns on you.",
+      "given": ["helper", "helper_first", "villain"],
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "square"},
+        {"cue": "crowd", "at": "square", "count": 8, "radius": 3, "key": "murmur", "ticks": 14},
+        {"cue": "pick", "role": "mourner", "any": true, "near": "square", "within": 12},
+        {"cue": "say", "who": "mourner", "key": "mourner", "ticks": 4},
+        {"cue": "disperse", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "They barred the doors first.",
+          "Nobody came to help. Nobody dared.",
+          "It is still warm, the ash.",
+          "Said it was a lesson. For all of us.",
+          "The roof-beams fell in about dawn.",
+          "Not even a dog left alive in it."
+        ],
+        "mourner": [
+          "{helper_first} is under that. Are you pleased?",
+          "You brought this on us. You and {villain} between you.",
+          "We heard them in there. All night we will hear them.",
+          "Whatever you wanted from {helper_first}, you have had it now.",
+          "Stand there if you like. The ash will not mind.",
+          "We shared a wall with them. Now we share this."
+        ]
+      }
+    }
+  }
+}

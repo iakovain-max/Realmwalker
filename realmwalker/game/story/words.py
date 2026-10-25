@@ -55,6 +55,13 @@ def for_adventure(game, adv: dict | None) -> dict:
         sid = getattr(helper, "settlement", None)
         out["helper_town"] = w.settlements[int(sid)].name if sid is not None and 0 <= int(sid) < len(
             w.settlements) else "the town"
+    wedge = adv.get("wedge") or {}  # (the companion its wedge is driven at, and what it offers them: E.2)
+    out["tempted"] = str(wedge.get("name", out["companion"])).split()[0]
+    out["offer"] = wedge.get("offer", "what they want most")
+    frame = adv.get("frame") or {}  # (where it did its murder, and to whom: E.2)
+    sid = frame.get("settlement")
+    out["frame_town"] = w.settlements[int(sid)].name if sid is not None else "a town near here"
+    out["frame_victim"] = frame.get("name", "a stranger")
     for name, p in adv["places"].items():
         if places.exists(w, p):
             out[name] = places.name(w, p)

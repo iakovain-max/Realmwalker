@@ -190,6 +190,34 @@
       },
       "endings": [
         {
+          "id": "bargained",
+          "if": ["flag:bargain_taken"],
+          "ops": [["bargained", 60, 120], ["mark", "town", "haunted"], ["infamy", 3], ["history", "bargained", 2]],
+          "pages": {
+            "place": [
+              "{town} is spared, and does not feel spared. At night the dead stand at the fences, in their old ranks, facing the houses, and do not come in.",
+              "The fires in {town} burn till dawn now, in every hearth, whatever the cost in wood. Beyond the last house the dead stand, and watch the light.",
+              "{town} has been given a season. The people count the days of it aloud, and do not say what happens when the count ends.",
+              "Frost lies on the roofs of {town} in the warm months. The dead come to the fences at dusk and go back toward {home} at first light, and the dogs have stopped barking at them.",
+              "Nobody leaves {town} after dark, and few leave by day. {villain_short} keeps {his} word, and the town is learning what that word costs."
+            ],
+            "patron": [
+              "{patron} heard what you had agreed, and was silent for a long while. Then {patron} turned away and would not be spoken to.",
+              "{patron} paid you nothing, and nothing was asked. {patron} looked at your hands as if they were something dirty.",
+              "{patron} still sets a lamp in the window each night for the dead at the fence. {patron} does not set one for you.",
+              "\"A season,\" {patron} said. \"You have sold us a season.\" It was said quietly, which was worse than shouting.",
+              "{patron} has told no one the whole of it, out of shame. But {town} has guessed, and {patron} knows it."
+            ],
+            "hero": [
+              "You took {villain_short}'s offer, and the {king} kept to it. That is all the good that can be said, and you know how little it is.",
+              "You walked out of {home} alive, and it was no victory. The dead keep their word. That is what the bargain bought, and the bargain was yours.",
+              "Word of the bargain has gone ahead of you. In {town} they look at you and then at the floor, and nobody will take your hand.",
+              "You told yourself it was the only way. The dead at the fences at night do not agree, and neither does the long dark before you sleep.",
+              "{villain} is not defeated, only waiting, and you bought the waiting. When the season ends, it will be your name they curse."
+            ]
+          }
+        },
+        {
           "id": "laid_to_rest",
           "if": ["flag:laid"],
           "ops": [["risen_laid"], ["danger", "home", -1], ["fame", 3]],
