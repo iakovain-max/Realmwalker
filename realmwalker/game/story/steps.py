@@ -203,6 +203,13 @@ class Slay(Step):
         return t
 
 
+@step("escape")
+class Escape(Step):
+    """Taken alive at the end and woken in the villain's cells (E.5, story/defeat.py): get out of the place. Made in
+    play, never by the forge; done when the party leaves the site's map."""
+    fields = frozenset({"at"})
+
+
 @step("finale")
 class Finale(Step):
     """The end of it: the boss's band, bound to its exact dungeon level (or a field), and the fight."""

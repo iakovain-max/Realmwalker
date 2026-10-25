@@ -166,7 +166,7 @@
         "endure_field": "burning_village",
         "keys": {
           "backway": ["surprise"],
-          "inside": ["minions(-50)"]
+          "inside": ["minions(-50)", "lieutenant_absent(raiders)"]
         },
         "words": {
           "warning": [

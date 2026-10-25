@@ -1,0 +1,37 @@
+{
+  "_comment": "The finale's retreat and defeat (Expansion 6 E.5, game/story/defeat.py): what a retreat from the last fight costs, the tempers of villains who take the beaten alive and the lock on the chest their things go into, and the words.",
+  "retreat": {"attention": 1, "ally_lost": 0.34},
+  "defeat": {"tempers": ["cruel", "proud", "cunning"], "lock": 12},
+  "words": {
+    "retreat": [
+      "You get clear, and nothing follows. But {villain_short} has the time now to mend, and to make ready, and you have shown {him} your faces.",
+      "You fall back, and the dark lets you go. It will not forget, and it will be whole again when you return.",
+      "Out, and away, breathing hard. Behind you {villain_short} is already gathering {his} strength again, and what {he} works at will not wait for you.",
+      "You have lived to try again. So has {villain_short}, and {he} will use the time better than you would like."
+    ],
+    "retreat_ally": [
+      "The one who came with you looks at you a long while when the fighting is done, and then says it plainly: they will not go back down there. You will have to finish it without them.",
+      "Your ally has had enough. They are sorry, they say, and they mean it, but they have a life to keep, and they do not think you can win.",
+      "When you count yourselves on the road, the one who stood with you is not among you. They went home, someone says. They did not say goodbye.",
+      "The one who fought beside you will not meet your eye. They came because they believed you could do it. They do not believe it now."
+    ],
+    "taken_wake": [
+      "You wake in the dark, on stone, with iron on your wrists and your head ringing. They did not kill you. {villain_short} wanted you alive, and that is worse.",
+      "Cold stone, the smell of old straw and older blood, and chains. You are alive because {villain_short} chose it, and you will not like the reasons.",
+      "You come round in a cell somewhere deep in {home}. Your weapons are gone, your armour is gone, and somewhere above you someone is laughing.",
+      "Darkness, and the drip of water, and the bite of a fetter. You were beaten, and dragged here, and left to wake. Someone has plans for you."
+    ],
+    "taken_gear": [
+      "Your gear was carried off somewhere close: you heard them laugh over it as they went, and a lid slam, and a lock turn.",
+      "They took your weapons and armour and your purse, and you heard the lot thrown into a chest not far off.",
+      "Everything you fought with is gone, but not far: a locked chest in one of the rooms nearby, if the talk you overheard was true.",
+      "Your things are in a strongbox somewhere on this level. You heard the guards arguing over who would have your blade."
+    ],
+    "escaped": [
+      "Open sky, and air that does not smell of the grave. You are out of {home}, and alive, and that is enough for now.",
+      "You come up out of the dark into the wind, and breathe, and breathe. You got out. Now there is the matter of going back.",
+      "Free, and on the road again. {villain_short} will know by morning that the cell is empty.",
+      "The world outside is very wide and very bright. You are out of {villain_short}'s hands. It will not be that easy a second time."
+    ]
+  }
+}

@@ -733,6 +733,11 @@ def on_battle(game, result, actor=None) -> None:
         villain.on_fight(game, adventures(game.world)[aid], servants=min(1, h["servants"]),
                          lieutenants=h["lieutenants"])
     battle = getattr(game, "battle", None)
+    if result.outcome == "fled" and battle is not None:
+        from realmwalker.game.story import defeat
+
+        for line in defeat.on_retreat(game, battle):  # (a retreat from its finale costs: E.5)
+            game.say(line, "story")
     if battle is not None and int(getattr(battle, "great_magic", 0) or 0):
         villain.on_magic(game, int(battle.great_magic))  # (great magic cast in its reach)
     from realmwalker.game.story import early
@@ -746,6 +751,14 @@ def on_battle(game, result, actor=None) -> None:
             for st in open_steps(adv):
                 if st["kind"] in ("slay", "finale"):
                     st["state"] = "done"
+            if how == "dead" and battle is not None and battle.__dict__.get("rite_allowed") == adv["id"]:
+                from realmwalker.game.story import deeds
+
+                for st in [s for s in open_steps(adv) if s["kind"] == "rite"]:  # (finished over its body: E.5)
+                    if deeds._needs_met(game, adv, st["target"].get("needs", [])):
+                        game.say(f"<good>{esc(deeds.say(game, adv, 'rite_done'))}</>", "story")
+                        _rite_flags(game, adv, st)
+                        step_done(game, adv["id"], st["id"])
             if how == "taken":
                 adv["taken_day"] = int(game.moment.total_days)
                 continue  # (the aftermath judges the captain first: on_fate ends the tale with the fate chosen)
@@ -760,6 +773,20 @@ def on_battle(game, result, actor=None) -> None:
             for st in open_steps(adv):
                 if st["kind"] == "slay" and (st["target"].get("fled_ok") or how == "taken"):
                     step_done(game, adv["id"], st["id"])
+
+
+def _rite_flags(game, adv: dict, st: dict) -> None:
+    """The codewords the rite's own beat sets on success (its first choice with a check), set now: the rite finished
+    over the body counts as the rite done at the threshold."""
+    from realmwalker.game.story import beats
+
+    beat = game.tables.beats.get(st.get("beat") or "") or {}
+    for ch in beat.get("choices", ()):
+        if "check" in ch:
+            for op in ch.get("success", ()):
+                if op and op[0] == "flag":
+                    beats.OPS["flag"](game, {"adv": adv["id"]}, *op[1:])
+            return
 
 
 def _villain_is_person(game, adv: dict) -> bool:

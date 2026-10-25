@@ -122,6 +122,11 @@ def _boss_fled(game, adv, arg) -> bool:
     return bool(adv.get("boss_fled"))
 
 
+@ending_if("rite_done")
+def _rite_done(game, adv, arg) -> bool:
+    return any(st["kind"] == "rite" and st["state"] == "done" for ch in adv["chapters"] for st in ch["steps"])
+
+
 @ending_if("scheme_done")
 def _scheme_done(game, adv, arg) -> bool:
     from realmwalker.world import threats

@@ -1080,6 +1080,9 @@ class GameState:
         self.player.local_key = None
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")
+        from realmwalker.game.story import defeat
+
+        defeat.on_leave(self)  # (out of a villain's cells: a tale's escape, Expansion 6 E.5)
         self.dirty = True
         if here is not None:
             from realmwalker.game.story import goals

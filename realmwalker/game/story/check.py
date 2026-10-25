@@ -200,6 +200,10 @@ def problems(tables) -> list[str]:
                 out.append(f"{cw}: '{ch['check']['skill']}' is not a skill.")
             if "check" in ch and not ("success" in ch and "failure" in ch):
                 out.append(f"{cw}: a choice with a check says what success and failure do.")
+    tempers = tables.villains.get("tempers", {})
+    for temper in (tables.adventures.get("defeat") or {}).get("tempers", ()):  # (E.5: who takes the beaten alive)
+        if temper not in tempers:
+            out.append(f"adventures.json defeat: the temper '{temper}' is not in villains.json.")
     for tid, boss in bosses.items():
         if tid.startswith("_"):
             continue

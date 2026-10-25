@@ -142,6 +142,7 @@ def prepare(battle, game) -> list[str]:
                     out.append(line)
             continue
         make_boss(battle, f, template, int(adv["tier"]))
+        battle.__dict__["finale_of"] = adv["id"]  # (its retreat and its defeat: story/defeat.py)
         from realmwalker.game.story import early
 
         line = early.on_boss(battle, game, adv, f)  # (come back from the dead, and harder to put down: E.4)
@@ -326,3 +327,84 @@ def _ally_fights(battle, game, adv, boss, *args) -> str:
     c.name, c.named = who.name, True
     battle.add_ally(c, leader, "story_ally")
     return f"<good>{who.name} is with you, bow strung.</>"
+
+
+RIVAL_KIND = "scout"  # who comes when no rival band is cast: hunters of the land with bows
+PARTY_BUFFS = {  # party_buff(<name>): what the beacon lit or the ground hallowed gives the party for the fight
+    "bless": {"attack_die": "1d4", "save_die": "1d4"},
+    "courage": {"immune": ["frightened"]},
+    "warded": {"resist": ["necrotic"]},
+}
+
+
+@key("rival_arrives")
+def _rival_arrives(battle, game, adv, boss, rnd: str = "3") -> str:
+    """The rival you befriended comes on the round named, with its band, from your side of the field."""
+    from realmwalker.game.story import cast
+    from realmwalker.rules.combat import PARTY
+    from realmwalker.rules.creatures import spawn
+
+    when = int(rnd)
+    who = cast.person(game.world, (adv["cast"].get("rival") or {}).get("npc")) if adv["cast"].get("rival") else None
+    name = who.name if who is not None else ""
+
+    def arrive(b, _done=[]):
+        if _done or b.round < when or b.outcome is not None:
+            return
+        _done.append(True)
+        leader = next((f for f in b.side(PARTY) if f.char is not None and f.active), None)
+        if leader is None:
+            return
+        kind = RIVAL_KIND if RIVAL_KIND in game.tables.creatures else "guard"
+        edge = (0, leader.y) if leader.x < b.field.width // 2 else (b.field.width - 1, leader.y)
+        for i in range(2):
+            c = spawn(game.tables, kind, b.rng.child(f"rival/{i}"), 9200 + i, now=int(b.now or 0))
+            if i == 0 and name:
+                c.name, c.named = name, True
+            f = b.add_ally(c, leader, "story_ally", point=edge)
+            f.auto = True
+        b.say(f"{name or 'Your rivals'} {'comes' if name else 'come'} running onto the field to stand with you!", "good")
+        b._event("arrive", who=leader.id)
+
+    battle.round_hooks.append(arrive)
+    return f"<good>{name or 'Your rivals'} said they would come. Hold until they do.</>"
+
+
+@key("party_buff")
+def _party_buff(battle, game, adv, boss, name: str = "bless") -> str:
+    from realmwalker.rules.combat import PARTY
+    from realmwalker.rules.engine import durations
+
+    buff = PARTY_BUFFS.get(name)
+    if buff is None:
+        return ""
+    for f in battle.side(PARTY):
+        if f.active:
+            durations.buff(f, dict(buff, source=f"story:{name}"))
+    return {"bless": "<good>You go into it blessed: the light you kindled is still with you.</>",
+            "courage": "<good>Nothing it can show you will make you run.</>",
+            "warded": "<good>The wards you raised hold off the cold of the grave.</>"}.get(name, "")
+
+
+@key("rite_allowed")
+def _rite_allowed(battle, game, adv, boss, *args) -> str:
+    """The rite can be finished over its body: if it falls in this fight with what the rite needs in your hands, the
+    rite is done (story.on_battle)."""
+    battle.__dict__["rite_allowed"] = adv["id"]
+    return "<good>You know the words. If it falls, you can finish it for good.</>"
+
+
+@key("lieutenant_absent")
+def _lieutenant_absent(battle, game, adv, boss, role: str = "") -> str:
+    """That lieutenant is not in the fight (sent away, kept busy): taken off the field before it begins."""
+    from realmwalker.rules.combat import FOE
+
+    gone = [f for f in battle.side(FOE) if f.creature is not None and (story_of(f.creature) or {}).get("role") == role]
+    bands = list(game.local.actors) if game.local is not None else []
+    for f in gone:
+        battle.fighters.remove(f)
+        if f.id in battle.order:
+            battle.order.remove(f.id)
+        for a in bands:  # (it is off on the errand it was given: free, and still the villain's)
+            a.creatures = [c for c in a.creatures if c is not f.creature]
+    return f"<good>{gone[0].name} is not here: the errand worked.</>" if gone else ""

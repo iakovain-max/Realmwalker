@@ -33,7 +33,9 @@ STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left
               "defeat": "Overcome {who}, at {place}.", "capture": "Take {who} alive, at {place}.",
               "recruit": "Win {who} to your side.", "rally": "Raise the people of {place} to stand.",
               "hold": "Hold {place} on the night of {night}.", "rite": "Perform the rite at {place}.",
-              "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know."}
+              "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know.",
+              "endure": "Live through what {villain} left behind.",
+              "escape": "Get out of {place} alive, and your things with you."}
 ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic",
                "tail": "follow someone by night"}
 CHECK_WORDS = {"nature": "study its kill", "history": "read the place's past", "religion": "read the signs of the dead",

@@ -306,7 +306,11 @@ def finish_battle(game) -> Aftermath:
     elif result.outcome in ("defeat", "surrendered"):
         foes = [f for f in battle.side(FOE) if f.active and f.bond is None]
         merciful = any(f.morale_type in MERCIFUL for f in foes) or result.outcome == "surrendered"
-        if merciful and any(c.alive for c in game.party):
+        from realmwalker.game.story import defeat
+
+        if result.outcome == "defeat" and defeat.on_defeat(game, battle, result, after):
+            pass  # (a tale's villain takes you alive at its finale: you wake in its cells, Expansion 6 E.5)
+        elif merciful and any(c.alive for c in game.party):
             called: list[str] = []
             taken = _rob_party(game, rng, called)
             after.outcome = "robbed"

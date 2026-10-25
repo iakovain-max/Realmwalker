@@ -1558,6 +1558,9 @@ ADVENTURES = Obj({
     # and when the boss's second phase changes it
     "arenas": Map(Obj({"styles": List(Str(max_len=30), optional=True), "wild": Bool(optional=True),
                        "enter": word_list(3, 300), "change": word_list(3, 300)}), optional=True),
+    # (E.5) what a retreat from a finale costs (story/defeat.py), and who takes the beaten alive at its end
+    "retreat": Obj({"attention": Int(min=0, max=5), "ally_lost": Float(min=0, max=1)}, optional=True),
+    "defeat": Obj({"tempers": List(Str(max_len=30)), "lock": Int(min=0, max=30)}, optional=True),
 })
 
 GREAT_ATTACK = Obj({
