@@ -575,18 +575,20 @@ D.4 (2026-10-25, realmwalker-a): the first hour, `game/story/opening.py` (docstr
 the threat as before (now up to twice `start.tiles` away when nothing is nearer) and `opening.begin` records
 `politics["director"]["opening"]` {kind, threat, town, day, state} instead of the day-0 scheduled hook. Kinds and
 weights in adventures.opening.json "openings" (schema ADVENTURES "openings"): crisis (`near`: the start town in the
-threat's reach or stakes), summons, terror (`kinds` ["outlaw"]); extra weight by background. Crisis and summons are
+threat's reach or stakes), summons (only when a stake other than the start town exists: `_asking`), terror (`kinds` ["outlaw"]); extra weight by background. Crisis and summons are
 staged when the start town's map is entered (`opening.on_enter_town` from story.on_enter_town, before `_show_tale`;
 scenes.opening.json opening_gate / opening_summons, `force=True`), else told as their beat by `opening.on_travel`
-(story.on_travel, once off the start tile) or `opening.daily` (after the first day). Terror plays at once: beat
+(story.on_travel, once off the start tile) or `opening.daily` (after the first day, not while busy); a crisis told
+off its town's map is the beat `opening_crisis_word` (`opening.TOLD`). Terror plays at once: beat
 `opening_captive` (beats.opening.json, picture "camp"), op `opening_escape` quiet/loud (registered in opening.py,
 in HANDLER_MODULES): take_hook, the party onto the nearest open tile outside town, an encounter of "bandits" tagged
 minion with `spotted_first` = quiet and `field` "captors" (arena.FIELDS: fire, bedrolls, a horse_post as the stake).
 `adv["opening"]` = the kind (story.take_hook). Beats opening_crisis / opening_summons / opening_captive (family
-"hook"; words threat, opening, start, gang, town, hook). Tests that start from new_game for other things use
-`tests/worlds.quiet_start` (test_stage, test_app_ui's start_small_world, a_life in test_first_hour);
+"hook"; words threat, opening, start, gang, town, hook). Outside tests marked `story`, conftest `_quiet_tales` makes
+`opening.begin` a no-op (as it already did offer_hook); `tests/worlds.quiet_start` clears it by hand (test_stage, test_app_ui's start_small_world, a_life in test_first_hour);
 test_story_hooks' `_start_near_a_beast` clears the opening and offers the hook directly; test_app_ui's creation flow
-accepts the opening's beat over the game screen. tests/test_first_hour.py (+7). Not yet: storyplay and autoplay
+accepts the opening's beat over the game screen. tests/test_first_hour.py (+7). The fresh review's fixes are in (the summons' {town}, the road
+word, adv["opening"] only when played). Not yet: storyplay and autoplay
 moves for the captive's beat (the bot picks a choice like any beat) - D.5's measure. No save format change.
 D.3 (2026-10-25, realmwalker-b): the blueprints `risen` and `outlaw` as pack fragments (adventures.risen.json,
 adventures.outlaw.json; their beats beats.risen/outlaw.json; tempers proud/grieving and cunning/cruel, moves and boss

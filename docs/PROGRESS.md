@@ -53,8 +53,8 @@ the expansion programme (the first entries below).
   - **Arriving into a crisis.** You walk into your start town as the bell starts ringing; someone shouts for the gate
     to be barred behind you, a crowd gathers in the street round one of the townsfolk, who turns and asks you for
     help. Only when the trouble is close enough to the town to have it shut its gates.
-  - **A summons.** A child or a porter runs up to you through the street with a sealed letter from the town the
-    trouble threatens (it opens as a page, and you keep it), asking you to come.
+  - **A summons.** A child or a porter runs up to you through the street with a sealed letter from another town
+    the trouble threatens (it opens as a page, and you keep it), asking you to come.
   - **Waking as the gang's captive** (only where an outlaw gang bleeds the roads). The game begins with you tied to a
     stake at the outlaws' fire. Work the knots loose (Sleight of Hand), tear the stake out (Athletics) or talk the
     youngest guard round (Deception). Quietly done, you find the guards with their backs to you; botched, they are on
@@ -63,7 +63,7 @@ the expansion programme (the first entries below).
 - The kind depends on the trouble, on how close it is, and on your background (a criminal is likelier to wake in the
   ropes, a noble or a priest to be sent for, a farmer or a guard to walk into a town shut tight).
 - If you walk away from the start town without going in, or the first day passes, the crisis or the letter finds you
-  wherever you are. Either way the tale is offered on your first day; say "not now", and the town may ask again.
+  wherever you are (the bell rings behind you, and people on the road tell you the gate has been barred). Either way the tale is offered on your first day; say "not now", and the town may ask again.
 - Try it: start a new character (any world) and walk into your start town.
 
 Decisions (Anton may want to change): a captive's tale begins whatever is chosen (being their prisoner makes it your
