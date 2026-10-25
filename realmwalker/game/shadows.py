@@ -58,10 +58,13 @@ def black_market_choice(conv) -> list:
     from realmwalker.game.dialogue import Choice
 
     game, npc = conv.game, conv.npc
-    if not law.is_fence(game, npc) or game.tables.people["occupations"].get(npc.job, {}).get("trade") or \
-            npc.flags.get("black_market"):
+    from realmwalker.game.story import favours
+
+    smuggler = favours.is_kind(game, npc, "smuggler") or favours.is_kind(game, npc, "fence")  # (one you know: C.7)
+    if not (law.is_fence(game, npc) or smuggler) or game.tables.people["occupations"].get(npc.job, {}).get("trade") \
+            or npc.flags.get("black_market"):
         return []  # (once shown, the wares are offered as any shop's are)
-    if game.world.settlements[npc.settlement].kind not in ("town", "city"):
+    if game.world.settlements[npc.settlement].kind not in ("town", "city") and not smuggler:
         return []
     return [Choice("black_market", "What do you have that the shops don't sell?")]
 

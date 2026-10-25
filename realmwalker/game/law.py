@@ -188,6 +188,9 @@ def report(game, rec: dict) -> None:
         game.say(f"<warn>The watch of {realm.name} is looking for a stranger in disguise, for {spec['name']}.</>", "warn")
         news.add(w, f"a stranger in disguise is wanted for {rec['text']}", rec["x"], rec["y"], kind="crime",
                  importance=max(1, int(spec["severity"]) - 1), factions=[realm.id], places=[rec["place"]])
+        from realmwalker.game.story import favours
+
+        favours.on_report(game, realm.id)  # (the disguise's description: your contacts there warn you, C.7)
         return
     game.renown.bounties[realm.id] = game.renown.bounties.get(realm.id, 0) + int(rec["bounty"])
     amounts = {realm.id: float(spec["standing"])}
@@ -199,6 +202,9 @@ def report(game, rec: dict) -> None:
                     infamy=int(spec["infamy"]), news_text=f"{who} is wanted for {rec['text']}")
     game.say(f"<danger>You are wanted in {realm.name} for {spec['name']}.</> The price on your head there is "
              f"{money_text(game.renown.bounties[realm.id])}.", "danger")
+    from realmwalker.game.story import favours
+
+    favours.on_report(game, realm.id)  # (your contacts there warn you: C.7)
 
 
 def place_for(game, rec: dict) -> str:
@@ -344,6 +350,9 @@ def watch(game) -> None:
     law = game.tables.law
     p = game.player
     w = game.world
+    from realmwalker.game.story import favours
+
+    warned = favours.warned(game, realm.id)  # (a contact told you which streets they walk: C.7)
     for n in npcs_in(w, s.id):
         if n.job != "guard" or not n.alive or not n.present:
             continue
@@ -360,11 +369,12 @@ def watch(game) -> None:
         if glamour.enthralled(game, n) or glamour.unseen(game):
             continue
         if disguised(game):
-            spotted = dice.d20(rng).natural + 2 - glamour.distraction(game) >= int(game.renown.flags.get("disguise_dc",
-                                                                                                        10))
+            spotted = dice.d20(rng).natural + 2 - glamour.distraction(game) - (2 if warned else 0) >= \
+                int(game.renown.flags.get("disguise_dc", 10))
         else:
             spotted = rng.chance((law["recognise_chance"] + (0.25 if hated else 0.0))
-                                 * max(0.0, 1.0 - glamour.distraction(game) / 20))  # (an illusion: eyes elsewhere)
+                                 * max(0.0, 1.0 - glamour.distraction(game) / 20)  # (an illusion: eyes elsewhere)
+                                 * (favours.data(game).get("warned_factor", 0.5) if warned else 1.0))
         if spotted:
             game.say(f"<danger>{n.label().capitalize()} looks at you hard, and then again.</>", "danger")
             start_arrest(game, n)
@@ -798,6 +808,15 @@ def trespass_check(game, building_index: int) -> None:
     inside = [n for n in npcs_in(game.world, s.id) if n.alive and n.present and b.x <= n.x < b.x + b.w
               and b.y <= n.y < b.y + b.h]
     if not inside:
+        return
+    from realmwalker.game.story import favours
+
+    friend = next((n for n in inside if favours.opens_at_night(game, n)), None)
+    if friend is not None:  # (a contact lets you in, and the house takes their word for you: C.7)
+        done.append(key)
+        game.renown.flags["trespass_seen"] = done[-20:]
+        if len(inside) > 1:
+            game.say(favours.vouch_line(game, friend), "info")
         return
     done.append(key)
     game.renown.flags["trespass_seen"] = done[-20:]

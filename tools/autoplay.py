@@ -914,6 +914,20 @@ def _check_quests(game, fail) -> None:
     for sid, n in live_by_town.items():
         if n > (2 if w.settlements[sid].great else 1):
             fail(f"{w.settlements[sid].name} has {n} live situations at once")
+    from realmwalker.game.story import favours  # (favours and contacts, C.7)
+
+    for f in game.renown.legend.get("favours", []):
+        if f.get("from") not in w.npcs or f.get("kind") not in favours.KINDS or not 1 <= int(f.get("weight", 0)) <= 3:
+            fail(f"a favour owed is not a favour: {f}")
+        if f.get("used") and f.get("spent_on") is None:
+            fail(f"a favour was spent on nothing: {f}")
+    seen_contacts = set()
+    for c in game.renown.legend.get("contacts", []):
+        if c.get("npc") not in w.npcs or c.get("kind") not in favours.CONTACT_KINDS:
+            fail(f"a contact is not a contact: {c}")
+        if c.get("npc") in seen_contacts:
+            fail(f"{w.npcs[c['npc']].name} is a contact twice")
+        seen_contacts.add(c.get("npc"))
     events = game.tables.lives.get("events", {})  # (lives of townsfolk, C.4)
     for npc in w.npcs.values():
         lf = npc.flags.get("life")
@@ -1033,11 +1047,22 @@ def _start_a_fight(app: App, rng: random.Random, report: AutoplayReport) -> None
                     if npc is None or not npc.alive or not npc.present:
                         continue
                     conv = Conversation(game, npc)
-                    opts = [c for c in conv.menu() if c.id.startswith("sit_") and c.enabled and c.id != "sit_refuse"]
+                    opts = [c for c in conv.menu() if c.id.startswith(("sit_", "fav_")) and c.enabled
+                            and c.id != "sit_refuse"]  # (a favour called in: C.7)
                     if opts:
                         conv.choose(rng.choice(opts))
                         conv.close()
                         report.sits = getattr(report, "sits", 0) + 1
+                        return
+            from realmwalker.game.story import favours  # (an informant's news: C.7)
+
+            for rec, npc in favours.contacts(game):
+                if npc.settlement == here.id and npc.present and rec["kind"] == "informant":
+                    conv = Conversation(game, npc)
+                    ask = next((c for c in conv.menu() if c.id == "contact_ask" and c.enabled), None)
+                    if ask is not None:
+                        conv.choose(ask)
+                        conv.close()
                         return
         if people and rng.random() < 0.1 and game.world.factions:
             # Now and then the bot joins a faction of someone here, so that commissions come (Expansion 6 C.2).

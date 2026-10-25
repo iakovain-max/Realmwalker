@@ -128,6 +128,7 @@
       "obstacles": [
         {
           "id": "debt",
+          "favour": {"kinds": ["goods"], "weight": 2, "then": [["flag", "paid"]]},
           "kind": "price",
           "who": "creditor",
           "note": ["{asker} owes {creditor_full} {price_pay}, and cannot pay {by_due}."],
@@ -174,6 +175,17 @@
           "line": [
             "{asker}'s promise is kept with your coin. {asker} will not forget it.",
             "The debt is paid. {asker} wept, and then laughed, and then wept again."
+          ]
+        },
+        {
+          "id": "kept_favour",
+          "when": "kept",
+          "if": ["way:favour"],
+          "tone": "good",
+          "ops": [["disposition", "asker", 30], ["xp_story", "small"]],
+          "line": [
+            "A name you carried spoke for {asker}, and {creditor} tore up the note. Debts are paid in more than coin in {town}.",
+            "{creditor} has let {asker}'s debt go, for the sake of a name you carried. {asker} does not ask whose."
           ]
         },
         {
@@ -235,6 +247,7 @@
       "obstacles": [
         {
           "id": "rival",
+          "favour": {"then": [["flag", "rival_yields"]]},
           "kind": "rival",
           "who": "rival",
           "note": ["{rival_full} wants {prize} too, and will not step aside."],
@@ -267,6 +280,7 @@
         },
         {
           "id": "judge",
+          "favour": {"then": [["flag", "judge_for_asker"]]},
           "kind": "rank",
           "who": "judge",
           "note": ["{judge_full} will decide, and listens to whoever speaks best."],
@@ -353,6 +367,7 @@
       "obstacles": [
         {
           "id": "knower",
+          "favour": {"then": [["flag", "buried"]]},
           "kind": "watcher",
           "who": "knower",
           "note": ["{knower_full} knows {asker}'s secret and means to tell it."],
@@ -481,6 +496,7 @@
       "obstacles": [
         {
           "id": "witness",
+          "favour": {"then": [["learn", "proof"]]},
           "kind": "silence",
           "who": "witness",
           "note": ["{witness_full} heard it, and is afraid to say so."],
@@ -544,6 +560,7 @@
           "tone": "good",
           "ops": [
             ["disposition", "asker", 30],
+            ["contact", "witness", "informant"],
             ["disposition", "rival", -20],
             ["favour", "asker", "goods", 2],
             ["money", 1500],
@@ -618,6 +635,7 @@
         },
         {
           "id": "law",
+          "favour": {"kinds": ["word", "door"], "then": [["law", "accused", "pardoned"]]},
           "kind": "law",
           "who": "judge",
           "note": ["{judge_full} has {accused} to hang {due}."],
@@ -723,6 +741,7 @@
       "obstacles": [
         {
           "id": "silence",
+          "favour": {"then": [["learn", "deed"]]},
           "kind": "silence",
           "who": "witness",
           "note": ["{witness} saw what {culprit} did, and is afraid of {lord}."],
@@ -750,6 +769,7 @@
         },
         {
           "id": "rank",
+          "favour": {"then": [["law", "culprit", "jailed"]]},
           "kind": "rank",
           "who": "lord",
           "note": ["{lord_full} will not judge {lord_their} own {culprit_kin}."],
@@ -1048,6 +1068,7 @@
         },
         {
           "id": "healer",
+          "favour": {"then": [["flag", "cured"]]},
           "kind": "price",
           "who": "healer",
           "note": ["{healer} could help, for a price."],
@@ -1075,6 +1096,7 @@
           "tone": "good",
           "ops": [
             ["disposition", "asker", 30],
+            ["contact", "healer", "healer"],
             ["disposition", "sick", 30],
             ["favour", "asker", "shelter", 1],
             ["xp_story", "fair"],
@@ -1155,6 +1177,7 @@
         },
         {
           "id": "priest",
+          "favour": {"then": [["flag", "lifted"]]},
           "kind": "price",
           "who": "priest",
           "note": ["{priest} would bless the house, for the temple's due."],
@@ -1176,7 +1199,7 @@
           "id": "lifted",
           "when": "lifted",
           "tone": "good",
-          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 1], ["money", 1000], ["xp_story", "small"]],
+          "ops": [["disposition", "asker", 30], ["favour", "asker", "shelter", 1], ["contact", "priest", "scholar"], ["money", 1000], ["xp_story", "small"]],
           "line": [
             "Lifted: the milk keeps, the children sleep.",
             "{asker}'s house is clean again. {asker} keeps a candle for you in the window."
@@ -1219,6 +1242,7 @@
       "obstacles": [
         {
           "id": "holder",
+          "favour": {"kinds": ["word", "goods"], "weight": 2, "then": [["hand", "holder"]]},
           "kind": "price",
           "who": "holder",
           "note": ["{holder_full} has {heirloom}, and will part with it only for coin."],
@@ -1280,7 +1304,7 @@
           "id": "bought",
           "when": "returned",
           "tone": "mixed",
-          "ops": [["disposition", "asker", 30], ["xp_story", "small"]],
+          "ops": [["disposition", "asker", 30], ["contact", "holder", "fence"], ["xp_story", "small"]],
           "line": [
             "Bought back dear: {asker} has {heirloom}, and you are lighter for it.",
             "Returned, at a price. {asker} swears to pay you back. One day."
@@ -1405,6 +1429,7 @@
       "obstacles": [
         {
           "id": "family",
+          "favour": {"then": [["flag", "blessed"]]},
           "kind": "honour",
           "who": "elder",
           "note": ["{elder_full} will not hear of {asker} and {beloved}."],
@@ -1714,6 +1739,7 @@
       "obstacles": [
         {
           "id": "search",
+          "favour": {"then": [["flag", "watch_away"]]},
           "kind": "guard",
           "who": "watch",
           "note": ["The watch is searching every house for {fugitive}."],
@@ -1864,6 +1890,7 @@
       "obstacles": [
         {
           "id": "custom",
+          "favour": {"then": [["flag", "rite_done"]]},
           "kind": "custom",
           "who": "priest",
           "note": ["{priest_full} will not say the rite for {dead}."],

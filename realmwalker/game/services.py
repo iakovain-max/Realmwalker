@@ -71,6 +71,9 @@ def fee(game, npc: NPC, base: int, scaled: bool = False) -> int:
     s = game.world.settlements[npc.settlement]
     price = base * (float(econ["services"]["size_factor"].get(s.kind, 1.0)) if scaled else 1.0)
     mood = {"hostile": 1.5, "unfriendly": 1.2, "neutral": 1.0, "friendly": 0.9, "warm": 0.8}[npc.mood()]
+    from realmwalker.game.story import favours
+
+    mood *= favours.discount(game, npc)  # (a contact's price: C.7)
     return max(1, int(round(price * mood * (1.0 + float(npc.flags.get("price_mod", 0.0))))))
 
 
@@ -93,6 +96,11 @@ def charge(game, npc: NPC, price: int) -> None:
 def services_for(game, npc: NPC) -> list[Service]:
     occ = game.tables.people["occupations"].get(npc.job, {})
     offered = [s for s in occ.get("services", []) if s != "rumours"]
+    from realmwalker.game.story import favours
+
+    for kind, more in (("healer", ("treat_wounds", "surgery", "herbal_cure")), ("scholar", ("identify",))):
+        if favours.is_kind(game, npc, kind):  # (what a contact does for you, whatever their trade: C.7)
+            offered += [s for s in more if s not in offered and not (s == "identify" and "blessing" in offered)]
     from realmwalker.game.economy import burnt_out
 
     from realmwalker.game.story import lives
@@ -159,7 +167,7 @@ def services_for(game, npc: NPC) -> list[Service]:
             ok, why = affordable(game, price)
             out.append(Service("cure_disease", "Ask the gods to lift a sickness (a donation)", price, ok and sick,
                                why if sick else "you are not sick"))
-        elif sid == "blessing":
+        elif sid in ("blessing", "identify"):
             packs = distinct_packs(game.party)  # the party shares one: list each thing once
             unknown = [it for m in packs for it in m.inventory if it.magic and not it.magic.get("identified")]
             from realmwalker.game import spellhire  # (G.2: the book's price for an Identify and a Remove Curse)
@@ -172,7 +180,7 @@ def services_for(game, npc: NPC) -> list[Service]:
             cursed = [(f"{game.party.index(m)}:{it.uid}", game.tables.items.name(it), spellhire.price(game, npc, "remove_curse"))
                       for m in packs for it in m.inventory if it.magic and it.magic.get("cursed")
                       and it.magic.get("curse_known")]
-            if cursed:
+            if cursed and sid == "blessing":
                 out.append(Service("remove_curse", "Have a curse lifted (a donation)", 0, True, "", options=cursed))
         elif sid == "repair":
             options = []

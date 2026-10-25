@@ -1,0 +1,141 @@
+{
+  "_comment": "Favours and contacts (Expansion 6 C.7, docs/ADVENTURES.md §8.10; game/story/favours.py). A favour owed is spent as a way through an obstacle that has a `favour` block (situations.predicaments.json) and lies within the giver's reach: their town, a faction they share, their trade. `kinds`: what each kind of favour opens (obstacle kinds) and its words; `weights`: how heavy a favour an obstacle needs (by obstacle kind; `_default`). A shelter favour also hides you where you are wanted (`hide`). Contacts send word by runner when you come to their town and by letter when you are away (`letters`), open their door at night, and warn you when the watch has your description (`warn`); each kind deals as it does (`contacts`).",
+  "kinds": {
+    "word": {"name": "a word in the right ear", "opens": ["rival", "rank", "watcher", "silence", "honour", "custom", "law", "lie", "price"]},
+    "door": {"name": "a door opened", "opens": ["guard", "rank", "law", "ward", "watcher", "custom"]},
+    "goods": {"name": "goods or coin", "opens": ["price", "sick", "honour", "rival"]},
+    "shelter": {"name": "a roof and a hiding place", "opens": ["guard", "watcher", "law"]},
+    "sword": {"name": "a blade at your side", "opens": ["guard", "rival", "watcher"]}
+  },
+  "weights": {"_default": 1, "rank": 2, "law": 2, "ward": 2, "honour": 2},
+  "call": [
+    "{giver} sends me. {giver_they_cap} said you would remember {giver_them}.",
+    "You know {giver} of {giver_town}. {giver_they_cap} owes me, and now you owe {giver_them}.",
+    "{giver} asked me to say {giver_their} name to you. And to ask this as a kindness.",
+    "I come from {giver}. {giver_they_cap} said to tell you it is time.",
+    "Ask {giver} about me, if you like. {giver_they_cap} will say the same."
+  ],
+  "own": [
+    "You said you owed me, {giver}. I am asking now.",
+    "Do you remember what you said? That if I ever needed anything. I need this.",
+    "{giver}, you owe me one. This is it."
+  ],
+  "answer": [
+    "...{giver}. Well. If {giver_they} vouches for you, that is different.",
+    "For {giver}? All right. Not for you. For {giver_them}.",
+    "{giver} has done more for me than I can say. Very well.",
+    "If {giver} asks it, it is done. Tell {giver_them} we are square.",
+    "You might have said so at the start. For {giver}, yes."
+  ],
+  "spent": [
+    "You called in {giver}'s favour.",
+    "{giver}'s favour is spent.",
+    "{giver} has paid what {giver_they} owed you."
+  ],
+  "hide": {
+    "label": [
+      "The watch is looking for me. Can you hide me a while?",
+      "I need a roof nobody knows about. You said, once, that I could ask.",
+      "Hide me. Just for a few days. Please."
+    ],
+    "say": [
+      "In here. Quickly. Nobody comes up to the loft but me.",
+      "Of course. You hid nothing for me, but you did more. The back room is yours.",
+      "Get in before someone sees. And keep away from the window."
+    ],
+    "after": [
+      "You spend {days} days in {giver}'s house, fed on what {giver_they} can spare. When you come out, the watch of {realm} have other things on their minds.",
+      "{days} days under {giver}'s roof, and not a soul knew. The watch of {realm} have half forgotten your face."
+    ],
+    "days": 2, "bounty_left": 0.5
+  },
+  "contacts": {
+    "informant": {
+      "name": "hears things",
+      "runner": [
+        "A boy finds you at the gate, out of breath: {giver} sends word.",
+        "A girl slips a folded note into your hand and is gone before you can thank her: {giver}'s writing.",
+        "Someone falls into step beside you for a moment. \"From {giver},\" they say, and are gone."
+      ],
+      "letter": [
+        "A letter finds you, sealed with a thumbprint in wax. It is from {giver} in {giver_town}.",
+        "A carter puts a letter in your hand: \"From {giver}, in {giver_town}. Paid for already.\"",
+        "A pedlar has a letter for you, folded small: {giver} of {giver_town} writes."
+      ],
+      "ask": ["What have you heard?", "What is the talk these days?", "Anything I should know?"],
+      "says": [
+        "Listen, then. And you did not hear it from me.",
+        "Close the door. All right.",
+        "Not much gets past me. Here is what I have."
+      ],
+      "trouble": [
+        "And this: {asker} of {town} has trouble at home. Go and see {asker_them}.",
+        "One more thing. In {town}, {asker} needs someone. Nobody else will go.",
+        "They say {asker} of {town} is in a bad way. You might be the one to help."
+      ],
+      "nothing": ["Quiet, for once. Ask me again in a few days.", "Nothing worth your coin. Nothing at all."]
+    },
+    "fence": {
+      "name": "buys what should not be sold",
+      "runner": [
+        "A boy finds you at the gate: {giver} has buyers waiting, if you have anything to sell. After dark, the back door.",
+        "A note in a child's hand: \"Come by when the lamps are out. G.\" It is {giver}'s way of saying hello."
+      ],
+      "letter": [
+        "A letter from {giver} in {giver_town}, written so that it says nothing at all to anyone but you: the market is good."
+      ]
+    },
+    "smuggler": {
+      "name": "has what the shops do not",
+      "runner": [
+        "A boy finds you at the gate: {giver} has had a cart in from the hills. Things the shops don't sell.",
+        "Someone brushes past you: \"{giver} says the boat came in.\""
+      ],
+      "letter": [
+        "{giver} writes from {giver_town}: new goods, the kind that come in at night. Come when you can."
+      ]
+    },
+    "healer": {
+      "name": "will see to your wounds at any hour",
+      "runner": [
+        "A boy finds you at the gate: {giver} heard you were back, and says to come by if anything needs stitching.",
+        "{giver} has sent a child with a pot of salve and a message: come and be looked at."
+      ],
+      "letter": [
+        "A letter from {giver} in {giver_town}, mostly about your health and how little you look after it."
+      ]
+    },
+    "scholar": {
+      "name": "knows what strange things are",
+      "runner": [
+        "A boy finds you at the gate: {giver} has been reading, and wants to see anything strange you have found.",
+        "A note from {giver}, in a careful hand: bring whatever you have that nobody can name."
+      ],
+      "letter": [
+        "{giver} writes from {giver_town}, three closely written pages of old names and older stories, and at the end: come and see me."
+      ]
+    }
+  },
+  "warn": {
+    "runner": [
+      "{giver} sends word, and it is not good: the watch of {realm} have your description. Keep your hood up and keep off the main street.",
+      "\"From {giver},\" a boy whispers: \"the watch know your face. They are at the gate and the market. Go round.\"",
+      "A note from {giver}: they are looking for you here. They know what you look like. Be quick and be careful."
+    ],
+    "letter": [
+      "A letter from {giver} in {giver_town}, hurried and short: the watch of {realm} have your description. Stay away, or come in quiet.",
+      "{giver} writes from {giver_town}: your name is on the watch's lips in {realm}. They know your face. Mind the gates."
+    ]
+  },
+  "knock": [
+    "You knock softly. After a while {giver} opens the door, a candle in {giver_their} hand, and lets you in.",
+    "A quiet knock, the way {giver} showed you. The bolt slides back.",
+    "{giver} is awake almost before you knock, and lets you in without a word."
+  ],
+  "vouch": [
+    "{giver} is here, and says you are a friend of the house.",
+    "{giver} steps between you and the others: \"It's all right. I let them in.\""
+  ],
+  "letters": {"gap": [10, 20], "reach": 40},
+  "warned_hours": 24, "warned_factor": 0.5, "discount": 0.85
+}

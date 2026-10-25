@@ -1648,7 +1648,10 @@ _SIT_ACT = Obj({"id": Str(max_len=40), "who": Str(max_len=30, optional=True), "l
 _SIT_OBSTACLE = Obj({"id": Str(max_len=40), "kind": Str(max_len=30), "who": Str(max_len=30, optional=True),
                      "note": word_list(1, 300), "acts": List(_SIT_ACT, optional=True), "chance": Float(min=0, max=1, optional=True),
                      "spells": List(Str(max_len=40), optional=True), "by_magic": List(List(Any_(), min_items=1), optional=True),
-                     "magic_note": List(Str(max_len=300), optional=True)})
+                     "magic_note": List(Str(max_len=300), optional=True),
+                     "favour": Obj({"then": List(List(Any_(), min_items=1)), "kinds": List(Str(max_len=20), optional=True),
+                                    "weight": Int(min=1, max=3, optional=True), "say": List(Str(max_len=300), optional=True),
+                                    "note": List(Str(max_len=300), optional=True)}, optional=True)})
 _SIT_ENDING = Obj({"id": Str(max_len=40), "when": Str(max_len=40, optional=True), "if": List(Str(max_len=60), optional=True),
                    "tone": Str(choices=["good", "mixed", "bitter"]), "ops": List(List(Any_(), min_items=1)),
                    "line": word_list(1, 300)})
@@ -1681,6 +1684,23 @@ SITUATIONS = Obj({  # situations (game/story/situations.py, C.6)
 }, optional=True)
 DATA_FILES.update({"situations.json": SITUATIONS})
 PACK_ONLY.update({"situations.json": {}})
+_CONTACT = Obj({"name": Str(max_len=60), "runner": word_list(1, 300), "letter": word_list(1, 300),
+                "ask": List(Str(max_len=160), optional=True), "says": List(Str(max_len=300), optional=True),
+                "trouble": List(Str(max_len=300), optional=True), "nothing": List(Str(max_len=300), optional=True)})
+FAVOURS = Obj({  # favours and contacts (game/story/favours.py, C.7)
+    "kinds": Map(Obj({"name": Str(max_len=60), "opens": List(Str(max_len=30), min_items=1)}), min_items=1),
+    "weights": Map(Int(min=1, max=3)),
+    "call": word_list(3, 300), "own": word_list(2, 300), "answer": word_list(3, 300), "spent": word_list(2, 200),
+    "hide": Obj({"label": word_list(2, 160), "say": word_list(2, 300), "after": word_list(2, 400),
+                 "days": Int(min=1, max=14), "bounty_left": Float(min=0, max=1)}),
+    "contacts": Map(_CONTACT, min_items=1),
+    "warn": Obj({"runner": word_list(2, 300), "letter": word_list(2, 300)}),
+    "knock": word_list(2, 300), "vouch": word_list(1, 300),
+    "letters": Obj({"gap": DAY_SPAN, "reach": Int(min=1, max=500)}),
+    "warned_hours": Int(min=1, max=24 * 14), "warned_factor": Float(min=0, max=1), "discount": Float(min=0.1, max=1),
+}, optional=True)
+DATA_FILES.update({"favours.json": FAVOURS})
+PACK_ONLY.update({"favours.json": {}})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
                    "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},
