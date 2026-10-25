@@ -188,6 +188,14 @@ def problems(tables) -> list[str]:
     for mid, move in tables.villains.get("moves", {}).items():
         if move["beat"] not in beats:
             out.append(f"villains.json: move {mid}: there is no beat called '{move['beat']}'.")
+    moves = tables.villains.get("moves", {})
+    for tid, tem in tables.villains.get("tempers", {}).items():  # (E.1: a temper's weights name real moves)
+        for mid in tem.get("moves", {}):
+            if mid not in moves:
+                out.append(f"villains.json: temper {tid}: there is no move called '{mid}'.")
+    for mid in (tables.villains.get("wrath") or {}).get("moves", []):
+        if mid not in moves:
+            out.append(f"villains.json: wrath: there is no move called '{mid}'.")
     for kind, lst in tables.villains.get("weaknesses", {}).items():
         for w in lst:
             for key in w["keys"]:

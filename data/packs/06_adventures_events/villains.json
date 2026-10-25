@@ -365,6 +365,12 @@
     "steps": [
       "fetch",
       "rescue"
+    ],
+    "moves": [
+      "test",
+      "risen_test",
+      "outlaw_test",
+      "carcass"
     ]
   },
   "spy": {

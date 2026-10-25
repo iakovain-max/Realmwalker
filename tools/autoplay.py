@@ -360,10 +360,37 @@ def _check_adventures(game, fail) -> None:
     if d.get("pending") and d["pending"]["beat"] not in game.tables.beats:
         fail(f"a beat waits that does not exist ({d['pending']['beat']})")
     _check_part_d(game, fail)
+    _check_villains(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
             fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_villains(game, fail) -> None:
+    """Expansion 6 E.1: a live tale's villain keeps its attention within bounds, its moves two days apart and each a
+    move it has; a token stolen has a thing and an owner; whoever paid for helping you is dead."""
+    from realmwalker.game import story
+    from realmwalker.game.story import villain
+
+    s = villain.spec(game)
+    table = game.tables.villains.get("moves", {})
+    for adv in story.active(game):
+        where = f"tale {adv['id']}"
+        if not 0 <= int(adv.get("attention", 0)) <= int(s["max"]):
+            fail(f"{where}: attention {adv.get('attention')} out of bounds")
+        days = [int(m["day"]) for m in adv.get("moves", [])]
+        if any(b - a < int(s["moves_apart_days"]) for a, b in zip(days, days[1:])):
+            fail(f"{where}: two moves too close together ({days})")
+        if any(m["move"] not in table for m in adv.get("moves", [])):
+            fail(f"{where}: a move that is not one ({[m['move'] for m in adv.get('moves', [])]})")
+        tok = adv.get("token")
+        if tok is not None and not (tok.get("what") and tok.get("of")):
+            fail(f"{where}: a stolen token without a thing or an owner ({tok})")
+        for nid in adv.get("reprisals", []):
+            npc = game.world.npcs.get(int(nid))
+            if npc is not None and npc.alive:
+                fail(f"{where}: {npc.name} paid for helping you, and is alive")
 
 
 def _check_part_d(game, fail) -> None:

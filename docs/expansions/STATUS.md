@@ -567,11 +567,30 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.1 (*attention in full and the whole
-move set with tempers' weights, spies that steal tokens and tailored next moves, wrath after a setback; the limits
-(one move in two days; beasts never write). Tests: `tests/test_villain.py`*), on branch `dlc/06-adventures-events`.
-Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.4, §5.5, §5.8, game/story/villain.py, and
-the D.5 note below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.2 (*visits staged on the map, letters
+in the villain's hand, invitations under safe conduct and the dinner, bargains and wedges with the dark endings wired,
+reprisals that are seen, frames, kidnaps*), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-
+events.md Part E, docs/ADVENTURES.md §5.4, §5.18, game/story/villain.py (docstring), data/packs/06_adventures_events/
+beats.villain.json, and the E.1 note below.
+E.1 (2026-10-25, realmwalker-a): `game/story/villain.py` (docstring has it all). villains.json `attention` (max 5,
+`levels`, `servants`, `great_magic`/`great_level`, `chance` by attention, `per_chapter` 2), `wrath` {jump, min, weight,
+days, steps: fetch, rescue}, `spy` {dc, tailored, tokens, missing}, `reprisal_roles` (witness, carter); moves carry
+`speaks` (never a beast's: `villain.speaks`), `tailored` (needs adv["token"] unused; marks it used), `spy`. Hooks:
+`villain.on_step` (story.step_done), `on_fight` (story.on_battle: minions dead +1 once, each other non-villain dead a
+lieutenant +2 and wrath), `on_magic` (magic.cast_on_road unless hired; `Battle.great_magic`, the party's highest cast
+level, read in story.on_battle). Generic move beats in beats.villain.json (villain_omen, rumour, spy_seen, sign, gift,
+letter, token_letter, nightmare, visit, reprisal, strike, hunt; cooldowns on the heavy ones) and letters in
+adventures.villain.json; temper `zealous` (no kind uses it yet). Ops `strike` (two bands of threats.json kind
+`minions`, all tagged minion), `band` (a tagged test band: the Risen's and outlaws' tests now use it), `reprisal`
+(adv["reprisal"] = the npc chosen by due_move; dead, npc.flags["reprisal"], news, adv["reprisals"]); conditions
+`villain.minions`, `villain.breaks_off` (boss template `before`). Words {token}, {token_of}, {companion}, {helper},
+{helper_town} (defaults when none, for the storybook). Journal "Its eye". Autoplay `_check_villains`. storyplay notes
+the party's state at the finale. Not in E.1 (E.2 builds them, add their moves and temper weights then): invitation,
+bargain, wedge, frame, kidnap; the Reading's +1 is Part F, Legend's +1 a tier Part J; "relic moved" waits for E.4's
+anchors, "pays the rival" for Part F's rivals. Wrath `moves` (beast and kind tests below `min`); while wrath waits
+no other move is made; `_helper` needs a done step naming the role; story/check.py checks temper and wrath move ids.
+Measures (storyplay, 20 lives): outlaw 20/20, risen 18/20 (base 20/20: more fights now; a strike is 1.5 bands, with
+a 12-day cooldown). Checks: full suite (only the known timing tests under load; pass alone), autoplay OK, smoke OK.
 D.5 (2026-10-25, realmwalker-b; Part D merged into main): `tools/storyplay.py --kind risen|outlaw` (Player methods
 per Part D kind: `delve` goes down a site level by level, climbs out to a long rest when pressed and comes back;
 `shed` drops the heaviest loose things when laden - a party once stood still for 60 days under barrow loot;

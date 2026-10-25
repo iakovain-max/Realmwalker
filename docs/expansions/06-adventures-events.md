@@ -339,7 +339,7 @@ with an opening tale. ADVENTURES.md §5.12 (the first hour), §6.2.
 
 ### Part E – Villains who act; the finale in full
 ADVENTURES.md §5.4, §5.5, §5.8.
-- [ ] E.1 Attention in full and the whole move set with tempers' weights, spies that steal tokens and tailored next
+- [x] E.1 Attention in full and the whole move set with tempers' weights, spies that steal tokens and tailored next
   moves, wrath after a setback; the limits (one move in two days; beasts never write). Tests: `tests/test_villain.py`.
 - [ ] E.2 Visits staged on the map (at camp or inn by night: the fire dims, a figure steps out of the dark; never at
   full strength), letters as pages in the villain's own hand, invitations under safe conduct (op `invite`: no

@@ -1580,7 +1580,8 @@ VILLAINS = Obj({
                       "chance": List(Float(min=0, max=1), min_items=1, optional=True)}, optional=True),
     # a major setback: attention jumps, and its next move is one needing at least `min` (by `weight` times)
     "wrath": Obj({"jump": Int(min=0, max=5), "min": Int(min=0, max=20), "weight": Float(min=0, max=20),
-                  "days": Int(min=1, max=60), "steps": List(Str(max_len=30))}, optional=True),
+                  "days": Int(min=1, max=60), "steps": List(Str(max_len=30)),
+                  "moves": List(Str(max_len=40), optional=True)}, optional=True),  # (angry moves below `min`)
     # its spy: seen by the party's best passive Perception against dc + attention; unseen, it steals a token
     "spy": Obj({"dc": Int(min=1, max=30), "tailored": Float(min=0, max=20), "tokens": word_list(6, 80),
                 "missing": word_list(3, 300)}, optional=True),

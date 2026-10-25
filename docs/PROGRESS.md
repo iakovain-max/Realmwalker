@@ -46,6 +46,41 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (midday): Adventures & Events Part E, task E.1 — villains who act — branch `dlc/06-adventures-events`
+
+- The villain of a tale now notices you, and how much it cares is shown in the journal ("Its eye": unaware, has heard
+  of you, watching, testing, wrathful, obsessed). It notices every step you take against it, its servants you kill,
+  its lieutenants you slay, and great magic (a spell of 6th level or more) cast in its country. Leave it alone for a
+  fortnight and it thinks of you a little less.
+- It answers with moves that fit how much it cares and what sort of villain it is (proud, cunning, cruel, grieving,
+  zealous, bestial): a stranger asking after you at the inn; a spy following you (seen, you can run them down; unseen,
+  they steal something small from one of you, a glove or a ribbon); a sign left at your camp; a purse of gold with a
+  warning; a letter; a letter with the stolen thing folded inside it, or a nightmare built from it; the villain itself
+  at the edge of your firelight by night, talking; one of the people who helped you found hanged, told in the news; its
+  servants coming at you in force; and, for the beast and the outlaw captain, a hunt in person. The Risen's letters,
+  the outlaws' toll and the beast's carcass are still there, among the rest.
+- Limits: never two moves within two days, two a chapter, and fewer while it hardly knows you. A beast never writes
+  or talks. A heavy move (a strike, a hunt, a reprisal) does not come again for a week and more.
+- Wrath: slay one of its lieutenants, take back what it holds or rescue the one it took, and it lashes out within the
+  week, whatever the chapter: a strike, a reprisal or a visit.
+- Try it: take on a tale, do a few of its steps, then open the journal (j) to see its eye, and travel and camp a few
+  nights.
+
+Decisions (Anton may want to change): attention goes up to 5, as the design says (it was 9); a step done +1, its
+servants killed +1 a fight, a lieutenant +2, great magic +1; a quiet fortnight -1. Invitations, bargains, wedges,
+frames and kidnaps are not in yet: they need E.2's staging (a dinner at its hall, the dark endings, the law's false
+witnesses, a rescue added to the tale). A reprisal falls only on a witness or a carter who has told you all they know.
+The spy is seen with the party's best passive Perception against 12 + its attention. The gift is 10 gold pieces. A
+strike is a band of its servants and half another, and they never arrive peaceful. In its wrath a villain makes no
+other move until it can lash out (a beast's wrath is a test by night).
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 20 of 20 finished (19
+before); the Risen's 18 of 20 (20 before; one party died in a finale at full strength, one in a fight right after a
+strike, without resting between). The villain fights back now; E.5 and E.6 rebuild the finale and measure its
+fairness. Checks: the full suite (only the known timing tests missed, run beside the other checks; they pass alone),
+autoplay OK, smoke test OK. The fresh review's fixes: strikes and tests always hostile; wrath waits for its place;
+a reprisal only on someone who helped you; their kin mourn them; a start-up check that every temper's move exists.
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part D, task D.5 — the Risen and the Outlaw Lord shown, heard and played through — **Part D merged into `main`**
 
 - **Pictures.** When the Risen king's dead come to your camp by night, you now see them: pale figures standing in a

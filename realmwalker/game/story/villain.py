@@ -18,8 +18,9 @@ adv["token"] {what, of, day, used}: the next tailored move is made with it ({tok
 its weight, and a token makes one such move.
 
 Wrath (`setback`; villains.json `wrath`): a lieutenant slain, or a step done that is a blow to it (its kind in
-`steps`): attention jumps by `jump`, and within `days` its next move is one needing `min` attention or more (`weight`
-times its temper's weight) whatever the chapter's count: a reprisal, a strike, a visit. A reprisal falls on one of the
+`steps`): attention jumps by `jump`, and within `days` its next move is one needing `min` attention or more, or one
+of `moves` (a beast's test), at `weight` times its temper's weight, whatever the chapter's count: a reprisal, a strike,
+a visit. It makes no other move while its wrath waits for the place to lash out. A reprisal falls on one of the
 cast who helped you (`reprisal_roles`) whom no step still needs: adv["reprisal"] holds them until the op `reprisal`.
 """
 
@@ -151,7 +152,7 @@ def due_move(game, adv: dict, where: str) -> str | None:
     att = int(adv.get("attention", 0))
     talks = speaks(game, adv)
     token = adv.get("token")
-    fresh = token is not None and not token.get("used")
+    fresh = token is not None and "used" not in token
     tailor = float((game.tables.villains.get("spy") or {}).get("tailored", 1))
     w_spec = game.tables.villains.get("wrath") or {}
     normal, angry = ([], []), ([], [])
@@ -169,12 +170,14 @@ def due_move(game, adv: dict, where: str) -> str | None:
         weight = float(wt) * (tailor if move.get("tailored") else 1.0)
         normal[0].append(mid)
         normal[1].append(weight)
-        if wrath is not None and lo >= int(w_spec.get("min", 0)):
+        if wrath is not None and (lo >= int(w_spec.get("min", 0)) or mid in w_spec.get("moves", [])):
             angry[0].append(mid)
             angry[1].append(weight * float(w_spec.get("weight", 1)))
     rng = game.world.rng.child(f"villain/{adv['id']}/{day}/{where}")
     if angry[0]:
         options, weights = angry
+    elif wrath is not None:
+        return None  # (in its wrath it waits for the place to lash out, rather than spend itself on a sign)
     elif normal[0] and len(this_chapter) < int(s["per_chapter"]):
         chance = s["chance"][min(att, len(s["chance"]) - 1)]
         if not rng.child("chance").chance(float(chance)):
@@ -205,7 +208,7 @@ def _spy_seen(game, adv: dict, rng) -> bool:
     able = [c for c in game.party if c.alive] or game.party
     if max(game.sheet(c).passive_perception for c in able) >= int(spy["dc"]) + int(adv.get("attention", 0)):
         return True
-    who = rng.choice(able)
+    who = rng.choice([c for c in able if c is not game.leader] or able)  # (a companion's, when there is one)
     adv["token"] = {"what": rng.choice(spy["tokens"]), "of": who.name.split()[0], "day": int(game.moment.total_days)}
     words = {"token": adv["token"]["what"], "token_of": adv["token"]["of"]}
     game.say(f"<dim>{textgen.fill(rng.choice(spy['missing']), rng, {}, words)}</>", "story")
@@ -214,22 +217,21 @@ def _spy_seen(game, adv: dict, rng) -> bool:
 
 # ---------------------------------------------------------------------------- reprisals
 def _helper(game, adv: dict) -> int | None:
-    """The npc id of one of the cast who helped you and may pay for it: alive, in a town you are not in, and needed
-    by no step still to do."""
+    """The npc id of one of the cast who helped you and may pay for it: a step that named them done, alive, in a town
+    you are not in, and needed by no step still to do."""
     from realmwalker.game.story import cast
 
     roles = game.tables.villains.get("reprisal_roles", [])
-    needed = set()
+    needed, helped = set(), set()
     for ch in adv["chapters"]:
         for st in ch["steps"]:
-            if st["state"] != "done":
-                needed.add(st["target"].get("role"))
-                needed.update(r.get("role") for r in st["target"].get("routes", []))
+            named = {st["target"].get("role")} | {r.get("role") for r in st["target"].get("routes", [])}
+            (helped if st["state"] == "done" else needed).update(named)
     here = game.world.settlement_at(game.player.x, game.player.y)
     for role in roles:
         entry = adv["cast"].get(role)
         npc = cast.person(game.world, entry) if entry and "npc" in entry else None
-        if npc is None or not getattr(npc, "alive", False) or role in needed:
+        if npc is None or not getattr(npc, "alive", False) or role in needed or role not in helped:
             continue
         if here is not None and int(entry.get("settlement", -1)) == here.id:
             continue

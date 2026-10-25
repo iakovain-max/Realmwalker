@@ -106,7 +106,7 @@ def test_a_spy_unseen_steals_a_token_and_the_next_move_is_made_with_it(made, tab
     _temper_moves(monkeypatch, game, adv, {"token_letter": 1, "villain_omen": 0})
     adv["chapter"] = (adv["chapter"] + 1) % len(adv["chapters"])
     assert villain.due_move(game, adv, "camp") == "villain_token_letter"
-    assert tok["used"]
+    assert "used" in tok
     beats.offer(game, "villain_token_letter", adv=adv["id"], where="camp")
     rec = beats.pending(game)
     assert tok["of"] in " ".join(beats.pages(game, rec)), "it names whose it was"
@@ -183,7 +183,7 @@ def test_a_strike_comes_in_force_and_its_dead_are_counted_in_a_real_fight(made, 
     beats.offer(game, "villain_strike", adv=adv["id"], where="road")
     beats.choose(game, beats.pending(game), 0)
     enc = game.encounter
-    assert enc is not None and len(enc.creatures) >= 2, "two bands of its servants"
+    assert enc is not None and len(enc.creatures) >= 2, "a band and more of its servants"
     assert all(c.story == {"adv": adv["id"], "role": "minion"} for c in enc.creatures)
     for c in game.party:
         c.level = max(c.level, 12)
@@ -198,3 +198,50 @@ def test_a_strike_comes_in_force_and_its_dead_are_counted_in_a_real_fight(made, 
     fight.finish_battle(game)
     assert b.outcome == "victory", "a strong party wins"
     assert adv["attention"] == min(5, before + 1), "its servants killed: it hears of it once"
+
+
+def test_a_beast_hunts_in_person_and_a_beast_in_wrath_tests_you(made, tables, monkeypatch):
+    from realmwalker.game.story import forge
+
+    game, t = _start_near_a_beast(made, tables)
+    adv = forge.make(game, t)
+    adv["attention"] = 5
+    _temper_moves(monkeypatch, game, adv, {"hunt": 1})
+    assert villain.due_move(game, adv, "road") == "villain_hunt", "the beast breaks off when hurt: it may hunt"
+    beats.offer(game, "villain_hunt", adv=adv["id"], where="road")
+    beats.choose(game, beats.pending(game), 0)
+    enc = game.encounter
+    assert enc is not None and enc.creatures[0].story["role"] == "villain", "it comes itself"
+    game.encounter = None
+    _days(game, 3)
+    adv["attention"] = 2
+    _temper_moves(monkeypatch, game, adv, {"omen": 3, "test": 1})
+    villain.on_fight(game, adv, lieutenants=1)
+    assert adv["attention"] == 5 and adv.get("wrath")
+    adv["attention"] = 3  # (its wrath: a test by night, never an omen)
+    assert villain.due_move(game, adv, "road") is None, "in its wrath it spends nothing on an omen"
+    game.world.time += (24 - game.moment.hour + 1) * 60
+    assert villain.due_move(game, adv, "camp") == "beast_test_night"
+
+
+def test_the_villain_visits_by_night_and_talks(made, tables, monkeypatch):
+    game, adv, t = _tale(made, tables, "risen")
+    adv["attention"] = 3
+    _temper_moves(monkeypatch, game, adv, {"visit": 1})
+    game.world.time += (24 - game.moment.hour + 1) * 60
+    assert villain.due_move(game, adv, "camp") == "villain_visit"
+    beats.offer(game, "villain_visit", adv=adv["id"], where="camp")
+    rec = beats.pending(game)
+    assert "{" not in " ".join(beats.pages(game, rec))
+    clues = int(adv["clues"].get("villain", 0))
+    beats.choose(game, rec, 0)
+    assert int(adv["clues"].get("villain", 0)) > clues, "listening teaches you something of it"
+
+
+def test_the_journal_shows_its_eye(made, tables):
+    from realmwalker.ui.screens.journal import tale_lines
+
+    game, adv, t = _tale(made, tables, "risen")
+    adv["attention"] = 3
+    text = tale_lines(game, adv)
+    assert "Its eye" in text and "testing" in text

@@ -508,7 +508,8 @@ def _villain_breaks_off(game, rec, value) -> bool:
 
 @op("strike")
 def _strike(game, rec, *args):
-    """Its servants in force (twice a band of its kind's `minions`), each with the story tag: a fight here and now."""
+    """Its servants in force (a band of its kind's `minions` and half another), each with the story tag: a fight here
+    and now."""
     from realmwalker.game.encounters import make_encounter
 
     group = _minions(game, rec)
@@ -516,9 +517,11 @@ def _strike(game, rec, *args):
         return []
     rng = rng_for(game, rec).child("strike")
     enc = make_encounter(game, group, rng)
-    enc.creatures += make_encounter(game, group, rng.child("more")).creatures
+    more = make_encounter(game, group, rng.child("more")).creatures
+    enc.creatures += more[:(len(more) + 1) // 2]
     if not enc.creatures:
         return []
+    enc.attitude = "hostile"  # (sent to fight: never a band you may pass by)
     for c in enc.creatures:
         c.story = {"adv": rec.get("adv"), "role": "minion"}
     game.encounter = enc
@@ -534,6 +537,7 @@ def _band(game, rec, group: str):
     if group not in game.tables.creatures.encounters or game.over is not None:
         return []
     enc = make_encounter(game, group, rng_for(game, rec).child(f"band/{group}"))
+    enc.attitude = "hostile"  # (sent to test you)
     for c in enc.creatures:
         c.story = {"adv": rec.get("adv"), "role": "minion"}
     game.encounter = enc
@@ -551,9 +555,22 @@ def _reprisal(game, rec, how: str = "hanged"):
     npc = game.world.npcs.get(int(adv["reprisal"])) if adv and adv.get("reprisal") is not None else None
     if npc is None or not npc.alive:
         return []
+    from realmwalker.game import townlife
+    from realmwalker.game.story import lives
+
     words = words_for(game, rec)
     npc.alive = False
     npc.present = False
+    npc.flags.pop("with_party", None)
+    townlife.forget_person(npc.id)
+    for t in (lives.life(npc) or {}).get("ties", []):  # (their kin mourn them, as any death of the people code)
+        other = game.world.npcs.get(t["npc"]) if t.get("npc") is not None else None
+        if other is not None and other.alive and lives.KIN_OF.get(t["kind"]) is not None:
+            lives._mourn(game, other, 21)
+            for ot in (lives.life(other) or {}).get("ties", []):
+                if ot.get("npc") == npc.id:
+                    ot["state"] = "dead"
+    npc.flags["died"] = {"how": how, "day": int(game.moment.total_days)}
     npc.flags["reprisal"] = {"adv": adv["id"], "how": how, "day": int(game.moment.total_days)}
     adv.setdefault("reprisals", []).append(int(npc.id))
     adv["reprisal"] = None
