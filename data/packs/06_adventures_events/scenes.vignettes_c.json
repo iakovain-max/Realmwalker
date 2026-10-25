@@ -1,0 +1,258 @@
+{
+  "_comment": "Meeting scenes of the vignettes, letter c (Expansion 6 C.9; situations.vignettes_c.json meetings v_...).",
+  "scenes": {
+    "vig_barrow_dog": {
+      "about": "A dog sits in the lane, and will not cross its own master's step, however it is called; the master, ashamed and afraid, comes over to you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "door", "who": "asker", "do": "open"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "shout", "who": "asker", "key": "call", "ticks": 3},
+        {"cue": "wait", "ticks": 3},
+        {"cue": "shout", "who": "asker", "key": "call", "ticks": 3},
+        {"cue": "say", "who": "asker", "key": "bad", "ticks": 3},
+        {"cue": "door", "who": "asker", "do": "close"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "call": [
+          "Here! Here, you! Come on, you daft thing!",
+          "Come in! Come in out of the lane! Come!",
+          "Here, girl. Here. It is only the house. It is only the house.",
+          "Please. Come on. Come in. It is cold."
+        ],
+        "bad": [
+          "It will not cross the step. Not since the ring.",
+          "Three weeks it has slept in the lane, looking at the house.",
+          "Look at it. Just sat there. Looking past me, into the house."
+        ],
+        "open": [
+          "You. You are not from here. Do you know anything of graves?",
+          "Stranger. A word. It is about the barrow at {barrow}.",
+          "Please. You look like someone who has seen worse than a dog."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_last_hearth": {
+      "about": "An old one tells children the night {ruin_was} fell, word for word, and stops when the children ask what came after; then looks up and sees you.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 1, "key": "ask", "ticks": 12},
+        {"cue": "say", "who": "asker", "key": "tell", "ticks": 4},
+        {"cue": "wait", "ticks": 2},
+        {"cue": "say", "who": "asker", "key": "stop", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "ask": [
+          "Then what?",
+          "Did the roof fall in?",
+          "Tell it again.",
+          "Were you frightened?",
+          "Did your mother run too?",
+          "Tell the part with the dog."
+        ],
+        "tell": [
+          "We all ran together. We all ran together out of {ruin_was}, every one, and we did not look back.",
+          "It was the night {ruin_fall}. We all ran. My mother, and my brother, and I. Together.",
+          "Every one of us ran. I have the whole of it. I have it by heart."
+        ],
+        "stop": [
+          "...That is all. That is the end of it. Go home.",
+          "What came after? ... Nothing. Nothing came after. Go on, go home.",
+          "That is enough for today. Go home. Off."
+        ],
+        "open": [
+          "You. You are a walker. You walk the roads.",
+          "Stranger. You go to the old places, I think. I can see it on you.",
+          "I have been watching you. You are the kind who goes where the roads end."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_beggar_row": {
+      "about": "A beggar and the notable of the town have words on the square, and the notable laughs; the beggar sees you and comes over.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "other", "to": "asker"},
+        {"cue": "overhear", "a": "asker", "b": "other", "key": "row", "knows": "heard_row"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "row": [
+          "The house on the square is mine. It was my people's before it was yours. The founders' blood is in me.",
+          "The founders' blood! Look at the state of you. Go and beg at the gate where the beggars beg.",
+          "Ask the rolls. Ask anyone who can read.",
+          "I do not need to ask a roll. I know whose house it is. Go on. Off the square."
+        ],
+        "open": [
+          "You heard that. You heard all of it. Do not tell me you did not.",
+          "Stranger. You stood and listened. Then you know it is not nothing.",
+          "They laugh. They have laughed all my life. But you listened. Come here."
+        ]
+      },
+      "cast": ["asker", "other"],
+      "given": ["plea"]
+    },
+    "vig_page_nine": {
+      "about": "People nudge each other as someone passes; a boy spits on the ground at their feet; the one passing does not answer, and then turns to you.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "say", "who": "asker", "key": "ignore", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "That is one of them.",
+          "Look who it is.",
+          "It is written down, so it is true.",
+          "His grandfather. Or hers. The one who sold us.",
+          "Not a word, mind. Not in front of the children.",
+          "They say it is in the hall, in the big book."
+        ],
+        "ignore": [
+          "I will not answer. I will not answer. Walk.",
+          "Let them. Let them say it.",
+          "It is a long time since I wept in the street."
+        ],
+        "open": [
+          "You are not from here, so you have not heard it. Hear it from me before you hear it from them.",
+          "Stranger. You were watching. You saw what they do. Come here.",
+          "A word. It is about a book. I will not keep you."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_pilgrim_kneels": {
+      "about": "A pilgrim kneels at the side of the road and prays toward {shrine}, coughing between the words; people go round; the pilgrim rises, with difficulty, and comes to you.",
+      "cues": [
+        {"cue": "focus", "at": "asker"},
+        {"cue": "kneel", "who": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "say", "who": "asker", "key": "pray", "ticks": 4},
+        {"cue": "rise", "who": "asker"},
+        {"cue": "disperse"},
+        {"cue": "hold"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "Poor soul.",
+          "That one will not see it.",
+          "Give the poor soul room.",
+          "{shrine}? On that chest?",
+          "Fetch the priest. Quick.",
+          "Hush, now."
+        ],
+        "pray": [
+          "{shrine}, hear me. I am coming. Wait for me.",
+          "I am coming. I am coming. Do not close the door before I come.",
+          "Hold the lamp for me at {shrine}. I will be there. I will be there."
+        ],
+        "open": [
+          "You. You are walking. Which way do you walk?",
+          "Stranger, you have good legs. I saw you come up the road.",
+          "Do not go by. I have something for someone who is going the right way."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_empty_room": {
+      "about": "A guest comes out of the inn at dusk with a pack on a shoulder, white-faced, and will not be stopped; the innkeeper runs after, then sees you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "door", "who": "asker", "do": "open"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "shout", "who": "asker", "key": "stay", "ticks": 3},
+        {"cue": "wait", "ticks": 2},
+        {"cue": "say", "who": "asker", "key": "mutter", "ticks": 3},
+        {"cue": "door", "who": "asker", "do": "close"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "stay": [
+          "Wait! The bed is paid for, you have not even slept!",
+          "Do not go! It is only a draught. Only a draught!",
+          "Half the price, then! Half! Come back, come back!"
+        ],
+        "mutter": [
+          "Third this month. Third this month.",
+          "Nothing wrong with the house. Nothing at all.",
+          "They will sleep in the stable before they sleep in that room."
+        ],
+        "open": [
+          "You, there. Are you staying in {town}? Do you need a bed?",
+          "Stranger. I will give you the best bed in the house, free. Hear me out.",
+          "You do not look like someone who is frightened of dark rooms."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_door_to_door": {
+      "about": "The priest goes down the street with two of the watch, knocking at every door and having it opened; the one at the next door watches, and when the priest has passed, crosses to you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "priest"},
+        {"cue": "shout", "who": "priest", "key": "knock", "ticks": 3},
+        {"cue": "crowd", "at": "priest", "count": 5, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "disperse"},
+        {"cue": "door", "who": "asker", "do": "close"},
+        {"cue": "say", "who": "asker", "key": "hush", "ticks": 3},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "knock": [
+          "Open your doors. By the bishop's letter, open your doors.",
+          "Open, in the name of the church. We search every house in the street.",
+          "Open. Nobody will be harmed who has nothing to hide."
+        ],
+        "murmur": [
+          "Who is it this time?",
+          "They say there is a book.",
+          "I have nothing. I have nothing at all.",
+          "Keep the children in.",
+          "God help whoever it is.",
+          "Not my door. Please. Not my door."
+        ],
+        "hush": [
+          "Not here. Not here, in the street. Walk with me.",
+          "Quiet. Say nothing. Come here.",
+          "They are one door down. Quiet."
+        ],
+        "open": [
+          "You are a stranger. Strangers are not searched. Listen.",
+          "I need someone nobody knows. You are the only one.",
+          "Look at me as though I were asking the time."
+        ]
+      },
+      "cast": ["asker", "priest"],
+      "given": ["plea"]
+    }
+  }
+}

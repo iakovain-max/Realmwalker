@@ -1,0 +1,243 @@
+{
+  "_comment": "Meeting scenes of vignettes b (Expansion 6 C.9): the orphan's map, the masked feast, the silent village, the tower's apprentice, the dragon's tithe, the beast's widow. Each shows something in the street before anyone asks anything.",
+  "scenes": {
+    "vig_orphans_map": {
+      "about": "Children in the street crowd round one who holds up a scrap of old hide and swears it is true; they jeer, the child shouts back, and when they drift away comes to you with the hide still in hand.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 1, "key": "jeer", "ticks": 12},
+        {"cue": "shout", "who": "asker", "key": "swear", "ticks": 3},
+        {"cue": "wait", "ticks": 2},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "jeer": [
+          "It's a scrap of hide. You drew it yourself.",
+          "There's no such place. Liar, liar.",
+          "Heroes don't have maps in a chapel chest.",
+          "Show us the treasure, then. Go on.",
+          "Your dead hero's a story. Go home."
+        ],
+        "swear": [
+          "It's real! It's the hero's own hand!",
+          "Look at the line. Look where it goes!",
+          "I'll show you. I'll show every one of you!",
+          "The hero was real! Fell out there!"
+        ],
+        "open": [
+          "You're not from here. You might believe me.",
+          "Please. Look at it. Just look.",
+          "You don't laugh. Good. Look.",
+          "They won't look. Will you look?"
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_masked_feast": {
+      "about": "A serving hand runs through the street with an armful of identical white masks, drops one, and stops while the crowd whispers about the lord's feast; then comes to you, breathless, the dropped mask still under one arm.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "run", "who": "asker", "to": "square"},
+        {"cue": "say", "who": "asker", "key": "count", "ticks": 3},
+        {"cue": "crowd", "at": "asker", "count": 5, "radius": 2, "key": "murmur", "ticks": 12},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "count": [
+          "One for each. One more than the guests. One more...",
+          "White, all of them. All the same. All the same.",
+          "Forty masks and not a face among them.",
+          "Count them again. It comes out wrong every time."
+        ],
+        "murmur": [
+          "The old custom of the house. Everyone in white, no names, no rank.",
+          "My cousin carries the wine. She says nobody may show a face till midnight.",
+          "Masks, in this day. What is the lord afraid of?",
+          "I'd not go. I'd not stand among forty faces I couldn't read.",
+          "It was done at the last feast too, and the one before the war."
+        ],
+        "open": [
+          "You. You're not of the house. Good. Listen.",
+          "Not here. Walk with me. Please.",
+          "I can't tell the master. I can tell you.",
+          "Take it. Look at it. That's what the heir will be wearing."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_silent_village": {
+      "about": "As the light goes, the village falls silent door by door and everyone turns from you without a word, while one child out in the street goes on talking aloud until the child is shushed and then comes to you, hand over own mouth.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "square", "count": 6, "radius": 3, "key": "hush", "ticks": 10},
+        {"cue": "say", "who": "asker", "key": "aloud", "ticks": 3},
+        {"cue": "shout", "who": "asker", "key": "why", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "door", "who": "elder", "do": "close"},
+        {"cue": "run", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "low", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "hush": [
+          "Hush. It's near dusk.",
+          "...",
+          "Not a word. Not one.",
+          "Inside. Inside, all of you.",
+          "Shh. Shh."
+        ],
+        "aloud": [
+          "It's only the sun going down. Nothing's listening!",
+          "Why can't I? Why can't I say anything?",
+          "Nobody's here. I'm only saying it.",
+          "I'll talk if I want. I'll talk."
+        ],
+        "why": [
+          "Tell me why! Somebody tell me why!",
+          "You never say! You never ever say!",
+          "I'm not scared of it! I'm not!"
+        ],
+        "low": [
+          "Quiet. They'll hear. Come here.",
+          "You talked back. You answered me. Nobody ever does.",
+          "Not so loud. Come here, where it's dark. Please.",
+          "You're a stranger. You haven't sworn."
+        ]
+      },
+      "cast": ["asker", "elder"],
+      "given": ["plea"]
+    },
+    "vig_tower_apprentice": {
+      "about": "A young scribe in a travel-stained coat is asking the road to a tower nobody will name; the townsfolk gather to mutter and turn away, and the scribe, left alone in the street, comes to you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "say", "who": "asker", "key": "ask", "ticks": 3},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 2, "key": "mutter", "ticks": 12},
+        {"cue": "shout", "who": "asker", "key": "plead", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "ask": [
+          "Which road leads to the tower? Only the road. Only that.",
+          "Ten days from the coast, they said. Which way is it from here?",
+          "A tower on the hill, grey, with no door on the ground. Anyone?",
+          "I'll pay for the way. Does nobody here know the way?"
+        ],
+        "mutter": [
+          "Another one asking after the tower.",
+          "Send them to the priest. Let the priest tell them.",
+          "Nobody goes up there. Nobody who comes back.",
+          "A scribe. What would a scribe want with that place?",
+          "Don't point. Don't tell. It'll only be on our heads."
+        ],
+        "plead": [
+          "It was the master's book! It's meant for those who learned from the master!",
+          "I only want what's mine to read! Is that so much?",
+          "You'll give directions to a thief, but not to me?"
+        ],
+        "open": [
+          "You carry a sword. Do you know the road?",
+          "You looked at me. Nobody else looked at me.",
+          "A word. Only a word, and I'll pay.",
+          "They'll not help. You might."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_dragon_tithe": {
+      "about": "In the street the headman walks off with the town's lot-pot under one arm while a parent shouts after the headman and the headman shuts a door; then the parent turns and finds you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "walk", "who": "other", "to": "square"},
+        {"cue": "shout", "who": "asker", "key": "after", "ticks": 3},
+        {"cue": "shout", "who": "other", "key": "answer", "ticks": 3},
+        {"cue": "door", "who": "other", "do": "slam"},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "after": [
+          "You drew the lots! You drew them yourself!",
+          "Not mine! You'll not take mine!",
+          "Look at me when I speak to you!",
+          "A hundred in this town and you drew mine!"
+        ],
+        "answer": [
+          "The lots are fair. It is done. It is done.",
+          "I did not choose. The pot chose.",
+          "Go home. Hold your child. That is all that is left.",
+          "Every year somebody's. This year it is yours."
+        ],
+        "murmur": [
+          "Poor thing. Poor thing. Better theirs than mine.",
+          "The {dragon_colour} one has never been refused.",
+          "Last time they didn't send, the barley burned.",
+          "Don't look at them. Don't say a word. It might turn."
+        ],
+        "open": [
+          "A stranger. With a blade. Please.",
+          "You've seen the hills. You've seen what's up there. Please.",
+          "They say strangers can do what we can't."
+        ]
+      },
+      "cast": ["asker", "other"],
+      "given": ["plea"]
+    },
+    "vig_beast_widow": {
+      "about": "A widow leaves the door of the house open for the night, calls out to the hills in the failing light, stands waiting, and then, finding someone watching, comes over to you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "door", "who": "asker", "do": "open"},
+        {"cue": "shout", "who": "asker", "key": "call", "ticks": 3},
+        {"cue": "wait", "ticks": 3},
+        {"cue": "say", "who": "asker", "key": "low", "ticks": 3},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "call": [
+          "Come in! It's cold! Come in out of it!",
+          "The door's open! Can you see the door?",
+          "Come home! The fire's going!",
+          "It's late! I've kept the bread!"
+        ],
+        "low": [
+          "Every night I do it. Every night.",
+          "I know. I know. But if it were me out there, I'd want a door left open.",
+          "Nothing. Nothing comes. But I'll do it again tomorrow.",
+          "They say it's foolish. Let them."
+        ],
+        "open": [
+          "You saw. You're not laughing.",
+          "You're a stranger, so you'll not pity me. Good.",
+          "Don't look at the door. Look at me. I need a thing done.",
+          "Stranger. A word."
+        ]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    }
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "_comment": "Meeting scenes of the letter-a vignettes (Expansion 6 C.9; situations.vignettes_a.json meetings v_...). Cast roles and words come from the situation (its roles and words).",
+  "scenes": {
+    "vig_bride_vow": {
+      "about": "A young woman walks through the square carrying a veil and talking, softly, to no one at all; her father runs after her, and the neighbours stop to watch.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "bride"},
+        {"cue": "say", "who": "bride", "key": "murmur", "ticks": 4},
+        {"cue": "crowd", "at": "bride", "count": 5, "radius": 3, "key": "whisper", "ticks": 10},
+        {"cue": "run", "who": "asker", "to": "bride"},
+        {"cue": "say", "who": "asker", "key": "beg", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "Yes. Yes, on the dark of the moon. I have the ribbon. I have not forgotten.",
+          "I am coming. I said I would. Do not be cold.",
+          "There is no one else for you, I know. I know it."
+        ],
+        "whisper": [
+          "That is the girl who is to wed the dead one.",
+          "Poor child. Poor child, and poor father.",
+          "She talks to him in the lane. I have heard her.",
+          "It is not right, a girl promised to a grave.",
+          "Leave her. She is not hurting anyone."
+        ],
+        "beg": ["Come home. Please, girl. Come home.", "{bride}! Not in the street, not before all of them!", "You will take your death of cold. Come in, come in."],
+        "open": ["You saw. Everyone has seen. You are a stranger, so I say it to you.", "Stranger. Did you see her? Did you hear what she said?", "You saw it all. Don't pretend you did not. Help me."]
+      },
+      "cast": ["asker", "bride"],
+      "given": ["plea"]
+    },
+    "vig_toll_jam": {
+      "about": "Carts stand in a line on the road to a bridge, and a carter is shouting at an old beggar who sits right in the middle of the planks and calls out questions.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "hermit"},
+        {"cue": "shout", "who": "hermit", "key": "riddle", "ticks": 4},
+        {"cue": "crowd", "at": "asker", "count": 5, "radius": 3, "key": "grumble", "ticks": 10},
+        {"cue": "shout", "who": "asker", "key": "curse", "ticks": 3},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "riddle": [
+          "Born {founded_years} back, and never walked. A road over {river} that bears every back. Who laid the first of me?",
+          "Who set the first stone, {founded_years} gone? Answer me or turn your cart.",
+          "I carry every back and I am carried by none. What am I, and who made me? Answer!"
+        ],
+        "grumble": [
+          "Two markets gone, and the grain going soft.",
+          "Why does nobody throw the old one in the river?",
+          "The old one is touched. Leave it be. Only asking.",
+          "My load will rot on the road.",
+          "Where is the watch, when it is wanted?"
+        ],
+        "curse": ["Old fool! Mad old fool, it is only a bridge!", "I have a load to deliver! Let me over!", "Answer the riddle, someone! Anyone!"],
+        "open": ["You. You look as though you read. Come here.", "Stranger. You can talk to a mad one better than I can. Come here.", "You, with the sword. A word."]
+      },
+      "cast": ["asker", "hermit"],
+      "given": ["plea"]
+    },
+    "vig_cold_anvil": {
+      "about": "A hammer strikes an anvil once, and then not again; the smith comes out into the street with a long grey blade across both hands and stands looking at it in the light.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "bell", "key": "clang"},
+        {"cue": "door", "who": "asker", "do": "open"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "say", "who": "asker", "key": "mutter", "ticks": 4},
+        {"cue": "wait", "ticks": 2},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "clang": [
+          "A hammer rings on an anvil, once, and then not again.",
+          "One clean stroke on iron rings out over the street, and then nothing.",
+          "From the forge comes the sound of a single blow, and a long silence after it."
+        ],
+        "mutter": [
+          "Not a note. Not one note. I have forgotten how it goes, or the iron has.",
+          "Forty years. Forty years and no one ever asked to hear it.",
+          "It is only iron. Plain iron. It will not sing."
+        ],
+        "open": ["You. You carry a blade. Do you know what a blade is, truly?", "Stranger. I saw you look at the forge.", "Wait. You. Do you know the old names of swords?"]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_barn_ash": {
+      "about": "Black ash blows across the village from the burned tithe barn; one poor soul crouches in it, picking out half-burnt grain and eating it, until the reeve's shout makes them flee.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "culprit"},
+        {"cue": "kneel", "who": "culprit"},
+        {"cue": "say", "who": "culprit", "key": "mutter", "ticks": 3},
+        {"cue": "crowd", "at": "asker", "count": 6, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "shout", "who": "asker", "key": "demand", "ticks": 3},
+        {"cue": "rise", "who": "culprit"},
+        {"cue": "flee", "who": "culprit"},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "mutter": [
+          "Half-cooked. Still good. Still good, if you pick the black off.",
+          "Not for me. For the little ones.",
+          "A handful. Only a handful. Nobody will count it now."
+        ],
+        "murmur": [
+          "It was lit. Barns do not burn themselves.",
+          "Someone will hang for this. Mark me.",
+          "The whole winter's grain. The whole winter.",
+          "Not a loaf in the village by midwinter.",
+          "Someone knows who did it, and I can guess."
+        ],
+        "demand": ["Who did this? Who? Step forward!", "I will have the one who did it! I will have a name!", "Whoever lit that fire, you will answer for it!"],
+        "open": ["You are a stranger. You have no stake in this. Good. Come here.", "Stranger. You have eyes. Look at that, and tell me what you see.", "You, there. You look like someone who can find things out."]
+      },
+      "cast": ["asker", "culprit"],
+      "given": ["plea"]
+    },
+    "vig_empty_niche": {
+      "about": "A bell is rung in the wrong order, like an alarm; the priest comes out onto the temple steps with pilgrims already gathering below, and falls to the stones.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "bell", "key": "alarm"},
+        {"cue": "door", "who": "asker", "do": "slam"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "crowd", "at": "asker", "count": 6, "radius": 2, "key": "murmur", "ticks": 10},
+        {"cue": "kneel", "who": "asker"},
+        {"cue": "say", "who": "asker", "key": "moan", "ticks": 3},
+        {"cue": "rise", "who": "asker"},
+        {"cue": "disperse"},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "alarm": [
+          "The temple bell rings out of order, hard and fast, as for fire or flood.",
+          "A bell clangs in the wrong rhythm over {town}, as if rung by a frightened hand.",
+          "Someone is ringing the temple bell as if the world were ending."
+        ],
+        "murmur": [
+          "The niche is empty. I looked myself.",
+          "The saint's day is the day after tomorrow.",
+          "Where is {saint}? Where is the saint?",
+          "A theft. A theft, in the holy house.",
+          "The pilgrims are already on the road."
+        ],
+        "moan": ["Not on the eve. Not on the eve of the feast.", "Forgive us. Forgive me.", "{saint} watched over this town for {saint_years}. And I lost the saint."],
+        "open": ["You. Stranger. I saw you on the steps yesterday. Come here.", "Stranger, you have an honest face. Please.", "You are not of {town}. That is why I may ask you."]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    },
+    "vig_dusk_shutters": {
+      "about": "At dusk the neighbours bar their shutters one after another, though it is still light enough to see; one old soul sits on a doorstep, listening toward the fields.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "door", "who": "asker", "do": "close"},
+        {"cue": "crowd", "at": "asker", "count": 4, "radius": 2, "key": "hush", "ticks": 10},
+        {"cue": "say", "who": "asker", "key": "mutter", "ticks": 4},
+        {"cue": "disperse"},
+        {"cue": "wait", "ticks": 2},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "hush": [
+          "Not out after dark. Not by the tree.",
+          "Do you hear it? No. No, nor do I.",
+          "Bar the door, children. Bar it now.",
+          "They are quiet tonight. That is worse.",
+          "I will not go past {scar} after the bells."
+        ],
+        "mutter": [
+          "{scar_hanged}. I count them every night and every night I miss one.",
+          "They only want what anyone wants. Someone to listen.",
+          "Rope creaks. That is all it is. That is all it ever is."
+        ],
+        "open": ["You do not bar your door. You are a stranger here, I think.", "Stranger. You are not afraid of the dark. Good.", "You. Come here. Sit. I have something to tell you, and I will not tell it twice."]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    }
+  }
+}

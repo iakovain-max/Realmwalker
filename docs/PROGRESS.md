@@ -46,6 +46,33 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.9 — vignettes — branch `dlc/06-adventures-events`
+
+- **Twenty hand-made stories** now turn up among the troubles of towns, each only where the world has what it is
+  about, and each at most once in a world: **the drowned bell** (a bell rings under the river where an old village
+  fell; the last of its people wants it raised from the crypt), **the bride of the dead** (a girl has promised to
+  marry a young man of the history who lies in the graveyard), **the bridge-keeper's toll** (riddles from the town's
+  own founding), **the last smith of the old way** (he would forge again a famous blade of the history, if you bring
+  the star-iron), **the tithe-barn fire**, **the saint's bones** (stolen on the eve of a saint's day; the saint is a
+  holy one of the history), **the hanging tree** (on an old battlefield or massacre ground the hanged speak at
+  midnight; doing what they ask lays that field's dead for good), **the orphan's map** (drawn by a hero who fell out
+  there, perhaps one of your own past lives), **the masked feast**, **the silent village** (nobody speaks after dusk
+  since its plague), **the apprentice** of a dead tower wizard, **the dragon's tithe**, **the widow's token** (from a
+  named beast's lair), **the barrow ring**, **the last of a fallen hamlet**, **the beggar's claim** to the founders'
+  blood, **the chronicle's page** (a real book of the history slanders a family), **the pilgrim's vow**, **the room
+  nobody lets** (someone of the history was murdered in the inn), **the hidden book** of a faith once persecuted here.
+- Each begins with **its own scene** in the street (a bell heard from the water, carts jammed at the bridge, a girl
+  murmuring to nobody in the square...), and is played like any trouble: talk, checks, prices, truths to learn,
+  expeditions to the real ruin, tower or lair, and endings that are not simply won or lost.
+- They are rare: only about a third of the times a town's trouble is made does the game look for one, and only one
+  is ever open near you at a time.
+
+Decisions (Anton may want to change): the share (0.35) and "one near at a time" are in situations.vignettes.json
+`vignettes`; the words were written by three helpers from a common brief and read through once; three needs are a
+little looser than the design's ten examples (no village drowned by a flood exists in the histories yet, so the bell
+lies in the flooded crypt of any old ruin by the water; the masked feast's lord needs only to be a figure of the
+history, with a grudge's words when the history keeps one; the dragon's tithe needs only a living dragon near).
+
 ### Session, 2026-10-25 (morning): Adventures & Events Part C, task C.8 — experience from stories — branch `dlc/06-adventures-events`
 
 - **Stories are worth experience**, sized to your party the way fights are: a trouble seen through gives a quarter,

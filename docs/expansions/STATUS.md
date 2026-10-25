@@ -562,9 +562,23 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.9 (*vignettes*: the first twenty
-hand-made of ADVENTURES.md §6.11 with their scenes, parallel words), on branch `dlc/06-adventures-events`. Read
-docs/expansions/06-adventures-events.md Part C and ADVENTURES.md §6.11 first.
+Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.10 (*situations inside adventures and
+the proof*: the Beast's witness and hunter steps as situations, storybook prints situations and --check holds §5.15,
+the variety, rarity, income and likeness measures, words to the floors of §8.8, FORMAT_VERSION +1, the fresh reader of
+thirty situations, Part C to `main`), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md
+Part C and ADVENTURES.md §5.16, §7, §9 first.
+C.9 (2026-10-25, realmwalker-a): `game/story/vignettes.py` (docstring has the API): a vignette is a predicament with
+`vignette` {needs, weight} (data situations.vignettes*.json; their meetings v_* in the same files, scenes vig_* in
+scenes.vignettes*.json); `NEEDS` (twenty, by name) find what each is about around a town and return roles (bound with
+`"bind": "given"`, situations._bind_given), words (kept in `sit["words"]`: {ruin}, {ruin_fall}, {dead_name}, {blade}...)
+and refs (`scar` for the op `lay_scar`). Roots kind "vignette" (situations ROOTS) come only on a share of forgings
+(situations.json-level `vignettes` {share .35, near 1}: at most one live near the hero), once a world (`vignettes.used`);
+`make(predicament=<vignette>)` takes its root from `vignettes.find` (never the ordinary roots). `_bind_far` takes
+`"town": "root"` (the pilgrim's shrine). Start-up check `vignettes.problems` (story/check). `tools/vignette_check.py
+[ids]` forges each in two test worlds and fills every line. Tests: tests/test_vignettes.py (two slow); test_situations'
+counts read `plain()` (the twenty ordinary predicaments). Autoplay: a vignette once a world, from its own root. For the
+C.10 variety measure: the vignettes are predicaments too (twenty more ids). No save format change.
+C.9 checks: suite green but for the turn-time tests (each passing alone, as before); smoke clean; autoplay clean in 13 of 14 runs; one run (seed 1, after the review fixes) reported "save/load round trip differs in ['world.json']" at turn 2505 and ten more runs (seeds 1-7) did not repeat it; if it comes back, run build/autoplay_debug.py-style dumping (write both world.json texts on a difference) to find the key. A fresh review's fifteen points fixed in 81753e0.
 C.8 (2026-10-25, realmwalker-b): `game/story/experience.py` (docstring has the API): `award(game, size, key,
 no_fight=)` gives `amount` to the living (encounter.budget of the living's levels x share / count; x `no_fight` when
 asked; x `stories_only` when `game.experience == "stories"`), data situations.json `experience` {sizes: {small, fair,

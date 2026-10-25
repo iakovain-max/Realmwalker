@@ -23,6 +23,11 @@ def life(tables):
     return a_life(tables, SEEDS[0])
 
 
+def plain(tables) -> dict:
+    """The predicaments forged from ordinary roots (not the hand-made vignettes, tests/test_vignettes.py)."""
+    return {k: v for k, v in situations.predicaments(tables).items() if not v.get("vignette")}
+
+
 def watched_town(game):
     """A town with a watch (guards), peopled now, the hero standing at its gate."""
     w = game.world
@@ -60,7 +65,7 @@ def test_the_data_reads_right(tables):
     probs = [p for p in check.problems(tables) if "situations" in p or "sit_" in p]
     assert probs == []
     preds = situations.predicaments(tables)
-    assert len(preds) == 20, "the first twenty predicaments of §6.7"
+    assert len(plain(tables)) == 20, "the first twenty predicaments of §6.7 (besides the hand-made vignettes)"
     for pid, p in preds.items():
         tones = {e["tone"] for e in p["endings"]} | {p["lapse"]["tone"]}
         assert tones & {"mixed", "bitter"}, f"{pid}: every predicament has a bitter or mixed end"
@@ -78,7 +83,7 @@ def test_every_predicament_can_be_forged_from_the_world(tables):
             towns = [town, watched_town(game)]
         except pytest.skip.Exception:
             towns = [town]
-        for pid in situations.predicaments(tables):
+        for pid in plain(tables):
             if pid in found:
                 continue
             for s in towns:
@@ -95,7 +100,7 @@ def test_every_predicament_can_be_forged_from_the_world(tables):
                 situations._unbind(game, sit)
                 sit["state"] = "done"
                 break
-    assert found == set(situations.predicaments(tables)), set(situations.predicaments(tables)) - found
+    assert found == set(plain(tables)), set(plain(tables)) - found
 
 
 def test_rarity_one_live_a_town_and_a_gap(life):

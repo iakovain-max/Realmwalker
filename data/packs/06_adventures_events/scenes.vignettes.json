@@ -1,0 +1,29 @@
+{
+  "_comment": "The vignettes' own meeting scenes (Expansion 6 C.9; situations.vignettes.json meetings v_...). Cast roles and given words come from the situation (its roles, its words: {ruin}, {water}, the plea).",
+  "scenes": {
+    "vig_drowned_bell": {
+      "about": "A bell rings somewhere under the water, though there is no bell; the oldest one in town stops in the street, and then comes to you.",
+      "cues": [
+        {"cue": "hold"},
+        {"cue": "bell", "key": "toll"},
+        {"cue": "focus", "at": "asker"},
+        {"cue": "say", "who": "asker", "key": "hush", "ticks": 3},
+        {"cue": "wait", "ticks": 2},
+        {"cue": "walk", "who": "asker", "to": "you"},
+        {"cue": "say", "who": "asker", "key": "open", "ticks": 3},
+        {"cue": "talk", "who": "asker", "key": "plea", "always": true}
+      ],
+      "words": {
+        "toll": [
+          "Somewhere under {water}, a bell rings. There is no bell in {town}.",
+          "A bell tolls, low and slow, from the direction of {water}. Nobody in the street looks up but one.",
+          "Out of {water} comes the sound of a bell, drowned and patient."
+        ],
+        "hush": ["There. There it is again.", "Do you hear it? Tell me you hear it.", "Hush. Listen."],
+        "open": ["You heard it too. I saw your face.", "Stranger. You heard the bell.", "Not everyone can hear it. You can."]
+      },
+      "cast": ["asker"],
+      "given": ["plea"]
+    }
+  }
+}

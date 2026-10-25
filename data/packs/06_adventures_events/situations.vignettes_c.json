@@ -1,0 +1,1250 @@
+{
+  "_comment": "Vignettes, letter c (Expansion 6 C.9): the ring from the barrow, the last of a ruined hamlet, the beggar's claim, the lie in the chronicle, the pilgrim's vow, the room nobody lets, the hidden book. Each has its own meeting (scenes.vignettes_c.json).",
+  "meetings": {
+    "v_ring_dog": {"scene": "vig_barrow_dog", "cast": {"asker": "finder"}},
+    "v_last_hearth": {"scene": "vig_last_hearth", "cast": {"asker": "survivor"}},
+    "v_beggar_row": {"scene": "vig_beggar_row", "cast": {"asker": "claimant", "other": "notable"}},
+    "v_page_nine": {"scene": "vig_page_nine", "cast": {"asker": "wronged"}},
+    "v_pilgrim_kneels": {"scene": "vig_pilgrim_kneels", "cast": {"asker": "pilgrim"}},
+    "v_room_empty": {"scene": "vig_empty_room", "cast": {"asker": "innkeeper"}},
+    "v_door_to_door": {"scene": "vig_door_to_door", "cast": {"asker": "keeper", "priest": "priest"}}
+  },
+  "predicaments": {
+    "v_barrow_ring": {
+      "name": "The ring from the barrow",
+      "vignette": {"needs": "barrow_near", "weight": 2.0},
+      "asks": "finder",
+      "base": "plain_ring",
+      "roles": {
+        "finder": {"bind": "given"},
+        "barrow": {"bind": "given"},
+        "priest": {"bind": "priest"}
+      },
+      "forge": [["plant", "finder", "ring"]],
+      "obstacles": [
+        {
+          "id": "ring",
+          "kind": "ward",
+          "who": "finder",
+          "note": [
+            "{finder} has kept {ring} in the house since the day the bank slumped at {barrow}, and nothing in {finder}'s yard has thrived since.",
+            "{ring} lies in {finder}'s house, taken from the hand of {barrow_king}. The beasts die, and the dog sleeps in the lane."
+          ],
+          "acts": [
+            {
+              "id": "king",
+              "label": ["Who lies in that mound? What would {barrow_king} want with a ring?", "Tell me what you know of {barrow_king}."],
+              "check": ["history", 12],
+              "unless": ["knows:king"],
+              "then": [["learn", "king"]],
+              "say": [
+                "They put {barrow_king} in the ground with that ring on, {king_years} ago, so the dead would know a king when they met one. It was not a gift to the living. It was never lent.",
+                "Buried with it on the finger, the old men say. Buried to keep it. So the ring is {barrow_king}'s, and the hand is still waiting for it."
+              ],
+              "fail_say": ["I only know it is a barrow, and old, and that I should have left it be."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "hand",
+              "label": ["Give me the ring. I will not have it in this house another night.", "Let me have it. I will see to it."],
+              "unless": ["holds"],
+              "then": [["hand", "finder"], ["flag", "carried"]],
+              "say": [
+                "Take it. Take it out of my yard. I never want to see the thing again, and I will not touch it to give it you, so lift it off the table yourself.",
+                "God keep you. There. It is cold, isn't it? It has always been cold."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rite",
+          "kind": "price",
+          "who": "priest",
+          "note": [
+            "{priest} will lay what was taken from a grave back with a rite, but not for nothing, and not for a ring only half understood.",
+            "A priest must be asked to say the proper words, whether the ring goes back into the barrow or stays in {finder}'s house."
+          ],
+          "acts": [
+            {
+              "id": "lay_paid",
+              "label": ["Take the ring and lay it back in the barrow, with the rite. Here is an offering."],
+              "price": 400,
+              "way": "pay",
+              "needs": ["holds"],
+              "then": [["give_back", "priest"], ["flag", "laid"]],
+              "say": [
+                "A thing out of a grave is not kept in a house. I will carry it to the mound at dusk and say what is to be said. The offering will buy candles and the rest I will do for the dead.",
+                "Give it here. I will put it back where it was, and I will not come back till it is done."
+              ]
+            },
+            {
+              "id": "lay_named",
+              "label": ["It was {barrow_king}'s. I know the words for a king laid down. Let me say them with you."],
+              "check": ["religion", 12],
+              "needs": ["holds", "knows:king"],
+              "then": [["give_back", "priest"], ["flag", "laid"], ["flag", "named"]],
+              "say": [
+                "You know the old form. Few do. Then we will lay it by name, the two of us, and {barrow_king} will have what was owed {barrow_king} and no coin spent.",
+                "By name, then. That is the better way. A name laid with it will hold longer than a prayer."
+              ],
+              "fail_say": ["Those are not the words. A wrong word at a barrow is worse than none. Come back when you have them."],
+              "retry": true
+            },
+            {
+              "id": "bless",
+              "label": ["Bless the yard and the beasts of {finder}. The ring stays where it is."],
+              "price": 900,
+              "way": "pay",
+              "unless": ["holds"],
+              "then": [["flag", "blessed"]],
+              "say": [
+                "I can bless a yard. I cannot bless a thing that is not mine to bless, and I will tell you so now. But I will do it.",
+                "A blessing for the house, then. The ring is a matter between the house and the grave, and I take no part in it."
+              ]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "keep",
+          "who": "finder",
+          "needs": ["holds"],
+          "label": ["I will keep it. Whatever comes after it can come after me."],
+          "then": [["flag", "kept"], ["disposition", "finder", 10]],
+          "say": [
+            "You are mad. Or you are a thief like me, and prouder of it. Go, then. Go, and take it out of my sight.",
+            "Then it is yours. I'll light a candle for you. I do not think it will do you any good."
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "laid", "test": ["flag", "laid"]},
+        {"id": "blessed", "test": ["flag", "blessed"]},
+        {"id": "kept", "test": ["flag", "kept"]}
+      ],
+      "endings": [
+        {
+          "id": "laid_named",
+          "when": "laid",
+          "if": ["flag:named"],
+          "tone": "good",
+          "ops": [["disposition", "finder", 35], ["favour", "finder", "goods", 2], ["contact", "priest", "scholar"], ["xp_story", "fair"]],
+          "line": [
+            "{ring} went back under {barrow} with the name of {barrow_king} said over it. The beasts of {finder} are fat by midsummer, and the dog sleeps by the hearth.",
+            "Laid by name, in the old form. {finder} will not go near {barrow} again, and does not need to."
+          ]
+        },
+        {
+          "id": "laid",
+          "when": "laid",
+          "tone": "good",
+          "ops": [["disposition", "finder", 30], ["favour", "finder", "goods", 1], ["xp_story", "fair"]],
+          "line": [
+            "{priest} carried {ring} back to {barrow} at dusk and said the prayers. The dying stopped. The dog came in on the third night, shaking.",
+            "The ring lies in the mound again. Nobody in {town} will say whose hand it is on, but the yard of {finder} is quiet."
+          ]
+        },
+        {
+          "id": "blessed",
+          "when": "blessed",
+          "tone": "mixed",
+          "ops": [["disposition", "finder", 15], ["xp_story", "small"]],
+          "line": [
+            "The yard is blessed, and the beasts stop dying. The dog comes in, and will not lie down in the room where {ring} is kept. {finder} walks around that room.",
+            "A blessing on a house that still holds what was taken from a grave. It holds. {finder} says it holds."
+          ]
+        },
+        {
+          "id": "kept",
+          "when": "kept",
+          "tone": "bitter",
+          "ops": [["xp_story", "small"], ["disposition", "finder", -5]],
+          "line": [
+            "{ring} is yours now. It is a plain grey ring and it does not warm to the hand. Somewhere out at {barrow}, {barrow_king} is still waiting.",
+            "You carry {ring} out of {town}. {finder} watched you go, and crossed to the door, and did not close it for a long time."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "finder", "ruined"], ["news", "news_lapse"]],
+        "line": [
+          "The last of {finder}'s beasts died in the spring. {finder} took the ring back to {barrow} by night, alone, and it is not known what was found there.",
+          "{finder} left the farm. The house stands with its door open, and the dog is in the lane."
+        ]
+      },
+      "clock": [12, 22],
+      "meetings": ["v_ring_dog"],
+      "words": {
+        "keep": ["ring"],
+        "ring": ["the grey ring of {barrow_king}", "the ring taken from the barrow of {barrow_king}"],
+        "title": ["The ring from the barrow", "What {finder} took from {barrow_king}", "The dog will not come in"],
+        "stakes": ["{finder}'s yard, and the ring of {barrow_king}", "the beasts of {finder}, and a dead king's ring"],
+        "plea": [
+          "I was cutting turf under {barrow} when the bank slumped, and there was a hand in the earth, grey as a root, and a ring on it. I took the ring. We had nothing. Since then the beasts die one by one, and the dog will not cross my step, and something walks my yard at night. Take it back. I cannot go near that place.",
+          "It is {barrow_king}'s mound, they tell me now. I did not know. I dug, and I found a ring, and I put it in my pocket, and God forgive me I was glad. The beasts are dying and the dog sleeps in the lane. Help me. Take the thing back, or have it blessed away. I have eleven pence and a side of bacon, and they are yours."
+        ],
+        "first": [
+          "{finder} took a ring from the barrow of {barrow_king} at {barrow}. Since then the beasts die and the dog will not come in.",
+          "{finder} took a ring from a grave, and something has followed it home."
+        ],
+        "news_lapse": ["In {town}, {finder}'s farm has been left empty. The beasts all died, and {finder} went to the barrow and did not come back the same."]
+      }
+    },
+    "v_last_of_town": {
+      "name": "The last of a hamlet",
+      "vignette": {"needs": "ruin_survivor", "weight": 2.0},
+      "asks": "survivor",
+      "roles": {
+        "survivor": {"bind": "given"},
+        "ruin": {"bind": "given"}
+      },
+      "obstacles": [
+        {
+          "id": "tale",
+          "kind": "lie",
+          "who": "survivor",
+          "note": [
+            "{survivor} tells the night {ruin_fall} the same way every time, word for word, like a prayer, and never looks up while telling it.",
+            "The tale {survivor} tells of {ruin_was} has no gaps in it. That is what is wrong with it."
+          ],
+          "acts": [
+            {
+              "id": "night",
+              "label": ["Tell me the night {ruin_fall}. Not the tale. What you saw."],
+              "check": ["insight", 13],
+              "unless": ["knows:night"],
+              "then": [["learn", "night"]],
+              "say": [
+                "...I was not carried out. My mother put me through the back window and barred the shutter behind me, and I heard it go. She stayed for my brother, who was sick, and the old woman next door. I have said for years that we all ran together. We did not. I ran. I did not look back.",
+                "They have it that we fled in a body. We did not. I was the one who was small enough for the window. My mother held the door. I have said it was the other way, so many years, that I hear myself say it in my sleep."
+              ],
+              "fail_say": [
+                "I told you. We ran together. We all ran together. I have said it a hundred times.",
+                "There is nothing to tell that I have not told. Do not look at me like that."
+              ],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "accounts",
+              "label": ["The old accounts say {ruin_was} lost nearly all, and name no one who lived. How did you live?"],
+              "check": ["history", 14],
+              "unless": ["knows:night"],
+              "then": [["learn", "night"]],
+              "say": [
+                "They counted the dead and did not count me, because I was in a ditch behind the hedge and no one thought to look. My mother put me there. I was not carried, and I did not run with anyone. I was put there, and she went back.",
+                "The accounts are right. No one lived. I was not living, that night. I was a child in a ditch with my hands over my mouth, and my mother went back to the house."
+              ],
+              "fail_say": ["The accounts say what they say. I was small. Leave it."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "let_go",
+              "label": ["It was {ruin_years} ago. Perhaps it is better to leave the hearth where it lies."],
+              "unless": ["taken"],
+              "then": [["flag", "left"]],
+              "say": [
+                "...Yes. Yes, that is kind. You are right. It was long ago. I only wanted ... no. No. Leave it.",
+                "Then I will die without it. I suppose that is a sort of answer."
+              ]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "absolve",
+          "who": "survivor",
+          "needs": ["knows:night"],
+          "unless": ["flag:absolved"],
+          "label": ["I know how you came out of {ruin_was}. Your mother chose. It was not a thing you did."],
+          "check": ["persuasion", 11],
+          "then": [["flag", "absolved"]],
+          "say": [
+            "She chose. ... Chose. I never let myself say that word. I have said run, and fled, and escaped. Chose. Yes. Say it again.",
+            "Not a thing I did. I was seven. I was seven. ... Thank you. I did not know I wanted it said."
+          ],
+          "fail_say": ["Do not tell me what I did. You were not there. No one was but me."],
+          "retry": true
+        }
+      ],
+      "work": {"kind": "retrieve", "giver": "survivor", "site": "ruin", "item": "box"},
+      "goals": [
+        {"id": "brought", "test": ["flag", "work_done"]},
+        {"id": "left", "test": ["flag", "left"]}
+      ],
+      "endings": [
+        {
+          "id": "brought_absolved",
+          "when": "brought",
+          "if": ["flag:absolved"],
+          "tone": "good",
+          "ops": [["disposition", "survivor", 40], ["favour", "survivor", "word", 2], ["contact", "survivor", "scholar"], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "{survivor} opened {box} on the doorstep: a lock of hair, a ribbon, a child's slate with a name on it. {survivor} said the name aloud, once, in the street, and the neighbours stopped to hear it.",
+            "{survivor} holds the hearthstone from {ruin} in both hands and talks about the night {ruin_fall} the way it was. By the first frost {survivor} is buried. The box is in the grave."
+          ]
+        },
+        {
+          "id": "brought_known",
+          "when": "brought",
+          "if": ["knows:night"],
+          "tone": "mixed",
+          "ops": [["disposition", "survivor", 25], ["xp_story", "fair"]],
+          "line": [
+            "{survivor} took {box} and did not open it in front of you. You know how {survivor} lived, and {survivor} knows you know. Neither of you says it.",
+            "The box is on {survivor}'s knee, shut. You carried it and carried the other thing too: a woman holding a door, {ruin_years} ago, in a place that is only stones now."
+          ]
+        },
+        {
+          "id": "brought",
+          "when": "brought",
+          "tone": "mixed",
+          "ops": [["disposition", "survivor", 20], ["xp_story", "small"]],
+          "line": [
+            "{survivor} died within the month with {box} on the chest. The tale was told at the grave, and it was the same tale, word for word.",
+            "{box} came home. {survivor} held it, and wept, and did not say why."
+          ]
+        },
+        {
+          "id": "left",
+          "when": "left",
+          "tone": "bitter",
+          "ops": [["disposition", "survivor", -5], ["xp_story", "small"]],
+          "line": [
+            "{ruin} keeps its hearthstones. {survivor} sits at the edge of {town} where the road to {ruin} starts, facing it, and nobody asks why.",
+            "Left where it lies. {survivor} asks nothing more of anyone, and tells the tale to whoever sits down."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "survivor", "dead"], ["news", "news_lapse"]],
+        "line": [
+          "{survivor} died before anyone went. They found the old one at the road's end, with the tale half told, facing {ruin}.",
+          "{survivor} is buried in {town}. The last of {ruin_was} took the rest of it to the grave, whatever it was."
+        ]
+      },
+      "clock": [14, 24],
+      "meetings": ["v_last_hearth"],
+      "words": {
+        "keep": ["box"],
+        "box": ["the box from under the hearth of {ruin_was}", "the iron-bound box from the hearthstone at {ruin}"],
+        "title": ["The last of {ruin_was}", "Under the hearth at {ruin}", "What {survivor} left behind"],
+        "stakes": ["a box under a hearth at {ruin}, and the truth of the night {ruin_fall}", "the last wish of the last of {ruin_was}"],
+        "plea": [
+          "I was a child when {ruin_fall}, {ruin_years} ago, at {ruin_was}. I am the last of it now. The last of anyone who stood on that ground. I will not see another winter. Under the hearth of my mother's house at {ruin} there is a box: her things, and mine. I want it in my hands before I die. I cannot walk that far. You can.",
+          "Nobody alive but me has stood in {ruin_was}. I was small, and I got out, and there is a box under the hearthstone of my mother's house that I have not been able to stop thinking of. I am old and I cannot go. Will you? I will tell you where. I remember where. I remember everything about the place but one night."
+        ],
+        "first": [
+          "{survivor}, the last of {ruin_was}, wants a box from under the hearth at {ruin}, before dying. The tale {survivor} tells of that night does not sit right.",
+          "{survivor} lived at {ruin_was} as a child, and wants one thing from {ruin} before the end."
+        ],
+        "news_lapse": ["In {town}, {survivor}, last of the people of {ruin_was}, has died, and with the old one the last memory of that place."]
+      }
+    },
+    "v_beggars_claim": {
+      "name": "The beggar's claim",
+      "vignette": {"needs": "founder", "weight": 2.0},
+      "asks": "claimant",
+      "roles": {
+        "claimant": {"bind": "given"},
+        "notable": {"bind": "given"},
+        "scribe": {"bind": "job", "jobs": ["scribe", "priest", "monk"]}
+      },
+      "parts": {"other": "notable"},
+      "obstacles": [
+        {
+          "id": "rolls",
+          "kind": "custom",
+          "who": "scribe",
+          "note": [
+            "The founding of {town} is in the rolls, {founded_years} ago, and nobody has read the rolls in a generation. {scribe} keeps the key.",
+            "What the town was founded on is written down at {scribe}'s hall. What the house on the square was founded on may not be."
+          ],
+          "acts": [
+            {
+              "id": "read",
+              "label": ["Open the rolls to me. I want every line touching the house on the square."],
+              "price": 200,
+              "check": ["investigation", 13],
+              "unless": ["knows:deed"],
+              "then": [["learn", "deed"]],
+              "say": [
+                "Here, then. The founders' grant is entered. The house on the square is not in it, nor in any grant after. There is no deed. {notable_full} has the house because {notable_their} family sat in it, and sitting is not a deed.",
+                "I looked and looked. It is not entered. A house on the best ground in {town} and not a line of it in the rolls. Whoever built it never asked, and nobody ever thought to."
+              ],
+              "fail_say": ["The rolls are in a bad way, and the hand is old. I found nothing you could swear to."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "paper",
+              "label": ["I want a leaf in the founders' hand, naming {claimant}'s line, and I do not care how it is made."],
+              "price": 1200,
+              "check": ["deception", 14],
+              "way": "pay",
+              "then": [["flag", "forged"]],
+              "say": [
+                "Sit still. It will take till dusk. I have old ink, and a leaf I cut from the back of a ledger. It will stand up if nobody asks it to stand up too hard.",
+                "I never did this. You never asked. There is a leaf now, in the rolls, between two others, and it was always there."
+              ],
+              "fail_say": ["No. No! You are asking me to forge the rolls. I will not. And I think the notable should hear that someone asked."],
+              "fail": [["flag", "caught"], ["disposition", "scribe", -30], ["law", "claimant", "jailed"]]
+            }
+          ]
+        },
+        {
+          "id": "claim",
+          "kind": "honour",
+          "who": "claimant",
+          "note": [
+            "{claimant} carries the founders' name like a coal, and will not put it down.",
+            "{claimant} has nothing but the tale. The tale is old, and the one who tells it has no way to read it."
+          ],
+          "acts": [
+            {
+              "id": "names",
+              "label": ["Give me the names your grandmother gave. Every one, in order."],
+              "check": ["history", 12],
+              "unless": ["knows:tale"],
+              "then": [["learn", "tale"]],
+              "say": [
+                "The names are right, every one, and the chain is whole but for one link. The youngest of the founders had a child in the hills, they say, and it is that child's line you come from. No one living can say yes or no. It is not a lie. It is not a proof.",
+                "The old names are real ones, I know them from the histories. All but the last. Past the last, there is nothing to read in either direction. You may be right. You may not."
+              ],
+              "fail_say": ["I do not know those names. They sound like names. Say them again."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "gentle",
+              "label": ["There is no proof, and there will not be. Let it go. Before the town does it for you."],
+              "check": ["persuasion", 13],
+              "unless": ["knows:tale"],
+              "then": [["flag", "shamed"]],
+              "say": [
+                "...Let it go. Let it go. I have carried it so long I do not know what hands are for without it. All right. All right. But I will not say it was a lie.",
+                "You are kind, which is worse. All right. I will stop."
+              ],
+              "fail_say": ["Let it go? It is the only thing I have that is not hunger. No."]
+            },
+            {
+              "id": "gentle_known",
+              "label": ["I have been through the names. It cannot be proved, and it cannot be refuted. Keep the tale. Stop asking for the house."],
+              "check": ["persuasion", 10],
+              "needs": ["knows:tale"],
+              "then": [["flag", "shamed"]],
+              "say": [
+                "Cannot be refuted. That is the kindest thing anyone has said of it. I will keep the tale. I will not ask for the house.",
+                "Neither yes nor no. I can live with that. I have lived with worse."
+              ],
+              "fail_say": ["Neither yes nor no is no. I know what that means."]
+            }
+          ]
+        },
+        {
+          "id": "house",
+          "kind": "honour",
+          "who": "notable",
+          "note": [
+            "{notable_full} laughs, and holds the house on the square, and there is nothing in the rolls that says why.",
+            "The house on the square belongs to {notable}'s family by sitting in it. It has been enough so far."
+          ],
+          "acts": [
+            {
+              "id": "argue",
+              "label": ["I have read the rolls. There is no deed for this house. {claimant} is owed a place in it, or an honest answer why not."],
+              "check": ["persuasion", 13],
+              "needs": ["knows:deed"],
+              "then": [["flag", "recognised"]],
+              "say": [
+                "...No deed. You have read it? ... Then keep it quiet. {claimant} may have the rooms at the back, and a seat at the hall, and the family's name said without a laugh. For that, you say nothing of the rolls.",
+                "No deed. God. All right. All right. Let {claimant} sit at the board with the elders. The house stays mine. Say nothing more."
+              ],
+              "fail_say": ["Rolls. Anyone can read a roll to suit. The house is mine. Get out of it."],
+              "fail": [["disposition", "notable", -10]],
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "recognised", "test": ["flag", "recognised"]},
+        {"id": "forged", "test": ["flag", "forged"]},
+        {"id": "shamed", "test": ["flag", "shamed"]},
+        {"id": "jailed", "test": ["flag", "caught"]}
+      ],
+      "endings": [
+        {
+          "id": "jailed",
+          "when": "jailed",
+          "tone": "bitter",
+          "ops": [["npc_fate", "claimant", "jailed"], ["standing", -1], ["xp_story", "small"]],
+          "line": [
+            "The scribe told the notable, the notable told the watch. {claimant} was taken for lying, in the stocks by midday, and the founders' blood was a joke for another year.",
+            "Forging a founder's leaf is a crime in {town}, and it is the claimant who sits in the cells for it, and says nothing, and keeps the tale."
+          ]
+        },
+        {
+          "id": "recognised",
+          "when": "recognised",
+          "tone": "good",
+          "ops": [["disposition", "claimant", 35], ["disposition", "notable", -15], ["favour", "claimant", "word", 2], ["xp_story", "fair"]],
+          "line": [
+            "{claimant} sits at the board with the elders of {town} now, and the house on the square has a back room with a pallet in it. Nobody says why. Nobody laughs.",
+            "No deed, and no proof. A place at the table, and a roof. It is not the house on the square. It is more than {claimant} had."
+          ]
+        },
+        {
+          "id": "forged",
+          "when": "forged",
+          "tone": "mixed",
+          "ops": [["disposition", "claimant", 30], ["standing", -2], ["xp_story", "small"]],
+          "line": [
+            "There is a leaf in the rolls of {town} that was never there. {notable} frowned over it a long time and gave way, and {claimant} has the back rooms of the house and the name of a founder's heir.",
+            "The founders' leaf stands, so long as nobody asks it to stand too hard. {claimant} is recognised. The scribe knows what you paid for."
+          ]
+        },
+        {
+          "id": "shamed",
+          "when": "shamed",
+          "tone": "mixed",
+          "ops": [["disposition", "claimant", -10], ["disposition", "notable", 20], ["xp_story", "small"]],
+          "line": [
+            "{claimant} let the claim go, and the town let it be known that it had been let go. It was kinder than the stocks. It did not feel kind.",
+            "The beggar of the founders' blood is just a beggar again. {notable} nodded to you in the street. {claimant} did not."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "claimant", "gone"], ["news", "news_lapse"]],
+        "line": [
+          "{claimant} took the claim to the square once too often, and was whipped out of {town} at the cart's tail. The rolls were never opened.",
+          "The founders' blood walked out of {town} on the road, with a bundle, and nobody went after."
+        ]
+      },
+      "clock": [12, 22],
+      "meetings": ["v_beggar_row"],
+      "words": {
+        "title": ["The beggar's claim", "The blood of the founders", "The house on the square"],
+        "stakes": ["{claimant}'s claim to the founders' blood, and the house on the square", "{claimant}'s name against {notable}'s deed"],
+        "plea": [
+          "They laugh. {notable_full} laughs loudest. {founded_years} ago this town was founded. In the rolls it says: {founding} My grandmother swore the founders' blood came down to us, and the house on the square was theirs, and so is mine. I cannot read. I cannot prove a word. Go to the rolls. Find what is written. I only want a roof that I cannot be put out of.",
+          "You have seen it. {notable} laughing in my face on the square. I am of the founders. My grandmother's grandmother was of the line that began this place. {founding} I have no paper. I have only the tale. Find me a paper, or find me out, but do not leave me to be laughed at."
+        ],
+        "first": [
+          "{claimant} says the founders' blood is theirs and the house on the square should be theirs. {notable} laughs.",
+          "{claimant} claims descent from the founders of {town}, and no one will hear it."
+        ],
+        "news_lapse": ["In {town}, {claimant} was whipped from the square for claiming the founders' blood."]
+      }
+    },
+    "v_chronicle_lie": {
+      "name": "What the book says",
+      "vignette": {"needs": "book_about_here", "weight": 2.0},
+      "asks": "wronged",
+      "roles": {
+        "wronged": {"bind": "given"},
+        "keeper": {"bind": "given"}
+      },
+      "obstacles": [
+        {
+          "id": "copy",
+          "kind": "custom",
+          "who": "keeper",
+          "note": [
+            "{keeper_full} keeps the town's copy of {book}, written by {author} {book_years} ago, and reads from it at the feast.",
+            "{book} says {wronged}'s family sold the town's grain to its enemies, and everyone in {town} knows it is written down."
+          ],
+          "acts": [
+            {
+              "id": "look",
+              "label": ["Let me read {book}. The page about {wronged}'s family."],
+              "price": 100,
+              "unless": ["knows:text"],
+              "then": [["learn", "text"]],
+              "say": [
+                "Page nine. Read it where you stand and give it back. It says what it says, and it is in {author}'s hand, and {author} was no fool.",
+                "There. By the window, where the light is. Do not turn the leaf more than you need to; it is old."
+              ],
+              "pass": false
+            },
+            {
+              "id": "false",
+              "label": ["{author} wrote this {book_years} ago, from a rival's table. Show me the dates, and I will show you they cannot be true."],
+              "check": ["history", 14],
+              "needs": ["knows:text"],
+              "unless": ["knows:true"],
+              "then": [["learn", "false"]],
+              "say": [
+                "...The dates of the grain are the dates of another year's famine, two leaves earlier, in the same hand. {author} did not see it. {author} was told it, by a man the book praises on the next page. I had not looked.",
+                "You are right. It is a good chronicle and a bad page. Whoever fed {author} that page was no friend to the family."
+              ],
+              "fail_say": ["It is a chronicle. It is old. I will not hear it called wrong on your say, however learned."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "true",
+              "label": ["Show me the margins. The old copies were written in, by whoever read them. Someone knew."],
+              "check": ["investigation", 15],
+              "needs": ["knows:text"],
+              "unless": ["knows:false"],
+              "then": [["learn", "true"]],
+              "say": [
+                "There. A second hand, older. 'He did it, at the elders' word, and the elders sat and let him be called the traitor.' It is in the town's own copy. Nobody here reads margins.",
+                "It is true, then, and it is worse. The family opened the grain-house, and the elders of that day ordered it, and then wrote it down so that it fell on one house and not on all."
+              ],
+              "fail_say": ["There is nothing in the margins but damp."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "rewrite",
+              "label": ["Cut the page and copy it again. Say the dates are in doubt. Here is the fee."],
+              "price": 1500,
+              "way": "pay",
+              "needs": ["knows:text"],
+              "then": [["flag", "rewritten"]],
+              "say": [
+                "A leaf recopied is a leaf recopied. I will write that the matter is in doubt and that the family has been heard. A copyist is paid to copy, and I am paid to say what I am paid to say.",
+                "Done by the new moon. The old leaf goes in the fire, and the new one says what you paid for it to say."
+              ]
+            },
+            {
+              "id": "burn",
+              "label": ["Look away a moment. The copy would be better ash."],
+              "check": ["sleight_of_hand", 14],
+              "way": "steal",
+              "needs": ["knows:text"],
+              "then": [["flag", "burned"]],
+              "say": ["(You are alone with the book, and then the book is not there.)"],
+              "fail_say": ["Thief! Thief in the hall! Someone fetch the watch!"],
+              "fail": [["flag", "caught"], ["disposition", "keeper", -40], ["standing", -3]]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "read_false",
+          "who": "keeper",
+          "needs": ["knows:false"],
+          "label": ["Let me read what I found from the hall steps on the feast day. The town should hear it."],
+          "check": ["performance", 12],
+          "then": [["flag", "told"]],
+          "say": [
+            "From the steps, then. At the feast, before the reading. I will say nothing against it. I should have looked at the dates myself.",
+            "You have the right of it, and the town should hear it said by someone not of the family."
+          ],
+          "fail_say": ["Not from the steps. Not at the feast. Write it and I will read it."],
+          "retry": true
+        },
+        {
+          "id": "read_true",
+          "who": "keeper",
+          "needs": ["knows:true"],
+          "label": ["Let me read the margin aloud, from the steps. The town should hear whose shame it is."],
+          "check": ["performance", 12],
+          "then": [["flag", "told"]],
+          "say": [
+            "From the steps. God help me, you are right. It will be a hard day for the old families.",
+            "Read it. Read it before the feast. I have kept this book for years and I did not read the margins. Read it."
+          ],
+          "fail_say": ["No. Not from the steps. It will start a feud that burns this town."],
+          "retry": true
+        }
+      ],
+      "goals": [
+        {"id": "caught", "test": ["flag", "caught"]},
+        {"id": "told", "test": ["flag", "told"]},
+        {"id": "rewritten", "test": ["flag", "rewritten"]},
+        {"id": "burned", "test": ["flag", "burned"]}
+      ],
+      "endings": [
+        {
+          "id": "caught",
+          "when": "caught",
+          "tone": "bitter",
+          "ops": [["disposition", "wronged", -10], ["xp_story", "small"]],
+          "line": [
+            "{keeper} caught you at the book. The watch was called, and the family of {wronged} has the shame of a stranger's theft laid on top of the old one.",
+            "A thief in the hall, over {book}. {wronged} is ashamed to be seen with you, and the town says it must be true, if they would burn it."
+          ]
+        },
+        {
+          "id": "told_true",
+          "when": "told",
+          "if": ["knows:true"],
+          "tone": "mixed",
+          "ops": [["disposition", "wronged", 25], ["favour", "wronged", "word", 1], ["contact", "keeper", "scholar"], ["mark", "memorial"], ["xp_story", "fair"]],
+          "line": [
+            "The margin was read from the steps. The town heard that the grain-house was opened at the elders' word. {wronged} wept for the first time in years, and held up {wronged_their} head.",
+            "It was true, and it was the town's shame, not the family's alone. The elders do not meet your eye now. {wronged} is not called what the book called them."
+          ]
+        },
+        {
+          "id": "told_false",
+          "when": "told",
+          "if": ["knows:false"],
+          "tone": "good",
+          "ops": [["disposition", "wronged", 35], ["favour", "wronged", "word", 2], ["contact", "keeper", "scholar"], ["xp_story", "fair"]],
+          "line": [
+            "{keeper} read the dates aloud from the hall steps, and the town heard it. The page is marked in the margin now: 'a lie, so proven'. The children of {wronged} walk to the well without being spat at.",
+            "It was a bad page in a good book, and now the town knows. {wronged} stood at the back and did not say a word."
+          ]
+        },
+        {
+          "id": "rewritten",
+          "when": "rewritten",
+          "tone": "mixed",
+          "ops": [["disposition", "wronged", 15], ["xp_story", "small"]],
+          "line": [
+            "The page was recopied: 'in doubt, and the family heard'. The town has heard it is in doubt, which is not the same as heard it is false. {wronged} says it is enough.",
+            "Paid for, and written. The old leaf is ash, and the town believes what it believed, only more quietly."
+          ]
+        },
+        {
+          "id": "burned",
+          "when": "burned",
+          "tone": "bitter",
+          "ops": [["disposition", "wronged", 5], ["standing", -1], ["xp_story", "small"]],
+          "line": [
+            "{keeper} found the copy gone and raged, and the town noticed who was most glad of it. The book is ash and what it said is still said, with the added thing that someone burned it.",
+            "A burned copy is not a disproved one. {wronged} thanks you, and does not look at you."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "wronged", "ruined"], ["news", "news_lapse"]],
+        "line": [
+          "{wronged} left {town}. A family can bear a good deal. It cannot bear a page read aloud every year at the feast, and {wronged} did not go to the feast.",
+          "The family of {wronged} took the road one night. {book} is read at the feast as it always was."
+        ]
+      },
+      "clock": [12, 22],
+      "meetings": ["v_page_nine"],
+      "words": {
+        "title": ["What the book says", "Page nine of {book}", "{wronged}'s name in {book}"],
+        "stakes": ["{wronged}'s name, and the page in {book}", "what {author} wrote of {wronged}'s family, {book_years} ago"],
+        "plea": [
+          "There is a book in the hall: {book}, by {author}, written {book_years} ago. It says my family sold this town's grain to its enemies. It is read aloud at the feast. I have heard it said at the well, to my face. I cannot read it myself. Find out if it is true. If it is not, make them hear it. If it is ... I would rather know.",
+          "{book} says my people were oath-breakers. {author} put it there, {book_years} ago, and the town believes it because it is written. My children are called by it in the street. I have no letters. Read it for me. Find where it lies. Or find that it does not, and tell me that."
+        ],
+        "first": [
+          "{book}, by {author}, written {book_years} ago, says something shameful of {wronged}'s family, and {town} believes it.",
+          "{wronged} wants to know if what {book} says of {wronged_their} family is true."
+        ],
+        "news_lapse": ["In {town}, {wronged}'s family has left, after years of being named in {book}."]
+      }
+    },
+    "v_pilgrims_vow": {
+      "name": "The pilgrim's vow",
+      "vignette": {"needs": "holy_road", "weight": 2.0},
+      "asks": "pilgrim",
+      "base": "pouch",
+      "roles": {
+        "pilgrim": {"bind": "stranger", "jobs": ["pilgrim"]},
+        "priest": {"bind": "far", "town": "root", "jobs": ["priest", "monk", "preacher"]}
+      },
+      "forge": [["plant", "pilgrim", "offering"]],
+      "obstacles": [
+        {
+          "id": "vow",
+          "kind": "honour",
+          "who": "pilgrim",
+          "note": [
+            "{pilgrim} fell sick at the inn on the way to {shrine}, and will not live to get there. The offering sewn in {pilgrim}'s coat must go on without {pilgrim_them}.",
+            "{pilgrim} will not say what the offering is. {pilgrim_they} only says it is for the priest of {shrine}, and no one else."
+          ],
+          "acts": [
+            {
+              "id": "ask",
+              "label": ["What is in the packet? I would know what I am carrying.", "Tell me what it is. You do not have to, but I would carry it better knowing."],
+              "check": ["insight", 12],
+              "unless": ["knows:offering"],
+              "then": [["learn", "offering"]],
+              "say": [
+                "...Silver. Eleven small pieces, worn thin, and a paper. When I was twenty I was a lamp-boy at {shrine}, and I took the silver from the poor-box, a little at a time, for a woman. She is dead now. The paper says so, and gives my name. It is for the priest, not for you.",
+                "I stole it. From {shrine}, from the box where the poor put their pence. Eleven pieces over a winter. I have carried the sin forty years, and the silver, which I never spent more than a tenth of. This is the rest, and a paper, and I would be shriven."
+              ],
+              "fail_say": ["It is an offering. It is a candle-stub and a little money. Pilgrims carry such. Why do you ask?"],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "open",
+              "label": ["(Wait until the pilgrim sleeps, and open the packet.)"],
+              "check": ["sleight_of_hand", 12],
+              "way": "sneak",
+              "unless": ["knows:offering"],
+              "then": [["learn", "offering"], ["flag", "opened"]],
+              "say": ["(Eleven small silver pieces, worn thin, sewn in the lining with a folded paper. It begins: 'I took this from the poor-box at {shrine}.' It ends with a name.)"],
+              "fail_say": ["Who is that? What are you doing? Put it down. Put it down!"],
+              "fail": [["disposition", "pilgrim", -25]],
+              "pass": false
+            },
+            {
+              "id": "take",
+              "label": ["Give me the packet. I will take it to the priest of {shrine}."],
+              "unless": ["holds"],
+              "then": [["hand", "pilgrim"], ["flag", "handed"]],
+              "say": [
+                "Take it. Put it inside your coat, against the skin, where it was against mine. Give it to the priest. Only the priest. Swear it.",
+                "Take it, then. Take it quick, before I think better of it. And thank you. I am not one who thanks."
+              ]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "pocket",
+          "who": "pilgrim",
+          "needs": ["holds", "knows:offering"],
+          "label": ["(Keep the silver. A dying thief will not miss it, and the shrine will not know.)"],
+          "then": [["flag", "kept"], ["money", 900], ["standing", -2]],
+          "say": ["(You say nothing. The silver is in your hand. {pilgrim} watches, and does not say anything either.)"]
+        }
+      ],
+      "work": {"kind": "deliver", "giver": "pilgrim", "to": "priest"},
+      "goals": [
+        {"id": "delivered", "test": ["flag", "work_done"]},
+        {"id": "kept", "test": ["flag", "kept"]}
+      ],
+      "endings": [
+        {
+          "id": "delivered_known",
+          "when": "delivered",
+          "if": ["knows:offering"],
+          "tone": "good",
+          "ops": [["give_back", "priest"], ["npc_fate", "pilgrim", "dead"], ["xp_story", "fair"]],
+          "line": [
+            "The priest of {shrine} read the paper standing, and sat down, and said that the debt was paid and the sin forgiven, and that the pilgrim would be prayed for by name. You did not tell what was in it. {pilgrim} died on the road, shriven.",
+            "Eleven pieces of silver and a name went into the poor-box at {shrine}. You carried it, and knew, and said nothing. {pilgrim} is buried in the pilgrim's ground, and the priest said the words over a grave far away."
+          ]
+        },
+        {
+          "id": "delivered",
+          "when": "delivered",
+          "tone": "mixed",
+          "ops": [["give_back", "priest"], ["npc_fate", "pilgrim", "dead"], ["xp_story", "small"]],
+          "line": [
+            "The priest of {shrine} took the packet and went away with it, and came back with eyes red from reading. You were thanked, and not told why.",
+            "It reached {shrine}. What it was, you never knew; only that the priest crossed {priest_their} chest, and that {pilgrim} died at the inn that same week, easy."
+          ]
+        },
+        {
+          "id": "kept",
+          "when": "kept",
+          "tone": "bitter",
+          "ops": [["npc_fate", "pilgrim", "dead"], ["xp_story", "small"]],
+          "line": [
+            "{pilgrim} died in the night, unshriven, with the paper still in your pack and the silver in your purse. No one at {shrine} will ever know.",
+            "You kept the silver. The paper you cannot bring yourself to burn, and cannot bring yourself to carry. {pilgrim} was buried by the inn wall, and the grave is not marked."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["npc_fate", "pilgrim", "dead"], ["news", "news_lapse"]],
+        "line": [
+          "{pilgrim} died at the inn, and the packet was found sewn in the coat. The innkeeper opened it, and kept what was in it. The pilgrim never reached {shrine}.",
+          "{pilgrim} did not see {shrine}. The offering was buried in the coat, and the coat was buried with the body."
+        ]
+      },
+      "clock": [10, 18],
+      "meetings": ["v_pilgrim_kneels"],
+      "words": {
+        "keep": ["offering"],
+        "offering": ["a packet of oilcloth, sewn shut, from a dying pilgrim", "the pilgrim's sewn packet for the priest of {shrine}"],
+        "title": ["The pilgrim's vow", "An offering for {shrine}", "What the dying one carried"],
+        "stakes": ["{pilgrim}'s offering to the priest of {shrine}, and {pilgrim}'s soul", "a vow that must be kept by someone else"],
+        "plea": [
+          "I will not live to see {shrine}. I know it. The fever is in my chest. I took a vow, long ago, and I have a thing sewn in my coat for the priest there, and no one else. Will you carry it? You will be paid at the other end, and I cannot pay you here. It matters more than I can say. I would be shriven, and I cannot go to be.",
+          "Do not look at me like that. I know what I am. I was walking to {shrine}, and I will not get there, and I have an offering. Take it. Give it into the priest's own hand. I do not ask you to be a holy person. I ask you to walk."
+        ],
+        "first": [
+          "{pilgrim}, sick at the inn, asks you to carry an offering to the priest at {shrine} before dying.",
+          "A pilgrim on the way to {shrine} will not live to reach it, and wants someone to carry what is sewn in the coat."
+        ],
+        "news_lapse": ["A pilgrim died at the inn in {town}, on the way to {shrine}, and never arrived."]
+      }
+    },
+    "v_inn_room": {
+      "name": "The room nobody lets",
+      "vignette": {"needs": "death_at_the_inn", "weight": 2.0},
+      "asks": "innkeeper",
+      "roles": {
+        "innkeeper": {"bind": "given"},
+        "dead": {"bind": "given"}
+      },
+      "obstacles": [
+        {
+          "id": "room",
+          "kind": "ward",
+          "who": "innkeeper",
+          "spells": ["gentle_repose", "speak_with_dead"],
+          "by_magic": [["learn", "hand"]],
+          "magic_note": [
+            "The dead one's mouth moves in the dark, and tells what the house has never said: who held the door.",
+            "{dead_name} answers, and what is said is not about the stranger who did it. It is about the keeper of the house."
+          ],
+          "note": [
+            "{dead_name} died in the back room of the inn {dead_years} ago, and guests do not sleep there past midnight.",
+            "Nobody lets the back room of {innkeeper}'s house. {dead_name} died in it, and does not seem to have gone."
+          ],
+          "acts": [
+            {
+              "id": "night",
+              "label": ["I will sleep in the room tonight, and listen.", "Give me the key. I will sit up in the room and see what comes."],
+              "check": ["investigation", 12],
+              "unless": ["knows:mark"],
+              "then": [["learn", "mark"]],
+              "say": [
+                "You found something. A loose board, and under it a purse with the neck cut off, and the name {dead_name} scratched on the underside. Whoever hid it did not want it found, and did not dare to burn it either.",
+                "There was a draught that was not a draught. And a board under the bed that was never nailed. I did not know that was there. I swear I did not."
+              ],
+              "fail_say": ["Cold, I told you. Cold, and a feeling. You will not find more than a feeling."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "ledger",
+              "label": ["Show me the house's old books. Whoever kept the house the night {dead_name} died."],
+              "check": ["investigation", 14],
+              "needs": ["knows:mark"],
+              "unless": ["knows:hand"],
+              "then": [["learn", "hand"]],
+              "say": [
+                "The page for that week is cut out. The stub shows a few words. And the keeper of that day is named in the book of the dead: the house's own keeper, of {innkeeper}'s own blood. Whoever's hand it was, the house barred the door, and took the purse, and said nothing.",
+                "Oh, God. It was ours. The keeper of the house barred the door that night, and took the purse, and kept it quiet. Someone of my blood. I have been paid by guests to sleep in a room my own people made."
+              ],
+              "fail_say": ["The books for that year are gone. Mice, and damp. There is nothing there."],
+              "pass": false,
+              "retry": true
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "lay_true",
+          "who": "innkeeper",
+          "needs": ["knows:hand"],
+          "label": ["I will say the rite for {dead_name} in the room, and I will say aloud what the house did. You will stand there and hear it."],
+          "check": ["religion", 13],
+          "then": [["flag", "laid"], ["flag", "told"]],
+          "say": [
+            "I will stand. I will hear it. If it is said in the room it is said, and if it is said, perhaps it is over. Say it. Say all of it.",
+            "Say the rite. Say the name. And say what we did. I do not think I can say it myself, but I can stand there."
+          ],
+          "fail_say": ["Not the words. I felt the cold turn, as though it were listening and did not like what it heard. Try again, tomorrow."],
+          "retry": true
+        },
+        {
+          "id": "lay",
+          "who": "innkeeper",
+          "unless": ["knows:hand"],
+          "label": ["Let me say the rite over the room, for {dead_name}."],
+          "check": ["religion", 14],
+          "then": [["flag", "laid"]],
+          "say": [
+            "Say it, then. Whatever comes of it. I would give a year of my trade to sleep in the house and not hear it.",
+            "God's blessing on you. Say it quietly. I do not want the guests to hear a priest in the house."
+          ],
+          "fail_say": ["It does not seem to listen. It did not, with the last two."],
+          "retry": true
+        },
+        {
+          "id": "tell",
+          "who": "innkeeper",
+          "needs": ["knows:hand"],
+          "label": ["Tell the town what the house did. In the square, at noon, in your own voice."],
+          "check": ["persuasion", 12],
+          "then": [["flag", "told"]],
+          "say": [
+            "In the square. In my own voice. ... Yes. I think I have always known I would have to. God keep my trade. Yes.",
+            "It will ruin the house. It is the house's fault. I will say it. Tomorrow. I will say it."
+          ],
+          "fail_say": ["Never. It is my family's house and my own name. I will not say it where the town can hear."],
+          "retry": true
+        },
+        {
+          "id": "hush",
+          "who": "innkeeper",
+          "label": ["It is only a room. Board it up, and say nothing."],
+          "then": [["flag", "hushed"], ["money", 600]],
+          "say": [
+            "A board across the door. Yes. Yes, that is simple. Here, for your trouble, and for your silence. I will not forget it.",
+            "Boarded, then. I will say the damp got in. Take this."
+          ]
+        }
+      ],
+      "goals": [
+        {"id": "laid", "test": ["flag", "laid"]},
+        {"id": "told", "test": ["flag", "told"]},
+        {"id": "hushed", "test": ["flag", "hushed"]}
+      ],
+      "endings": [
+        {
+          "id": "laid_true",
+          "when": "laid",
+          "if": ["flag:told"],
+          "tone": "good",
+          "ops": [["disposition", "innkeeper", 40], ["favour", "innkeeper", "shelter", 3], ["mark", "memorial"], ["xp_story", "great"]],
+          "line": [
+            "{innkeeper} stood in the back room while the rite was said, and the truth with it, and no one heard but the room. The room is a room now. {innkeeper} has a bed in it, and sleeps.",
+            "{dead_name} is laid, and named, and the house's part in it is said. The guests come back, a few at a time. {innkeeper} tells it to anyone who asks."
+          ]
+        },
+        {
+          "id": "laid",
+          "when": "laid",
+          "tone": "mixed",
+          "ops": [["disposition", "innkeeper", 25], ["favour", "innkeeper", "shelter", 1], ["xp_story", "fair"]],
+          "line": [
+            "The room is quiet. The guests stay. Nobody in {town} knows why, and {innkeeper} does not ask. Whatever {dead_name} wanted, it was not only the rite.",
+            "Laid, and quiet. Under a board in the back room a purse still lies, and the name of {dead_name} is scratched under it, and the house goes on."
+          ]
+        },
+        {
+          "id": "told",
+          "when": "told",
+          "tone": "bitter",
+          "ops": [["disposition", "innkeeper", -5], ["shop", "innkeeper", "shut", 20], ["xp_story", "small"]],
+          "line": [
+            "{innkeeper} told it from the square at noon, and the town heard. The inn is shut a season. The room was not laid, and some say the cold is worse now that it is known.",
+            "The truth is out, and the house is ashamed, and the dead one is no more at peace for being told of. It needed the rite as well."
+          ]
+        },
+        {
+          "id": "hushed",
+          "when": "hushed",
+          "tone": "bitter",
+          "ops": [["standing", -1], ["xp_story", "small"]],
+          "line": [
+            "The door of the back room is boarded and the damp is blamed. Guests sleep elsewhere in the house and, on still nights, listen. {dead_name} is still in the room.",
+            "Boarded and paid for. {innkeeper} nods to you in the street, and does not look at the back of the house."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["shop", "innkeeper", "shut", 30], ["disposition", "innkeeper", -10], ["news", "news_lapse"]],
+        "line": [
+          "The last guests left in the night. {innkeeper} closed the inn at the end of the month. The room at the back has had its door nailed shut by someone, from the inside.",
+          "No one slept in the back room. No one slept anywhere in the house, in the end, and {innkeeper}'s inn is shuttered."
+        ]
+      },
+      "clock": [14, 24],
+      "meetings": ["v_room_empty"],
+      "words": {
+        "title": ["The room nobody lets", "{dead_name}'s room", "What lies under the back room"],
+        "stakes": ["the inn of {innkeeper}, and the peace of {dead_name}", "a dead guest, and a house's old shame"],
+        "plea": [
+          "There is a room at the back of my house that nobody takes. {dead_name} died in it, {dead_years} ago ({dead_cause}). Since then guests who sleep there are out in the yard by midnight, white as lard, and will not say why, and then they tell other people. I am losing the trade. Sleep in it a night. Find out what it wants. I will not charge you for the bed.",
+          "Do you see my guests leaving? Every one, by midnight, out of the back room. {dead_name} died in there, {dead_years} ago, and I will not say what is in the room, but nobody will stay. {dead_cause}, they say. Sleep there. Learn why. Whatever you need, the house will stand it. I cannot go in myself."
+        ],
+        "first": [
+          "{innkeeper}'s back room is empty, and its guests leave by midnight. {dead_name} died there {dead_years} ago.",
+          "The innkeeper of {town} asks you to sleep in the room where {dead_name} died, and learn why the dead one does not rest."
+        ],
+        "news_lapse": ["The inn in {town} has closed. Guests would not sleep in the back room, where {dead_name} was killed."]
+      }
+    },
+    "v_hidden_book": {
+      "name": "The book under the floor",
+      "vignette": {"needs": "persecution", "weight": 2.0},
+      "asks": "keeper",
+      "base": "prayer_book",
+      "roles": {
+        "keeper": {"bind": "given"},
+        "priest": {"bind": "given"}
+      },
+      "forge": [["plant", "keeper", "volume"]],
+      "obstacles": [
+        {
+          "id": "search",
+          "kind": "law",
+          "who": "priest",
+          "note": [
+            "{priest} has heard rumour of a book of the old faith in {town}, and goes from house to house with the watch behind.",
+            "{priest} will reach {keeper}'s house within days, and is not a cruel person, which makes the matter harder to read."
+          ],
+          "acts": [
+            {
+              "id": "doubt",
+              "label": ["Why do you do this work? I have seen your face when you knock."],
+              "check": ["insight", 12],
+              "unless": ["knows:doubt"],
+              "then": [["learn", "doubt"]],
+              "say": [
+                "...Because the bishop's letter says to, and I swore. And because my mother's mother sang the old psalms over my cradle, and I have not forgotten one of them. Do not say that to anyone. I do not know why I said it to you.",
+                "Do you think I like it? I knock, and they look at me as if I were the sword. I would not be doing it, if I had a choice. I do not."
+              ],
+              "fail_say": ["I do my duty. I need no one's opinion of it."],
+              "pass": false,
+              "retry": true
+            },
+            {
+              "id": "mercy",
+              "label": ["Let it lie. {old_wrong} That was {wrong_years} ago. Who is harmed by a book in a cellar?"],
+              "check": ["persuasion", 15],
+              "unless": ["knows:doubt"],
+              "then": [["flag", "mercy"]],
+              "say": [
+                "...Let it lie. Yes. I will search no further in {town}. I will write that there was nothing to find. But if it ever comes out of hiding, I will not be able to say I did not know.",
+                "Mercy, then. Once. Do not make me regret it."
+              ],
+              "fail_say": ["It is the law, and it is the church's order. I cannot overlook it because you ask well."]
+            },
+            {
+              "id": "mercy_known",
+              "label": ["You sang the old psalms yourself, as a child. Let the house of {keeper} alone."],
+              "check": ["persuasion", 11],
+              "needs": ["knows:doubt"],
+              "then": [["flag", "mercy"]],
+              "say": [
+                "You will keep that to yourself. ... Yes. The house of {keeper} is clean. I have searched it in my own mind and found nothing. I will say the same to the watch.",
+                "I did. I do. ... Let it be. I will turn my face from that street. And you will never have heard what I told you."
+              ],
+              "fail_say": ["That was said in weakness, and it is not a lever. Go."],
+              "fail": [["disposition", "priest", -10]]
+            },
+            {
+              "id": "betray",
+              "label": ["Search the house of {keeper}. It hides a book of the old faith."],
+              "then": [["flag", "betrayed"], ["law", "keeper", "jailed"], ["disposition", "priest", 15]],
+              "say": [
+                "I knew it was in this street. I did not know whose. God have mercy on {keeper}. The watch will go at dawn.",
+                "You are sure. ... Then it is done. I will take the book myself, and I will not take any other thing from the house."
+              ]
+            }
+          ]
+        }
+      ],
+      "acts": [
+        {
+          "id": "hide",
+          "who": "keeper",
+          "label": ["Show me where it lies. I will hide it where no one will look."],
+          "check": ["sleight_of_hand", 13],
+          "unless": ["holds"],
+          "then": [["flag", "hidden"]],
+          "say": [
+            "Under the third board by the hearth. ... You have moved it. Where? No, do not tell me. I will not know, and then I cannot tell.",
+            "In the thatch, I think, or the wall. I did not see you do it. That is how it should be."
+          ],
+          "fail_say": ["That is the first place a searcher would look. Not there. Anywhere but there."],
+          "retry": true
+        },
+        {
+          "id": "carry",
+          "who": "keeper",
+          "label": ["Give me the book. I will carry it out of {town} myself."],
+          "check": ["sleight_of_hand", 12],
+          "unless": ["holds"],
+          "then": [["hand", "keeper"], ["flag", "carried"]],
+          "say": [
+            "Take it. It is heavy for its size. It was my mother's mother's, and I will not see it again. Walk out through the east gate. The watch is idle there.",
+            "Take it, and keep it close. If it is lost I will not know whether to grieve or be relieved. Go, and do not come back with it."
+          ],
+          "fail_say": ["Not now. There are eyes at the window across the way. Come when it is dark."],
+          "retry": true
+        }
+      ],
+      "goals": [
+        {"id": "betrayed", "test": ["flag", "betrayed"]},
+        {"id": "mercy", "test": ["flag", "mercy"]},
+        {"id": "carried", "test": ["all", ["flag", "carried"], ["holds", "you", "$story"]]},
+        {"id": "hidden", "test": ["flag", "hidden"]}
+      ],
+      "endings": [
+        {
+          "id": "betrayed",
+          "when": "betrayed",
+          "tone": "bitter",
+          "ops": [["npc_fate", "keeper", "jailed"], ["xp_story", "small"]],
+          "line": [
+            "The watch went at dawn. They found the book under the hearthstone, and {keeper} in the doorway with a child on each side. {priest} does not look at you now.",
+            "The book was burned in front of the temple. {keeper} was taken. Some in {town} saw the book as a thing finished. Some saw whose doing it was."
+          ]
+        },
+        {
+          "id": "mercy_known",
+          "when": "mercy",
+          "if": ["knows:doubt"],
+          "tone": "good",
+          "ops": [["disposition", "keeper", 35], ["disposition", "priest", 20], ["favour", "keeper", "shelter", 2], ["contact", "keeper", "informant"], ["xp_story", "fair"]],
+          "line": [
+            "{priest} turned the search away from {keeper}'s street, and wrote that {town} was clean. The book lies where it lay. The two of them have never spoken of it, and do not need to.",
+            "A priest with a grandmother's psalms in the ear is not the worst thing for a persecuted book. {priest} nods to {keeper} at the well, and that is all."
+          ]
+        },
+        {
+          "id": "mercy",
+          "when": "mercy",
+          "tone": "mixed",
+          "ops": [["disposition", "keeper", 25], ["disposition", "priest", 5], ["xp_story", "fair"]],
+          "line": [
+            "{priest} gave up the search for this season. The house of {keeper} is not searched. The book lies where it lay, and {keeper} does not sleep much.",
+            "Mercy, once. {priest} said so plainly. Next year there will be another letter from the bishop."
+          ]
+        },
+        {
+          "id": "carried",
+          "when": "carried",
+          "tone": "mixed",
+          "ops": [["disposition", "keeper", 30], ["favour", "keeper", "word", 1], ["xp_story", "fair"]],
+          "line": [
+            "You carried the book out of {town} under your coat, and when {priest} came to {keeper}'s door there was nothing to find. {keeper} lit a candle at the empty hearth, and said it was only damp.",
+            "The book of the old faith left {town} on the road in your pack. What you do with it is yours. {keeper}'s house is clean, and so, as far as the watch can tell, is the town."
+          ]
+        },
+        {
+          "id": "hidden",
+          "when": "hidden",
+          "tone": "mixed",
+          "ops": [["disposition", "keeper", 20], ["xp_story", "small"]],
+          "line": [
+            "The book is hidden where {keeper} does not know. {priest} searched {keeper}'s house on the third day, found nothing, and went on to the next street. It is still in the house.",
+            "A good hiding place, so long as nobody looks twice. The searches will come again, and {keeper} will not sleep much. The book is safe for now."
+          ]
+        }
+      ],
+      "lapse": {
+        "tone": "bitter",
+        "ops": [["law", "keeper", "jailed"], ["news", "news_lapse"]],
+        "line": [
+          "{priest} searched the house of {keeper} and found the book in the first hour. {keeper} was taken away, and the children are with a neighbour.",
+          "The search reached {keeper}'s street, and the book was found. The faith that was driven out {wrong_years} ago was driven out a second time."
+        ]
+      },
+      "clock": [8, 14],
+      "meetings": ["v_door_to_door"],
+      "words": {
+        "keep": ["volume"],
+        "volume": ["the book of the old faith, in a bag of oiled cloth", "the little book, wrapped in oilcloth, of the faith driven out of {town}"],
+        "title": ["The book under the floor", "The priest at the door", "{keeper}'s hidden book"],
+        "stakes": ["{keeper}'s house and children, and a book of the old faith", "the old faith's last book in {town}"],
+        "plea": [
+          "There is a book in my house. My mother's mother kept it, and hers before: the book of the faith they drove out of this town {wrong_years} ago. {old_wrong} It is only words. But {priest} has heard a rumour, and goes from door to door, and will be at mine in a day or two. If it is found I am finished, and my children. Hide it, or take it away. I do not care how.",
+          "Keep your voice down. Listen. {priest} is searching the houses. Everyone knows what for. I have the book. I have had it all my life. They drove the faith out of {town} {wrong_years} ago, and I keep the last of it under my hearth. I will not give it up, and I cannot keep it. Help me."
+        ],
+        "first": [
+          "{keeper}'s house hides a book of the faith persecuted in {town}. {priest} is searching the houses.",
+          "{keeper} keeps the last book of a persecuted faith, and {priest} is going door to door."
+        ],
+        "news_lapse": ["In {town}, the house of {keeper} was searched and a forbidden book found. {keeper} is taken."]
+      }
+    }
+  }
+}

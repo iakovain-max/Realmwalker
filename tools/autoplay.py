@@ -914,6 +914,14 @@ def _check_quests(game, fail) -> None:
     for sid, n in live_by_town.items():
         if n > (2 if w.settlements[sid].great else 1):
             fail(f"{w.settlements[sid].name} has {n} live situations at once")
+    from realmwalker.game.story import vignettes  # (hand-made vignettes, C.9)
+
+    vigs = [s for s in w.politics.get("situations", {}).values() if vignettes.is_vignette(preds.get(s.get("predicament"), {}))]
+    for sit in vigs:
+        if sit["root"].get("vignette") != sit["predicament"]:
+            fail(f"vignette {sit['id']} ({sit['predicament']}) was forged from a root that is not its own")
+    if len({s["predicament"] for s in vigs}) != len(vigs):
+        fail("a vignette was met twice in one world")
     from realmwalker.game.story import favours  # (favours and contacts, C.7)
 
     for f in game.renown.legend.get("favours", []):

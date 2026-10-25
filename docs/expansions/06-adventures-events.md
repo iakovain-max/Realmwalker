@@ -308,7 +308,7 @@ rarity and income measures pass. ADVENTURES.md §5.15–5.16, §6.7–6.11, §7,
 - [x] C.8 **Experience from stories**: the `xp_story` op by encounter budgets; the *Experience* setting (fights and
   stories, or stories only) in the Settings screen, copied onto `game.experience` as `verbosity` is, and read by
   `fight.finish_battle`.
-- [ ] C.9 **Vignettes**: the first twenty hand-made (§6.11) with their scenes *(parallel words)*.
+- [x] C.9 **Vignettes**: the first twenty hand-made (§6.11) with their scenes *(parallel words)*.
 - [ ] C.10 **Situations inside adventures and the proof**: the Beast's witness and hunter steps become situations;
   `storybook` prints situations (§7) and `--check` holds the six rules of §5.15; the variety measure (among thirty met,
   no two share root, predicament, turn and meeting; with Part C's twenty predicaments, twelve different predicaments
