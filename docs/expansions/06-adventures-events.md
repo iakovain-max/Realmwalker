@@ -347,7 +347,7 @@ ADVENTURES.md §5.4, §5.5, §5.8.
   endings wired), reprisals that are seen (a helper on the gibbet in the square: a mark and a crowd; a burned
   farmhouse), frames (`law.commit` with false witnesses), kidnaps (`step_add` a rescue).
 - [x] E.3 Lieutenants who remember: escapes, scars, grudges, promotion, turning; their epilogue lines.
-- [ ] E.4 Escapes once per adventure, anchors, returning villains, early ends (contingencies, a lieutenant's
+- [x] E.4 Escapes once per adventure, anchors, returning villains, early ends (contingencies, a lieutenant's
   succession, "the cat is away"); step kind `endure`.
 - [ ] E.5 The finale in full: arenas (a burning village with fire that spreads, a ritual circle, a throne hall, a
   bridge, a tower top), phases with lines that change the arena (`Field.set_terrain`: sarcophagi open, a floor

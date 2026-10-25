@@ -46,6 +46,50 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-10-25 (afternoon, late): Adventures & Events Part E, task E.4 — escapes, early ends and villains who come back — branch `dlc/06-adventures-events`
+
+- **A villain gets away from you once.** Meet the outlaw captain (or the beast) before its den and hurt it badly,
+  and it breaks off as before; but only once in a tale. The journal notes it ("It will not get away a second
+  time"), and the next time you meet it out in the land it plants its feet and fights to the end. Hold it fast
+  (grappled, restrained) or kill it in one blow, and it does not get away even the first time. With what binds the
+  Risen king in your hands (his crown), he cannot flee at all.
+- **Killed before its finale, it is not quite over.** The kill counts (the ending is the one a slain villain earns),
+  but a short last chapter comes first, one of three:
+  - *The Heir*: one of its lieutenants still free takes its place and holds its den with what was left (the outlaw
+    captain's right hand, the Risen's waker). Go down and finish them; there is no finale card, it is a smaller
+    fight.
+  - *The Last Order*: it planned for its own death. Within a day or two, on the road or at your camp, a rider brings
+    you its last letter (a page in its own hand) while its people close in, or the things it kept caged are let
+    loose on your trail. Stand and fight, or try to slip away (Athletics or Survival). Come out alive and it is over.
+  - *The cat is away*: nothing is left behind it; its servants scatter, its den stands open, and the tale ends at
+    once.
+- **Put down without its anchor, it comes back.** The Risen king killed without his crown broken "returns in weeks"
+  as before, but now he really does: after four to eight weeks he stirs again, and the hero who put him down hears
+  of it first ("the news you were afraid of: he walks again"), with the choice to take the tale on at once. That
+  tale begins with his eye already hard on you, and in its finale he has more hit points for each time he has come
+  back.
+- **It moves its anchor.** At the height of its anger the Risen king may have his crown carried out of the crypt
+  where it lay and into his own barrow, while nobody has laid a hand on it yet: the journal tells you where, and now
+  you must go under his roof for it.
+- A new kind of step for any tale, *endure*: live through a set piece (a beat, then a battle); missed for a week, it
+  passes by itself so no tale can get stuck.
+- Try it: take on the outlaw tale; when the captain hunts you on the road, grapple him as he breaks off, and kill
+  him there.
+
+Decisions (Anton may want to change): the outlaw tale's early ends are weighted heir 3, last order 1, nothing left 1;
+the Risen's 2, 2, 1 (the Beast's is always "nothing left"); the last order's set piece comes 0-2 days after the
+death, and passes by itself a week later; a villain come back starts at attention 3 ("testing") with +15% hit points
+in its finale for each return (at most three); the crown is moved only into the barrow's first level.
+
+Measured (a careful party playing whole tales, 20 lives each): the outlaw captain's tales 18 of 20 finished (18
+before), the Risen's 18 of 20 (19 before); every lost life died in a fight, none was stuck. Checks:
+tests/test_early_ends.py (12), the full suite, autoplay, smoke test.
+
+Fixed after the fresh review: a set piece whose band you slipped past, talked down or paid off is lived through the
+next day (it could have left a tale waiting for ever); a beast's lines say "it" and "its" (they showed "{he}"); a
+beast killed where its tale meant it to be (at the bait) is no early end; what is left of a dead villain's band at
+its den is not a boss.
+
 ### Session, 2026-10-25 (afternoon, later): Adventures & Events Part E, task E.3 — lieutenants who remember — branch `dlc/06-adventures-events`
 
 - The villain's bands now have named heads. In the Risen's tale the cultists who woke the dead are led by someone

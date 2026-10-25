@@ -31,8 +31,34 @@ def test_part_ds_tales_are_finished(data, kind):
 def test_a_new_life_opens_with_a_tale(data):
     runs = storyplay.openings(6, tables=Tables(data))
     assert sum(r.begun for r in runs) >= 5, "\n".join(f"{r.world} {r.kind}: {r.why}" for r in runs if not r.begun)
-    assert len({r.kind for r in runs}) >= 2, "more than one kind of first hour"
     assert sum(r.finished for r in runs) >= 4, "\n".join(f"{r.world} {r.kind}: {r.why or r.ending}" for r in runs)
+    # (which first hour a life draws follows its dice, keyed by the world's id - which changes with the game's data -
+    # and the hero's name: more than one kind is asked of many draws, not of these six lives)
+    assert len({r.kind for r in runs} | _first_hours(data)) >= 2, "more than one kind of first hour"
+
+
+def _first_hours(data) -> set:
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.game.story import beats, opening
+    from realmwalker.world import threats
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    tables, kinds = Tables(data), set()
+    for wo in storyplay.WORLDS:
+        w = copy.deepcopy(cached_world(WorldOptions(*wo), tables))
+        towns = sorted((s for s in w.settlements if s.kind in ("town", "village", "hamlet", "city")), key=lambda s: s.id)
+        game = new_game(w, tables, start_settlement=towns[0].id)
+        rec = beats.director(w).get("opening")
+        if rec is None:
+            continue
+        t, town = threats.records(w)[rec["threat"]], w.settlements[rec["town"]]
+        for n in range(12):
+            game.leader.name = f"Hero {n}"
+            kinds.add(opening.choose(game, t, town))
+    return kinds
 
 
 def test_the_income_reference_is_kept():

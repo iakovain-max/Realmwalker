@@ -567,12 +567,44 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.4 (*escapes once per adventure, anchors,
-returning villains, early ends (contingencies, a lieutenant's succession, "the cat is away"); step kind `endure`*), on
-branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.4
-("Escapes and early ends", "Anchors and returning villains"), game/story/lieutenants.py and villain.py (docstrings),
-game/story/finale.py, endings.py (`sequel`), and the E.3, E.2 and E.1 notes below. A lieutenant's succession can build
-on lieutenants.py: the one with the greatest grudge still free (`after_tale` picks it for the nemesis today).
+Next session starts at: Expansion 6, **Adventures & Events**, Part E, task E.5 (*the finale in full: arenas (a burning
+village with fire that spreads, a ritual circle, a throne hall, a bridge, a tower top), phases that change the arena
+(`Field.set_terrain`), telegraphed great attacks, boss entrances, boss templates for tiers 3-4, a "command its
+minions" legendary action, every key of ADVENTURES.md §8.6, the retreat rule, defeat as content (`story.on_defeat`)*),
+on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part E, docs/ADVENTURES.md §5.8
+and §8.6, game/story/finale.py and rules/engine/handlers/bosses.py (docstrings), game/arena.py FIELDS, and the E.4,
+E.3 notes below. E.5 is big: it may be split in two sessions (arenas and phases; then keys, retreat and defeat).
+E.4 (2026-10-25, realmwalker-b): `game/story/early.py` (docstring has it all). Escapes: `may_escape` (not after
+adv["escaped"], kept by `on_fled` from story.on_battle; not with a found key whose finale effects include the new KEYS
+`no_escape`: the risen's anchor) gates the template `before` in finale.prepare; else `no_flight` (morale fanatic, the
+`spent` line). Early ends: story.on_battle, villain dead while `is_early` (its finale step open but not in the
+current chapter) -> `begin`: blueprint `early` weights (risen 2/2/1, outlaw 3/1/1; default cat_away) over `available`
+KINDS succession (a FREE lieutenant with a band, the finale step's level), contingency (the kind's `minions`),
+cat_away; the current chapter's open steps "dropped", later chapters cut (adv["early"]["chapters"] keeps the count),
+the finale's story_sites record unbound (`_unbind_finale`), a last chapter "early" with one step (succession: defeat on
+the heir's role at the finale level; contingency: `endure` with beat early_last_letter if the villain speaks, else
+early_loosed). `after_chapter` (from story._chapter_check) finishes the tale. story.on_battle skips villain-tagged
+leftovers once boss_dead; villain.due_move makes no moves while boss_dead/early. Step kind `endure` (steps.py fields
+beat, group, after; deeds.py `_setup_endure` sets `due`, `_endure_due` offers its beat from deeds.on_travel off towns
+and deeds.on_night at camp, op `endure` -> `deeds.endure` -> a band all tagged role "endure" (deeds.LOOSE), on_battle:
+won or got away done, defeat/surrendered failed, deeds.daily passes it after ENDURE_WAIT days). Returns: endings
+`_sequel` -> `early.returns` (threat["returns"] {adv, life, times}); threats.advance wakes a `sequel` dormant threat
+for sure once held_until passes (never by chance before); `early.daily` (story.daily) offers the hero beat
+villain_returns once (rec["told"]); `on_forge` (forge._record) pops `sequel`, sets adv["returning"] and attention
+villains.early.json returning.attention; `on_boss` (finale.prepare after make_boss) +hp per return. Relic moved: move
+relic_moved (attention 5, needs "anchor": `relic_movable`, an open fetch step giving key:anchor, not placed, not at
+home) -> beat villain_relic_moved -> op `move_relic` (target to home level 1, its step quest remade). Words:
+villains.early.json, beats.early.json, adventures.early.json. check.py: blueprint early kinds, early.BEATS. Autoplay
+`_check_early`; storyplay plays endure (camps out of town). Not in E.4: an early end's own epilogue page (the journal
+keeps it), a fled finale (the retreat rule is E.5's), anchors for kinds other than the Risen (Part K's tales).
+Measures (storyplay, 20 lives): outlaw 18/20 (18 before), risen 18/20 (19 before); all lost lives died, none stuck.
+The fresh review's fixes: an endure's band left without a battle (evade, talk, pay) is lived through the next day
+(st["fighting"] = the day; deeds.daily); words.for_adventure gives beasts it/its; `is_early` is false with an open
+slay step (the beast's planned kill); finale.prepare skips a villain-tagged band once boss_dead; on_fled not in the
+finale; dropped steps' quests removed; a return's attention only for the same hero's life. Checks: full suite (only the known enemy-casters timing test
+missed under load; passes alone), autoplay OK, smoke OK. test_storyplay's openings test asked six lives for two
+kinds of first hour; the dice follow the world's id, which follows the data, and E.4's data drew six summonses: it
+now also draws the choice for twelve heroes in each test world (`_first_hours`).
 E.3 (2026-10-25, realmwalker-a): `game/story/lieutenants.py` (docstring has it all). Blueprint `lieutenants` [{as,
 creature, titles, turns}] (risen: waker; outlaw: raiders, lookout) on cast roles that are bands; `forge` (from
 forge._record, after the cast is bound) keeps records on `threat["lieutenants"]` and the cast entry's "lt" index (the
