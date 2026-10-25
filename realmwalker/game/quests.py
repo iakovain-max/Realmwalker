@@ -899,7 +899,7 @@ def _all_quests(game) -> list[dict]:
 def board_bounties(game, settlement) -> list[dict]:
     """Bounties posted on the notice board here, paid by the town's watch: one for each gang within reach, and for
     the two nearest beasts of the history that lair within it (a threat's villain among them: taking that bounty
-    opens its tale, story.on_job_taken)."""
+    opens its tale, story.on_job_taken), and one den near the town to be cleared (C.10)."""
     from realmwalker.game import past
     from realmwalker.game.people import town_of
 
@@ -928,6 +928,14 @@ def board_bounties(game, settlement) -> list[dict]:
                                   "town": settlement.id}, w.rng.child(f"board/{settlement.id}/beast{fid}"))
             posted[f"beast{fid}"] = q
         wild.append(q)
+    lair = _clear_lair_pick(game, None, w.rng.child(f"board/{settlement.id}/lair"), settlement) \
+        if not any(k.startswith("lair") and v.get("state") == "offered" for k, v in posted.items()) else None
+    if lair is not None and lair["site"] not in {s for _, s, _, _ in beasts}:
+        # (the nearest den that troubles its roads: Expansion 6 C.10, the paid work that keeps coin fair)
+        posted[f"lair{lair['site']}"] = make(game, None, {"kind": "clear_lair", "site": lair["site"],
+                                                           "town": settlement.id},
+                                              w.rng.child(f"board/{settlement.id}/lair{lair['site']}"))
+    wild += [v for k, v in sorted(posted.items()) if k.startswith("lair") and v.get("state") == "offered"]
     out = []
     for gang in fx.active_factions(w, "bandit_gang"):
         if not 0 <= gang.site < len(w.sites) or gang.site in cleared(game) or gang.id in taken:
