@@ -72,7 +72,15 @@ Decisions (Anton may want to change): a tale has a rival half the time or so (th
 a day in; their race takes 7 to 13 days; something of theirs happens at most every three days, on half the nights;
 their price for the prize is 60, 150, 400 or 1000 gold by the tale's tier; a theft takes a quarter of your coin (at
 most that price); a band you refused holds out two days; one who died in its hall took a fifth of its hit points with
-them. The rival is not a townsperson you can visit: they ride, and you meet them in beats.
+them. The rival is not a townsperson you can visit: they ride, and you meet them in beats. Their news comes in the
+morning, so it never breaks your night's rest; only an ambush comes in the dark. The truce brings them on the third
+round of the finale.
+
+Checks: the Beast played through by the bot 40 times finishes 33 (31 before rivals; a first try, whose meetings broke
+the night's rest, finished 25 and was fixed); the Risen 15 of 20 (12 before); the fresh review's seven findings fixed.
+Full suite: only the known timing tests missed under load (enemy casters' slowest turn, the archmage's tactics); the
+storyplay test of the Risen and the Outlaw now plays eight lives of each (five to finish) instead of six (four): its six
+fell on other dice once rivals came. Autoplay OK, smoke OK. No save format change.
 
 ### Session, 2026-10-25 (night, later): Adventures & Events Part F, task F.1 — allies with stakes — branch `dlc/06-adventures-events`
 

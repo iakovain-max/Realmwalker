@@ -583,17 +583,20 @@ pinned_until, in_lair, found, hurt, fought, fate}. Data adventures.rivals.json "
 kinds: leader/band by tier filling the party's "high" budget, most; fates), schema in ADVENTURES; beats.rivals.json
 (family "rival"). Hooks: story.daily -> `daily` (decide, race end `_arrives`: fetch -> quest target["rival"], chest
 empty in quests.on_chest, state ahead; finale -> dead in_lair, hurt = clock wounds; pinned past its day -> overrun),
-story.on_night -> `on_night` after stakes (meeting, prize, then by relation every `every` days at `event_chance`:
+story.on_night -> `on_night` after stakes (`morning`: fight.rest's last call passes it; only the ambush plays at
+midnight and breaks the rest - played mid-rest the beats cost the Beast's storyplay 6 lives in 40; meeting, prize
+(again every `every` days while they hold it), then by relation every `every` days at `event_chance`:
 plea (truce/2, chapter >= 1, villain has minions), truce (1), race (0), sold (<= -1, chapter >= 1), ambush (-2, camp),
 theft (inn)), story.on_descend -> `on_descend` (bones near the entry, beat rival_found_dead), story.on_battle ->
 `on_battle` (role "rival" bands: leader dead = slain; won = what they held is yours, gone; a plea's band beside you:
-won = truce; the harm count skips role "rival"), finale.prepare -> `to_battle` (a plea answered: their band as
+won = truce, a leader fallen there "fell_beside"; the harm count skips role "rival"; the key "rival" goes with a dead
+rival: `_drop_key`), `riding(world)` keeps a rival hero figure out of people.heroes_at_the_inn, finale.prepare -> `to_battle` (a plea answered: their band as
 story_ally creatures) and, after the keys, `at_finale` (hurt, sold: env.surprised cleared, truce: they arrive on
 ARRIVE_ROUND), endings.finish -> `after_tale` (page "rival"). Op `rival` (met/relation/slow/read/truce/steal/
 recover/sold/fight/pay_off/plea_go/plea_refused/buy/give/let_go/search/honour); conditions `rival` (relation at
 least), `rival_price`. Key "rival" (words.KEY_WORDS). Journal "Rivals". Autoplay `_check_rivals`; story/check checks
 rivals.BEATS and the kinds' creatures. finale's old `rival_arrives` key and RIVAL_KIND stay for blueprints that name
-it (none do). No save format change in F.2 (F.5 bumps it). Not in F.2: the full forms' own rivals (F.5); a rival as a
+it (none do). Checks: full suite (only the known timing tests under load), autoplay OK, smoke OK; storyplay Beast 33/40 (31 before), Risen 15/20 (12 before); tests/test_storyplay.py plays 8 Risen and 8 Outlaw lives (5 to finish). No save format change in F.2 (F.5 bumps it). Not in F.2: the full forms' own rivals (F.5); a rival as a
 townsperson you can visit; a stolen thing already fetched (the theft takes coin).
 F.1 (2026-10-25, realmwalker-b): `game/story/stakes.py` (docstring has it all). The key "ally" (beats.OPS["key"], every
 road to it: recruit talk, the hunter's situation, story_learn's ally route) calls `stakes.join`: `adv["ally"]` {npc,
