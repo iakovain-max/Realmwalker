@@ -95,7 +95,9 @@ def services_for(game, npc: NPC) -> list[Service]:
     offered = [s for s in occ.get("services", []) if s != "rumours"]
     from realmwalker.game.economy import burnt_out
 
-    if not offered or npc.mood() == "hostile" or burnt_out(game, npc):  # (no trade in a burnt shell)
+    from realmwalker.game.story import lives
+
+    if not offered or npc.mood() == "hostile" or burnt_out(game, npc) or lives.sign(game, npc):  # (burnt, or shut)
         return []
     econ = game.tables.economy["services"]
     c = game.leader

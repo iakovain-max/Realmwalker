@@ -70,7 +70,7 @@ def ensure(game, sid: int) -> int:
         if "life" in npc.flags:
             continue
         npc.flags["life"] = make(game, npc, houses.get(tuple(npc.home), []), folk, rng.child(str(npc.id)))
-        write_profile(game, npc, rng.child(f"words/{npc.id}"))
+        write_profile(game, npc, w.rng.child(f"lives/{sid}/words/{npc.id}"))
         made += 1
     return made
 
@@ -102,7 +102,7 @@ def make(game, npc, house: list, folk: list, rng) -> dict:
         if kind is None or (KIN_OF[kind] == "spouse" and spouse_taken):
             continue
         spouse_taken = spouse_taken or KIN_OF[kind] == "spouse"
-        ties.append(_tie(kind, other.first_name, npc=other.id, state="alive" if other.alive else "dead"))
+        ties.append(_tie(kind, other.first_name, npc=other.id, state="alive" if other.alive else "dead", age=other.age))
     fig = game.world.figures.get(npc.flags.get("figure", -1))
     if fig is not None:
         ties += _figure_kin(game, fig, {t["npc"] for t in ties})
@@ -122,7 +122,8 @@ def make(game, npc, house: list, folk: list, rng) -> dict:
             and rng.chance(float(kin["spouse"]) * (0.6 if npc.age < 24 else 1.0)):
         sex = "male" if npc.sex == "female" else "female"
         state = "dead" if npc.age >= 55 and rng.chance(0.35) else "alive"
-        ties.append(_tie(KIN_WORDS["spouse"][sex == "female"], name(sex), state=state))
+        ties.append(_tie(KIN_WORDS["spouse"][sex == "female"], name(sex), state=state,
+                         age=max(16, npc.age + rng.randint(-6, 6))))
         have.add("spouse")
     gap = min(40, npc.age - 16)  # (the oldest a child of theirs can be is their age less sixteen)
     if "child" not in have and gap >= 1 and npc.job not in ("monk", "acolyte"):
@@ -139,7 +140,8 @@ def make(game, npc, house: list, folk: list, rng) -> dict:
                 ties.append(_tie(KIN_WORDS["parent"][sex == "female"], name(sex), state="alive" if alive else "dead"))
     if "sibling" not in have and rng.chance(float(kin["sibling"])):
         sex = rng.choice(["male", "female"])
-        ties.append(_tie(KIN_WORDS["sibling"][sex == "female"], name(sex), state="alive"))
+        ties.append(_tie(KIN_WORDS["sibling"][sex == "female"], name(sex), state="alive",
+                         age=max(1, npc.age + rng.randint(-9, 9))))
     ties += _others(game, npc, folk, d, rng, name)
     lf = {"ties": ties, "want": None, "fear": None, "secrets": [], "things": [], "events": []}
     lf["want"] = _pick(d["wants"], npc, lf, rng)
@@ -423,7 +425,7 @@ def walk_in(game, lm, building) -> str | None:
         if n is not None and n.alive and n.building == bi:
             words = sign(game, n)
             if words:
-                return f"The place is shut. A sign on the door: <story>\"{words}\"</>"
+                return f"The place is shut. A sign on the door: <info>\"{words}\"</>"
     return None
 
 
@@ -511,6 +513,7 @@ def happen(game, s, npc, kind: str, rng) -> dict | None:
     if rng.chance(float(spec["seed"])):
         ev["seed"] = True
     record(game, npc, ev, rng.randint(*spec["days"]))
+    write_profile(game, npc, game.world.rng.child(f"lives/{npc.settlement}/words/{npc.id}"))  # (one source)
     return ev
 
 
@@ -561,12 +564,17 @@ def _lm(game, s):
 def _shut(game, npc, days: float, home: bool) -> None:
     """A trade shut for a while (with a sign on the door); `home`: they keep to the house."""
     until = int(game.world.time + days * DAY)
-    from realmwalker.game import economy
-
-    if npc.building >= 0 or economy.shop_spec(game, npc) is not None:
+    if keeps_shop(game, npc):  # (a sick serving hand does not shut the inn)
         npc.flags["closed_until"] = max(until, int(npc.flags.get("closed_until", 0)))
     if home:
         npc.flags["home_until"] = max(until, int(npc.flags.get("home_until", 0)))
+
+
+def keeps_shop(game, npc) -> bool:
+    """The keeper of a trade or a house of work (whose door is shut when they are), not a helper in it."""
+    from realmwalker.game import economy
+
+    return economy.shop_spec(game, npc) is not None or (npc.notable and npc.building >= 0)
 
 
 def _mourn(game, npc, days: int) -> None:
@@ -582,7 +590,7 @@ def _grave(game, s, who: dict) -> tuple[int, int] | None:
     from realmwalker.game import remains
     from realmwalker.game.dungeon import set_terrain
 
-    spot = remains._grave_spot(game, lm)
+    spot = remains._grave_spot(game, lm, s)
     if spot is None:
         return None
     set_terrain(lm, spot[0], spot[1], "grave_fresh")
@@ -646,7 +654,7 @@ def _can_die(game, s, npc, lf) -> float:
 def _die(game, s, npc, lf, rng) -> dict | None:
     """A death of age: the old one themself (through the people code), or a parent who was only a name. The family
     mourn in black, the shop is shut, a fresh grave is dug and a crowd stands round it the next morning."""
-    old = npc.age >= 60 and rng.chance(min(0.8, (npc.age - 58) / 12.0)) and not npc.flags.get("figure")
+    old = npc.age >= 60 and rng.chance(min(0.8, (npc.age - 58) / 12.0)) and _may_die(game, s, npc)
     if old:
         return _die_self(game, s, npc, lf, rng)
     parents = [t for t in lf["ties"] if KIN_OF.get(t["kind"]) == "parent" and t["state"] == "alive"
@@ -660,6 +668,17 @@ def _die(game, s, npc, lf, rng) -> dict | None:
     spot = _grave(game, s, {"name": t["name"]})
     _gathering(game, s, "death_of_age", spot, [npc.id], _days(game) + 1, (9, 11), rng, name=t["name"])
     return {"kin": t["kind"], "name": t["name"]}
+
+
+def _may_die(game, s, npc) -> bool:
+    """Not a figure of the history, a story's person, a companion, one on guard or travelling with you, nor the only
+    one of their trade in town (an old village keeps its one inn and its one healer)."""
+    f = npc.flags
+    if any(f.get(k) is not None for k in ("figure", "story", "companion", "escort", "stays", "visitor")):
+        return False
+    from realmwalker.game.people import npcs_in
+
+    return any(n is not npc and n.alive and n.job == npc.job for n in npcs_in(game.world, s.id))
 
 
 def _die_self(game, s, npc, lf, rng) -> dict | None:
@@ -679,7 +698,9 @@ def _die_self(game, s, npc, lf, rng) -> dict | None:
         other = w.npcs.get(t["npc"]) if t["npc"] is not None else None
         if other is None or not other.alive or KIN_OF.get(t["kind"]) is None:
             continue
-        olf = other.flags.get("life")
+        if other.flags.get("life") is None:  # (one of the house who had no life kept: now they have)
+            other.flags["life"] = make(game, other, [npc], [npc, other], rng.child(f"life/{other.id}"))
+        olf = other.flags["life"]
         word = KIN_WORDS[REVERSE[KIN_OF[t["kind"]]]][npc.sex == "female"]
         if olf is not None:
             for ot in olf["ties"]:
@@ -689,6 +710,7 @@ def _die_self(game, s, npc, lf, rng) -> dict | None:
             if rng.chance(float(data(game)["events"]["death_of_age"]["seed"])):
                 ev["seed"] = True
             record(game, other, ev, rng.randint(*data(game)["events"]["death_of_age"]["days"]))
+            write_profile(game, other, w.rng.child(f"lives/{s.id}/words/{other.id}"))
         _mourn(game, other, rng.randint(14, 30))
         _shut(game, other, rng.randint(1, 3), home=True)
         mourners.append(other.id)
@@ -736,7 +758,7 @@ event("debt_due")((_can_owe, _owe))
 
 def _young_kin(lf) -> list[dict]:
     return [t for t in lf["ties"] if t["kind"] in ("son", "brother", "husband") and t["state"] == "alive"
-            and t["npc"] is None and t.get("figure") is None and 16 <= int(t.get("age", 25)) <= 40]
+            and t["npc"] is None and t.get("figure") is None and 16 <= int(t.get("age", 99)) <= 40]
 
 
 def _can_levy(game, s, npc, lf) -> float:

@@ -72,8 +72,10 @@ def test_hidden_members_keep_their_faith_secret(tables):
 
 def _old_one(game, town):
     w = game.world
-    folk = [n for n in npcs_in(w, town.id) if n.alive and "life" in n.flags and not n.flags.get("figure")]
-    npc = max(folk, key=lambda n: sum(t["npc"] is not None for t in n.flags["life"]["ties"]))
+    folk = [n for n in npcs_in(w, town.id) if n.alive and "life" in n.flags]
+    free = [n for n in folk if lives._may_die(game, town, n)]
+    assert free, "someone here may die of age"
+    npc = max(free, key=lambda n: sum(t["npc"] is not None for t in n.flags["life"]["ties"]))
     kin = next((t for t in npc.flags["life"]["ties"] if t["npc"] is not None and t["kind"] in lives.KIN_OF), None)
     if kin is None:  # (make one: a son living with them)
         other = next(n for n in folk if n is not npc)
@@ -207,3 +209,51 @@ def test_weeks_of_lives_near_the_hero(tables, seed):
     if max(abs(far.x - town.x), abs(far.y - town.y)) > tables.lives["reach"]:
         assert {n.id: len(n.flags["life"]["events"]) for n in npcs_in(w, far.id) if "life" in n.flags} == far_lives
     assert all(isinstance(ev, dict) for _, ev in lives.seeds(game, town.id))
+
+
+def test_debts_the_levy_and_quarrels(tables):
+    game, town = a_life(tables, SEEDS[0])
+    w = game.world
+    npc = next(n for n in npcs_in(w, town.id) if n.alive and "life" in n.flags)
+    lf = npc.flags["life"]
+    lf["ties"] = [t for t in lf["ties"] if t["kind"] not in ("creditor", "rival", "brother", "son", "husband")]
+    lf["events"] = []
+    lf["ties"] += [lives._tie("creditor", "Odo"), lives._tie("rival", "Brun"), lives._tie("brother", "Ivo", age=20)]
+    npc.purse = 100
+    ev = lives.happen(game, town, npc, "debt_due", w.rng.child("debt"))
+    assert ev["creditor"] == "Odo" and npc.purse < 100
+    ev = lives.happen(game, town, npc, "quarrel", w.rng.child("q"))
+    assert ev["rival"] == "Brun"
+    from realmwalker.world import factions as fx
+    from realmwalker.world import politics
+
+    realm = fx.realm_of_settlement(w, town)
+    if realm is None or not politics.at_war(w, realm.id):
+        assert lives._can_levy(game, town, npc, lf) == 0.0, "no levy in peace"
+    else:
+        assert lives.happen(game, town, npc, "levy", w.rng.child("levy"))
+        assert lives._tie_of(lf, "brother") is None or lf["ties"][-1]["state"] == "levied"
+    lf["ties"].append(lives._tie("brother", "Old", age=70))
+    assert all(t["name"] != "Old" for t in lives._young_kin(lf)), "the levy takes the young"
+    for e in lf["events"]:
+        line = lives.fill(tables.lives["events"][e["kind"]]["note"][1], lives._event_vals(game, npc, e))
+        assert "{" not in line, line
+
+
+def test_a_sick_helper_does_not_shut_the_house_and_a_shut_keeper_sells_nothing(tables):
+    game, town = a_life(tables, SEEDS[1])
+    w = game.world
+    from realmwalker.game import services
+
+    folk = [n for n in npcs_in(w, town.id) if n.alive]
+    helper = next((n for n in folk if n.building >= 0 and not lives.keeps_shop(game, n)), None)
+    if helper is not None:
+        helper.flags.setdefault("life", lives.make(game, helper, [], [helper], w.rng.child("h")))
+        lives.happen(game, town, helper, "sickness", w.rng.child("hs"))
+        assert lives.sign(game, helper) is None and townlife.activity(game, helper) == "home"
+    keeper = next((n for n in folk if services.services_for(game, n)), None)
+    if keeper is None:
+        pytest.skip("no one here sells services")
+    keeper.flags.setdefault("life", lives.make(game, keeper, [], [keeper], w.rng.child("k")))
+    lives.happen(game, town, keeper, "sickness", w.rng.child("ks"))
+    assert not services.services_for(game, keeper), "a shut house sells no beds and no cures"

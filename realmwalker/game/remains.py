@@ -142,7 +142,7 @@ def tick(game, lm) -> list[str]:
     return out
 
 
-def _grave_spot(game, lm):
+def _grave_spot(game, lm, settlement=None):
     """A square for a new grave: beside the graves already dug, else near the temple, else near the town's edge -
     never in a doorway or on a way that people need."""
     from realmwalker.game.people import outdoor_cells
@@ -161,7 +161,7 @@ def _grave_spot(game, lm):
     doors = {tuple(b.door) for b in lm.buildings}
     taken = {(g["x"], g["y"]) for g in graves}
     best = None
-    for x, y in outdoor_cells(game, lm):
+    for x, y in outdoor_cells(game, lm, walk, settlement):
         if (x, y) in taken or not walk[x, y] or any(abs(x - dx) <= 1 and abs(y - dy) <= 1 for dx, dy in doors):
             continue
         if abs(x - lm.entry[0]) <= 3 and abs(y - lm.entry[1]) <= 3:
