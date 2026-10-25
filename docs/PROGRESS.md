@@ -77,8 +77,10 @@ Towns near you now have **troubles of their own people**: small stories about re
   stake, by when, and what stands in the way.
 - When your hero dies, their troubles go on in the world and wait for the next one, clocks still running.
 
-Decisions (Anton may want to change): what you can do in a trouble opens once you have taken it on; a failed
-haggle costs nothing (you pay only if the haggle works); every death a trouble brings gets a grave in its town; a
+Decisions (Anton may want to change): what you can do in a trouble opens once you have taken it on; a check that
+fails (talking someone round, catching a lie) can be tried again the next day; a failed haggle costs nothing (you pay
+only if the haggle works); a trouble is met a few moments after you walk into its town, never on the step through the
+gate; work a trouble sets has the trouble's own time; every death a trouble brings gets a grave in its town; a
 tale's own call for help goes before a trouble's meeting when you walk into a town; experience from a trouble's end is
 a share of a fair fight's (C.8 will add the setting to have only this); the turns (a liar, a shorter clock, the one who
 asked dying, a cure that costs the shop...) come in about half of them.

@@ -32,7 +32,9 @@ Known, not yet chased: one autoplay run of nine during Expansion 5 Part A's chec
   branch, were clean). The timing tests (an enemy turn under 150/400 ms) now and then miss while the suite runs
   beside autoplay and the smoke test, and pass alone; this was already so in Expansions 3 and 4.
 Assumptions waiting for Anton:
-- Expansion 6 C.6 (situations): a trouble's acts open once taken on; a failed haggle costs nothing; every death a
+- Expansion 6 C.6 (situations): a trouble's acts open once taken on; a failed check may be tried the next day
+  (`sit["tried"]`); its work's deadline is the trouble's clock (lengthened if the walk needs it); a failed haggle
+  costs nothing; every death a
   trouble brings gets a grave in its town; a tale's own hook goes before a trouble's meeting on entering a town; a
   trouble's end gives a share of a fair fight's experience (more with no blood shed); turns come in about half of
   them; the innocent are hanged and the feud's due paid if nobody comes; refusing a lord's letter is remembered.
@@ -564,7 +566,7 @@ Next session starts at: Expansion 6, **Adventures & Events**, Part C, task C.7 (
 `game/story/favours.py`: favours spent as ways through, contacts who send word by runner, deal at night and warn of the
 law; both in the People tab), on branch `dlc/06-adventures-events`. Read docs/expansions/06-adventures-events.md Part C
 and ADVENTURES.md §8.10 (Favours and contacts) first.
-C.6 (2026-10-25, realmwalker-a): `game/story/situations.py` (docstring has the record and API), data
+C.6 (2026-10-25, realmwalker-a; checks: suite green but for the turn-time tests, each passing alone as before; autoplay clean; smoke clean; a fresh review's fifteen points fixed in 8977157): `game/story/situations.py` (docstring has the record and API), data
 `situations.json` (rarity, roots key -> predicaments, 12 meetings -> scenes, 15 turns) + `situations.predicaments.json`
 (the first twenty of §6.7) + `scenes.situations.json` (12 meeting scenes; SCENE `cast`/`given` = roles and words the
 caller supplies; story/check knows them). Forged by `maybe_forge` from `story.daily` (via `situations.daily`, after
