@@ -701,6 +701,13 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
 - A threat's reach on the map (Expansion 6 G.8): `story.known_reaches` (a tale taken, or signs heard with the den
   seen; spreading by stage) drawn by `mapsigns.reaches` under the fog, one soft picture a threat keyed by reach and
   stage; its look is threats.json kinds `wash` (grey, red, mist: `mapsigns.WASHES`).
+- Founding (Expansion 6 G.9): `world/founding.py` (its docstring): new settlements only through `found` (appended,
+  never reordered or deleted; a realm holds it through `Politics.set_owner`; a road through the land ledger, reshape
+  kind "road"); records `politics["foundings"]`, the layout override `politics["styles"]` (read by `plan.style_for` /
+  `worldview.town_mark` with a `world`); stages by `set_stage` (a grown camp's map is laid out again by
+  `game/founding.before_entry` unless someone tied to the player lives there). First use: `refugee_camp` from
+  `Politics.begin_siege`; `weekly` from `Politics.advance`. Layout `encampment`, the canvas tent (`houses` form "tent"),
+  `mapsigns.founded` on the world map. Autoplay `_check_founded`; debug `camp`.
 - Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
   nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
   and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found

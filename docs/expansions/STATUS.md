@@ -571,12 +571,40 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.9 (*Founding*: `world/founding.py` by
-the checklist of docs/ADVENTURES.md §8.16; `politics["styles"]` read by `plan.style_for` and `worldview.town_mark`; the
-encampment layout and the canvas tent; its stages; its world-map composite in `mapsigns`; the first use: a refugee camp
-outside a besieged city), on branch `dlc/06-adventures-events` (Parts A-F are on main; Part G goes to main at G.10).
-Read docs/expansions/06-adventures-events.md Part G (G.9 in full), docs/ADVENTURES.md §5.21 (new places) and §8.16
-(Founding, the checklist), and the G.8-G.1 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.10 (*showcase pages for all of Part G;
+FORMAT_VERSION +1; tests; Part G merged into `main`*), on branch `dlc/06-adventures-events` (Parts A-F are on main).
+Read docs/expansions/06-adventures-events.md Part G (G.10), docs/EXPANSIONS.md §5 (the merge), and the G.9-G.1 notes
+below (what each task built, what the showcase should stage: signs, wakings, endings' consequences, epilogue and
+tales, rumours, land changes, hosts, reaches, a founded camp).
+G.9 (2026-11-06, realmwalker-a): `world/founding.py` (its docstring has it all). `found(pol, x, y, kind=, people=,
+owner=, population=, name=, of=, story=)` by the checklist: Settlement appended (id = index; kind "hamlet"),
+`rebuild_index`, `Politics.set_owner` (refuses a non-realm), `fx.touch`, `world.culture` (culture_ids appended if new),
+the square's local map popped, `politics["styles"][str(id)]` = "encampment", `politics["founded"][str(id)]` = year
+(Legends), a record in `politics["foundings"]` {id "F<n>", kind, settlement, stage, since, staged, of, home?, story?}
+(`next_founded`), and a road by `lay_road` (path2d cardinal from the camp to road squares within 14 steps, round
+keep_out) through the land ledger: new reshape kind "road" (shape {x, y, cells}; wilderness maps on its squares popped);
+no road found: `reshape._bump` the camp's square. `spot_near`: 2..3.6 squares off, passable, not keep_out, nothing
+within one square, no land change there, away from `away` (the besieger's `place_of`), dry open ground (move_hours,
+not coast/marsh), near a road. `refugee_camp(pol, target, besieger)` from `Politics.begin_siege` (threats.json
+"founding" refugee_camp: chance 0.45, kinds town/city, share 0.08, least 40, most 600 and at most a third of the town,
+home 0.5, most_camps 8; one stage-0 camp a town; the realm is `top_liege` of the owner; news "camp_pitched", importance
+3 so history). `weekly(pol)` from `Politics.advance`: a refugee camp waits while its town is besieged; 7+ days after
+the siege lifts, `home` share go back (floor 30, "camp_home"); then growth 1.2% a week, `set_stage` 1 after 60 days
+(style encampment_fortified, walled, "camp_fortified"), 2 after 300 days with 150 people (style popped, kind village,
+"camp_grown"). Layout `layouts.encampment` (towns.json pack styles; style key `fortified`, schema): `plan.target` at
+least 8 + population/10 (max 48); CAMP_KINDS hall, temple, smithy, store first; tent lines every 7 squares; fire pits,
+standards, horse lines; palisade by `finish_town` when fortified. `plan.style_for(tables, s, world=None)` and
+`worldview.town_mark(tables, s, default, world=None)` read the override first (`map/town_encampment_small|big`, drawn by
+`mapsigns.founded` from `camp_picture(stage)`, not the atlas). `plan.look_for` falls back to the style's "house" look
+(pack fragments drop "_" keys). Tent: roof/walls "canvas" (ROOFS, WALL_TERRAIN wall_felt, roofs.WALLS, houses ROOF/FACE,
+placemarks OWN_ROOFS), `houses.form_of` -> "tent" (a swept front triangle; a back door leaves no hole). `game/founding.
+before_entry` (from `enter_local` and `prepare_town`): a map whose `meta["founded_stage"]` (set in `get_local_map`) is
+not the record's is dropped with its Town, the folk `moved_on`, `townlife.forget()`, unless `free` is False (TIES flags
+companion/story/grateful, or a giver/target npc of an offered/active quest) or the party is on it. Autoplay
+`_check_founded` and `_found_a_camp` (game turn 250 of every 500: a camp by the nearest town, or with two camps one
+grows). Debug `camp`, `camp grow`. tests/test_founding.py (9). No save format change. Not in G.9: sites founded while
+you play (the same checklist; their first use comes with the rift's depths), the crusaders' camp-city and a realm's
+border fort (other kinds for `KINDS` when their stories come).
 G.8 (2026-11-06, realmwalker-b): `story.known_reaches(game)` (beside `map_signs`): live threats whose tale the hero
 has taken (`active`), or whose signs they have heard (`renown.heard`) with the den explored (the claw marks' test);
 each {id, x, y, r, wash, strength, key}: r is half the kind's reach at the first stage up to all of it at the last

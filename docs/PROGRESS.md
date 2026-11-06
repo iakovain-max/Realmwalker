@@ -46,6 +46,32 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (night, last): Adventures & Events Part G, task G.9 — new places: a refugee camp outside a besieged city — branch `dlc/06-adventures-events`
+
+- **New places now appear while you play.** When an army lays siege to a town or a city, some of its people may flee
+  and pitch a camp a short walk outside the walls, on the side away from the besiegers, on dry open ground. The camp is
+  a real place: it has its own name in its people's tongue, it belongs to the besieged town's realm, it has a road to
+  the nearest road, and it is in the news, the history and the Legends book ("Founded in ...").
+- **Walking in**: rows of canvas tents along straight tent lines, two ways crossing at a muster ground with standards
+  and a notice board, the captain's pavilion, a chapel tent, a forge and a sutler's tent, cook fires between the rows,
+  horse lines at the end; mud underfoot; a tent for every ten or so people. It has its own words when you arrive
+  ("Smoke from a hundred cook fires...", the names of the missing chalked on a board).
+- **It changes with time**: when the siege lifts about half the refugees go home. Those who stay dig in: after two
+  months the camp is ringed by a palisade and timber halls rise among the tents; after most of a year more, with
+  enough people, it becomes a village built its people's own way. Each change is news. Its close-up map is laid out
+  anew at your next visit (its old folk move on and new ones live there) - but never while a companion, someone a tale
+  or a job is about, or someone grateful to you lives there.
+- **On the world map** a camp is drawn larger than any town's mark: rows of little tents round a fire, later a ring of
+  stakes with two timber halls and the forge's smoke, its realm's banners over it.
+- Debug console: `camp` (refugees pitch a camp by the town nearest you), `camp grow` (the nearest camp grows a stage).
+- Choices made while Anton was away: how often (45% of besieged towns and cities), how many flee (8% of the town, 40 to
+  600), how long each stage takes (60 days, then 300 more with 150 people); the camp counts as a hamlet for shops and
+  prices until it becomes a village; the world-map picture is drawn in code (the tile sheets were not rebuilt: the
+  source art pack is not on this PC). The canvas tent is a new building picture (a ridge tent with its door flap tied
+  back).
+- No save change (old saves simply have no camps).
+  Checks: see STATUS.md (G.9 note).
+
 ### Session, 2026-11-06 (night, later): Adventures & Events Part G, task G.8 — a threat's shadow on the map — branch `dlc/06-adventures-events`
 
 - **The country a threat troubles is shaded on the world map once you know of it**: once you have heard its signs
