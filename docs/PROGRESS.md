@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-E on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; villains who act and the finale in full; Parts F-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-F on main (2026-11-06): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; villains who act and the finale in full; the cast (allies, rivals, patrons and traitors) and the Reading; Parts G-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,167 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-11-06 (midday): Adventures & Events Part F, task F.5 — the three tales' full casts — **Part F merged into `main`**
+
+- **Each tale has its own rival now.** When the Beast is hunted, the one racing you is usually a glory-hunter with a
+  trophy wall and one empty place on it, after the beast's head and pelt. In the Risen's tale it is a crew of
+  barrow-breakers after the gold buried with the dead king (they start out unfriendly). Against the Outlaw Lord it
+  is the lord's own captain and his riders, stung that a stranger was asked to do his work, after the glory of
+  taking the outlaw. The older kinds (a famous hero, deserters, a lord's child) still turn up now and then.
+- **The Risen's patron may be the one who woke the dead.** When the Risen's tale hides a traitor, it is most often
+  the very person who sent for you: they paid the grave-robber to open the barrow, for its gold. Beat the waker and
+  what you find on the body gives them away (a priced list of the grave-goods in their hand, a purse with their
+  seal, or the waker's last laugh), told at your next fire or inn. Catch them out as before (accuse them in their
+  own town), or be betrayed at the end. This can still happen only once in a hero's life.
+- **The Outlaw's traitor has their own reason:** a cut of every wagon the gang stopped, with their own clues (their
+  wagons are the only ones never robbed; a gang-cut coin in a boot).
+- **The Outlaw Lord's tale has an ally.** In its second chapter you may win over a robbed carter or an old soldier
+  (the "Win over" step is optional). Their stake is of the road: a wagon lost with the lad who drove it, or months
+  ridden with the gang before running from it (a half-burned brand on the arm). They come under oath as the other
+  tales' allies do, and fight beside you in the hideout.
+- **More words:** every answer in the rival, patron, traitor, ally and seer scenes has at least three wordings now,
+  and every card of the Wayfarer's Deck three ways of turning up in the world.
+- **New world needed:** the save format changed (24). Saves from before this cannot be loaded (the game says so and
+  leaves the files untouched); start a new world.
+  Checks: see STATUS.md (F.5 note).
+
+### Session, 2026-11-06 (late morning): Adventures & Events Part F, task F.4 — the Reading — branch `dlc/06-adventures-events`
+
+- **A seer can read the cards for you.** In every city, and in any town where three roads or more meet, a seer keeps
+  a fire near the gate (a road-woman, a rune-caster in a dwarven hold, a star-reader among the elves). Talk to them
+  and ask for a reading: they want a coin (5 silver) or an hour's work about their fire. Out in the wild, a hermit
+  lives at about half of the world's wonders and offers the same when you come there with a tale on your hands.
+- **The game's own deck, the Wayfarer's Deck:** twenty great cards (the Lantern, the Hound, the Widow, the Ford,
+  the Crown, the Bell, the Mask, the Key, the Ash Tree, the Bride, the Smith, the Pilgrim, the Sleeper, the Broken
+  Shield, the Crow, the Mother, the Grave, the Wheel, the Candle, the Wolf) and four suits of small cards (Blades,
+  Coins, Cups, Stones), each with its own picture. The reading is laid at the seer's fire as a picture: five cards
+  in a cross on a red cloth, each crossed by a small card. Arrow keys (or a click) pick a card and show what it
+  means and the riddle it gives.
+- **The five cards answer the tale's hidden questions, truly.** The Key: where the thing you need lies. The Hand:
+  who will stand with you. The Shadow: what the villain fears. The Door: where the end will be. The Turn: what is
+  coming next (or, if someone close to you secretly serves the villain, a warning about them, which counts as one
+  of their clues). The game knows the answer first and picks the card that fits it, then writes a riddle out of the
+  real place's own history and land ("where one called the Unburied was laid in the earth, dead in 580, where
+  nothing grows above the knee"), never its name. The journal keeps every riddle under "The cards".
+- **Silent cards.** A card may stay face down ("Not yet. Come back when the road has turned."). Once the tale's
+  next chapter begins, ask again: the silent cards speak, and the Turn is read anew.
+- **Sometimes the villain's own card turns up**, upside down across the corner. It speaks through the seer's mouth,
+  it knows about you now (it pays more attention to you), and the person the Hand named becomes the first one it
+  goes after.
+- **The cards come true in the world, and the game points it out:** arriving at the Key's or the Door's place
+  ("A horseshoe is nailed over the way in, rusted the colour of old blood. The Smith, as Old Maud said."), meeting
+  the person the Hand named (a mark on them), finding the thing the Shadow spoke of. And the person the Hand names
+  is never the traitor.
+- Not in F.4: a blind priest who reads (seers and hermits only).
+  Checks: see STATUS.md (F.4 note). No save format change (F.5 bumps it); towns you had already
+  visited keep their people, so a seer appears only in towns filled from now on. Part F joins `main` at F.5.
+
+### Session, 2026-11-06 (morning): Adventures & Events Part F, task F.3 — patrons, traitors, innocents — branch `dlc/06-adventures-events`
+
+- **The one who sent for you may not have told you everything.** About one patron in three has a reason of their
+  own: a debt that the villain's death cancels, a guilt (it began with them), or a gain (they bought up the land the
+  trouble emptied). It never comes out at once. First they are kind to you: come back to their town and stay at its
+  inn, and they come down in person, once a chapter, with a purse and something for the road. Once the second
+  chapter has begun, one evening at that inn, they tell you the rest. Let it lie, take money to keep quiet, or tell
+  the whole town. The ending's page about them then says what really happened.
+- **Sometimes one of your own serves the villain.** About one tale in five hides a traitor: the patron (but never
+  more than once in a hero's whole life), the ally who came with you, or a companion you hired. They have a reason
+  (the villain holds their child; they are paid; they believe in it). You get clues by night: a name said in their
+  sleep, an old gold coin they should not have, a sign scratched in the ashes. Each clue goes in the journal under
+  "Doubts". From the second clue on you can act: have it out with them (an Insight check: they break and confess,
+  and from then on they feed the villain lies, so it is caught by surprise at the end; or they run to it), send them
+  away, or draw steel. A traitor patron can also be faced in their own town ("I know what you have done").
+- **Miss the clues and it is a twist.** On a night in the last chapter, a companion who serves it slips away with
+  one of the things you found, and the villain's servants come out of the dark after them. A patron far away calls
+  off the townsfolk who were going to stand with you. If you went straight to the end without a night's rest, the
+  traitor at your side turns on you in the final fight, on its second round, and fights for the villain. Someone
+  who ran to it is standing beside it when you get there. A patron who was never kind to you twice cannot go
+  through with it (the rule from the books: trust comes before betrayal).
+- **The innocent has a fate.** The village (or the person) who suffers if you fail now gets its own page at the end:
+  spared, scarred (you won, but the villain's reprisals, a kidnapping or a betrayal cost them), or lost. Your
+  companions hear it too.
+- **Two new kinds of task inside tales.** *Deliver*: carry something sealed into the right hands (the Risen tale now
+  has an optional letter from the patron to the temple, which sends back holy water; breaking the seal on a
+  traitor patron's letter is a clue). *Infiltrate*: get inside a place unseen (the Outlaw tale now has an optional
+  try at slipping into the gang's hideout before the end: in disguise, by stealth or by talking past the watch;
+  getting in gives you the back way and the surprise; getting caught brings the gang down on you).
+- Checks: see STATUS.md (F.3 note). No save format change (F.5 bumps it). Part F joins `main` at F.5.
+
+### Session, 2026-10-26 (small hours): Adventures & Events Part F, task F.2 — rivals — branch `dlc/06-adventures-events`
+
+- **Someone else wants it too.** About half of all tales now have a rival: a hero of the land with companions (a
+  living hero of the world's history, when there is one), a band of deserters, or a lord's son or daughter with paid
+  swords. You meet them a day or so into the tale, at an inn or at the next fire: drink with them, warn them off, or
+  say little and read them (you then learn when they will get there).
+- **They are racing you.** From the meeting their own clock runs, a week or two. If the tale has a thing to fetch
+  (the Risen's anchor) and you are slower, they get there first: the chest is forced and empty, and they are
+  drinking on it at the next inn. Pay their price, ask for it as a friend, take it from them, or let it go (that
+  part of the tale is lost; the rest goes on). If the prize is the villain's head, they go into its hall ahead of
+  you, and do not come out: you find them there, on the first level you come down to, their bones by the way in.
+  It is hurt from that fight, and the finale shows it.
+- **How they stand with you (from enemy to friend) decides how they show up.** A friend offers a truce: when you
+  face the villain, they come over the hill on the second round with their band. Neutral, they race you (offer a
+  truce, cut their girths by night, or ride your own road). Hostile, they rob you at the inn, and once the tale is
+  deep they sell your road to the villain: it knows you are coming, and you will not catch it unawares. An enemy
+  ambushes your camp at night (fight, talk them down, or throw them a purse). Under a truce, they may send for help
+  when they are in over their heads: ride to them and fight its servants beside them (and they owe you their life),
+  or refuse, and they are overrun.
+- The Journal shows them under "Rivals"; the epilogue tells what became of them.
+- Try it: take a tale, spend a night at an inn or camp a day after, and see who sits down with you.
+
+Decisions (Anton may want to change): a tale has a rival half the time or so (the Beast's six in ten); you meet them
+a day in; their race takes 7 to 13 days; something of theirs happens at most every three days, on half the nights;
+their price for the prize is 60, 150, 400 or 1000 gold by the tale's tier; a theft takes a quarter of your coin (at
+most that price); a band you refused holds out two days; one who died in its hall took a fifth of its hit points with
+them. The rival is not a townsperson you can visit: they ride, and you meet them in beats. Their news comes in the
+morning, so it never breaks your night's rest; only an ambush comes in the dark. The truce brings them on the third
+round of the finale.
+
+Checks: the Beast played through by the bot 40 times finishes 33 (31 before rivals; a first try, whose meetings broke
+the night's rest, finished 25 and was fixed); the Risen 15 of 20 (12 before); the fresh review's seven findings fixed.
+Full suite: only the known timing tests missed under load (enemy casters' slowest turn, the archmage's tactics); the
+storyplay test of the Risen and the Outlaw now plays eight lives of each (five to finish) instead of six (four): its six
+fell on other dice once rivals came. Autoplay OK, smoke OK. No save format change.
+
+### Session, 2026-10-25 (night, later): Adventures & Events Part F, task F.1 — allies with stakes — branch `dlc/06-adventures-events`
+
+- **The ally comes with you.** When you win over a tale's ally (the hunter who knows what the Beast fears, the old
+  soldier who will stand at the barrow), they now join your company as a full companion of their own trade (a
+  hunter fights as a fighter, a herder as a rogue, a priest as a cleric), at your level, and ask no wage: the party
+  screen says what they came for ("Came for the friend they lost to the Beast, and gave you their word to see it
+  through"). They like and dislike what you do by their own values, like any companion.
+- **A stake of their own.** Each ally has a reason: a friend lost, a brother taken, a home burned, an old vow over
+  the barrow-stones, an old shame to wipe out. The Journal shows them under "Beside you".
+- **If your company is full**, the ally rides with the patron instead, and comes to every fight with the tale's foes
+  (its bands, the night at the ford, the finale) as a fighter of their own beside you, on Auto, without taking a
+  place in the party. If they fall there, they are dead.
+- **Three beats by the fire.** A night or two after joining, the ally tells you why they came (listen, promise it
+  will be paid for, or tell them grief is poor company). Once the tale is in its second chapter, a crisis: one
+  out for revenge wants to go after the villain now (talk them down, take their pack from them, or let them go),
+  one with doubts wants to go home (persuade them, find out what really frightens them, or let them go). One who
+  rides with the patron may be carried off to the villain's hall instead, and the tale gains a rescue. When a won
+  tale is over and they live, they offer you their oath by the fire (they stay as a companion sworn to you for good)
+  or you send them home. Dying in the finale is dying well, and the epilogue says so; a retreat that breaks their
+  heart sends them home.
+- **Winning them over may be a story of its own.** The Risen's old soldier may not leave a parent unburied (pay the
+  priest, say the rite yourself, or talk the reeve into a grave on the hill), or may doubt you can win at all.
+- **A lieutenant who has come over to you** stands on your side at the finale.
+- **Fixed:** a villain's lieutenant who could run away (the Risen's grave-robber) ran from every fight, so the task
+  of beating them could go on for a month; after getting away twice they are cornered and fight to the end. A tale
+  no longer asks you to win over an ally who has already joined you.
+- Try it: take the Beast or the Risen, win the ally, camp a couple of nights, and open the Journal (j) and the
+  party screen.
+
+Decisions (Anton may want to change): the ally fights at the hero's level as the class of their trade; the crisis
+comes at most once, on a night once the second chapter has begun (half the nights); one who rides with the patron
+tells you their reason only at the inn of their own town; at the end of a won tale the oath is asked at the next
+night's fire and needs a place in the company; a lost or abandoned tale sends the ally home; the Outlaw Lord's tale
+has no ally yet (its full form, F.5, may give it one); the oath needs the ally to think well of you.
+
+Checks: full suite (only the known timing tests missed under load: enemy casters' slowest turn 453 ms of 400; they
+pass alone), autoplay OK, smoke OK; the Risen and the Outlaw played through by the bot as before (four in six or
+better, every miss a death).
 
 ### Session, 2026-10-25 (night): Adventures & Events Part E, task E.7 — every villain in its own voice — **Part E merged into `main`**
 

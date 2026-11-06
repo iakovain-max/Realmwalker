@@ -285,7 +285,8 @@ def bond_text(game, c: Character) -> str:
     lender = w.factions.get(comp.get("lender", -1))
     values = {"lender": lender.name if lender is not None else "a lord who is no more",
               "home": comp.get("home_name", "home"), "ruin": comp.get("ruin", "was lost"),
-              "share": f"{int(float(comp.get('cut', 0)) * 100)}%", **textgen.pronoun_values(c.sex)}
+              "share": f"{int(float(comp.get('cut', 0)) * 100)}%", "stake": comp.get("stake", "a cause of their own"),
+              **textgen.pronoun_values(c.sex)}
     return textgen.fill(bonds(game)[bond]["text"], game.world.rng.child("bond"), {}, values)
 
 
@@ -312,8 +313,9 @@ def dismiss(game, c: Character, *, deserted: bool = False) -> list[str]:
         from realmwalker.game import uniques
 
         uniques.left(game, c)  # home again, as they are, to be found there
-    from realmwalker.game.story import goals
+    from realmwalker.game.story import goals, stakes
 
+    stakes.dismissed(game, c, deserted)  # (a tale's ally: back by the patron, or broken with you: F.1)
     goals.notify(game, "party")  # (C.5)
     return [line(game, "desert" if deserted else "leave", c)]
 
@@ -597,6 +599,9 @@ def died(game, c: Character) -> None:
     from realmwalker.game import servants
 
     servants.died(game, c)  # (the hold on their raised dead ends)
+    from realmwalker.game.story import stakes
+
+    stakes.died(game, c)  # (a tale's ally fell: F.1)
     npc = game.world.npcs.get(c.companion.get("npc", -1)) if c.companion else None
     if npc is not None:
         npc.alive = False

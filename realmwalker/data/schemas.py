@@ -1571,6 +1571,68 @@ ADVENTURES = Obj({
                      "by_kind": Map(Obj({"share": Float(min=0, max=5, optional=True),
                                          "most": Int(min=1, max=16, optional=True)}), optional=True)},
                  optional=True),
+    # (F.1) allies with stakes (story/stakes.py): the class an ally of a trade fights as, the arc's days, each stake
+    # (the blueprints it fits, its crisis, the values and want it gives, its words), and the fates' epilogue lines
+    "allies": Obj({
+        "classes": Map(List(Str(max_len=30), min_items=2, max_items=2)),
+        "default_class": List(Str(max_len=30), min_items=2, max_items=2),
+        "arc": Obj({"confidence_after": Int(min=0, max=60), "crisis_after": Int(min=0, max=60),
+                    "crisis_chance": Float(min=0, max=1), "oath_loyalty": Int(min=0, max=100)}),
+        "stakes": Map(Obj({"blueprints": List(Str(max_len=30), optional=True),
+                           "jobs": List(Str(max_len=30), optional=True),
+                           "crisis": Str(choices=["revenge", "doubt"]),
+                           "values": List(Str(max_len=30), min_items=1),
+                           "want": Str(choices=["pay", "loot", "cause", "knowledge", "revenge"]),
+                           "stake": word_list(3, 200), "mine": word_list(3, 200),
+                           "confidence": word_list(3, 600)}), min_items=1),
+        "riding": word_list(3, 300),
+        "fates": Map(word_list(3, 400)),
+    }, optional=True),
+    # (F.2) rivals (story/rivals.py): the chance a blueprint's tale has one, their clock, their kinds (leader and band
+    # by tier, the relation they start at, their words) and the epilogue's line for each way it ended
+    "rivals": Obj({
+        "chance": Map(Float(min=0, max=1)),
+        "clock": Obj({"meet_after": Int(min=0, max=60), "race_days": List(Int(min=1, max=90), min_items=2, max_items=2),
+                      "every": Int(min=1, max=30), "event_chance": Float(min=0, max=1), "wounds": Float(min=0, max=0.9),
+                      "price": List(Int(min=0, max=10_000_000), min_items=4, max_items=4)}),
+        "kinds": Map(Obj({"weight": Int(min=0, max=20), "relation": Int(min=-2, max=2), "noble": Bool(optional=True),
+                          "leader": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+                          "band": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+                          "most": List(Int(min=1, max=12), min_items=4, max_items=4),
+                          "who": word_list(3, 200), "band_words": word_list(3, 100),
+                          # (F.5) a blueprint's own kind: only for these tales; what they want instead of the head
+                          "blueprints": List(Str(max_len=30), optional=True),
+                          "prize": List(Str(max_len=120), min_items=2, optional=True)}), min_items=1),
+        "fates": Map(word_list(2, 400)),
+    }, optional=True),
+    # (F.3) the cast's secrets (story/patrons.py, story/traitors.py): the patron's hidden motives and their kindnesses
+    # first, a traitor's chance by blueprint, whom it may be, their reasons and tells, and the innocent's fates
+    "patrons": Obj({
+        "motives": Map(Obj({"weight": Int(min=0, max=20), "told": List(Str(max_len=400), min_items=2, optional=True),
+                            "page": List(Str(max_len=400), min_items=2, optional=True)}), min_items=1),
+        "answers": Map(word_list(2, 300)),
+        "trust": Obj({"gift_after": Int(min=0, max=60), "gifts": Int(min=0, max=5), "betray_at": Int(min=0, max=5)}),
+        "gift_coin": List(Int(min=0, max=1_000_000), min_items=4, max_items=4),
+        "gifts": word_list(2, 200),
+    }, optional=True),
+    "traitors": Obj({
+        "chance": Map(Float(min=0, max=1)),
+        "from": Map(Int(min=0, max=20)),
+        "from_by": Map(Map(Int(min=0, max=20)), optional=True),  # (F.5) a blueprint's own weights by role
+        "clock": Obj({"tell_after": Int(min=0, max=60), "every": Int(min=1, max=30),
+                      "event_chance": Float(min=0, max=1), "tells": Int(min=2, max=4)}),
+        "reasons": Map(Obj({"weight": Int(min=0, max=20), "why": word_list(2, 400), "near": word_list(3, 400),
+                            "far": word_list(3, 400),
+                            # (F.5) the full forms' own reasons: only for these tales and roles; `waker` the tell
+                            # found when the tale's waker falls (the Risen's patron who woke the dead)
+                            "blueprints": List(Str(max_len=30), optional=True),
+                            "roles": List(Str(choices=["patron", "ally", "companion"]), optional=True),
+                            "waker": List(Str(max_len=400), min_items=2, optional=True)}), min_items=1),
+        "turned_as": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+        "patron_men": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+        "fates": Map(word_list(2, 400)),
+    }, optional=True),
+    "innocents": Obj({"fates": Map(Obj({"place": word_list(2, 400), "person": word_list(2, 400)}))}, optional=True),
 })
 
 GREAT_ATTACK = Obj({
@@ -1840,6 +1902,39 @@ FAVOURS = Obj({  # favours and contacts (game/story/favours.py, C.7)
 }, optional=True)
 DATA_FILES.update({"favours.json": FAVOURS})
 PACK_ONLY.update({"favours.json": {}})
+_CARD = Obj({"name": Str(max_len=40), "meaning": Str(max_len=200), "tags": List(Str(max_len=30), min_items=2),
+             "signs": word_list(3, 300), "marks": word_list(2, 300)})
+_TAGGED = Obj({"words": word_list(1, 300), "tags": List(Str(max_len=30), min_items=1)})
+READING = Obj({  # the Reading and the Wayfarer's Deck (game/story/reading.py, F.4)
+    "price": Int(min=0, max=100_000), "favour_minutes": Int(min=0, max=24 * 60),
+    "silent": Obj({"chance": Float(min=0, max=1), "most": Int(min=0, max=5)}),
+    "villain_card": Obj({"chance": Float(min=0, max=1), "per_attention": Float(min=0, max=1),
+                         "notice": Int(min=0, max=5)}),
+    "seers": Obj({"crossroads": Int(min=2, max=8), "hermit_chance": Float(min=0, max=1),
+                  "hermit_every": Int(min=1, max=60)}),
+    "positions": Obj({p: Obj({"name": Str(max_len=40), "asks": Str(max_len=120)})
+                      for p in ("key", "hand", "shadow", "door", "turn")}),
+    "great": Map(_CARD, min_items=20),
+    "suits": Map(Obj({"name": Str(max_len=30), "meaning": Str(max_len=120), "low": Str(max_len=60),
+                      "high": Str(max_len=60)}), min_items=4),
+    "ranks": List(Str(max_len=20), min_items=10, max_items=10),
+    "crossed": word_list(2, 200),
+    "riddles": Obj({k: word_list(3, 300) for k in ("key", "door", "hand", "shadow", "turn_traitor", "turn_scheme")}),
+    "pasts": Map(word_list(1, 300)),
+    "event_tags": Map(List(Str(max_len=30), min_items=1)),
+    "places": Obj({"kinds": Map(_TAGGED), "looks": Map(word_list(1, 200)), "initial": word_list(1, 200),
+                   "tomb": word_list(1, 300), "ruin": word_list(1, 300), "scar": word_list(1, 300)}),
+    "trades": Map(_TAGGED), "shadows": Map(_TAGGED), "turns": Map(_TAGGED), "traitor": Map(_TAGGED),
+    "villain": Obj({"cards": Map(List(Str(max_len=30), min_items=1)), "voice": Map(word_list(1, 600))}),
+    "silent_words": word_list(3, 300), "pointed": word_list(3, 300), "met": word_list(2, 300),
+    "shadow_seen": word_list(2, 300),
+    "talk": Obj({"ask": word_list(2, 120), "none": word_list(2, 300), "done": word_list(2, 300),
+                 "yes": word_list(2, 300)}),
+    "intros": Obj({"seer": word_list(3, 600), "hermit": word_list(2, 600)}),
+    "asks": word_list(3, 300), "hermits": word_list(2, 100),
+}, optional=True)
+DATA_FILES.update({"reading.json": READING})
+PACK_ONLY.update({"reading.json": {}})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
                    "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},

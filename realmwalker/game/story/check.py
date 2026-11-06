@@ -121,7 +121,7 @@ def problems(tables) -> list[str]:
                     if st.get(wk) and st[wk] not in tables.adventures.get("words", {}):
                         out.append(f"{sw}: there are no words called '{st[wk]}' in adventures.json.")
                 for field in ("at", "who", "about", "what", "to"):
-                    if field == "what" and st["kind"] == "fetch":
+                    if field == "what" and st["kind"] in ("fetch", "deliver"):
                         continue  # (a thing's name in words: "the crown of {villain_short}")
                     if isinstance(st.get(field), str):
                         _selector(f"{sw}, {field}", st[field], bound, out)
@@ -252,6 +252,33 @@ def problems(tables) -> list[str]:
     for b in early.BEATS:  # (E.4: the beats the code plays by name)
         if b not in beats:
             out.append(f"story/early.py: there is no beat called '{b}'.")
+    from realmwalker.game.story import rivals
+
+    rv = tables.adventures.get("rivals") or {}
+    for b in rivals.BEATS if rv else ():  # (F.2: the rivals' beats, played by name)
+        if b not in beats:
+            out.append(f"story/rivals.py: there is no beat called '{b}'.")
+    for kid, kind in rv.get("kinds", {}).items():
+        for part in ("leader", "band"):
+            for tier in kind[part]:
+                for c in tier:
+                    if creatures is not None and c not in creatures:
+                        out.append(f"adventures.rivals.json: {kid}'s {part} '{c}' is not a creature.")
+    from realmwalker.game.story import patrons, traitors
+
+    tr = tables.adventures.get("traitors") or {}
+    for mod, names, on in ((patrons, patrons.BEATS, tables.adventures.get("patrons")), (traitors, traitors.BEATS, tr)):
+        for b in names if on else ():  # (F.3: the cast's secrets, played by name)
+            if b not in beats:
+                out.append(f"story/{mod.__name__.rsplit('.', 1)[1]}.py: there is no beat called '{b}'.")
+    for part in ("turned_as", "patron_men"):
+        for tier in tr.get(part, []):
+            for c in tier:
+                if creatures is not None and c not in creatures:
+                    out.append(f"adventures.cast.json: traitors' {part} '{c}' is not a creature.")
+    for fate in traitors.STATES:
+        if tr and fate not in ("hidden", "fought") and fate not in tr.get("fates", {}):
+            out.append(f"adventures.cast.json: traitors have no epilogue line for the fate '{fate}'.")
     for mid, move in tables.villains.get("moves", {}).items():
         for b in (move["beat"], move.get("disloyal")):
             if b and b not in beats:

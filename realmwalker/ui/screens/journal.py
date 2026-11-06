@@ -70,6 +70,7 @@ STEP_WORDS = {"go": "Go to {place}.", "search": "Search {place} for what it left
               "hold": "Hold {place} on the night of {night}.", "rite": "Perform the rite at {place}.",
               "escort": "Walk {who} safely to {to}.", "confront": "Confront {who} with what you know.",
               "endure": "Live through what {villain} left behind.",
+              "deliver": "Carry {what} to {who}, into their hands.", "infiltrate": "Get inside {place} unseen.",
               "escape": "Get out of {place} alive, and your things with you."}
 ROUTE_WORDS = {"talk": "ask someone who knows", "check": "study its kill", "divine": "magic",
                "tail": "follow someone by night"}
@@ -80,6 +81,8 @@ CHECK_WORDS = {"nature": "study its kill", "history": "read the place's past", "
 def _thing(game, adv, st) -> str:
     """The thing a read or fetch step is about, in words (a fetch's name filled from the tale's words)."""
     tg = st["target"]
+    if st["kind"] == "deliver":
+        return tg.get("thing", "what you were given")
     if st["kind"] != "fetch":
         return tg.get("item", "it")
     q = quests.by_id(game, st.get("quest"))
@@ -120,7 +123,8 @@ def tale_lines(game, adv) -> str:
             text = st["note"] + (f" ({routes})" if routes else "") if st.get("note") else \
                 STEP_WORDS.get(st["kind"], st["kind"]).format(
                 place=places.name(w, tg["place"]) if tg.get("place") else "the place",
-                who=cast.describe(game, adv, tg["role"]) if tg.get("role") else "them",
+                who=cast.describe(game, adv, tg["role"]) if tg.get("role") else
+                (w.npcs[int(tg["npc"])].name if tg.get("npc") is not None and int(tg["npc"]) in w.npcs else "them"),
                 villain=words.get("villain", "it"), routes=routes, means=means or "something",
                 what=_thing(game, adv, st), to=places.name(w, tg["to"]) if tg.get("to") else "the place",
                 night=quests.when_text(game, int(tg["night"])) if tg.get("night") is not None else "a night to come")
@@ -131,6 +135,26 @@ def tale_lines(game, adv) -> str:
         lines += ["", "<title>People</> " + "; ".join(f"{esc(cast.describe(game, adv, r))} ({r})" for r in known)]
     from realmwalker.game.story import lieutenants
 
+    from realmwalker.game.story import stakes
+
+    beside = stakes.journal_line(game, adv)  # (the ally and their stake: F.1)
+    if beside:
+        lines += ["", "<title>Beside you</> " + beside]
+    from realmwalker.game.story import rivals
+
+    against = rivals.journal_line(game, adv)  # (who races you for it: F.2)
+    if against:
+        lines += ["", "<title>Rivals</> " + against]
+    from realmwalker.game.story import patrons, traitors
+
+    doubts = [x for x in (patrons.journal_line(game, adv), traitors.journal_line(game, adv)) if x]
+    if doubts:  # (what the patron kept back; the one who does not add up: F.3)
+        lines += ["", "<title>Doubts</> " + "; ".join(doubts)]
+    from realmwalker.game.story import reading
+
+    cards = reading.journal_lines(game, adv)  # (the seer's reading, and its riddles: F.4)
+    if cards:
+        lines += ["", "<title>The cards</>"] + cards
     hands = lieutenants.journal_lines(game, adv)  # (its lieutenants as far as you know them: E.3)
     if hands:
         lines += ["", "<title>Its hands</>"] + hands

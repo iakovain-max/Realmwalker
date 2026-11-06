@@ -1147,7 +1147,7 @@ def rest(game, kind: str, *, inn: bool = False) -> list[str]:
     if kind == "long" and (lm is None or inn) and game.over is None:
         from realmwalker.game import story
 
-        story.on_night(game, "inn" if inn else "camp")  # (what was left at the camp's edge by morning: Expansion 6)
+        story.on_night(game, "inn" if inn else "camp", morning=True)  # (what was left at the camp's edge by morning)
     if kind == "long" and game.over is None:
         from realmwalker.game.gear import check_snares
 

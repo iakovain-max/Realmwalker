@@ -362,12 +362,133 @@ def _check_adventures(game, fail) -> None:
     _check_part_d(game, fail)
     _check_villains(game, fail)
     _check_lieutenants(game, fail)
+    _check_allies(game, fail)
+    _check_rivals(game, fail)
+    _check_secrets(game, fail)
+    _check_reading(game, fail)
     _check_early(game, fail)
     _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
         rec = w.politics.get(key)
         if rec is not None and json.loads(json.dumps(rec)) != rec:
             fail(f"politics[{key!r}] is not JSON-native")
+
+
+def _check_allies(game, fail) -> None:
+    """Expansion 6 F.1: a tale's ally has a stake the data knows and a state the game knows; one with you is in the
+    company (or told to wait), one beside you in a live tale under the bond "oath"; a dead one is not with you."""
+    from realmwalker.game import companions, story
+    from realmwalker.game.story import stakes
+
+    sp = stakes.spec(game)
+    if not sp:
+        return
+    states = ("joined", "riding", "taken", "broke", "home", "fell", "sworn")
+    for adv in story.adventures(game.world).values():
+        rec = adv.get("ally")
+        if not rec:
+            continue
+        where = f"tale {adv['id']}, ally {rec.get('npc')}"
+        if rec.get("stake") not in sp["stakes"] or rec.get("state") not in states:
+            fail(f"{where}: an unknown stake or state ({rec.get('stake')}, {rec.get('state')})")
+        npc = stakes.npc_of(game, adv)
+        c = stakes.companion_of(game, adv)
+        carried = any(b["char"].companion.get("adv") == adv["id"] for b in getattr(game, "fallen", None) or ()
+                      if b["char"].companion)
+        if adv["state"] == "active" and rec.get("state") == "joined" and not carried and (
+                c is None or companions.bond_of(c) != "oath"):
+            fail(f"{where}: joined, but not in the company under oath (nor carried, fallen)")
+        if c is not None and (npc is None or not npc.alive):
+            fail(f"{where}: with you, and dead")
+
+
+def _check_rivals(game, fail) -> None:
+    """Expansion 6 F.2: a tale's rival has a kind the data knows, a state the game knows and a relation from -2 to 2;
+    one met has a prize; one holding a thing to fetch is ahead of you; a truce is a key of the tale."""
+    from realmwalker.game import story
+    from realmwalker.game.story import rivals
+
+    sp = rivals.spec(game)
+    if not sp:
+        return
+    for adv in story.adventures(game.world).values():
+        r = adv.get("rival")
+        if not r:
+            continue
+        where = f"tale {adv['id']}, rival {r.get('name')}"
+        if r.get("kind") not in sp["kinds"] or r.get("state") not in rivals.STATES:
+            fail(f"{where}: an unknown kind or state ({r.get('kind')}, {r.get('state')})")
+        elif adv["blueprint"] not in sp["kinds"][r["kind"]].get("blueprints", [adv["blueprint"]]):
+            fail(f"{where}: another tale's own rival ({r['kind']})")  # (F.5)
+        if not -2 <= int(r.get("relation", 0)) <= 2:
+            fail(f"{where}: a relation out of bounds ({r.get('relation')})")
+        if r.get("state") == "racing" and (r.get("prize") is None or r.get("due") is None):
+            fail(f"{where}: racing for nothing")
+        if r.get("holds") and r.get("state") not in ("ahead",) + tuple(s for s in rivals.STATES if s not in rivals.LIVE):
+            fail(f"{where}: holds the prize, but is {r.get('state')}")
+        if adv["state"] == "active" and r.get("state") == "truce" and "rival" not in adv["keys"]:
+            fail(f"{where}: under truce, but the tale has no key 'rival'")
+
+
+def _check_reading(game, fail) -> None:
+    """Expansion 6 F.4: a reading's cards are cards of the deck, each with whole words; the Hand names a person, and
+    never the tale's traitor."""
+    from realmwalker.game import story
+    from realmwalker.game.story import reading
+
+    sp = reading.spec(game)
+    if not sp:
+        return
+    for adv in story.adventures(game.world).values():
+        rec = adv.get("reading")
+        if not rec:
+            continue
+        where = f"tale {adv['id']}, reading"
+        for pos, c in rec.get("cards", {}).items():
+            if pos not in reading.POSITIONS or c.get("card") not in sp["great"] or \
+                    c.get("minor", [""])[0] not in sp["suits"]:
+                fail(f"{where}: {pos} is not a card of the deck ({c.get('card')}, {c.get('minor')})")
+            if not c.get("riddle") or "{" in c["riddle"] or "}" in c["riddle"]:
+                fail(f"{where}: {pos}'s riddle is not whole: {c.get('riddle')!r}")
+        named = rec.get("named")
+        if named is not None and int(named) not in game.world.npcs:
+            fail(f"{where}: the Hand names npc {named}, who is not in the world")
+        t = adv.get("traitor") or {}
+        if named is not None and t.get("npc") is not None and int(t["npc"]) == int(named):
+            fail(f"{where}: the one the Hand named is the traitor")
+
+
+def _check_secrets(game, fail) -> None:
+    """Expansion 6 F.3: a patron's motive is one the data knows (a traitor patron's tale has the traitor); a traitor
+    has a role, reason and state the game knows, and a patron betrays at most once in a hero's life."""
+    from realmwalker.game import story
+    from realmwalker.game.story import patrons, traitors
+    from realmwalker.game.story.forge import life_of
+
+    psp, tsp = patrons.spec(game), traitors.spec(game)
+    patron_traitors = 0
+    for adv in story.adventures(game.world).values():
+        p, t = adv.get("patron"), adv.get("traitor")
+        where = f"tale {adv['id']}"
+        if p and p.get("motive") not in set(psp.get("motives", {})) | {"traitor"}:
+            fail(f"{where}: the patron's motive '{p.get('motive')}' is not one the data knows")
+        if p and p.get("motive") == "traitor" and not (t and t.get("role") == "patron"):
+            fail(f"{where}: a traitor patron, but no traitor of the patron's role")
+        if not t:
+            continue
+        if t.get("role") not in ("patron", "ally", "companion") or t.get("reason") not in tsp.get("reasons", {}) \
+                or t.get("state") not in traitors.STATES:
+            fail(f"{where}: traitor {t.get('name')} with an unknown role, reason or state")
+        else:
+            rs = tsp["reasons"][t["reason"]]
+            if adv["blueprint"] not in rs.get("blueprints", [adv["blueprint"]]) or \
+                    t["role"] not in rs.get("roles", [t["role"]]):
+                fail(f"{where}: traitor {t.get('name')}'s reason '{t['reason']}' is another tale's or role's (F.5)")
+        if t.get("role") == "patron" and adv["hero"]["life"] == life_of(game) and \
+                t.get("state") not in ("faltered", "never"):
+            patron_traitors += 1
+    if patron_traitors > 1:
+        fail(f"{patron_traitors} patrons betrayed one hero (at most once in a life)")
 
 
 def _check_lieutenants(game, fail) -> None:

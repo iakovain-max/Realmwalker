@@ -560,6 +560,10 @@ class GameScreen(Screen):
             from realmwalker.ui.screens.beat import BeatScreen
 
             self.app.push(BeatScreen(self.app, game))
+        elif (game.world.politics.get("director") or {}).get("reading"):  # (the cards laid out: F.4)
+            from realmwalker.ui.screens.reading import ReadingScreen
+
+            self.app.push(ReadingScreen(self.app, game))
         elif game.read_board:
             from realmwalker.ui.screens.notices import NoticeBoardScreen
 

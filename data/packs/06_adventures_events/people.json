@@ -1,0 +1,12 @@
+{
+  "_comment": "Expansion 6 F.4: the seer, who reads the Wayfarer's Deck (game/story/reading.py). A seer keeps a fire in a city or a town where the roads meet (people.populate_town).",
+  "occupations": {
+    "seer": {"name": "seer", "titles": {"hold": "rune-caster", "elfhall": "star-reader"}, "place": "street", "social": "low", "purse": [2, 60], "stats": "commoner", "services": ["rumours"]}
+  },
+  "days": {
+    "seer": [[0, "sleep"], [7, "post"], [12, "meal"], [13, "post"], [22, "sleep"]]
+  },
+  "barks": {
+    "seer": ["Cards read! Know your road!", "A coin for your fortune!", "The cards see what you don't.", "Sit by the fire, traveller."]
+  }
+}

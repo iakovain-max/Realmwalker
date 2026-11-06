@@ -262,6 +262,8 @@ def test_a_parley_ends_the_gang_without_blood(made, tables, monkeypatch):
     fig = threats.villain_figure(game.world, t)
     _stand(game, adv["places"]["home"])
     assert story.on_arrive(game)
+    if beats.pending(game)["beat"] == "story_infiltrate":
+        _play(game, 3)  # (not now: the way in unseen another night, F.3)
     _play(game, 0)
     assert adv["ending"] == "pardoned" and adv["state"] == "won"
     assert not gang.active and fig.alive, "the band disbands; its captain lives"

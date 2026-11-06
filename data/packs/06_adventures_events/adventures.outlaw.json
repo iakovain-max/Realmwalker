@@ -68,6 +68,7 @@
         "suspect": {"pick": ["suspect_of(town)", "notable_of(town)"]},
         "raiders": {"pick": ["band(bandits)"]},
         "lookout": {"pick": ["band(bandits)"]},
+        "ally": {"pick": ["veteran_of(town)", "carter_of(town)"]},
         "innocent": {"pick": ["settlement(town)"]}
       },
       "lieutenants": [
@@ -129,6 +130,7 @@
              "routes": ["tail(suspect)", "skill(insight, town)", "ask(witness)", "divine()"],
              "gives": ["clue:inside"]},
             {"kind": "confront", "who": "suspect", "clue": "inside", "group": "thugs", "check": ["intimidation", 14]},
+            {"kind": "recruit", "who": "ally", "check": ["persuasion", 12], "optional": true},
             {"kind": "choose", "beat": "outlaw_parley_or_break", "note": "Decide: a parley with {villain_short}, or break {gang}"}
           ]
         },
@@ -153,6 +155,7 @@
             "Whatever is said of it later, the wagons of {town} roll on with nobody watching them from the trees."
           ],
           "steps": [
+            {"kind": "infiltrate", "at": "home", "group": "bandits", "optional": true, "gives": ["key:backway"]},
             {"kind": "go", "at": "home", "beat": "outlaw_the_hideout"},
             {"kind": "finale", "at": "home.deepest"}
           ]
@@ -166,6 +169,7 @@
         "endure_field": "burning_village",
         "keys": {
           "backway": ["surprise"],
+          "ally": ["ally_fights"],
           "inside": ["minions(-50)", "lieutenant_absent(raiders)"]
         },
         "words": {

@@ -505,9 +505,10 @@ class GameState:
 
     @property
     def story_waiting(self) -> bool:
-        """A story screen waits (Expansion 6): a beat, a chapter's title card, a finale's card, an epilogue."""
+        """A story screen waits (Expansion 6): a beat, a chapter's title card, a reading's cards, a finale's card, an
+        epilogue."""
         d = self.world.politics.get("director") or {}
-        return bool(d.get("pending") or d.get("card") or getattr(self, "finale", None)
+        return bool(d.get("pending") or d.get("card") or d.get("reading") or getattr(self, "finale", None)
                     or getattr(self, "epilogue", None))
 
     @property

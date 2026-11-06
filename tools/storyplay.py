@@ -96,6 +96,8 @@ class Player:
                 self.beat()
             elif beats.director(g.world).get("card"):
                 beats.director(g.world)["card"] = None
+            elif beats.director(g.world).get("reading"):  # (the cards looked at, as on their screen: F.4)
+                beats.director(g.world)["reading"] = None
             elif getattr(g, "finale", None):
                 self.note("the finale: Fight (" + ", ".join(f"{c.hp}/{c.max_hp} hp L{c.level} ex{c.exhaustion}"
                                                             for c in g.party if c.alive) + ")")
@@ -136,7 +138,7 @@ class Player:
         rec = beats.pending(g)
         opts = [o for o in beats.choices(g, rec) if o["ok"]]
         prefer = ("hunt it", "quietly", "stake out", "tooth", "look closer", "study it", "stand to the fire",
-                  "think back")
+                  "think back", "have it out")
         pick = next((o for w in prefer for o in opts if w in o["label"].lower()), None)
         pick = pick or next((o for o in opts if "not now" not in o["label"].lower()), opts[0] if opts else None)
         self.run.beats.append(rec["beat"])

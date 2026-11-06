@@ -25,10 +25,14 @@ HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selector
                    "realmwalker.game.story.steps", "realmwalker.game.story.beats", "realmwalker.game.story.endings",
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
                    "realmwalker.game.story.situations", "realmwalker.game.story.opening",
-                   "realmwalker.game.story.arenas")
+                   "realmwalker.game.story.arenas", "realmwalker.game.story.stakes", "realmwalker.game.story.rivals",
+                   "realmwalker.game.story.deeds", "realmwalker.game.story.patrons", "realmwalker.game.story.traitors",
+                   "realmwalker.game.story.reading")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
                  "sit_act", "fav_call", "fav_hide", "contact_ask",  # (situations, C.6; favours and contacts, C.7)
-                 "story_recruit", "story_rally", "story_confront", "story_escort"}  # (Part D's steps: story/deeds.py)
+                 "story_recruit", "story_rally", "story_confront", "story_escort",  # (Part D's steps: story/deeds.py)
+                 "story_accuse",  # (a traitor patron faced in their own town: story/traitors.py, F.3)
+                 "story_reading"}  # (a seer asked to read the cards: story/reading.py, F.4)
 
 
 def load_all() -> None:
@@ -266,6 +270,9 @@ def daily(game) -> None:
     from realmwalker.game.story import favours
 
     favours.daily(game)  # (letters from your contacts, and their warnings: C.7)
+    from realmwalker.game.story import reading
+
+    reading.daily(game)  # (the Hand's name, once their town has its people: F.4)
     for adv in active(game):
         villain.quiet(game, adv)
         villain.lapse(game, adv)  # (an invitation never taken up: E.2)
@@ -290,6 +297,13 @@ def daily(game) -> None:
     from realmwalker.game.story import early
 
     early.daily(game)  # (a villain you put down walks again: you hear of it first, E.4)
+    from realmwalker.game.story import rivals
+
+    rivals.daily(game)  # (a rival for each tale, their race run, a band left pinned: F.2)
+    from realmwalker.game.story import patrons, traitors
+
+    patrons.daily(game)  # (the patron's hidden motive, decided once: F.3)
+    traitors.daily(game)  # (a traitor among the cast, decided as the second chapter opens: F.3)
     for item in list(d.get("scheduled", [])):
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
@@ -417,8 +431,9 @@ def _due_slay(game) -> bool:
 def on_arrive(game) -> bool:
     """The party stands on a tile of the world map: a step that is here (go, search, a learning route's check) plays
     its beat, or is done. True when a beat waits."""
-    from realmwalker.game.story import beats, places
+    from realmwalker.game.story import beats, places, reading
 
+    reading.on_arrive(game)  # (a card's place met, pointed out: F.4)
     if beats.pending(game) is not None:
         return False
     for adv in active(game):
@@ -433,6 +448,11 @@ def on_arrive(game) -> bool:
                 if st["kind"] == "search" and any(o["kind"] == "go" and o["state"] == "open" and
                                                   o["target"].get("place") == t["place"] for o in open_steps(adv)):
                     continue  # (first the arrival, then the search)
+                from realmwalker.game.story import deeds
+
+                if st["kind"] == "go" and any(o["kind"] == "infiltrate" and o["target"].get("place") == t["place"]
+                                              and deeds.infiltrate_waits(game, adv, o) for o in open_steps(adv)):
+                    continue  # (first the way in unseen, if you will try it today: F.3)
                 if st.get("beat"):
                     beats.offer(game, st["beat"], adv=adv["id"], step=st["id"], where=_where(game))
                     return True
@@ -446,7 +466,7 @@ def on_arrive(game) -> bool:
 
     if deeds.on_arrive(game):  # (a band waiting here, a hold's night, a rite: D.2)
         return True
-    return _offer_choice(game)
+    return _offer_choice(game) or reading.hermit(game)  # (a hermit's fire at a wonder: F.4)
 
 
 def after_beat(game) -> None:
@@ -523,7 +543,7 @@ def _show_tale(game, town) -> bool:
         if ch is None or ch["id"] != "den" or "ally" not in adv["keys"] or adv.get("ally_note") is not None:
             continue
         ally = cast.person(game.world, adv["cast"].get("ally"))
-        if ally is None or not getattr(ally, "alive", True) or getattr(ally, "settlement", None) == town.id:
+        if ally is None or not getattr(ally, "alive", True) or getattr(ally, "settlement", None) == town.id or                 (adv.get("ally") or {}).get("state") == "joined":  # (one in your company needs send no note: F.1)
             continue  # (in the hunter's own town, the hunter would simply come)
         words.update(sender=f"{ally.first_name}, {ally.title}", hand_of=getattr(ally, "job", "plain"))
         if stage.start(game, "ally_note", words=words) is not None:
@@ -593,9 +613,10 @@ def _hunter_situation(game, adv: dict, st: dict, town) -> None:
     situations.for_step(game, adv, st, npc, route="ally")
 
 
-def on_night(game, where: str) -> bool:
+def on_night(game, where: str, *, morning: bool = False) -> bool:
     """A night at camp or at the inn: the villain may answer you (a carcass at the camp's edge, a test by night), or a
-    choice that is due is put to you."""
+    choice that is due is put to you. `morning`: the rest is over (fight.rest's last call), and what would only have
+    broken it waits for now (a rival's beats but the ambush: F.2)."""
     from realmwalker.game.story import beats, villain
 
     if beats.pending(game) is not None:
@@ -605,6 +626,20 @@ def on_night(game, where: str) -> bool:
     from realmwalker.game.story import deeds
 
     if deeds.on_night(game, where):  # (the night a place must be held: D.2)
+        return True
+    from realmwalker.game.story import stakes
+
+    if stakes.on_night(game, where):  # (an ally's confidence, crisis or fate: F.1)
+        return True
+    from realmwalker.game.story import rivals
+
+    if rivals.on_night(game, where, morning=morning):  # (a rival met, racing, offering a truce, robbing you: F.2)
+        return True
+    from realmwalker.game.story import patrons, traitors
+
+    if traitors.on_night(game, where, morning=morning):  # (a traitor's tell, or the betrayal: F.3)
+        return True
+    if morning and patrons.on_night(game, where):  # (the patron's kindness, and the motive they kept back: F.3)
         return True
     for adv in active(game):
         beat = villain.due_move(game, adv, where)
@@ -668,6 +703,9 @@ def on_descend(game, lm) -> None:
     from realmwalker.game.story import deeds
 
     deeds.on_descend(game, lm)  # (a step's band on a level filled before: D.2)
+    from realmwalker.game.story import rivals
+
+    rivals.on_descend(game, lm)  # (a rival who went in ahead of you, found: F.2)
     for adv in active(game):
         for st in [s for ch in adv["chapters"] for s in ch["steps"] if s["state"] == "open"]:  # (early too)
             if st["kind"] != "finale" or st["target"].get("level") != lm.key:
@@ -714,6 +752,15 @@ def on_battle(game, result, actor=None) -> None:
     from realmwalker.game.story import deeds, endings, lieutenants, villain
 
     lieutenants.on_battle(game, result)  # (a lieutenant slain, taken or got away; a nemesis: E.3)
+    from realmwalker.game.story import stakes
+
+    stakes.on_battle(game, result)  # (an ally who rode with the patron and fell; one at the finale: F.1)
+    from realmwalker.game.story import rivals
+
+    rivals.on_battle(game, result)  # (a rival's band fought, or fought beside you: F.2)
+    from realmwalker.game.story import traitors
+
+    traitors.on_battle(game, result)  # (a traitor slain, or one who turned in the fight gone over: F.3)
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
     seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \
@@ -726,7 +773,7 @@ def on_battle(game, result, actor=None) -> None:
             continue
         if tag.get("role") == "villain":
             seen.append((adv, how))
-        elif how == "dead":  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
+        elif how == "dead" and tag.get("role") != "rival":  # (a rival's band is no servant of its: F.2)  # (its servants killed, once a fight; each lieutenant slain, and its wrath: E.1)
             h = harm.setdefault(adv["id"], {"servants": 0, "lieutenants": 0})
             h["servants" if tag.get("role") in ("minion", "wave", "ambush", "endure") else "lieutenants"] += 1
     for aid, h in harm.items():
@@ -830,6 +877,10 @@ def on_quest_end(game, q: dict, ok: bool) -> None:
     st = find_step(game, aid, sid)
     if st is not None and st["state"] == "open":
         if ok:
+            if st["kind"] == "deliver":
+                from realmwalker.game.story import deeds
+
+                deeds.delivered(game, adventures(game.world)[aid], st)  # (what they give back: F.3)
             step_done(game, aid, sid)
         else:
             st["state"] = "failed"
@@ -1018,6 +1069,12 @@ def talk_choices(conv) -> list:
 
     out += deeds.talk_choices(conv)  # (recruit, rally, confront, an escort's setting out: D.2)
     out += situations.talk_choices(conv)
+    from realmwalker.game.story import traitors
+
+    out += traitors.talk_choices(conv)  # (a traitor patron faced with what you know: F.3)
+    from realmwalker.game.story import reading
+
+    out += reading.talk_choices(conv)  # (a seer: the Wayfarer's Deck, F.4)
     from realmwalker.game.story import favours
 
     out += favours.call_choices(conv)  # (a favour called in, a contact's news: C.7)
@@ -1062,6 +1119,16 @@ def talk_choose(conv, choice) -> None:
 
     if cid in deeds.TALK_CHOICES:
         deeds.talk_choose(conv, choice)
+        return
+    from realmwalker.game.story import traitors
+
+    if cid in traitors.TALK_CHOICES:
+        traitors.talk_choose(conv, choice)
+        return
+    from realmwalker.game.story import reading
+
+    if cid in reading.TALK_CHOICES:
+        reading.talk_choose(conv, choice)
         return
     if cid == "story_hook":
         from realmwalker.world import threats

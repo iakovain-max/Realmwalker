@@ -16,7 +16,7 @@ from realmwalker.rules.items import Item
 
 from realmwalker.world.factions import CULTURE_RACE  # noqa: E402  (kept importable from here)
 DAY_START, DAY_END = 7, 19
-STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord", "wayfarer"}
+STAYS_AT_POST = {"innkeeper", "serving_hand", "guard", "priest", "lord", "wayfarer", "seer"}
 WANDERS = {"guard", "farmer", "labourer", "weaver", "carter", "washerwoman", "beggar", "fisher", "woodcutter", "miner"}
 MARKET_DAYS = ("Freyasday", "Saturnsday")  # when the square fills up
 
@@ -357,6 +357,19 @@ def populate_town(game, lm, settlement) -> Town:
             if i == 0 and getattr(settlement, "great", False):
                 npc.stats, npc.title = "archmage", "archmage"  # (the greatest city's first mage: Exp 5 C.2)
             add(world, town, npc)
+    # A seer (Expansion 6 F.4): where the roads meet, or in a city, one keeps a fire near the gate and reads the
+    # Wayfarer's Deck for a coin (game/story/reading.py).
+    from realmwalker.game.story import reading
+
+    if reading.keeps_seer(game, settlement):
+        home = a_home()
+        post = home
+        for gx, gy in _gate_posts(game, lm, walk)[:1]:
+            near = [(gx + dx, gy + dy) for r in (3, 2, 4) for dx in range(-r, r + 1) for dy in range(-r, r + 1)
+                    if max(abs(dx), abs(dy)) == r]
+            post = next((p for p in near if lm.in_bounds(*p) and walk[p] and p not in taken), home)
+        taken.add(post)
+        add(world, town, make_npc(game, settlement, "seer", rng.child("seer"), post=post, home=home))
     spec = people["settlement_people"].get(settlement.kind, people["settlement_people"]["village"])
     if getattr(settlement, "great", False):
         spec = people["settlement_people"].get("great", spec)
@@ -526,7 +539,10 @@ def heroes_at_the_inn(game, settlement, rng: RNG) -> None:
     slew a beast or found a lost treasure, with that story to tell (and a sword for hire)."""
     w = game.world
     home = f"S{settlement.id}"
-    heroes = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.home == home
+    from realmwalker.game.story import rivals
+
+    away = rivals.riding(w)  # (riding as a tale's rival: Expansion 6 F.2)
+    heroes = [f for f in w.figures.values() if f.alive and f.kind == "person" and f.home == home and f.id not in away
               and f.job in ("adventurer", "hero") and (f.npc < 0 or f.npc not in w.npcs or not w.npcs[f.npc].alive)]
     if not heroes:
         return

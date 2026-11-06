@@ -250,6 +250,16 @@ def _helper(game, adv: dict) -> int | None:
             named = {st["target"].get("role")} | {r.get("role") for r in st["target"].get("routes", [])}
             (helped if st["state"] == "done" else needed).update(named)
     here = game.world.settlement_at(game.player.x, game.player.y)
+    rd = adv.get("reading") or {}
+    if rd.get("villain_knows") and rd.get("named") is not None:  # (it knows whom the cards favour: F.4)
+        nid = int(rd["named"])
+        npc = game.world.npcs.get(nid)
+        in_party = any((c.companion or {}).get("npc") == nid for c in game.party[1:])
+        role = next((r for r, e in adv["cast"].items() if isinstance(e, dict) and e.get("npc") == nid), None)
+        if npc is not None and getattr(npc, "alive", False) and not in_party and npc.present and \
+                not npc.flags.get("kidnapped") and role not in needed and \
+                (here is None or npc.settlement != here.id):
+            return nid  # (never one a step still needs: the tale stays winnable)
     for role in roles:
         entry = adv["cast"].get(role)
         npc = cast.person(game.world, entry) if entry and "npc" in entry else None

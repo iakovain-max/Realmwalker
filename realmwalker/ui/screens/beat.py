@@ -23,6 +23,11 @@ def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, fl
 
         scenes.camp(canvas, game, px, canvas.now)
         return True
+    if name == "reading":  # (the seer's fire, the cards still face down: F.4)
+        from realmwalker.ui.gfx import cards
+
+        cards.table(canvas, game, px, None, canvas.now)
+        return True
     from realmwalker.ui.gfx import vignette
 
     backdrop = backdrop_for(game, name, rec)
@@ -93,14 +98,18 @@ class BeatScreen(Screen):
         super().__init__(app)
         self.game = game
         self.rec = beats.pending(game)
-        if self.rec and game.tables.beats.get(self.rec["beat"], {}).get("family") == "villain":
+        family = game.tables.beats.get(self.rec["beat"], {}).get("family") if self.rec else None
+        if family == "villain":
             self.sound_open = "villain_move"  # (its move reaches you: E.7)
+        elif family == "ally":
+            self.sound_open = "fire"  # (an ally's word by the fire: F.1)
+        self.family = family
         self.pages = beats.pages(game, self.rec) if self.rec else []
         self.page = 0
         self.result: list[str] | None = None
 
     def music(self) -> str | None:
-        return "story/omen"
+        return "rest" if self.family == "ally" else "story/omen"
 
     def choose(self, i: int) -> None:
         opts = beats.choices(self.game, self.rec)
@@ -151,7 +160,7 @@ class BeatScreen(Screen):
             for line in self.result:
                 tail += markup.wrap(line, iw) if line else []
         pic = game.tables.beats.get(self.rec["beat"], {}).get("picture") if self.page == 0 else None
-        pic_rows = PICTURE_ROWS + 1 if pic == "camp_night" or backdrop_for(game, pic, self.rec) else 0
+        pic_rows = PICTURE_ROWS + 1 if pic in ("camp_night", "reading") or backdrop_for(game, pic, self.rec) else 0
         height = len(body) + len(tail) + len(opts) + 8 + pic_rows
         x, y, w, h = modal_box(canvas, width, height, beats.title(game, self.rec) or self.title)
         row = y + 2

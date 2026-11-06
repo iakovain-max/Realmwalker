@@ -1354,6 +1354,10 @@ def on_chest(game, feature: dict) -> list[Item]:
     q = by_id(game, feature.get("quest"))
     if q is None:
         return []
+    if q["target"].get("rival"):  # (a tale's rival reached it first: Expansion 6 F.2)
+        game.say(f"<warn>The lock is forced and {q['target'].get('item', 'what you came for')} is gone. "
+                 "Someone was here before you.</>", "warn")
+        return []
     item = quest_item(game, q)
     mark_done(game, q)
     return [item]
@@ -2130,6 +2134,12 @@ def read_letter(game, it) -> list[str]:
     q["opened"] = True
     if it.name.startswith("sealed "):
         it.name = "opened " + it.name.removeprefix("sealed ")
+    if q.get("adventure"):
+        from realmwalker.game.story import traitors
+
+        told = traitors.read_letter(game, q, first)  # (a traitor patron's letter is a tell: Expansion 6 F.3)
+        return told or [f"You break the seal. It is what {q['giver_name']} said it was: a plea for help, and a list "
+                        f"of the dead. The broken seal will show."]
     if q.get("hidden") == "incriminating":
         if first:
             reveal(game, q)

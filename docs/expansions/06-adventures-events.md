@@ -361,17 +361,17 @@ ADVENTURES.md §5.4, §5.5, §5.8.
 
 ### Part F – The cast and the Reading
 ADVENTURES.md §5.3, §5.6, §5.7.
-- [ ] F.1 Allies with stakes, join conditions (often a situation of their own) and three-beat arcs; the new bond
+- [x] F.1 Allies with stakes, join conditions (often a situation of their own) and three-beat arcs; the new bond
   `oath` (companions.json); the full party case (`Battle.add_ally`); their fates. Tests: `tests/test_cast.py`.
-- [ ] F.2 Rivals: bands with their own clocks (race, theft, ambush, truce, plea, sale to the villain, found dead – a
+- [x] F.2 Rivals: bands with their own clocks (race, theft, ambush, truce, plea, sale to the villain, found dead – a
   scene in the lair) and a relation from −2 to 2.
-- [ ] F.3 Patrons' hidden motives (a betrayal at most once in a hero's life), traitors with at least two tells,
+- [x] F.3 Patrons' hidden motives (a betrayal at most once in a hero's life), traitors with at least two tells,
   innocents' fates; step kinds `deliver`, `infiltrate`.
-- [ ] F.4 The Reading: `reading.json` (the Wayfarer's Deck – twenty great cards and four suits, original names and
+- [x] F.4 The Reading: `reading.json` (the Wayfarer's Deck – twenty great cards and four suits, original names and
   meanings), seers (a people.json job; crossroads camps, hermits at wonders), the reading staged at the seer's fire
   with the cards laid out as a picture, riddles written from the true places' own pasts, silent cards, the villain's
   card; the cards' imagery planted in the world and pointed out; card faces.
-- [ ] F.5 Words *(parallel)*, pictures, tests; the blueprints' full forms gain their rivals and traitors;
+- [x] F.5 Words *(parallel)*, pictures, tests; the blueprints' full forms gain their rivals and traitors;
   FORMAT_VERSION +1; Part F to `main`.
 
 ### Part G – The world changes

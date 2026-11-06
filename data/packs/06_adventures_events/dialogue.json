@@ -1,0 +1,6 @@
+{
+  "_comment": "Expansion 6 F.4: how a seer greets you.",
+  "greeting_job": {
+    "seer": ["\"I wondered when you would come.\"", "They look up from the cards, and do not seem surprised. \"Sit, if you like.\"", "\"The fire is warm, and the cards are dry. What do you want to know?\""]
+  }
+}

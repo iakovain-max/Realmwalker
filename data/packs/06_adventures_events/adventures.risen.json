@@ -125,6 +125,7 @@
             "The work is done and the road is quiet. It will not stay so. {villain_short} has felt the crown taken, and {his} anger lies on {town} like a cold weight."
           ],
           "steps": [
+            {"kind": "deliver", "to": "lore", "jobs": ["priest", "preacher", "monk"], "what": "a letter sealed with {patron}'s ring, for the temple at {lore}", "item": "holy_water", "optional": true},
             {"kind": "learn", "about": "villain", "answer": "risen_past", "beat": "risen_lore_at_field",
              "note": "Learn who {villain_short} was, and {his} true name",
              "routes": ["sage(lore)", "ask(ally)", "skill(history, field)", "divine()"], "gives": ["key:name"]},

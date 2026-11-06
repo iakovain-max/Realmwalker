@@ -1,0 +1,27 @@
+{
+  "_comment": "The Reading (Expansion 6 F.4, game/story/reading.py): a seer's or a hermit's offer to lay the Wayfarer's Deck. Offered from talk or at a wonder, never by the director (weight 0). {seer_intro} and {seer_ask} are written by story/reading.offer from reading.json.",
+  "beats": {
+    "reading_offer": {
+      "family": "reading",
+      "picture": "reading",
+      "weight": 0,
+      "title": ["The cards", "{seer} reads", "The Wayfarer's Deck", "At {seer}'s fire"],
+      "text": [
+        ["{seer_intro}", "{seer_intro} The light is going, and the fire is the brightest thing for a mile.", "{seer_intro} Somewhere behind you a dog barks, and stops, as if told to."],
+        ["{seer_ask}"]
+      ],
+      "choices": [
+        {"label": ["Cross {seer}'s palm with {price}.", "Pay {price}, and sit down by the fire."],
+         "requires": {"reading_price": 1},
+         "ops": [["reading", "pay"]],
+         "result": ["The coin vanishes somewhere about {seer}. The cards are cut, and cut again, and laid down one by one on the cloth.", "\"Good,\" says {seer}, and the first card goes down on the cloth, face up.", "{seer} takes the payment without a word and shuffles, slowly, the cards worn soft as cloth."]},
+        {"label": ["Offer a favour instead: an hour's work about the fire.", "Carry water and wood for an hour, as the price."],
+         "ops": [["reading", "favour"]],
+         "result": ["You fetch, carry, mend and stack until {seer} is satisfied, and then sit down, and the cards come out.", "An hour of work, and {seer} nods at last, and lays out the cards.", "You split wood and haul water until your arms ache. {seer} watches, and when it is done, takes up the deck."]},
+        {"label": ["Not today."],
+         "ops": [],
+         "result": ["{seer} shrugs, and the cards go back into their cloth. \"The road will still be there.\"", "\"Another time, then,\" says {seer}, not at all surprised.", "{seer} wraps the cards without a word. \"As you like. They keep.\""]}
+      ]
+    }
+  }
+}

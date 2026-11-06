@@ -110,6 +110,21 @@
       "{who} is here, waiting for you.",
       "{who}. They have been expecting you.",
       "There they are: {who}, and they have seen you."
+    ],
+    "deliver_given": [
+      "{patron} gives you {what}, for {who} in {to}. Into their hands, and nobody else's.",
+      "{patron} presses {what} on you: for {who}, in {to}. \"Nobody else reads it. Nobody.\"",
+      "You carry {what} now, for {who} in {to}. {patron} watched you put it away before saying another word."
+    ],
+    "deliver_thanks": [
+      "They give you {what} for your trouble, and their thanks to {patron}.",
+      "For your trouble: {what}. \"Tell {patron} it came, and that we will do what we can.\"",
+      "They send you away with {what}, and a blessing on the road."
+    ],
+    "infiltrate_caught": [
+      "The alarm is up. They know you are here.",
+      "A shout, and another, and the dark is full of running feet.",
+      "So much for unseen. They are coming."
     ]
   }
 }

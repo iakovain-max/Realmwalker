@@ -17,6 +17,11 @@ Their binding (what a blueprint's step becomes) is story/steps.py; story/__init_
   passes by itself.
 - `talk_choices(conv)` / `talk_choose(conv, choice)`: recruit, rally, confront and setting out on an escort; the first
   three may become a situation (situations.for_step), which then finishes the step.
+- deliver (F.3): a step quest of the deliver kind, the sealed thing put in your pack as its chapter opens (its
+  receiver found at once: a role of the cast, or the one of its jobs in a town, peopled ahead if need be); done in
+  their hands (quests' deliver_letter -> story.on_quest_end -> `delivered`: what they give back).
+- infiltrate (F.3): at its place (on the land, or the tile of a site or town), its beat once a day (`on_arrive`); the
+  op `infiltrate` in (done) or caught (its band, and the step fails).
 
 A step's record keeps its own progress: "set" (set up), "quest" (its step quest), "night" (in the target, a hold's
 day), "wave", "met" (the day its band was last met), "asked" (the day a recruit or rally was refused), "taken".
@@ -25,9 +30,11 @@ day), "wave", "met" (the day its band was last met), "asked" (the day a recruit 
 from __future__ import annotations
 
 from realmwalker.core.textgen import escape_markup as esc
+from realmwalker.game.story.beats import condition, op
 
-KINDS = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront", "endure")
-LOOSE = ("wave", "ambush", "endure")  # (a band with no named head: every one of it carries the role)
+KINDS = ("rescue", "fetch", "defeat", "capture", "recruit", "rally", "hold", "rite", "escort", "confront", "endure",
+         "deliver", "infiltrate")
+LOOSE = ("wave", "ambush", "endure", "infiltrate")  # (a band with no named head: every one of it carries the role)
 ENDURE_WAIT = 7  # days an endure's set piece waits for the road or a camp before it passes by itself
 BAND_KINDS = ("defeat", "capture")
 TALK_CHOICES = {"story_recruit", "story_rally", "story_confront", "story_escort"}
@@ -60,6 +67,9 @@ DEFAULT_WORDS = {
     "endure_won": ["You came through it."],
     "endure_lost": ["You live, and that is all."],
     "endure_passed": ["Whatever was meant to find you never did."],
+    "deliver_given": ["{patron} gives you {what}, for {who} in {to}. Into their hands, and nobody else's."],
+    "deliver_thanks": ["They give you {what} for your trouble, and their thanks to {patron}."],
+    "infiltrate_caught": ["The alarm is up. They know you are here."],
 }
 
 
@@ -154,6 +164,9 @@ def setup(game, adv: dict) -> None:
         if st["state"] == "open" and st["kind"] in SETUP and not st.get("set"):
             st["set"] = True
             SETUP[st["kind"]](game, adv, st)
+    from realmwalker.game.story import stakes
+
+    stakes.won_over(game, adv)  # (a recruit step for one who already came with you: F.1)
 
 
 def _giver(game, adv: dict):
@@ -255,8 +268,74 @@ def _setup_endure(game, adv: dict, st: dict) -> None:
     st["target"]["due"] = _today(game) + rng.randint(int(lo), int(hi))
 
 
+def _receiver(game, adv: dict, st: dict):
+    """Who a deliver step's thing is for: the role's person, or the one of its jobs in its town (peopled now if it
+    has never been)."""
+    from realmwalker.game import people
+    from realmwalker.game.story import cast
+
+    t = st["target"]
+    if "role" in t:
+        who = cast.person(game.world, adv["cast"].get(t["role"]))
+        return who if who is not None and hasattr(who, "settlement") and who.alive else None
+    sid = int(t["place"]["settlement"])
+    s = game.world.settlements[sid]
+    town = game.world.towns.get(sid)
+    if town is None or not town.npcs:
+        people.prepare_town(game, s)
+    folk = [n for n in people.npcs_in(game.world, sid) if n.alive and n.job != "child"]
+    for job in t.get("jobs", []):
+        found = sorted((n for n in folk if n.job == job), key=lambda n: n.id)
+        if found:
+            return found[0]
+    notables = sorted((n for n in folk if n.notable), key=lambda n: n.id)
+    return notables[0] if notables else None
+
+
+def _setup_deliver(game, adv: dict, st: dict) -> None:
+    from realmwalker.core import textgen
+    from realmwalker.game.quests import direction
+    from realmwalker.game.story import words as wordsmod
+    from realmwalker.rules.inventory import add_existing
+    from realmwalker.rules.items import Item
+
+    who = _receiver(game, adv, st)
+    if who is None:
+        step_failed(game, adv, st)  # (nobody left to take it: law 6)
+        return
+    t = st["target"]
+    t["npc"] = int(who.id)
+    rng = game.world.rng.child(f"deliver/{adv['id']}/{st['id']}")
+    name = textgen.fill(t["what"], rng, game.tables.adventures.get("words", {}), wordsmod.for_adventure(game, adv))
+    t["thing"] = name
+    dest = game.world.settlements[who.settlement]
+    giver = _giver(game, adv)
+    frm = game.world.settlements[giver.settlement] if giver is not None else dest
+    q = _quest(game, adv, st, "deliver", {"dest": int(dest.id), "npc": int(who.id), "story": True},
+               {"recipient": f"{who.name}, the {who.title}", "recipient_name": who.name, "dest": dest.name,
+                "where": direction(frm, dest) if frm is not dest else "here"})
+    q["hidden"] = None  # (its secret, if it has one, is the tale's: story/traitors.read_letter)
+    w = game.world
+    letter = Item(uid=0, def_id="sealed_letter", qty=1, made_at=w.time, name=name, tags=[f"quest:{q['id']}"])
+    add_existing(game.leader, game.tables.items, letter)
+    line = say(game, adv, "deliver_given", rng, what=name, who=who.name, to=dest.name)
+    _story().journal(adv, line, _today(game))
+    game.say(f"<loot>{esc(line)}</>", "story")
+
+
+def delivered(game, adv: dict, st: dict) -> None:
+    """The thing is in their hands (story.on_quest_end): what they give back for it, if anything."""
+    from realmwalker.rules.inventory import add_item
+
+    item = st["target"].get("item")
+    if item and item in game.tables.items:
+        add_item(game.leader, game.tables.items, item, 1)
+        name = game.tables.items.get(item)["name"]
+        game.say(f"<loot>{esc(say(game, adv, 'deliver_thanks', what=name))}</>", "story")
+
+
 SETUP = {"rescue": _setup_rescue, "fetch": _setup_fetch, "defeat": _setup_band, "capture": _setup_band,
-         "hold": _setup_hold, "endure": _setup_endure}
+         "hold": _setup_hold, "endure": _setup_endure, "deliver": _setup_deliver}
 
 
 def cap(text: str) -> str:
@@ -322,7 +401,41 @@ def on_arrive(game) -> bool:
             return _wave(game, adv, st)
         if st["kind"] == "rite" and here and int(st.get("tried", -1)) != today:
             return _rite(game, adv, st)
+        if st["kind"] == "infiltrate" and here and infiltrate_waits(game, adv, st):
+            from realmwalker.game.story import beats
+
+            if beats.pending(game) is None and t["beat"] in game.tables.beats:
+                st["tried"] = today
+                beats.offer(game, t["beat"], adv=adv["id"], step=st["id"], where=_story()._where(game),
+                            words={"place": _place_words(game, t["place"])})
+                return True
     return False
+
+
+def infiltrate_waits(game, adv: dict, st: dict) -> bool:
+    """An infiltrate step that would be tried on arriving at its place today: open, not tried today, and with
+    something left to bring (what it gives is not already yours another way: the back way a prisoner told of)."""
+    if st["state"] != "open" or int(st.get("tried", -1)) == _today(game):
+        return False
+    keys = [g.split(":", 1)[1] for g in st.get("gives", []) if g.startswith("key:")]
+    return not keys or not all(k in adv["keys"] for k in keys)
+
+
+@op("infiltrate")
+def _infiltrate_op(game, rec, what: str):
+    """Getting inside (the infiltrate step's beat): in (done), caught (its band comes for you; the step fails)."""
+    from realmwalker.game.story import beats
+
+    adv = beats.adventure(game, rec)
+    st = _story().find_step(game, rec.get("adv"), rec.get("step")) if adv else None
+    if adv is None or st is None or st["state"] != "open" or st["kind"] != "infiltrate":
+        return []
+    if what == "in":
+        _story().step_done(game, adv["id"], st["id"])
+        return []
+    step_failed(game, adv, st, say(game, adv, "infiltrate_caught"))
+    _encounter(game, adv, st, "infiltrate", st["target"]["group"], say(game, adv, "infiltrate_caught"))
+    return []
 
 
 def _hold_due(game, st: dict) -> bool:
@@ -598,6 +711,14 @@ def on_goal(game) -> None:
                 ok = False
             if ok:
                 story.step_done(game, adv["id"], st["id"])
+
+
+@condition("disguised")
+def _disguised(game, rec, value) -> bool:
+    """The leader wears a disguise (law.put_on_disguise) - or, with false, does not."""
+    from realmwalker.game import law
+
+    return law.disguised(game) == bool(value)
 
 
 # ---------------------------------------------------------------------------- talk

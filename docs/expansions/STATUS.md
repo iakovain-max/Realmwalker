@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part F (the cast and the Reading) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part G (the world changes) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -30,7 +30,9 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   format 22) · Part E (2026-10-25: villains who act - attention, schemes staged on the map, letters in
   their hands, lieutenants who remember, nemeses, escapes, returns and early ends; the finale in full - arenas,
   phases, great attacks, every key, retreat and defeat, measured fair; every move in its temper's words, seals,
-  the villain's shadow in the journal; saves format 23)
+  the villain's shadow in the journal; saves format 23) · Part F (2026-11-06: allies with stakes under oath, rivals on
+  their own clocks, patrons' hidden motives and traitors with their tells, the innocent's fate, the Reading of the
+  Wayfarer's Deck with seers and hermits, each tale's own rival and traitor; saves format 24)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -569,11 +571,174 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.1 (*allies with stakes, join
-conditions (often a situation of their own) and three-beat arcs; the new bond `oath` (companions.json); the full party
-case (`Battle.add_ally`); their fates; tests/test_cast.py*), on branch `dlc/06-adventures-events` (Part E is on main).
-Read docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.3 and §5.6, game/story/cast.py, the E.3 note
-below (a turned lieutenant as an ally waits for F) and rules/allies.py's `add_ally`.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.1 (*full sign sets for every threat
+kind's stages, as news, scenes, marks and map signs; overlays on road encounters, prices and the land's flavour*), on
+branch `dlc/06-adventures-events` (Parts A-F are on main). Read docs/expansions/06-adventures-events.md Part G,
+docs/ADVENTURES.md §5.1, §5.9, §5.19, §5.21, §8.13, §8.16, and the Part B notes below on marks and map signs.
+F.5 (2026-11-06, realmwalker-b): the full forms' cast. Rivals: a kind may say `blueprints` (only those tales) and
+`prize` (what it wants when there is no thing to fetch: `rivals.prize_name`); the own kinds `hunter` (beast),
+`graverobbers` (risen, relation -1), `captain` (outlaw), weight 5 against the others' 2-3; `decide` gives no rival when
+no kind fits. Traitors: `from_by` {blueprint: {role: weight}} over `from` (risen: patron 5); reasons may say
+`blueprints` and `roles` (`traitors._reason`); `woke` (risen, patron only, weight 8: the patron paid the waker) has
+`waker` lines: `_waker_falls` (traitors.daily) sets `rec["waker"]` "due" once the waker lieutenant's fate is past
+met/escaped or its defeat step is done, and on_night tells it first at the next inn or camp morning ("told", seen +1,
+journal); `toll` (outlaw, any role: a cut of the gang's take). The Outlaw: cast `ally` (veteran_of, carter_of), an
+optional recruit step (persuasion 12) in the "inside" chapter, finale key `ally` -> ally_fights; stakes `robbed_road`
+and `deserter_out` (outlaw, by jobs) in adventures.allies.json. Schemas ADVENTURES rivals/traitors take the new keys.
+Words (two sonnet helpers): every result/fail_result of beats.rivals/cast/allies/reading at 3 variants or more (pages
+that are one code-filled placeholder stay one), patron answers and rival fate "bought" at 3, every great card's
+`marks` at 3. Pictures: none new (the beats' pictures and the card faces came with F.1-F.4; the new bands wear their
+people's dress). Autoplay `_check_rivals` (an own kind in its own tale only) and `_check_secrets` (a reason of the
+tale and role). tests/test_full_forms.py (9); test_rivals' every-kind test covers the beast's kinds;
+test_traitors' `_with_traitor` clears `from_by`. FORMAT_VERSION 24. Decisions: the Outlaw's ally is optional (the
+tale's chapter needs no recruit); the Risen's waker stays a cultist lieutenant (the patron paid it: the design's "the
+waker's identity, sometimes the patron" as a hidden hand, not the same body, so the defeat step and the patron's town
+life never clash); the Beast's own rival is a beast-hunter beside the old hero kind (the design: "a glory-hunter").
+Checks: full suite (only the known timing tests under load: enemy casters 1 and 3, tactics coverage wight; they
+pass alone), autoplay OK, smoke OK; story tests with storyplay 204/204. The fresh review's fixes: the hunter's prize
+without the rival's pronoun (prize words get only the tale's), {king} in the waker's lines, words.py gives "the gang"
+when the outlaw's faction is gone and "king" for a risen without a figure, the waker's tell fits a waker beaten but
+alive, `traitors._reason` always finds one. Not in F.5: a traitor among a situation's people; a rival as a
+townsperson you can visit.
+F.4 (2026-11-06, realmwalker-a): `game/story/reading.py` (its docstring has it all), data reading.json (its own
+data file, schema READING; tables.reading; keys starting "_" are comments, so the fallbacks are "any"/"default"),
+beats.reading.json (beat reading_offer, picture "reading"), people.json and dialogue.json pack fragments (job
+"seer", its day and barks and greetings). Seers: `keeps_seer` (a city, or `crossroads`: road on 3+ of the 8 squares
+round the town) placed by people.populate_town near the first gate (else at home), STAYS_AT_POST; hermits:
+`hermit_at` (crc32 of world and wonder, `hermit_chance` 0.5), offered by `hermit` at the end of story.on_arrive
+(once per `hermit_every` days a wonder: director["hermits"]). Talk "story_reading" (STORY_CHOICES; answers "none"
+with no tale, "done" when nothing may be read) -> `offer` -> beat (pay: condition reading_price, op reading pay;
+favour: op time, op reading favour; not today) -> `lay` -> director["reading"] {adv} -> GameScreen opens
+ui/screens/reading.py (GameState.story_waiting knows it) which clears it. `lay`: truths by place (TRUTHS: key = a
+fetch step's place, else a learn route's place or town, else a search/infiltrate place; hand = the live ally, else
+the cast's ally/patron/witness, bound now if their town has people (`_bind`), never a chosen traitor nor a traitor
+patron; shadow = the hidden weakness's name, else the blueprint's (shadows table), its `key` the finale key it
+foretells; door = the finale step's place; turn = a hidden traitor's reason (seen +1, once: rec traitor_told), else
+the threat's next scheme stage), silent by chance (first reading only, `silent.most`) or with no truth, cards dealt by
+`_deal` (the truth with fewest fitting cards first), riddles by `_riddle` from `_where` (tomb, ruin, scar, history
+events with the name masked by `_masked`, else kind and initial) and `look` (river, road, biome). Once a tale: the
+villain's card (`villain_card` chance + per_attention), villain.notice, rec villain_knows -> villain._helper returns
+the named npc first (alive, present, not with you, not kidnapped, not in your town, no step still needing their
+role). `readable`: "again" once adv chapter > rec chapter (silent places and the turn re-laid). Pointed out once each
+(rec pointed): key/door at their place (on_arrive), hand in Conversation.greet (on_meet: the card's marks with
+pronouns), shadow when its key is gained (beats key op -> on_key). `named(game, adv)` resolves the Hand's npc late
+(story.daily -> reading.daily); traitors._candidates excludes it (patron or ally). Journal: "The cards"
+(journal_lines). Pictures: tools/card_art.py (20 great cards, 4 suits, a back; 24x36, tiles card/*, no grading),
+ui/gfx/cards.py `table` (the cross, minors at 90 degrees, the villain's card at 180 degrees, tinted), also the beat's
+picture with the cards face down. Autoplay `_check_reading`. tests/test_reading.py (11). The fresh review's fixes:
+the Hand never a traitor chosen before the reading, the reprisal spares a needed role, the traitor warning once,
+`removeprefix`, no doubled phrase, the name masked without its article. Checks: full suite (only the known timing
+tests under load: tactics coverage, enemy casters; they pass alone), autoplay OK, smoke OK; storyplay (tests 6/6):
+the bot plays a hermit's reading and must clear director["reading"] as it clears a title card (fixed in
+tools/storyplay.py: before that, the long Lawland tales stuck "busy" and died); Beast 18 of 24 distinct lives (19
+at F.3: the seers re-roll the towns' dice; run 8 now lives, 14 and 21 die). No save format change in
+F.4 (F.5 bumps it). Decisions: the price 5 sp or an hour's work; a seer only in towns peopled from now on; no blind
+priest who reads (seers and hermits only); the beast's key is where its weakness is learned (it has no relic).
+F.3 (2026-11-06, realmwalker-b): `game/story/patrons.py` and `game/story/traitors.py` (docstrings have it all).
+`adv["patron"]` (None: no patron role) {motive plain|debt|guilt|gain|traitor, trust, gifts, gift_ch, told, answer
+forgave|paid|exposed, made}: decided once (patrons.daily from story.daily); patrons.on_night (story.on_night, morning
+only, after the traitors) at the inn of the patron's own town: beat patron_gift once a chapter (`trust.gifts` at most,
+from `gift_after` days; op patron gift: `gift_coin` by tier, or refuse: trust either way), beat patron_motive (a told
+motive, chapter >= 1, trust >= 1; op patron forgive/paid/expose). after_tale (endings.finish, after rivals): the
+patron page from the motive's `page`; the innocent's fate `adv["innocent"]` {fate spared|scarred|lost} and page
+("innocents" fates by place/person; scarred = adv reprisal, flag betrayed, a turned traitor or a failed kidnap
+step), `companions.react` innocent_saved/innocent_lost. `adv["traitor"]` (None: decided, none) {role patron|ally|
+companion, npc, name, first, sex, reason kin|paid|belief, why, used {near, far}, seen, last, state hidden|yielded|sent|
+fled|fought|slain|turned|faltered|never, made, fate, key, in_fight, letter}: decided the first day the tale is in its
+second chapter (traitors.daily; adventures.cast.json "traitors" chance by blueprint, `from` weights); the patron only
+with motive plain and never twice in one life (`renown.flags["patron_betrayed"]` = the tale; the patron's motive
+becomes "traitor"); the ally (stakes record joined/riding, not `adv["reading"]["named"]`); a hired companion (bond
+hired, no companion["adv"]); `traitors.companion` finds them by companion["npc"] (or name). on_night (story.on_night
+after rivals): tells (morning, from `tell_after` days, every `every`, `event_chance`, `tells` at most; `near` lines
+when they are in the party, else `far`; journal line "Something is wrong about ..."), beat traitor_tell with
+condition `traitor_tells` 2 on its acting choices (Insight 12: op traitor yield/flee; send; fight = `_men` with the
+traitor at the head, role "traitor"); in the finale's chapter: a patron with trust < `betray_at` faltered; near: beat
+traitor_turns at camp in the dark (op turn: dismissed deserted with a random key of the tale, then strike); far:
+traitor_sells (op turn: a patron takes militia/ally keys; villain.notice 2; flag betrayed). `read_letter` (from
+quests.read_letter, a step quest's letter): a traitor patron's letter is a tell. talk_choices/choose "story_accuse"
+(STORY_CHOICES): the patron, seen >= 1 (sure from 2, else Insight 14). at_finale (finale.prepare, after rivals):
+yielded -> env.surprised = FOE; fled/turned non-patron -> its `turned_as` creature beside the boss (add_ally with the
+boss as owner, bond cleared); turned patron -> no surprise; still hidden: in the fight (a companion, or the riding ally's
+character) -> a round hook on TURN_ROUND gives "charmed" with control FOE (immune: they leave the field), in_fight;
+not in it -> turned now, no surprise, `patron_men` beside it (a patron with too little trust falters). on_battle
+(story.on_battle): a "traitor" leader dead -> slain; in_fight -> the companion dismissed deserted (or slain if
+dead), the ally broke; fought + victory -> sent. after_tale (after patrons): fate and page "traitor" (a patron's
+replaces the patron page; never suspected: no page). Journal "Doubts" (patrons.journal_line, traitors.journal_line).
+Step kinds (steps.py, deeds.py): `deliver` {to: a role or a settlement place, jobs, what, item}: deeds._setup_deliver
+finds the receiver (`_receiver`: the role's person, or the first of `jobs` in the town, people.prepare_town if never
+peopled; none: the step fails), a step quest of template deliver (q["hidden"] None) and the sealed letter (tag
+quest:<id>, name in target "thing"); quests' deliver_letter -> reward -> story.on_quest_end -> `deeds.delivered`
+(gives `item`). `infiltrate` {at, group (default the threat's minions), beat (story_infiltrate)}: deeds.on_arrive
+offers its beat once a day while `infiltrate_waits` (open, not tried today, its gives' keys not all held); story's go
+step at the same place waits for it; op infiltrate in (step_done) / caught (step_failed + its band, role
+"infiltrate" in LOOSE); condition `disguised` (law.disguised). Blueprints: the Risen's binds chapter has an optional
+deliver to "lore" (priest/preacher/monk, holy_water back); the Outlaw's last chapter an optional infiltrate at home
+(bandits; gives key:backway). story/check: the beats by name, turned_as/patron_men creatures, a fate line for every
+state; check.py lets a deliver's `what` be words. Autoplay `_check_secrets`. tests/test_traitors.py (13). The test
+test_a_parley_ends_the_gang_without_blood plays "not now" on the hideout's infiltrate first. The fresh review's fixes:
+condition `traitor_near` (send and steel only for one at your side), no kindness from a patron who sold you or is gone
+(`flags["gone"]`, honoured by people.py), the once-in-a-life flag given back when it never came to a betrayal
+(`_patron_spent`), the decision asked again daily while nobody can be the traitor, near tells only at camp. Checks:
+full suite (only the known timing tests under load: enemy casters, tactics coverage; they pass alone), autoplay OK,
+smoke OK; storyplay Risen 11/12, Outlaw 10/12 (the two lost to ordinary fights); storyplay's party has it out from
+the second tell. No save format change in F.3 (F.5 bumps it). Not in F.3: the full forms' own traitors (F.5: e.g. the Risen's waker as the patron); a traitor
+among a situation's people; the villain targeting the Reading's ally (F.4).
+F.2 (2026-10-26, realmwalker-a): `game/story/rivals.py` (docstring has it all). `adv["rival"]` (None: decided, no
+rival) {kind hero|deserters|noble, name, first, sex, figure (a living hero figure of the history, kind hero), child,
+who, band_words, relation -2..2, state unmet|racing|ahead|truce|pinned|dead|slain|gone|bought, made, met, due, prize
+(a fetch step id whose quest is out, else "finale"), last, seen [beats], lost (band killed), sold, holds, helping,
+pinned_until, in_lair, found, hurt, fought, fate}. Data adventures.rivals.json "rivals" (chance by blueprint, clock,
+kinds: leader/band by tier filling the party's "high" budget, most; fates), schema in ADVENTURES; beats.rivals.json
+(family "rival"). Hooks: story.daily -> `daily` (decide, race end `_arrives`: fetch -> quest target["rival"], chest
+empty in quests.on_chest, state ahead; finale -> dead in_lair, hurt = clock wounds; pinned past its day -> overrun),
+story.on_night -> `on_night` after stakes (`morning`: fight.rest's last call passes it; only the ambush plays at
+midnight and breaks the rest - played mid-rest the beats cost the Beast's storyplay 6 lives in 40; meeting, prize
+(again every `every` days while they hold it), then by relation every `every` days at `event_chance`:
+plea (truce/2, chapter >= 1, villain has minions), truce (1), race (0), sold (<= -1, chapter >= 1), ambush (-2, camp),
+theft (inn)), story.on_descend -> `on_descend` (bones near the entry, beat rival_found_dead), story.on_battle ->
+`on_battle` (role "rival" bands: leader dead = slain; won = what they held is yours, gone; a plea's band beside you:
+won = truce, a leader fallen there "fell_beside"; the harm count skips role "rival"; the key "rival" goes with a dead
+rival: `_drop_key`), `riding(world)` keeps a rival hero figure out of people.heroes_at_the_inn, finale.prepare -> `to_battle` (a plea answered: their band as
+story_ally creatures) and, after the keys, `at_finale` (hurt, sold: env.surprised cleared, truce: they arrive on
+ARRIVE_ROUND), endings.finish -> `after_tale` (page "rival"). Op `rival` (met/relation/slow/read/truce/steal/
+recover/sold/fight/pay_off/plea_go/plea_refused/buy/give/let_go/search/honour); conditions `rival` (relation at
+least), `rival_price`. Key "rival" (words.KEY_WORDS). Journal "Rivals". Autoplay `_check_rivals`; story/check checks
+rivals.BEATS and the kinds' creatures. finale's old `rival_arrives` key and RIVAL_KIND stay for blueprints that name
+it (none do). Checks: full suite (only the known timing tests under load), autoplay OK, smoke OK; storyplay Beast 33/40 (31 before), Risen 15/20 (12 before); tests/test_storyplay.py plays 8 Risen and 8 Outlaw lives (5 to finish). No save format change in F.2 (F.5 bumps it). Not in F.2: the full forms' own rivals (F.5); a rival as a
+townsperson you can visit; a stolen thing already fetched (the theft takes coin).
+F.1 (2026-10-25, realmwalker-b): `game/story/stakes.py` (docstring has it all). The key "ally" (beats.OPS["key"], every
+road to it: recruit talk, the hunter's situation, story_learn's ally route) calls `stakes.join`: `adv["ally"]` {npc,
+stake, words {stake, confidence}, state joined|riding|taken|broke|home|fell|sworn, joined, told, crisis, held,
+at_finale, fate, fate_due}; stakes in adventures.allies.json (`allies`: classes by job, arc days, stakes by blueprint/
+job with crisis revenge|doubt, values, want, words; riding lines; fates fell_well/fell/broke/home/sworn), schema in
+ADVENTURES. With `companions.room`: `companions.build` at the hero's level, `enlist(bond "oath", adv=, stake=)`
+(companions.json bonds oath, pledged; bond_text knows {stake}); else "riding": `to_battle` (finale.prepare, after the
+militia) adds them as a character (`add_ally(None, leader, "story_ally", char=)`, auto) to every fight with a foe
+tagged with the tale (battle.__dict__["story_allies"] {fid: aid}; `fighting`), and at the finale a lieutenant with fate
+"turned" as its creature (the E.3 gap). `finale._ally_fights` adds no creature when the tale has an ally record (here:
+a line; elsewhere nothing); without a record (storyplay's keys set by hand) the old creature fallback stays. Arc:
+`on_night` (story.on_night after deeds) offers beats.allies.json ally_confidence (after `confidence_after` days, with
+you, or riding and at the inn of their town), ally_crisis_<revenge|doubt|taken> (told `crisis_after` days ago, chapter
+>= 1, not the finale chapter, `crisis_chance` a night; riding: taken through villain.kidnap when it has a lair),
+ally_fate (fate_due). Op `ally` (told/held/held_hard n, breaks, home, taken, sworn, farewell); condition `party_room`
+(beats._why "your company is full"). Hooks: companions.dismiss -> `dismissed` (deserted: broke, key lost; else riding),
+companions.died -> `died` (fell), story.on_battle -> `on_battle` (a riding ally dead on the field: the npc dies;
+at_finale), defeat.on_retreat's ally_lost -> op ally home, endings.finish -> `after_tale` after lieutenants (fell_well
+when at_finale, broke, home; a won tale's living ally gets fate_due; the epilogue's "ally" page replaced by the fate
+line). situations.allies.json: ally_unburied, ally_doubts (inside recruit, risen only: their endings give ["key",
+"ally"], their lapse ["step"]). Journal "Beside you" (`journal_line`). Autoplay `_check_allies`. Ally beats open
+with the "fire" sound and the "rest" music (BeatScreen by family). `stakes.won_over` (join, deeds.setup) finishes an
+open recruit step whose role's key is already held (the risen's story_learn ally route gives "ally" before binds.4).
+Found by storyplay and fixed: a lieutenant with `flee_at` escaped every fight, so a defeat step could loop for a month
+(the risen's waker): `lieutenants.ESCAPES` 2, counted in `rec["escapes"]`; after that it is cornered.
+The fresh review's fixes: stakes' `mine` (first-person, index-matched with `stake`: words {mine}); own stakes weighted
+(`OWN_WEIGHT`); at_finale for a party ally standing or fallen; `_page` (sworn, farewell, `_settle`); fate_due re-checked
+at the fire (fallen, carried or gone: `_settle`); breaks/home only from LIVE; kidnap keeps adv["reprisal"]; an ally
+already a companion is tagged (companion["adv"]), never doubled in `to_battle`; condition `ally_loyal`
+(oath_loyalty; riding: disposition >= 0); the ally_note skips a joined ally. Checks: full suite (only the known
+timing tests under load), autoplay OK, smoke OK. No save format change in F.1 (F.5 bumps it). Not in F.1: the
+Outlaw's tale has no ally (F.5's full forms), the Reading's named ally whom the villain targets (F.4), a traitor among
+the cast (F.3); an ally riding with the patron is a fresh character each fight (wounds are not kept).
 E.7 (2026-10-25, realmwalker-a): a beat's `tempers` {temper: [first-page variants]} replace its text[0] when its tale's
 villain has that temper (beats.pages); fragments beats.voices_a/b/c.json (`_merge`; named to sort after
 beats.villain.json: fragments merge in name order) give every move of every temper three (77 pairs; floor test
