@@ -164,7 +164,11 @@ def test_the_dead_go_back_to_the_earth_when_their_king_is_laid(world, tables):
     dead = hosts.the_dead_march(pol, t, world.settlements[t["stakes"][0]], ("haunted",))
     if dead is None:
         pytest.skip("no road")
-    threats.end(world, t, "laid", pol.day)
+    threats.end(world, t, "doom", pol.day)  # (the doom stage ends the threat at once: its dead still walk)
+    _march(pol, 1)
+    assert hosts.get(world, dead["id"]) is dead
+    world.politics.setdefault("laid", {})[str(t["home"]["site"])] = pol.year  # (laid to rest on the way)
+    assert not threats.villain_lives(world, t)
     _march(pol, 1)
     assert hosts.get(world, dead["id"]) is None
 

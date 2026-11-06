@@ -470,9 +470,9 @@ class Politics:
 
         threats.trigger(self, "battle", [(place.x, place.y)])  # (fresh dead near an old barrow: Expansion 6 G.2)
 
-    def sieges(self, war: dict, a, d, days: float, *, march: bool = True) -> None:
+    def sieges(self, war: dict, a, d, days: float) -> None:
         """A war's sieges: one begins when the war goes well enough for a side (its army marches there first, a host
-        on the roads: world/hosts.py; `march=False` begins it at once), and ends in the town taken or relieved."""
+        on the roads: world/hosts.py), and ends in the town taken or relieved."""
         w = self.w
         siege = war.get("siege")
         if siege is None:
@@ -494,7 +494,7 @@ class Politics:
                 return  # the capital holds until the war is nearly lost
             from realmwalker.world import hosts
 
-            if not march or hosts.march_to_siege(self, war, besieger, target) is None:
+            if hosts.march_to_siege(self, war, besieger, target) is None:
                 self.begin_siege(war, besieger, target)
             return
         if self.day < siege["until"]:

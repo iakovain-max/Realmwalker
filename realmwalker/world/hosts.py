@@ -61,7 +61,7 @@ def _year(tables, day: float) -> int:
 
 
 def _cost(world, tables) -> np.ndarray:
-    key = (id(world), int(world.politics.get("land_version", 0)), world.width, world.height)
+    key = (id(world), world.meta.id, int(world.politics.get("land_version", 0)), world.width, world.height)
     got = _COST.get(key)
     if got is not None:
         return got
@@ -206,7 +206,8 @@ def advance(pol, days: float | None = None) -> None:
             if pol.day >= float(h.get("until", 0)):
                 records(w).remove(h)
             continue
-        h["at"] = min(float(len(h["path"]) - 1), h["at"] + h["speed"] * days)
+        walked = min(float(days), max(0.0, float(pol.day) - float(h["since"])))  # (none of it before it set out)
+        h["at"] = min(float(len(h["path"]) - 1), h["at"] + h["speed"] * walked)
         i = int(h["at"])
         h["x"], h["y"] = h["path"][i]
         if h["at"] >= len(h["path"]) - 1:
@@ -222,8 +223,9 @@ def _still_wanted(pol, h: dict) -> bool:
     if h["kind"] == "the_dead":
         from realmwalker.world import threats
 
-        t = threats.records(w).get(h.get("threat"))
-        return t is not None and t["state"] in threats.LIVE
+        t = threats.records(w).get(h.get("threat"))  # (its doom under way ends the threat: its dead still walk)
+        return t is not None and (t["state"] in threats.LIVE or t.get("outcome") == "doom") and \
+            threats.villain_lives(w, t)  # (their king laid or slain on the way: the dead go back to the earth)
     if h["kind"] == "warband" or h["faction"] >= 0:
         f = w.factions.get(h["faction"])
         return f is not None and f.active
@@ -506,7 +508,8 @@ def check(world, tables) -> list[str]:
             war = next((x for x in world.wars if x["id"] == h["war"]), None)
             if war is None:
                 out.append(f"host {hid}: war {h['war']} is no war")
-        if (h["kind"] in ("army", "warband", "crusade") or h.get("war") is not None) and                 h["faction"] not in world.factions:
+        if (h["kind"] in ("army", "warband", "crusade") or h.get("war") is not None) and \
+                h["faction"] not in world.factions:
             out.append(f"host {hid}: faction {h['faction']} is no faction")
     for war in world.wars:
         if war.get("active") and war.get("march") and get(world, war["march"]) is None:

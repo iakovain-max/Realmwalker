@@ -692,6 +692,12 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   wonder, water or `politics["party_at"]`. Never write `world.biome`/`relief`/`elevation`/`road`/`river` in play except
   through it. `GameState.land_check()` -> `land_changed()` (remap, costs, the journey); `local.patch_land` on entry;
   the painter follows `land_version` (`WorldView.ready` -> `ChunkCache.refresh`, keys carry chunk versions).
+- Hosts on the map (Expansion 6 G.7): `world/hosts.py` (its docstring): `politics["hosts"]` + `hosts_tick` +
+  `next_host`; `raise_host` (a road by `route`, None when none or longer than threats.json hosts `most_days`: then act
+  at once), `advance` (from `Politics.advance` and `story.daily` by the one stamp), `arrive` (an army/horde of a war:
+  `Politics.begin_siege`, `war["march"]` while it walks; a warband: `Politics.raid(target=)`; else `strike`),
+  `refugees`, `near` (encounters), `check` (autoplay `_check_hosts`). Raise one through `march_to_siege`, `ride_out`,
+  `the_dead_march` (threat op `host`) or `crusade`; never set a war's siege while its army marches.
 - Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
   nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
   and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found

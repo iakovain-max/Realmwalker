@@ -571,11 +571,43 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.7 (*hosts: `world/hosts.py`, armies
-marching to their sieges, threats' hordes, crusades; `hosts.advance`, arrival through the war code or `raid` or
-`hosts.strike`; encounters near them; drawn by `mapsigns`; refugee columns*), on branch `dlc/06-adventures-events`
-(Parts A-F are on main; Part G goes to main at G.10). Read docs/expansions/06-adventures-events.md Part G (G.7 in full),
-docs/ADVENTURES.md §5.21 (signs on the map: hosts) and §8.16, and the G.6-G.1 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.8 (*a threat's reach washed on the map
+once known: the `overlays` hook, cached by reach and version*), on branch `dlc/06-adventures-events` (Parts A-F are on
+main; Part G goes to main at G.10). Read docs/expansions/06-adventures-events.md Part G (G.8 in full), docs/ADVENTURES.md
+§5.21 (signs on the map: a threat's reach washed grey, red or under mist) and §8.16, and the G.7-G.1 notes below.
+G.7 (2026-11-06, realmwalker-a): `world/hosts.py` (its docstring has it all). Records `politics["hosts"]` {id "H<n>",
+kind (army, horde, the_dead, crusade, warband, refugees), faction (-1 none), group, strength, x, y, path (start..goal,
+8-connected, roads cost 1, land 3, impassable 0 by the biome remap; cached by land_version), at, goal {settlement},
+speed, since, state marching|holding, war / threat / against / people / came_from / also / who / figure / until},
+`hosts_tick`, `next_host`. `raise_host` returns None with no road or a march over threats.json hosts `most_days` (60):
+the caller then acts at once as before. `advance(pol, days=None)`: by the stamp (from `Politics.advance` after
+reshape.weekly, and `story.daily` through `advance_world`, which makes a Politics of the day); a host never walks
+time before its `since`; `_still_wanted` drops an army whose war ended or no longer marks it (`war["march"]`), the
+dead whose threat ended other than by its doom (the doom stage ends the threat at once: its dead still walk) or whose
+king no longer `villain_lives` (laid or slain on the way), a
+faction's host whose faction fell. Arrival: army/horde of a war -> `Politics.begin_siege` (new: refuses when the town
+left the enemy's holdings or is besieged already); warband -> `Politics.raid(tribe, target=)`; refugees -> the
+town's population grows; the rest -> `strike`: the dead empty the place (threats.json emptied floor and days, its
+`also` marks: haunted), a horde costs 20-40% and leaves `beset` (30 days) and `burned` (hamlet/village); a crusade
+holding the town meets them first (strength odds: the dead broken, or the crusade); a crusade arriving after the dead
+lifts `haunted`, else holds the town 30 days. Refugees (`refugees`): 40% of a town's losses when 20 or more, to the
+nearest same-size-or-bigger place within 30 squares not besieged/beset/emptied/burning/plague/sacked; from a sack
+(`take`), a hamlet burned by a raid, a strike. Raising: `Politics.sieges` -> `march_to_siege` (a tribe's is a horde;
+the nearest holding musters; within 2 squares the siege begins at once);
+`pressures` -> `raid(tribe, ride=True)` -> `ride_out`; the risen's march stage effect is now `["host", "the_dead",
+"village", "haunted"]` (threats op `host`: chooses as `emptied` does, one host per threat, else `_emptied` at once) ->
+`the_dead_march` -> `crusade` (chance 0.7: the nearest knightly order before a temple within 45 squares, else the
+realm). Encounters: `hosts.near` (3 squares, a marching host with a group) raises the chance x2.5 and a share of the
+meetings are its group (army_foragers, crusaders in creatures.hosts.json; orc_raiders, zombies) with a near_words line
+first. `news.faction_place` ends with `hosts.place`. `mapsigns.hosts` (from WorldView.draw after the towns' signs, for
+marching hosts on explored squares): dust puffs, 3-7 dolls of the group's first creature (refugees: commoner), the
+banner in the faction's colours (BESET_RGB without one), gliding by `hosts.heading`. Debug console `host <kind>`.
+Autoplay `_check_hosts` (`hosts.check`). News words politics.json host_* (4 each); numbers threats.json "hosts"
+(schema in THREATS). tests/test_hosts.py (11); test_politics and test_threat_kinds march their hosts. No save format
+change. Measured over three years of a medium world's politics: two marches of the dead (both struck), two crusades
+(one broken, one cleansed), two refugee columns, three warbands, no problems. Not here: walking onto a host offers no
+beat (its camp: parley, join, slip past) - a later part may add it; the interlude moves hosts a week at a time, so a
+warband or an army marching under a week is never seen there.
 G.6 (2026-11-06, realmwalker-b): `world/reshape.py` (its docstring has it all). The ledger `politics["land"]` (records
 {id, kind, day, seed, shape, v, cells [[x, y, field, old, new]...], story?, spread?}), `land_version`, `land_log` (the
 last 64 changes' squares and fields: `changes_since(world, v)`, None when it no longer reaches back), `party_at` (set by

@@ -400,7 +400,7 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
   painter's rift, blight, scorch, drowned land and crater, and `local.patch_land` for maps already built. Tests:
   `tests/test_reshape.py` (the ledger replays; travel and caches follow; a built map takes the change; a weekly blight
   repaints only its chunks; the repaint recorded headless); autoplay `_check_land`.
-- [ ] G.7 **Hosts** (`world/hosts.py`): armies marching to their sieges, threats' hordes, crusades; `hosts.advance` by
+- [x] G.7 **Hosts** (`world/hosts.py`): armies marching to their sieges, threats' hordes, crusades; `hosts.advance` by
   its own stamp from `story.daily` and `Politics.advance`; arrival through the war code (`sieges`, `take`) for armies,
   `raid` for a tribe's warband, and the world layer's `hosts.strike` (marks such as `beset`, losses with the floor,
   refugees, news) for hordes, the dead and crusades; encounters near them; `news.faction_place`; drawn by `mapsigns`

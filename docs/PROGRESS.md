@@ -46,6 +46,30 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (night): Adventures & Events Part G, task G.7 — hosts on the roads — branch `dlc/06-adventures-events`
+
+- **Armies march to their sieges.** When a war goes well enough for one side to besiege a town, its army now sets out
+  from its nearest town and walks there along the roads, a few squares a day: the news says it is coming, and the siege
+  begins only when it arrives. If the war ends first, the army goes home. A tribe at war sends a horde the same way.
+- **A tribe's warband rides out** before it raids: the raid falls on the village when the riders get there.
+- **The dead march.** At the last stage of a risen barrow king's scheme his dead leave the barrow in a column and walk
+  to the village he will empty. A temple or a knightly order (or the realm, if none is near) may preach a crusade and
+  march to the same village: if it gets there first it holds the village for a month, and the dead may break on it;
+  if it comes after, it lays the dead the village was left with.
+- **Refugees.** A town sacked, a hamlet burned by raiders, a village emptied by the dead or beset by a horde sends a
+  column of its people down the road to the nearest bigger place that is not in trouble itself; they settle there.
+- **On the world map** each host is a short column of figures (three to seven, by its size; soldiers, the dead,
+  orcs, priests and men-at-arms, common folk for refugees) behind its banner in its realm's colours, with dust
+  behind it, a little further along its road each day.
+- **Near a host** (three squares) you meet its bands far more often: an army's foragers, a crusade's outriders, the
+  dead, the horde's raiders, each with a line saying what you have walked into.
+- For testing, the debug console has `host <kind>` (army, horde, the_dead, crusade, warband, refugees): a host sets
+  out from the town nearest you for the next one.
+- No save change: your current world keeps working (hosts start appearing as wars and threats move).
+- Not yet: walking onto a host does not yet offer a scene of its own (a parley, joining, slipping past); that waits for
+  a later part.
+  Checks: see STATUS.md (G.7 note).
+
 ### Session, 2026-11-06 (evening): Adventures & Events Part G, task G.6 — the land itself changes — branch `dlc/06-adventures-events`
 
 - **The land can change while you play.** When a risen barrow king's dead begin to empty the hamlets, the country round
