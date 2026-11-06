@@ -594,7 +594,11 @@ letter (`books._letter`, first reading only; the words are kept as before) tries
 tests/test_rumours.py (8). No save format change. Notice boards already showed every stirring threat within a week's
 walk (G.1/C), so nothing changed there. Decision: a rumour's clue gives no `clues` count (those finish confronts and
 needs; a rumour only points the way).
-Checks: CHECKS_G5
+Checks: full suite twice (the first: the storybook check found {where} in words it fills only with the tale's words,
+removed; conftest's quiet offer_hook needed `staged`; two tactics coverage turn times under load; the second only the
+known turn-time tests, enemy casters 3 and tactics coverage ogre, both pass alone), autoplay OK, smoke OK. The fresh
+review's fixes: distance before `_can_take`, a clue's {villain} never raw, "that is all I know" when a clue is asked
+for and none is left, `_offer`'s answer true.
 G.4 (2026-11-06, realmwalker-b): `game/story/epilogue.py` (its docstring has it all): `compose(game, adv, before)` is
 the last thing endings.finish does after every after_tale (before = `snapshot` taken before the ops): the tale's town
 page gets a closing line for its most telling mark (VIGNETTE_MARKS), other places of the tale get "place:<key>" pages
