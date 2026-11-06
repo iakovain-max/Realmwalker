@@ -2138,8 +2138,8 @@ def read_letter(game, it) -> list[str]:
         from realmwalker.game.story import traitors
 
         told = traitors.read_letter(game, q, first)  # (a traitor patron's letter is a tell: Expansion 6 F.3)
-        if told:
-            return told
+        return told or [f"You break the seal. It is what {q['giver_name']} said it was: a plea for help, and a list "
+                        f"of the dead. The broken seal will show."]
     if q.get("hidden") == "incriminating":
         if first:
             reveal(game, q)

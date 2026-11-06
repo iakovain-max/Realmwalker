@@ -75,8 +75,7 @@ def _candidates(game, adv: dict) -> list[tuple[str, object]]:
     out: list[tuple[str, object]] = []
     p = patrons.npc(game, adv)
     rec = patrons.record(adv)
-    if p is not None and rec is not None and rec["motive"] == "plain" and \
-            not game.renown.flags.get("patron_betrayed"):
+    if p is not None and rec is not None and rec["motive"] == "plain" and not _patron_spent(game, adv):
         out.append(("patron", p))
     ally = adv.get("ally") or {}
     named = (adv.get("reading") or {}).get("named")
@@ -92,8 +91,21 @@ def _candidates(game, adv: dict) -> list[tuple[str, object]]:
     return out
 
 
+def _patron_spent(game, adv: dict) -> bool:
+    """A patron has betrayed this hero already (or is the traitor of another of their tales): never a second."""
+    from realmwalker.game.story.forge import life_of
+
+    if game.renown.flags.get("patron_betrayed") not in (None, adv["id"]):
+        return True
+    life = life_of(game)
+    return any(a is not adv and a["hero"]["life"] == life and (a.get("traitor") or {}).get("role") == "patron"
+               and a["traitor"]["state"] not in ("faltered", "never")
+               for a in _story().adventures(game.world).values())
+
+
 def decide(game, adv: dict) -> None:
-    """Whether this tale hides a traitor, and who (decided once, the first day of its second chapter)."""
+    """Whether this tale hides a traitor, and who (decided once, the first day of its second chapter; with nobody
+    yet to be it - the ally not yet won, nobody hired - asked again each day until the finale's chapter)."""
     if "traitor" in adv or int(adv.get("chapter", 0)) < 1:
         return
     sp = spec(game)
@@ -103,7 +115,8 @@ def decide(game, adv: dict) -> None:
         return
     cands = [(r, w) for r, w in _candidates(game, adv) if int(sp["from"].get(r, 0)) > 0]
     if not cands:
-        adv["traitor"] = None
+        if _in_finale(adv):
+            adv["traitor"] = None
         return
     role, who = rng.weighted(cands, [float(sp["from"][r]) for r, _ in cands])
     reasons = sorted(k for k, v in sp["reasons"].items() if int(v["weight"]) > 0)
@@ -207,7 +220,7 @@ def on_night(game, where: str, *, morning: bool = True) -> bool:
             if not close and morning and (rec["role"] != "ally" or npc(game, adv) is not None):
                 return _offer(game, adv, "traitor_sells", where, {})
             continue
-        if not morning or today - int(rec["made"]) < int(clock["tell_after"]) or \
+        if not morning or (close and where != "camp") or today - int(rec["made"]) < int(clock["tell_after"]) or \
                 today - int(rec["last"]) < int(clock["every"]) or int(rec["seen"]) >= int(clock["tells"]):
             continue
         if not game.world.rng.child(f"traitor-night/{adv['id']}/{today}").chance(float(clock["event_chance"])):
@@ -274,6 +287,14 @@ def read_letter(game, q: dict, first: bool) -> list[str]:
     rec["last"] = _today(game)
     _note(game, adv, text)
     return [f"<warn>{esc(text)}</>"]
+
+
+@condition("traitor_near")
+def _near_cond(game, ctx, value) -> bool:
+    """The traitor of this beat's tale travels with you (or, with false, does not): steel and sending away are for
+    one at your side; one far off is faced where they live."""
+    adv = _adv(game, ctx)
+    return adv is not None and near(game, adv) == bool(value)
 
 
 @condition("traitor_tells")
@@ -343,7 +364,8 @@ def _leave(game, adv: dict, rec: dict, *, deserted: bool) -> list[str]:
     p = npc(game, adv)
     if p is not None and rec["role"] != "companion" and c is None:
         p.present = False
-        p.flags["story_gone"] = adv["id"]  # (gone from their town: to the villain, or anywhere but near you)
+        p.flags["gone"] = True  # (gone from their town, to the villain or anywhere but near you: people.py keeps them
+        p.flags["story_gone"] = adv["id"]  # away)
     return out
 
 
@@ -559,6 +581,9 @@ def after_tale(game, adv: dict) -> None:
         rec["fate"] = {"hidden": "never", "fought": "sent"}.get(rec["state"], rec["state"])
     if rec["state"] == "hidden":
         rec["state"] = "never"
+    if rec["role"] == "patron" and rec["fate"] in ("faltered", "never") and \
+            game.renown.flags.get("patron_betrayed") == adv["id"]:
+        game.renown.flags.pop("patron_betrayed")  # (it never came to a betrayal: the once in a life is not spent)
     if rec["fate"] == "never" and int(rec["seen"]) == 0:
         return  # (never so much as suspected: nothing to tell)
     text = _say(game, adv, sp["fates"].get(rec["fate"], sp["fates"]["never"]),

@@ -365,7 +365,7 @@ ADVENTURES.md §5.3, §5.6, §5.7.
   `oath` (companions.json); the full party case (`Battle.add_ally`); their fates. Tests: `tests/test_cast.py`.
 - [x] F.2 Rivals: bands with their own clocks (race, theft, ambush, truce, plea, sale to the villain, found dead – a
   scene in the lair) and a relation from −2 to 2.
-- [ ] F.3 Patrons' hidden motives (a betrayal at most once in a hero's life), traitors with at least two tells,
+- [x] F.3 Patrons' hidden motives (a betrayal at most once in a hero's life), traitors with at least two tells,
   innocents' fates; step kinds `deliver`, `infiltrate`.
 - [ ] F.4 The Reading: `reading.json` (the Wayfarer's Deck – twenty great cards and four suits, original names and
   meanings), seers (a people.json job; crossroads camps, hermits at wonders), the reading staged at the seer's fire

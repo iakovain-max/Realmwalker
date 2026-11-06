@@ -46,6 +46,37 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (morning): Adventures & Events Part F, task F.3 — patrons, traitors, innocents — branch `dlc/06-adventures-events`
+
+- **The one who sent for you may not have told you everything.** About one patron in three has a reason of their
+  own: a debt that the villain's death cancels, a guilt (it began with them), or a gain (they bought up the land the
+  trouble emptied). It never comes out at once. First they are kind to you: come back to their town and stay at its
+  inn, and they come down in person, once a chapter, with a purse and something for the road. Once the second
+  chapter has begun, one evening at that inn, they tell you the rest. Let it lie, take money to keep quiet, or tell
+  the whole town. The ending's page about them then says what really happened.
+- **Sometimes one of your own serves the villain.** About one tale in five hides a traitor: the patron (but never
+  more than once in a hero's whole life), the ally who came with you, or a companion you hired. They have a reason
+  (the villain holds their child; they are paid; they believe in it). You get clues by night: a name said in their
+  sleep, an old gold coin they should not have, a sign scratched in the ashes. Each clue goes in the journal under
+  "Doubts". From the second clue on you can act: have it out with them (an Insight check: they break and confess,
+  and from then on they feed the villain lies, so it is caught by surprise at the end; or they run to it), send them
+  away, or draw steel. A traitor patron can also be faced in their own town ("I know what you have done").
+- **Miss the clues and it is a twist.** On a night in the last chapter, a companion who serves it slips away with
+  one of the things you found, and the villain's servants come out of the dark after them. A patron far away calls
+  off the townsfolk who were going to stand with you. If you went straight to the end without a night's rest, the
+  traitor at your side turns on you in the final fight, on its second round, and fights for the villain. Someone
+  who ran to it is standing beside it when you get there. A patron who was never kind to you twice cannot go
+  through with it (the rule from the books: trust comes before betrayal).
+- **The innocent has a fate.** The village (or the person) who suffers if you fail now gets its own page at the end:
+  spared, scarred (you won, but the villain's reprisals, a kidnapping or a betrayal cost them), or lost. Your
+  companions hear it too.
+- **Two new kinds of task inside tales.** *Deliver*: carry something sealed into the right hands (the Risen tale now
+  has an optional letter from the patron to the temple, which sends back holy water; breaking the seal on a
+  traitor patron's letter is a clue). *Infiltrate*: get inside a place unseen (the Outlaw tale now has an optional
+  try at slipping into the gang's hideout before the end: in disguise, by stealth or by talking past the watch;
+  getting in gives you the back way and the surprise; getting caught brings the gang down on you).
+- Checks: see STATUS.md (F.3 note). No save format change (F.5 bumps it). Part F joins `main` at F.5.
+
 ### Session, 2026-10-26 (small hours): Adventures & Events Part F, task F.2 — rivals — branch `dlc/06-adventures-events`
 
 - **Someone else wants it too.** About half of all tales now have a rival: a hero of the land with companions (a

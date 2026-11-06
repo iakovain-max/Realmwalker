@@ -569,12 +569,58 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.3 (*patrons' hidden motives (a betrayal
-at most once in a hero's life), traitors with at least two tells, innocents' fates; step kinds `deliver`,
-`infiltrate`*), on branch `dlc/06-adventures-events` (Part E is on main; F.1 and F.2 on the branch). Read
-docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.6 (Traitors) and §5.3 (patrons, innocents),
-game/story/stakes.py and rivals.py (the pattern: a record on the tale, beats by the fire, a fate in the epilogue),
-and the F.1 and F.2 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.4 (*the Reading: reading.json, the
+Wayfarer's Deck of twenty great cards and four suits with original names and meanings; seers (a people.json job;
+crossroads camps, hermits at wonders); the reading staged at the seer's fire with the cards laid out as a picture;
+riddles written from the true places' own pasts; silent cards; the villain's card; the cards' imagery planted in the
+world and pointed out; card faces*), on branch `dlc/06-adventures-events` (Part E is on main; F.1-F.3 on the branch).
+Read docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.7 (and §5.6: the villain targets the ally
+the Reading named), and the F.1-F.3 notes below. The Reading must set `adv["reading"]["named"]` (the npc id of the
+ally it names): story/traitors.py already keeps that ally from being the traitor.
+F.3 (2026-11-06, realmwalker-b): `game/story/patrons.py` and `game/story/traitors.py` (docstrings have it all).
+`adv["patron"]` (None: no patron role) {motive plain|debt|guilt|gain|traitor, trust, gifts, gift_ch, told, answer
+forgave|paid|exposed, made}: decided once (patrons.daily from story.daily); patrons.on_night (story.on_night, morning
+only, after the traitors) at the inn of the patron's own town: beat patron_gift once a chapter (`trust.gifts` at most,
+from `gift_after` days; op patron gift: `gift_coin` by tier, or refuse: trust either way), beat patron_motive (a told
+motive, chapter >= 1, trust >= 1; op patron forgive/paid/expose). after_tale (endings.finish, after rivals): the
+patron page from the motive's `page`; the innocent's fate `adv["innocent"]` {fate spared|scarred|lost} and page
+("innocents" fates by place/person; scarred = adv reprisal, flag betrayed, a turned traitor or a failed kidnap
+step), `companions.react` innocent_saved/innocent_lost. `adv["traitor"]` (None: decided, none) {role patron|ally|
+companion, npc, name, first, sex, reason kin|paid|belief, why, used {near, far}, seen, last, state hidden|yielded|sent|
+fled|fought|slain|turned|faltered|never, made, fate, key, in_fight, letter}: decided the first day the tale is in its
+second chapter (traitors.daily; adventures.cast.json "traitors" chance by blueprint, `from` weights); the patron only
+with motive plain and never twice in one life (`renown.flags["patron_betrayed"]` = the tale; the patron's motive
+becomes "traitor"); the ally (stakes record joined/riding, not `adv["reading"]["named"]`); a hired companion (bond
+hired, no companion["adv"]); `traitors.companion` finds them by companion["npc"] (or name). on_night (story.on_night
+after rivals): tells (morning, from `tell_after` days, every `every`, `event_chance`, `tells` at most; `near` lines
+when they are in the party, else `far`; journal line "Something is wrong about ..."), beat traitor_tell with
+condition `traitor_tells` 2 on its acting choices (Insight 12: op traitor yield/flee; send; fight = `_men` with the
+traitor at the head, role "traitor"); in the finale's chapter: a patron with trust < `betray_at` faltered; near: beat
+traitor_turns at camp in the dark (op turn: dismissed deserted with a random key of the tale, then strike); far:
+traitor_sells (op turn: a patron takes militia/ally keys; villain.notice 2; flag betrayed). `read_letter` (from
+quests.read_letter, a step quest's letter): a traitor patron's letter is a tell. talk_choices/choose "story_accuse"
+(STORY_CHOICES): the patron, seen >= 1 (sure from 2, else Insight 14). at_finale (finale.prepare, after rivals):
+yielded -> env.surprised = FOE; fled/turned non-patron -> its `turned_as` creature beside the boss (add_ally with the
+boss as owner, bond cleared); turned patron -> no surprise; still hidden: in the fight (a companion, or the riding ally's
+character) -> a round hook on TURN_ROUND gives "charmed" with control FOE (immune: they leave the field), in_fight;
+not in it -> turned now, no surprise, `patron_men` beside it (a patron with too little trust falters). on_battle
+(story.on_battle): a "traitor" leader dead -> slain; in_fight -> the companion dismissed deserted (or slain if
+dead), the ally broke; fought + victory -> sent. after_tale (after patrons): fate and page "traitor" (a patron's
+replaces the patron page; never suspected: no page). Journal "Doubts" (patrons.journal_line, traitors.journal_line).
+Step kinds (steps.py, deeds.py): `deliver` {to: a role or a settlement place, jobs, what, item}: deeds._setup_deliver
+finds the receiver (`_receiver`: the role's person, or the first of `jobs` in the town, people.prepare_town if never
+peopled; none: the step fails), a step quest of template deliver (q["hidden"] None) and the sealed letter (tag
+quest:<id>, name in target "thing"); quests' deliver_letter -> reward -> story.on_quest_end -> `deeds.delivered`
+(gives `item`). `infiltrate` {at, group (default the threat's minions), beat (story_infiltrate)}: deeds.on_arrive
+offers its beat once a day while `infiltrate_waits` (open, not tried today, its gives' keys not all held); story's go
+step at the same place waits for it; op infiltrate in (step_done) / caught (step_failed + its band, role
+"infiltrate" in LOOSE); condition `disguised` (law.disguised). Blueprints: the Risen's binds chapter has an optional
+deliver to "lore" (priest/preacher/monk, holy_water back); the Outlaw's last chapter an optional infiltrate at home
+(bandits; gives key:backway). story/check: the beats by name, turned_as/patron_men creatures, a fate line for every
+state; check.py lets a deliver's `what` be words. Autoplay `_check_secrets`. tests/test_traitors.py (12). The test
+test_a_parley_ends_the_gang_without_blood plays "not now" on the hideout's infiltrate first. No save format change in
+F.3 (F.5 bumps it). Not in F.3: the full forms' own traitors (F.5: e.g. the Risen's waker as the patron); a traitor
+among a situation's people; the villain targeting the Reading's ally (F.4).
 F.2 (2026-10-26, realmwalker-a): `game/story/rivals.py` (docstring has it all). `adv["rival"]` (None: decided, no
 rival) {kind hero|deserters|noble, name, first, sex, figure (a living hero figure of the history, kind hero), child,
 who, band_words, relation -2..2, state unmet|racing|ahead|truce|pinned|dead|slain|gone|bought, made, met, due, prize

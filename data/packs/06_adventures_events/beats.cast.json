@@ -68,7 +68,7 @@
       "weight": 0,
       "title": ["Something is wrong", "A small thing", "You notice"],
       "text": [
-        ["{tell}"],
+        ["{tell}", "You notice it without meaning to, and then cannot stop noticing it. {tell}", "It is a small thing, the kind you would let pass. {tell}"],
         ["{doubt}"]
       ],
       "choices": [
@@ -87,13 +87,13 @@
         },
         {
           "label": ["Send {traitor} away, tonight, and say why."],
-          "requires": {"traitor_tells": 2},
+          "requires": {"traitor_tells": 2, "traitor_near": true},
           "ops": [["traitor", "send"]],
           "result": ["{traitor} does not deny it. {They} only nod{s}, and go{es}.", "\"I'm sorry,\" {traitor} says at the end, and it might even be true."]
         },
         {
           "label": ["Draw steel. {traitor} will answer for it here."],
-          "requires": {"traitor_tells": 2},
+          "requires": {"traitor_tells": 2, "traitor_near": true},
           "ops": [["traitor", "fight"]],
           "result": ["{traitor} sees it in your face, and steel is out on both sides.", "\"So be it,\" {traitor} says, and does not pretend any more."]
         }
@@ -122,7 +122,7 @@
       "text": [
         [
           "A boy from {town} has run all day to find you, and can hardly speak for it: {traitor} rode out towards {home} two nights ago, with a lantern and no servant, and has not come back.",
-          "Word comes by a carter: {traitor} has been seen on the road to {home}, alone, by night, and the people who stood ready in {town} have been told to go home.",
+          "Word comes by a carter: {traitor} has been seen on the road to {home}, alone, by night, and nobody in {town} has had a word from {them} since.",
           "A letter, in a hand you know: {traitor}'s. It is not for you. It was found on the road, dropped by a rider in a hurry, and it sets out everything you mean to do."
         ],
         ["{why}"]

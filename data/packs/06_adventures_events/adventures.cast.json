@@ -60,10 +60,10 @@
     "trust": {"gift_after": 1, "gifts": 2, "betray_at": 2},
     "gift_coin": [1500, 4000, 10000, 25000],
     "gifts": [
-      "a purse, and a new cloak against the cold",
-      "a purse, a flask of good spirits and a word for every innkeeper on the road",
-      "a purse, a fresh horse's worth of oats, and a blessing from {their} own lips",
-      "a purse, and the loan of {their} late father's sword-belt, which {they} will not hear of you refusing"
+      "a purse, heavier than you expected",
+      "a purse, with a blessing from {their} own lips",
+      "a purse tied with {their} own cord, and {their} hand on yours as {they} give{s} it",
+      "a purse, which {they} will not hear of you refusing"
     ]
   },
   "traitors": {
@@ -120,7 +120,7 @@
         ],
         "near": [
           "{traitor} is drawing something in the ashes when you wake: a sign you saw last on the walls at {home}. {They} scuff{s} it out with {their} boot.",
-          "When you speak of {villain_short} {traitor} goes still, the way a man goes still in a temple.",
+          "When you speak of {villain_short} {traitor} goes still, the way someone goes still in a temple.",
           "{traitor} hums a tune by the fire, and you have heard it before, from the dark at {home}.",
           "{traitor} does not flinch at what {villain_short} leaves for you to find. Not once. Everyone else does."
         ],

@@ -129,8 +129,9 @@ def on_night(game, where: str) -> bool:
     for adv in _story().active(game):
         rec = record(adv)
         p = npc(game, adv)
-        if rec is None or p is None or p.settlement != here.id:
-            continue
+        if rec is None or p is None or p.settlement != here.id or p.flags.get("gone") or \
+                (adv.get("traitor") or {}).get("state", "hidden") not in ("hidden", "yielded", "faltered", "never"):
+            continue  # (one who sold you, fled or was sent away comes down to nobody's table)
         ch = int(adv["chapter"])
         t = sp["trust"]
         if int(rec["gifts"]) < int(t["gifts"]) and ch > int(rec["gift_ch"]) and \

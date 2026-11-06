@@ -285,3 +285,20 @@ def test_the_epilogue_tells_of_the_traitor_and_the_innocent(made, tables, monkey
     assert "innocent" in pages and all(_whole(x) for x in pages.values())
     assert adv["innocent"]["fate"] == ("spared" if adv["state"] == "won" else "lost")
     assert rec["fate"] == "sent"
+
+
+def test_one_far_off_is_not_fought_at_your_fire_and_gives_no_more_gifts(made, tables, monkeypatch):
+    game, adv, t = _tale(made, tables, "risen")
+    p = _patron(game, adv)
+    rec = _with_traitor(game, adv, monkeypatch, "patron")
+    _tell(game, adv, "inn")
+    _play(game, 0)
+    opts = beats.choices(game, _tell(game, adv, "inn"))
+    assert opts[1]["ok"] and not opts[2]["ok"] and not opts[3]["ok"], "steel and sending away are for one at your side"
+    _play(game, 0)
+    beats.OPS["traitor"](game, {"adv": adv["id"]}, "flee")
+    assert rec["state"] == "fled" and p.flags.get("gone")
+    adv["patron"]["made"] = -10
+    s = game.world.settlements[p.settlement]
+    game.player.x, game.player.y = s.x, s.y
+    assert not patrons.on_night(game, "inn"), "one who ran to it comes down to nobody's table"

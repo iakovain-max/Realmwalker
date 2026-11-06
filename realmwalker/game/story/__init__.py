@@ -751,10 +751,10 @@ def on_battle(game, result, actor=None) -> None:
     stakes.on_battle(game, result)  # (an ally who rode with the patron and fell; one at the finale: F.1)
     from realmwalker.game.story import rivals
 
-    rivals.on_battle(game, result)
+    rivals.on_battle(game, result)  # (a rival's band fought, or fought beside you: F.2)
     from realmwalker.game.story import traitors
 
-    traitors.on_battle(game, result)  # (a traitor slain, or one who turned in the fight gone over: F.3)  # (a rival's band fought, or fought beside you: F.2)
+    traitors.on_battle(game, result)  # (a traitor slain, or one who turned in the fight gone over: F.3)
     deeds.on_battle(game, result)  # (a step's band, a hold's wave: D.2)
     seen, harm = [], {}
     for c, how in [(c, "dead") for c in result.dead] + [(c, "taken") for c in getattr(result, "captives", [])] + \

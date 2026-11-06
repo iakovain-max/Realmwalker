@@ -136,7 +136,7 @@ class Player:
         rec = beats.pending(g)
         opts = [o for o in beats.choices(g, rec) if o["ok"]]
         prefer = ("hunt it", "quietly", "stake out", "tooth", "look closer", "study it", "stand to the fire",
-                  "think back")
+                  "think back", "have it out")
         pick = next((o for w in prefer for o in opts if w in o["label"].lower()), None)
         pick = pick or next((o for o in opts if "not now" not in o["label"].lower()), opts[0] if opts else None)
         self.run.beats.append(rec["beat"])

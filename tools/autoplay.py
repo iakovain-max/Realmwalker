@@ -364,6 +364,7 @@ def _check_adventures(game, fail) -> None:
     _check_lieutenants(game, fail)
     _check_allies(game, fail)
     _check_rivals(game, fail)
+    _check_secrets(game, fail)
     _check_early(game, fail)
     _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
@@ -424,6 +425,34 @@ def _check_rivals(game, fail) -> None:
             fail(f"{where}: holds the prize, but is {r.get('state')}")
         if adv["state"] == "active" and r.get("state") == "truce" and "rival" not in adv["keys"]:
             fail(f"{where}: under truce, but the tale has no key 'rival'")
+
+
+def _check_secrets(game, fail) -> None:
+    """Expansion 6 F.3: a patron's motive is one the data knows (a traitor patron's tale has the traitor); a traitor
+    has a role, reason and state the game knows, and a patron betrays at most once in a hero's life."""
+    from realmwalker.game import story
+    from realmwalker.game.story import patrons, traitors
+    from realmwalker.game.story.forge import life_of
+
+    psp, tsp = patrons.spec(game), traitors.spec(game)
+    patron_traitors = 0
+    for adv in story.adventures(game.world).values():
+        p, t = adv.get("patron"), adv.get("traitor")
+        where = f"tale {adv['id']}"
+        if p and p.get("motive") not in set(psp.get("motives", {})) | {"traitor"}:
+            fail(f"{where}: the patron's motive '{p.get('motive')}' is not one the data knows")
+        if p and p.get("motive") == "traitor" and not (t and t.get("role") == "patron"):
+            fail(f"{where}: a traitor patron, but no traitor of the patron's role")
+        if not t:
+            continue
+        if t.get("role") not in ("patron", "ally", "companion") or t.get("reason") not in tsp.get("reasons", {}) \
+                or t.get("state") not in traitors.STATES:
+            fail(f"{where}: traitor {t.get('name')} with an unknown role, reason or state")
+        if t.get("role") == "patron" and adv["hero"]["life"] == life_of(game) and \
+                t.get("state") not in ("faltered", "never"):
+            patron_traitors += 1
+    if patron_traitors > 1:
+        fail(f"{patron_traitors} patrons betrayed one hero (at most once in a life)")
 
 
 def _check_lieutenants(game, fail) -> None:
