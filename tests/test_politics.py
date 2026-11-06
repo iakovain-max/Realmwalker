@@ -121,6 +121,14 @@ def test_a_war_is_fought_and_a_town_changes_hands(world, tables):
     war["score"] = 75  # nearly won: even a capital may be besieged
     d.military = 1
     engine.sieges(war, a, d, 7)
+    if war.get("march") is not None:  # (its army marches there first: a host on the roads, G.7)
+        from realmwalker.world import hosts
+
+        for _ in range(90):
+            if war["siege"] is not None:
+                break
+            engine.day += 1
+            hosts.advance(engine, days=1)
     siege = war["siege"]
     assert siege is not None
     target = w.settlements[siege["settlement"]]

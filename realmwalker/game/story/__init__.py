@@ -259,6 +259,9 @@ def daily(game) -> None:
     d["day"] = today
     d["at"] = [int(game.player.x), int(game.player.y)]
     _need(game, d, today)  # (nothing stirring near you: the Storyteller wakes something, G.2)
+    from realmwalker.world import hosts
+
+    hosts.advance_world(game.world, game.tables, float(game.moment.total_days))  # (hosts on the roads, G.7)
     for adv in active(game):  # (a villain taken alive whom no aftermath judged: the lord's justice, D.3)
         if adv.get("boss_taken") and int(adv.get("taken_day", today)) < today:
             for line in endings.finish(game, adv):

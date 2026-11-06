@@ -101,4 +101,6 @@ def faction_place(world, faction) -> tuple[int, int] | None:
     coast = faction.flags.get("coast")
     if coast:
         return int(coast[0]), int(coast[1])
-    return None
+    from realmwalker.world import hosts
+
+    return hosts.place(world, faction.id)  # (one with only a host in the field: where its host is, G.7)

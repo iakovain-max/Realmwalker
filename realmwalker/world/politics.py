@@ -83,6 +83,9 @@ class Politics:
         from realmwalker.world import reshape
 
         reshape.weekly(self)  # (a blight spreading round a barrow: G.6)
+        from realmwalker.world import hosts
+
+        hosts.advance(self)  # (armies, warbands, the dead and refugees on the roads: G.7)
         if self.changed:
             fx.touch(self.w)
 
@@ -467,10 +470,18 @@ class Politics:
 
         threats.trigger(self, "battle", [(place.x, place.y)])  # (fresh dead near an old barrow: Expansion 6 G.2)
 
-    def sieges(self, war: dict, a, d, days: float) -> None:
+    def sieges(self, war: dict, a, d, days: float, *, march: bool = True) -> None:
+        """A war's sieges: one begins when the war goes well enough for a side (its army marches there first, a host
+        on the roads: world/hosts.py; `march=False` begins it at once), and ends in the town taken or relieved."""
         w = self.w
         siege = war.get("siege")
         if siege is None:
+            if war.get("march") is not None:  # (its army is on the road: the siege begins when it arrives, G.7)
+                from realmwalker.world import hosts
+
+                if hosts.get(w, war["march"]) is not None:
+                    return
+                war["march"] = None
             if abs(war["score"]) < 30:
                 return
             attacking = war["score"] > 0
@@ -481,11 +492,10 @@ class Politics:
             owner_top = fx.realm_of_settlement(w, target)
             if owner_top is not None and owner_top.seat == target.id and abs(war["score"]) < 70:
                 return  # the capital holds until the war is nearly lost
-            war["siege"] = {"settlement": target.id, "by": besieger.id, "since": self.day,
-                            "until": self.day + self.rng.uniform(14, 60)}
-            marks.add(w, target, "siege", self.day, self.t, war=war["id"], by=besieger.id)
-            self.say("siege", {"attacker": besieger.name, "place": target.name}, where=(target.x, target.y),
-                     importance=3, factions=[besieger], places=[target])
+            from realmwalker.world import hosts
+
+            if not march or hosts.march_to_siege(self, war, besieger, target) is None:
+                self.begin_siege(war, besieger, target)
             return
         if self.day < siege["until"]:
             return
@@ -509,6 +519,22 @@ class Politics:
                                   "defender": defender.name if defender else "the townsfolk"},
                      where=(target.x, target.y), importance=3, factions=[besieger], places=[target])
 
+    def begin_siege(self, war: dict, besieger, target) -> bool:
+        """The besieger's army is at the walls (or mustered there): the siege begins, if the town is still the
+        enemy's and nothing else besieges it."""
+        w = self.w
+        if war.get("siege") is not None or target.status.get("siege") is not None or not war["active"]:
+            return False
+        other = w.factions.get(war["defender"] if besieger.id == war["attacker"] else war["attacker"])
+        if other is None or target.id not in {t.id for t in fx.holdings(w, other, deep=True)}:
+            return False  # (the town changed hands while the army marched)
+        war["siege"] = {"settlement": target.id, "by": besieger.id, "since": self.day,
+                        "until": self.day + self.rng.uniform(14, 60)}
+        marks.add(w, target, "siege", self.day, self.t, war=war["id"], by=besieger.id)
+        self.say("siege", {"attacker": besieger.name, "place": target.name}, where=(target.x, target.y),
+                 importance=3, factions=[besieger], places=[target])
+        return True
+
     def take(self, target, winner, loser, war: dict) -> None:
         """A settlement changes hands. Its lord's house swears to the conqueror, or the crown takes it."""
         w = self.w
@@ -530,8 +556,12 @@ class Politics:
         else:
             self.set_owner(target, winner.id)
         if sacked:
+            was = target.population
             target.population = max(10, int(target.population * self.rng.uniform(0.55, 0.8)))
             marks.add(w, target, "sacked", self.day, self.t)
+            from realmwalker.world import hosts
+
+            hosts.refugees(w, self.t, target, was - target.population, day=self.day, rng=self.rng)
         war["score"] += 15 if winner.id == war["attacker"] else -15
         self.changed = True
         kind = "sacked" if sacked else "taken"
@@ -548,6 +578,7 @@ class Politics:
         war["active"] = False
         war["ended"] = self.day
         war["end_year"] = self.year
+        war["march"] = None  # (its army on the road goes home: hosts.advance drops it)
         if war.get("siege"):
             s = w.settlements[war["siege"]["settlement"]]
             marks.lift(w, s, "siege")
@@ -620,7 +651,7 @@ class Politics:
                 self.famine(realm)
         for tribe in fx.active_factions(w, "tribe"):
             if self.rng.chance(float(rates["tribe_raid"]) * share):
-                self.raid(tribe)
+                self.raid(tribe, ride=True)
         for cult in fx.active_factions(w, "cult"):
             self.cult_year(cult, share)
         for d in w.politics.get("dragons", []):
@@ -758,18 +789,35 @@ class Politics:
 
         threats.trigger(self, "famine", [(s.x, s.y) for s in towns])  # (hungry beasts, hungry men)
 
-    def raid(self, tribe) -> None:
+    def raid(self, tribe, *, target=None, ride: bool = False) -> None:
+        """A tribe raids a village near its home. `ride`: its warband rides out first, a host on the map, and the
+        raid falls when it gets there (world/hosts.py calls this again with the `target`)."""
         w = self.w
-        home = self.place_of(tribe)
-        if home is None:
-            return
-        targets = [s for s in w.settlements if s.kind in ("hamlet", "village") and
-                   math.hypot(s.x - home[0], s.y - home[1]) < 28 and fx.owner_of(w, s) is not None]
-        if not targets:
-            return
-        s = self.rng.choice(targets)
+        if target is not None:
+            if fx.owner_of(w, target) is None:
+                return  # (nobody there to raid any more)
+            s = target
+        else:
+            home = self.place_of(tribe)
+            if home is None:
+                return
+            targets = [s for s in w.settlements if s.kind in ("hamlet", "village") and
+                       math.hypot(s.x - home[0], s.y - home[1]) < 28 and fx.owner_of(w, s) is not None]
+            if not targets:
+                return
+            s = self.rng.choice(targets)
+            if ride:
+                from realmwalker.world import hosts
+
+                if hosts.ride_out(self, tribe, s) is not None:
+                    return
         burned = s.kind == "hamlet" and self.rng.chance(0.3)
+        was = s.population
         s.population = max(10, int(s.population * (0.5 if burned else self.rng.uniform(0.85, 0.95))))
+        if burned:
+            from realmwalker.world import hosts
+
+            hosts.refugees(w, self.t, s, was - s.population, day=self.day, rng=self.rng)
         marks.add(w, s, "raided", self.day, self.t, until=self.day + 30, by=tribe.id)
         if burned:
             marks.add(w, s, "burned", self.day, self.t)

@@ -124,6 +124,30 @@ class DebugConsole(Screen):
             game.dirty = True
             self.say(f"Changed {len(rec['cells'])} cells ({kind})." if rec else "<warn>Nothing there to change.</>")
 
+        @self.command("host", "host <kind> — a host sets out from the town nearest you for the next one (army, horde, "
+                              "the_dead, crusade, warband, refugees)")
+        def _host(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.world import hosts
+
+            if not args or args[0] not in hosts.KINDS:
+                self.say("Kinds: " + ", ".join(hosts.KINDS))
+                return
+            w, p = game.world, game.player
+            near = sorted(w.settlements, key=lambda s: (abs(s.x - p.x) + abs(s.y - p.y), s.id))
+            if len(near) < 2:
+                self.say("<warn>Nowhere to march to.</>")
+                return
+            fid = next((f.id for f in w.factions.values() if f.active), -1) if args[0] != "refugees" else -1
+            h = hosts.raise_host(w, game.tables, args[0], (near[0].x, near[0].y), near[1].id, day=w.time / 1440.0,
+                                 faction=fid if args[0] not in ("horde", "the_dead") else -1, strength=150,
+                                 who="the debug console", people=60)
+            game.dirty = True
+            self.say(f"{h['id']}: {args[0]} from {near[0].name} to {near[1].name}, {len(h['path'])} squares."
+                     if h else "<warn>No road goes there.</>")
+
         @self.command("quest", "quest <kind> — take on work of that kind (quest list: show kinds)")
         def _quest(args):
             game = need_game()

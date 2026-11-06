@@ -313,6 +313,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _check_factions(game, fail)
         _check_threats(game, fail)
         _check_land(game, fail)
+        _check_hosts(game, fail)
         _check_adventures(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
@@ -735,6 +736,15 @@ def _check_part_d(game, fail) -> None:
                 st = story.find_step(game, tag.get("adv"), tag.get("step"))
                 if st is not None and st["kind"] != "capture":
                     fail(f"{c.name} is wanted alive by a step that is no capture")
+
+
+def _check_hosts(game, fail) -> None:
+    """Hosts on the map (G.7): each on its own road (no jumps, inside the world, ending at its goal), at a square of
+    it, of a known kind and state, an army's war and a host's faction real; a war marching has its host."""
+    from realmwalker.world import hosts
+
+    for problem in hosts.check(game.world, game.tables):
+        fail(problem)
 
 
 def _check_land(game, fail) -> None:

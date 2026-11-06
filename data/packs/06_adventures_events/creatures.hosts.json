@@ -1,0 +1,8 @@
+{
+  "_comment": "Expansion 6 G.7: the bands met near a host on the map (world/hosts.py, threats.json hosts groups): an army's foragers and a crusade's outriders. Never met at random (weight 0, no biome): only near their host.",
+  "creatures": {},
+  "encounters": {
+    "army_foragers": {"name": "an army's foragers", "members": [["guard", "1d3+2"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0, "intro": ["Soldiers driving a farmer's pigs ahead of them stop and look you over. \"Who are you for?\"", "A party of foragers with the army's badge, and their sergeant does not like strangers on the road.", "Soldiers off the line, looking for food and trouble, and you are one of the two."]},
+    "crusaders": {"name": "a crusade's outriders", "members": [["priest", "1"], ["guard", "1d2+1"]], "biomes": ["none"], "danger": [0, 10], "time": "any", "weight": 0, "intro": ["Riders under a holy banner block the road. \"Stand and be known. The dead wear living faces now.\"", "A priest in mail and his men-at-arms, outriders of the crusade, and they have hanged men on less than a hunch.", "The crusade's scouts ride up with drawn swords and a question: are you living, and whose are you?"]}
+  }
+}

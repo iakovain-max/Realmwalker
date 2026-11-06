@@ -563,7 +563,8 @@
           "doom": true,
           "effects": [
             [
-              "emptied",
+              "host",
+              "the_dead",
               "village",
               "haunted"
             ],
@@ -832,6 +833,120 @@
         "Wanted, alive or otherwise: {villain}, captain of {gang}. Ask at the gate of {town}. The gang keeps to {home}, {where}.",
         "{town} has had enough of paying {gang}. Whoever breaks {villain} at {home}, {where}, will want for nothing here.",
         "A robbed carter of {town} offers all he has left to whoever brings down {villain}. His men lie up at {home}, {where}."
+      ]
+    }
+  },
+  "hosts": {
+    "_comment": "Hosts on the map (world/hosts.py, G.7): squares a day by kind (a square is three miles), the encounter group met near each, how near (squares) and how much likelier a meeting is there, the longest march (days; longer and the thing happens at once), what a host with no war behind it does to a town, refugees (the share of a town's losses who take to the road, the fewest that make a column, how far they go), the crusade (its chance to set out against the dead, how far an order or temple answers, its strength, the days it holds a town). Names: {who} is its faction or its master.",
+    "speed": {
+      "army": 4,
+      "horde": 4,
+      "the_dead": 2.5,
+      "crusade": 4.5,
+      "warband": 6,
+      "refugees": 3
+    },
+    "groups": {
+      "army": "army_foragers",
+      "horde": "orc_raiders",
+      "the_dead": "zombies",
+      "crusade": "crusaders",
+      "warband": "orc_raiders"
+    },
+    "near": 3,
+    "boost": 2.5,
+    "most_days": 60,
+    "strike": {
+      "horde": {
+        "losses": [
+          0.2,
+          0.4
+        ],
+        "marks": [
+          "beset",
+          "burned"
+        ],
+        "days": 30
+      },
+      "the_dead": {
+        "losses": [
+          0.0,
+          0.0
+        ],
+        "marks": []
+      }
+    },
+    "refugees": {
+      "share": 0.4,
+      "least": 20,
+      "reach": 30
+    },
+    "crusade": {
+      "chance": 0.7,
+      "reach": 45,
+      "strength": [
+        60,
+        160
+      ],
+      "hold_days": 30
+    },
+    "names": {
+      "army": [
+        "the army of {who}",
+        "the host of {who}",
+        "{who}'s army"
+      ],
+      "horde": [
+        "the horde of {who}",
+        "the warhost of {who}",
+        "{who}'s horde"
+      ],
+      "the_dead": [
+        "the dead of {who}",
+        "the host of {who}",
+        "{who}'s dead"
+      ],
+      "crusade": [
+        "the crusade of {who}",
+        "the knights of {who}",
+        "{who}'s crusade"
+      ],
+      "warband": [
+        "a warband of {who}",
+        "the riders of {who}",
+        "{who}'s warband"
+      ],
+      "refugees": [
+        "a column of refugees",
+        "people fleeing with what they could carry",
+        "a train of refugees"
+      ]
+    },
+    "near_words": {
+      "army": [
+        "The road is churned to mud by many feet, and the hedges are stripped: an army has passed this way, or is passing.",
+        "Smoke from a hundred cookfires hangs over the next valley. An army is camped there.",
+        "Foragers with a soldier's badge are driving off a farmer's cows. The army they feed is not far."
+      ],
+      "horde": [
+        "Every farm along this road is empty, its gate open. Something big is coming, and the people knew it first.",
+        "Drums, far off, all day. The horde is close.",
+        "A burned cart in the ditch, and the tracks of hundreds going the same way."
+      ],
+      "the_dead": [
+        "The birds have gone quiet, and there is a smell on the wind like an opened grave.",
+        "Tracks on the road: bare feet, hundreds of them, and none of them ever turning aside.",
+        "A dog by the roadside will not stop howling at the empty country to the east."
+      ],
+      "crusade": [
+        "Hymns carry over the fields: a crusade is on the march, banners and all.",
+        "A knight in a white surcoat rides by with his squire, and asks if you have seen the dead.",
+        "Pilgrims with staves hurry along the road, following the banners of a crusade."
+      ],
+      "warband": [
+        "Fresh hoofprints by the score, and none of them shod: a warband rode this way today.",
+        "A herdsman runs past without a word, his flock left behind him. Riders are out.",
+        "A beacon burns on the hill behind you. Raiders in the country."
       ]
     }
   }

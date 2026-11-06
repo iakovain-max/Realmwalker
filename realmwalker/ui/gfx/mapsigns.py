@@ -11,6 +11,9 @@ Animations "calm" or "off".
     signed(s)                                      the marks of s that show on the map, strongest first
     under(canvas, game, places, now, tint)         what stands behind the towns' marks (the far tents, a fire's glow)
     over(canvas, game, places, now, tint)          what stands before them (smoke, flags, the near tents, lanterns)
+    hosts(canvas, game, columns, now, tint)        hosts on the roads (G.7): a short column of figures (three to
+                                                   seven, by its strength, dolls of its own creatures) behind its
+                                                   banner, with a little dust; refugees without a banner
 
 `places` is [(settlement, x, y, size, alpha)]: the mark's rectangle on the screen (x, y its top left corner, size its
 side in pixels), as WorldView.draw lays it, and how clearly it is seen (1 explored, 0.6 only known).
@@ -158,6 +161,70 @@ def over(canvas, game, places, now: float, tint) -> None:
                 h = max(9.0, size * 0.42)
                 canvas.under(Image(("sign", "statue"), _statue, (x - h * 0.2, y + size * 0.92 - h, h * 0.64, h),
                                    rgba=_lit(tint, a), smooth=False))
+
+
+DUST_RGB = (168, 146, 112)
+_HOST_PARTS: dict = {}  # (creature id, figure, id(tables)) -> its doll's parts (the same few, every frame)
+
+
+def _host_parts(game, atlas, def_id: str, i: int):
+    from realmwalker.ui.gfx import dolls
+
+    key = (def_id, i % 3, id(game.tables), id(atlas))
+    parts = _HOST_PARTS.get(key)
+    if parts is None:
+        parts = dolls.creature(def_id, game.tables, f"host/{def_id}/{i % 3}", atlas=atlas)
+        _HOST_PARTS[key] = parts
+    return parts
+
+
+def host_creature(tables, h: dict) -> str:
+    """Whom its column shows: the first of its encounter group (the dead's zombies, an army's soldiers), or
+    common folk for refugees."""
+    g = tables.creatures.encounters.get(h.get("group") or "")
+    if g and g.get("members"):
+        return str(g["members"][0][0])
+    return "commoner"
+
+
+def hosts(canvas, game, columns, now: float, tint) -> None:
+    """`columns` is [(host, x, y, ppc, alpha)]: the screen point of its square's middle foot, the map's pixels a
+    square, how clearly it is seen."""
+    from realmwalker.ui.gfx import dolls
+    from realmwalker.world import hosts as host_rules
+
+    animate = canvas.gfx.ambient
+    t = now if animate else 0.0
+    atlas = canvas.gfx.atlas
+    light = (tint[0] / 255, tint[1] / 255, tint[2] / 255)
+    for h, x, y, ppc, a in columns:
+        fs = max(10.0, ppc * 0.95)
+        n = host_rules.figures(h)
+        _, _, dx = host_rules.heading(h)
+        back = -1.0 if dx > 0 else 1.0  # (the column trails behind the way it goes)
+        gap = fs * 0.42
+        who = host_creature(game.tables, h)
+        seed = (int(h["id"][1:]) * 0.618034) % 1.0
+        for k in range(3):  # dust behind it
+            p = (t * 0.25 + k / 3 + seed) % 1.0 if animate else k / 3
+            r = fs * (0.25 + 0.35 * p)
+            px = x + back * (gap * (n - 0.5) + fs * 0.3 * p)
+            py = y - fs * 0.15 - fs * 0.3 * p
+            canvas.under(Image(("sign", "puff", k), lambda v=k: _puff(v), (px - r, py - r, 2 * r, 2 * r),
+                               rgba=_lit(tint, a, DUST_RGB, int(150 * (1.0 - p)))))
+        for i in reversed(range(n)):  # the far end first, the leader last (in front)
+            bob = math.sin(t * 6.0 + i * 1.3) * fs * 0.03 if animate else 0.0
+            px = x + back * gap * i - fs / 2
+            py = y - fs * (0.96 + 0.06 * (i % 2)) + bob
+            cmd = dolls.draw(atlas, _host_parts(game, atlas, who, i), px, py, fs, light, a)
+            if cmd is not None:
+                canvas.under(cmd)
+        if h["kind"] != "refugees":  # its banner, carried before it
+            f = game.world.factions.get(h["faction"]) if h["faction"] >= 0 else None
+            colour = tuple(f.color) if f is not None else BESET_RGB
+            bw, bh = fs * 0.42, fs * 1.0
+            canvas.under(Image(("sign", "banner"), _banner, (x - back * fs * 0.32 - bw * 0.2, y - bh * 1.15, bw, bh),
+                               rgba=_lit(tint, a, colour), smooth=False))
 
 
 def _smoke(canvas, s, x, y, size, a, tint, t, mark, night) -> None:

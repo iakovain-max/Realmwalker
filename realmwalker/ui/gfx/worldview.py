@@ -10,6 +10,7 @@ import math
 import numpy as np
 
 from realmwalker.ui.gfx import dolls, mapsigns
+from realmwalker.world import hosts as host_rules
 from realmwalker.ui.gfx.paint import CANON, OVERVIEW, ChunkCache, WorldPainter
 from realmwalker.ui.gfx.scene import Clip, Image, Lines, Rect, Sprite, Text, tile_batch
 
@@ -276,6 +277,16 @@ class WorldView:
             canvas.under(*tile_batch(gfx.atlas, names, np.array(dst, np.float32), np.array(cols, np.float32)))
         if signs:
             mapsigns.over(canvas, game, signs, now, tint)
+        columns = []  # hosts on the roads (G.7), where you have seen the land
+        for h in world.politics.get("hosts", ()):
+            if h["state"] != "marching" or not explored[h["x"], h["y"]]:
+                continue  # (a crusade holding a town is inside it)
+            hx, hy, _ = host_rules.heading(h)
+            sx, sy = self.cell_px(hx, hy)
+            if X0 - 3 * ppc < sx < X0 + VW + 3 * ppc and Y0 - 3 * ppc < sy < Y0 + VH + 3 * ppc:
+                columns.append((h, sx + ppc / 2, sy + ppc * 0.95, ppc, 1.0))
+        if columns:
+            mapsigns.hosts(canvas, game, columns, now, tint)
         town_boxes = []
         for lx, ly, name, kind, a in labels:
             big = kind in ("town", "city", "hold", "great")

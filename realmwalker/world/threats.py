@@ -780,3 +780,24 @@ def _reshape(pol, t: dict, kind: str = "blight", r: float = 2, most: float = 5) 
                        story=str(t["id"]), spread={"threat": str(t["id"]), "max": float(most)})
     if rec is not None and f"land_{kind}" in pol.data["text"]:
         pol.say(f"land_{kind}", _words(w, t, pol.rng), where=(hx, hy), importance=3)
+
+
+@stage_op("host")
+def _host(pol, t: dict, kind: str = "the_dead", which: str = "village", *also: str) -> None:
+    """The doom on the march (G.7): the dead leave the barrow for the place they will empty (chosen as `emptied`
+    chooses it), a host on the roads that a crusade may go to meet; arriving, it falls on the place through
+    world/hosts.strike (emptied, with `also`). Where no road goes there, the place is emptied at once, as before."""
+    from realmwalker.world import hosts
+
+    w = pol.w
+    small = [s for s in _in_reach(w, t, ("hamlet", "village")) if "emptied" not in s.status]
+    towns = small or [s for s in _in_reach(w, t) if "emptied" not in s.status]
+    if which in ("hamlet", "village"):
+        towns = [s for s in towns if s.kind == which] + [s for s in towns if s.kind != which]
+    if not towns:
+        return
+    if any(h.get("threat") == t["id"] for h in hosts.records(w)):
+        return  # (its dead are on the road already)
+    if kind == "the_dead" and hosts.the_dead_march(pol, t, towns[0], also) is not None:
+        return
+    _emptied(pol, t, which, *also)

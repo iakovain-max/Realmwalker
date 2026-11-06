@@ -1481,6 +1481,18 @@ THREATS = Obj({
     "interlude": Obj({"woke": word_list(4, 160), "grew": word_list(4, 160), "doom": word_list(4, 160),
                       "ended": word_list(4, 160)}, optional=True),
     "kinds": Map(THREAT_KIND),
+    # hosts on the map (world/hosts.py, G.7)
+    "hosts": Obj({
+        "speed": Map(Float(min=0.5, max=20)), "groups": Map(Str(max_len=40)), "near": Int(min=0, max=10),
+        "boost": Float(min=1, max=10), "most_days": Int(min=1, max=365),
+        "strike": Map(Obj({"losses": List(Float(min=0, max=0.9), min_items=2, max_items=2),
+                           "marks": List(Str(max_len=30)), "days": Int(min=1, max=365, optional=True)})),
+        "refugees": Obj({"share": Float(min=0, max=1), "least": Int(min=1, max=10000), "reach": Int(min=1, max=200)}),
+        "crusade": Obj({"chance": Float(min=0, max=1), "reach": Int(min=1, max=200),
+                        "strength": List(Int(min=1, max=10000), min_items=2, max_items=2),
+                        "hold_days": Int(min=1, max=365)}),
+        "names": Map(word_list(3, 80)), "near_words": Map(word_list(3, 200)),
+    }, optional=True),
 })
 
 CHOICE = Obj({

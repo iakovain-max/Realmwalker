@@ -133,15 +133,29 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
 
     road = threats.on_the_road(w, game.tables, p.x, p.y, night)  # (a threat's bands on the land: Expansion 6 D.1)
     boost = float(road[1]["boost"]) if road is not None else 1.0
+    from realmwalker.world import hosts
+
+    host = hosts.near(w, p.x, p.y, tables=game.tables)  # (a host on the march near you: its foragers, G.7)
+    if host is not None and host["group"] not in game.tables.creatures.encounters:
+        host = None
+    host_boost = float(hosts.spec(game.tables).get("boost", 2.5)) if host is not None else 1.0
+    boost = max(boost, host_boost)
     if not rng.chance(encounter_chance(danger, minutes, night, on_road) * (1.6 if haunted else 1.0) * boost):
         return None
+    if host is not None and rng.chance(1.0 - 1.0 / host_boost):
+        enc = make_encounter(game, host["group"], rng)
+        words = hosts.spec(game.tables).get("near_words", {}).get(host["kind"])
+        if words:
+            enc.intro = rng.choice(words) + " " + enc.intro
+        return enc
     if haunted:
         intro = past.restless(game, rng)
         if intro and "restless_dead" in game.tables.creatures.encounters:
             enc = make_encounter(game, "restless_dead", rng)
             enc.intro = intro
             return enc
-    if road is not None and road[1]["group"] in game.tables.creatures.encounters and rng.chance(1.0 - 1.0 / boost):
+    if road is not None and road[1]["group"] in game.tables.creatures.encounters and \
+            rng.chance(1.0 - 1.0 / float(road[1]["boost"])):
         t, roads = road  # (the share of meetings the threat added: the dead on the road at night, the gang's toll)
         enc = make_encounter(game, roads["group"], rng)
         enc.intro = threats.road_words(w, t, roads, rng)
