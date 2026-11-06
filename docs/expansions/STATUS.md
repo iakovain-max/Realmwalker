@@ -596,7 +596,12 @@ Autoplay `_check_threat_signs`. tests/test_threat_signs.py (7), test_mapsigns co
 change (the threat's `staged` list is optional). Decisions: overlays only on folk who mean no harm (the words are of
 people met on the road; hostile bands and beasts are their own story); the doom stages have no roads (a doom ends its
 threat at once); scenes ask nothing of the player (no hold, no talk). Words by two sonnet helpers, read over.
-CHECKS_PLACEHOLDER
+Checks: full suite twice (only the known turn-time tests under load: tactics coverage archmage, enemy casters 1, 3
+and 7; all pass alone), autoplay OK, smoke OK. The fresh review's fixes: a scene's {place} is the town you are in
+(barks too), the land's line escaped, no overlay on a camp's night visitor, the overlay lines rewritten to fit any
+company met on the road (the people met there are mages, priests, deserters, spies, bandits who let you pass: never
+plain travellers, so no carts or children). Not in G.1: signs of kinds still to come (hidden circle, mad mage...: they
+come with their kinds); a threat's reach washed on the map (G.8).
 F.5 (2026-11-06, realmwalker-b): the full forms' cast. Rivals: a kind may say `blueprints` (only those tales) and
 `prize` (what it wants when there is no thing to fetch: `rivals.prize_name`); the own kinds `hunter` (beast),
 `graverobbers` (risen, relation -1), `captain` (outlaw), weight 5 against the others' 2-3; `decide` gives no rival when

@@ -378,7 +378,7 @@ ADVENTURES.md §5.3, §5.6, §5.7.
 *Done when*: every ending's consequences are applied and seen; marks run their whole course (a burned town rebuilds
 and regrows, a memorial stands); the land itself can change through the ledger and the map repaints; hosts march on
 the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, §5.21, §8.13, §8.16.
-- [ ] G.1 Full sign sets for every threat kind's stages, as news, scenes, marks and map signs; overlays on road
+- [x] G.1 Full sign sets for every threat kind's stages, as news, scenes, marks and map signs; overlays on road
   encounters (`story.overlay` from `encounters.roll_encounter`), on prices (marks read by `game/economy`) and on the
   land's flavour (only the extra lines behind Text detail).
 - [ ] G.2 Waking dormant threats (triggers, the Storyteller's need, chance); `seed_from` from every `Politics` method
