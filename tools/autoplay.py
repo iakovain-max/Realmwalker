@@ -463,6 +463,9 @@ def _check_tales(game, fail) -> None:
             fail(f"the epilogue of {adv.get('title')!r} is out of order ({[p.get('about') for p in pages]})")
         if adv.get("sequel_of") and adv["sequel_of"] not in advs:
             fail(f"the tale {adv.get('title')!r} follows on from a tale that does not exist")
+        hints = adv.get("hints") or []  # (G.5: a rumour points at each of a tale's steps once)
+        if len(hints) != len(set(hints)):
+            fail(f"a pointer of {adv.get('title')!r} was told twice ({hints})")
     for t in threats.records(w).values():
         rec = t.get("sequel_of")
         if not rec or t["state"] == "ended":

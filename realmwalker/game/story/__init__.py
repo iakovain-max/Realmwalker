@@ -1049,8 +1049,9 @@ def hook_line(game, t: dict, town=None) -> str:
     return textgen.fill(rng.choice(kind["hooks"]), rng, {}, hook_words(game, t, town))
 
 
-def offer_hook(game, t: dict, town=None) -> None:
-    """A threat's people ask the hero to take it on (the hook beat: take it, or not now)."""
+def offer_hook(game, t: dict, town=None, staged: bool = True) -> None:
+    """A threat's people ask the hero to take it on (the hook beat: take it, or not now). `staged` False: no one of
+    the town comes up to the hero with it (it was already told: a rumour, a letter, G.5)."""
     from realmwalker.game.story import beats
 
     if not _can_take(game, t):
@@ -1061,7 +1062,7 @@ def offer_hook(game, t: dict, town=None) -> None:
     words["hook"] = hook_line(game, t, town)
     words["threat"] = t["id"]
     then = {"beat": "story_hook", "where": _where(game), "words": words}
-    if town is not None and _on_its_map(game, town):  # (show, don't tell: someone of the town comes to you with it)
+    if staged and town is not None and _on_its_map(game, town):  # (show, don't tell: someone of the town comes to you with it)
         from realmwalker.game.story import stage
 
         scene = ("runner", "plea")[int(game.moment.total_days + town.id) % 2]

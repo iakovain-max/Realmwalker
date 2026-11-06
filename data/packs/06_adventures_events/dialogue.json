@@ -1,6 +1,76 @@
 {
-  "_comment": "Expansion 6 F.4: how a seer greets you.",
-  "greeting_job": {
-    "seer": ["\"I wondered when you would come.\"", "They look up from the cards, and do not seem surprised. \"Sit, if you like.\"", "\"The fire is warm, and the cards are dry. What do you want to know?\""]
+ "_comment": "Expansion 6 F.4: how a seer greets you. G.5: talk that leads somewhere (reveal_hook: the nearest threat's tale; reveal_clue: where a tale you have taken goes on).",
+ "greeting_job": {
+  "seer": [
+   "\"I wondered when you would come.\"",
+   "They look up from the cards, and do not seem surprised. \"Sit, if you like.\"",
+   "\"The fire is warm, and the cards are dry. What do you want to know?\""
+  ]
+ },
+ "special": {
+  "any": {
+   "_append": [
+    {
+     "text": "[Insight] Ask what people round here are afraid of.",
+     "skill": "insight",
+     "difficulty": "medium",
+     "success": {
+      "outcome": "reveal_hook",
+      "line": "They hesitate, and then it comes out all at once."
+     },
+     "failure": {
+      "outcome": "none",
+      "line": "\"Afraid? Of the price of bread, mostly.\""
+     }
+    },
+    {
+     "text": "[Investigation] Ask what they know about the trouble you are chasing.",
+     "skill": "investigation",
+     "difficulty": "medium",
+     "success": {
+      "outcome": "reveal_clue",
+      "line": "They think about it, then nod slowly."
+     },
+     "failure": {
+      "outcome": "none",
+      "line": "\"Never heard of it. Of any of it.\""
+     }
+    }
+   ]
+  },
+  "innkeeper": {
+   "_append": [
+    {
+     "text": "[Persuasion] Ask who has been asking strangers for help.",
+     "skill": "persuasion",
+     "difficulty": "easy",
+     "success": {
+      "outcome": "reveal_hook",
+      "line": "\"Funny you should ask.\" They put down the cloth."
+     },
+     "failure": {
+      "outcome": "none",
+      "line": "\"Everyone wants help. Nobody pays for it.\""
+     }
+    }
+   ]
+  },
+  "guard": {
+   "_append": [
+    {
+     "text": "[Persuasion] Ask what the watch has heard about your trouble.",
+     "skill": "persuasion",
+     "difficulty": "medium",
+     "success": {
+      "outcome": "reveal_clue",
+      "line": "The guard glances at the gate, then speaks low."
+     },
+     "failure": {
+      "outcome": "disposition_down",
+      "line": "\"The watch doesn't gossip. Move along.\""
+     }
+    }
+   ]
   }
+ }
 }
