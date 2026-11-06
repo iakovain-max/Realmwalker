@@ -602,6 +602,11 @@ tests/test_epilogue.py (6); test_legends skips the empty Tales of a new world. N
 "fled" ending (a villain fleeing the finale leaves its tale going, as before); the fled lieutenant's sequel stays E.3's
 nemesis; the risen's sequel stays E.4's `sequel` op ("returns"); "the defeated villain's heir" is the beast's get only
 (the outlaw's band already passes to a new captain, the risen king has none).
+Checks: full suite twice (the first run: the known turn-time test under load, tactics coverage priest, and two epilogue
+page tests that showed eight pages were too few for a full cast, fixed with MOST 10; the second run only the known
+turn-time tests, enemy casters 3 and tactics coverage bugbear, both pass alone), autoplay OK, smoke OK. The fresh
+review's fixes: a full cast keeps its pages, a stale settlement index skipped, no empty place links, a sleeping sequel
+not woken early by seed_from.
 G.3 (2026-11-06, realmwalker-a): `game/story/consequences.py` (its docstring lists every op and its arguments) adds
 the rest of ADVENTURES.md 8.6's consequence ops to `endings.OPS` (registered by importing it at the end of
 endings.py): figure_dies ("villain" or "lord:<place>", through Politics.die with `led`, so the seat's succession runs),
