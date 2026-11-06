@@ -459,15 +459,18 @@ def showcase_world(console, game) -> list[str]:
                              faction=fid if kind not in ("horde", "the_dead", "refugees") else -1,
                              strength=60 + 40 * i, who="the showcase", people=60, most=999)
         if h is None:
-            said.append(f"<warn>{kind}: no road from {a.name} to {b.name}</>")
+            said.append(f"<warn>{kind}: no road from {markup.escape(a.name)} to {markup.escape(b.name)}</>")
             continue
         h["at"] = float(len(h["path"]) // 3)
         h["x"], h["y"] = h["path"][int(h["at"])]
         for s in (a, b):
             p.known_settlements.add(s.id)
-        said.append(f"{kind}: {a.name} to {b.name}")
+        said.append(f"{kind}: {markup.escape(a.name)} to {markup.escape(b.name)}")
+    from realmwalker.world import founding
+
+    camps = len(founding.records(w))
     console.run("camp")
-    said += console.output[-1:]
+    said += console.output[-1:] if len(founding.records(w)) > camps else ["<warn>No room for a camp near you.</>"]
     t = min(threats.live(w), key=lambda t: threats.distance(w, t, x, y), default=None)
     if t is not None:
         game.renown.heard.update(t.get("signs", []))

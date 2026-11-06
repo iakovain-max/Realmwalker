@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part G (the world changes) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part H (assaults: battles through a living town) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -32,7 +32,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   phases, great attacks, every key, retreat and defeat, measured fair; every move in its temper's words, seals,
   the villain's shadow in the journal; saves format 23) · Part F (2026-11-06: allies with stakes under oath, rivals on
   their own clocks, patrons' hidden motives and traitors with their tells, the innocent's fate, the Reading of the
-  Wayfarer's Deck with seers and hermits, each tale's own rival and traitor; saves format 24)
+  Wayfarer's Deck with seers and hermits, each tale's own rival and traitor; saves format 24) · Part G (2026-11-06:
+  the world changes - threats' signs and wakings, endings' consequences in full with ruin, memorials, songs and relics,
+  the epilogue of places and the Legends book's Tales, rumours that lead somewhere, land changes through a ledger with
+  the map repainted, hosts marching on the roads, a threat's reach on the map, refugee camps founded and growing;
+  saves format 25)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -571,11 +575,23 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.10 (*showcase pages for all of Part G;
-FORMAT_VERSION +1; tests; Part G merged into `main`*), on branch `dlc/06-adventures-events` (Parts A-F are on main).
-Read docs/expansions/06-adventures-events.md Part G (G.10), docs/EXPANSIONS.md §5 (the merge), and the G.9-G.1 notes
-below (what each task built, what the showcase should stage: signs, wakings, endings' consequences, epilogue and
-tales, rumours, land changes, hosts, reaches, a founded camp).
+Next session starts at: Expansion 6, **Adventures & Events**, Part H, task H.1 (*the assault record
+`politics["assaults"]`, assaults.json, its tick inside townlife's loop, phases and clock, waves as LocalActors, the
+attackers from what the game has, the abstract resolution when the player is away through `hosts.strike`, arriving in
+the middle of one*), on branch `dlc/06-adventures-events` (Parts A-G are on main). Read
+docs/expansions/06-adventures-events.md Part H, docs/ADVENTURES.md §5.20 and §8.15, and the G.7 (hosts.strike), G.3
+(marks, ruin) and B.7 (fire) notes below.
+G.10 (2026-11-06, realmwalker-b): the showcase for Part G. `debug_console.showcase_world(console, game)` (the
+console's `showcase world`): `LAND_SHOWN` one of each land change at fixed offsets about the party (dead_forest on
+the nearest forest within 3..15 squares; `keep` the party's square), a host of each `hosts.KINDS` between successive
+nearest towns (`most=999`, set a third of the way along its path), `camp` run through the console, the nearest live
+threat's signs heard and den explored (so `story.known_reaches` shows it), the 16-square disc about the party
+explored. tools/showcase.py sheets `world` (that, on the world map at 32 px a square), `founded` (`--stage 0|1|2`:
+`camp`, `camp grow` and the camp's close-up map at noon from its middle), `tales` (`_tale("epilogue")` then the
+Legends book with `set_category` tales), MARKS now every mark with `dress` in marks.json. The console's camp grow
+says "a fortified camp" / "a village". tests/test_beast_shown.py `test_the_console_stages_the_world_showcase`
+(the ledger replays, every host kind out on its road, a camp, a reach, the world map drawn headless with no error).
+FORMAT_VERSION 25 for Part G (threat signs and wakings, consequences, tales, land ledger, hosts, foundings).
 G.9 (2026-11-06, realmwalker-a): `world/founding.py` (its docstring has it all). `found(pol, x, y, kind=, people=,
 owner=, population=, name=, of=, story=)` by the checklist: Settlement appended (id = index; kind "hamlet"),
 `rebuild_index`, `Politics.set_owner` (refuses a non-realm), `fx.touch`, `world.culture` (culture_ids appended if new),

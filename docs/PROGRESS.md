@@ -46,6 +46,27 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (night, closing): Adventures & Events Part G, task G.10 — the world changes, shown and merged — branch `dlc/06-adventures-events` → `main`
+
+- **Part G is finished and on main.** Everything it added in one place: dangers asleep in the world wake and send their
+  signs ahead of them (news, scenes, marks on towns, signs on the world map, dearer bread); a tale's ending changes the
+  world for good (owners, successions, a town ruined in full or emptied and rebuilt, memorials, songs sung at inns,
+  relics), told in an epilogue of how the places now stand and kept as a chapter in the Legends book's Tales; rumours,
+  letters and notice boards that point at real dangers; the land itself can change (a rift, a blight, scorched or
+  drowned country, a crater) and the map repaints only what changed; armies, hordes, the dead, crusades, warbands and
+  refugees march along the roads as columns you can see; a danger's reach is washed over the map once you know it;
+  and refugees of a besieged city pitch a camp that can grow into a village.
+- **To see it all at once** (for looking, not for play): the debug console's `showcase world` changes the land about
+  you (one of each kind), sets a host of each kind out on the roads between the nearest towns, pitches a refugee camp
+  and makes the nearest danger's reach known, then shows you the country; open the world map (m). The contact sheets
+  are `tools/showcase.py --sheet world`, `--sheet founded --stage 0|1|2` (the camp, the palisade, the village),
+  `--sheet tales` (the Legends book's Tales) and `--sheet mark --mark ruined` (every mark that dresses a town now has
+  its sheet: ruined, cursed, haunted, occupied, gibbet...); `--sheet all` saves every one in build/showcase.
+- Small fix: the console said a camp "is now a fortified"; it now says "a fortified camp" (and "a village").
+- **Saves: a new world is needed** (save format 25). Old saves are refused with the usual friendly message; the files
+  stay untouched.
+  Checks: see STATUS.md (G.10 note).
+
 ### Session, 2026-11-06 (night, last): Adventures & Events Part G, task G.9 — new places: a refugee camp outside a besieged city — branch `dlc/06-adventures-events`
 
 - **New places now appear while you play.** When an army lays siege to a town or a city, some of its people may flee

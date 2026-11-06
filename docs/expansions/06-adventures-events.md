@@ -415,7 +415,7 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
   outside a besieged city. Tests:
   `tests/test_founding.py` (autoplay's invariants hold; the camp's map passes `check_works`; the ownership ledger
   replays); autoplay `_check_founded`.
-- [ ] G.10 Showcase pages for all of it; FORMAT_VERSION +1; tests; Part G to `main`.
+- [x] G.10 Showcase pages for all of it; FORMAT_VERSION +1; tests; Part G to `main`.
 
 ### Part H – Assaults: battles through a living town
 *Done when*: a sack by politics while the player is in the town, and an adventure's assault, play as a battle through

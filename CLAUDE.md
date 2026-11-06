@@ -707,7 +707,8 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `worldview.town_mark` with a `world`); stages by `set_stage` (a grown camp's map is laid out again by
   `game/founding.before_entry` unless someone tied to the player lives there). First use: `refugee_camp` from
   `Politics.begin_siege`; `weekly` from `Politics.advance`. Layout `encampment`, the canvas tent (`houses` form "tent"),
-  `mapsigns.founded` on the world map. Autoplay `_check_founded`; debug `camp`.
+  `mapsigns.founded` on the world map. Autoplay `_check_founded`; debug `camp`. All of Part G staged at once: the
+  console's `showcase world` (`debug_console.showcase_world`), tools/showcase.py sheets world, founded, tales.
 - Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
   nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
   and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found
