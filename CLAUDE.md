@@ -687,6 +687,11 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   places as they now are, the realm, the sequel, you last; 10 pages at most) and `chronicle` (`politics["tales"]`, the
   Legends book's Tales, refs "C<i>"); sequel threats are the op `sequel_threat` in `game/story/sequels.py` (a beast's
   heir, the gang in a broken band's gap: dormant with `sequel_of`, stirring after `held_until`).
+- Land changes (Expansion 6 G.6): `world/reshape.py` (its docstring): the ledger `politics["land"]` + `land_version` +
+  `land_log`; `reshape.make` / `undo` / `check` (autoplay `_check_land`) / `changes_since`; never on a town, site,
+  wonder, water or `politics["party_at"]`. Never write `world.biome`/`relief`/`elevation`/`road`/`river` in play except
+  through it. `GameState.land_check()` -> `land_changed()` (remap, costs, the journey); `local.patch_land` on entry;
+  the painter follows `land_version` (`WorldView.ready` -> `ChunkCache.refresh`, keys carry chunk versions).
 - Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
   nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
   and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found

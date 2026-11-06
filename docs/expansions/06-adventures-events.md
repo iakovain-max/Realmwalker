@@ -393,7 +393,7 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
   history in the Legends book; sequel threats.
 - [x] G.5 Rumours, letters and notice boards that lead somewhere (`reveal_hook` repurposed, `reveal_clue` added to
   dialogue's OUTCOMES).
-- [ ] G.6 **Land changes** (`world/reshape.py`): the ledger and its records, apply (never under the party's square or
+- [x] G.6 **Land changes** (`world/reshape.py`): the ledger and its records, apply (never under the party's square or
   the map it is on) and undo, the new biomes (`biomes.json`), `game.land_changed()` (`_biome_remap`, `_cost_cache`,
   `_remaps`, the route), the repaint of only what changed (`WorldPainter.refresh(cells)`, `ChunkCache` queuing the
   touched chunks again and restarting its thread, a version per chunk in its key; the old pictures standing in), the

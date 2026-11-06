@@ -778,5 +778,5 @@ def _reshape(pol, t: dict, kind: str = "blight", r: float = 2, most: float = 5) 
         return  # (once a threat: its blight grows on its own)
     rec = reshape.make(w, kind, {"x": hx, "y": hy, "r": float(r)}, seed=f"threat/{t['id']}", day=pol.day,
                        story=str(t["id"]), spread={"threat": str(t["id"]), "max": float(most)})
-    if rec is not None:
+    if rec is not None and f"land_{kind}" in pol.data["text"]:
         pol.say(f"land_{kind}", _words(w, t, pol.rng), where=(hx, hy), importance=3)

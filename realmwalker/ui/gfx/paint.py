@@ -877,6 +877,7 @@ class ChunkCache:
         with self.lock:
             pend = self.pending
             self.pending = None
+            gen = self.gen
         if pend is not None:
             self.painter.refresh(*pend)
         if self.overview_stale or self.overview is None:
@@ -884,7 +885,8 @@ class ChunkCache:
             with self.lock:
                 self.overview = im
                 self.overview_v += 1
-                self.overview_stale = False
+                if self.gen == gen:  # (changed again meanwhile: the overview is painted once more)
+                    self.overview_stale = False
                 self.version += 1
 
     def paint_overview(self) -> Image.Image:
@@ -938,6 +940,7 @@ class ChunkCache:
                     log.exception("Could not read the changed land")
                     with self.lock:
                         self.pending, self.overview_stale = None, False
+                        self.land_version = -1  # (WorldView.ready paints the whole map again)
             with self.lock:
                 key = self._next()
                 gen = self.gen

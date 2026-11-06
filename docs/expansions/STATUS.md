@@ -571,11 +571,38 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.6 (*land changes: `world/reshape.py`,
-the ledger and its records, apply and undo, the new biomes, `game.land_changed()`, the repaint of only what changed,
-`local.patch_land`*), on branch `dlc/06-adventures-events` (Parts A-F are on main; Part G goes to main at G.10). Read
-docs/expansions/06-adventures-events.md Part G (G.6 in full), docs/ADVENTURES.md §5.21 (changed land), and the G.5-G.1
-notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.7 (*hosts: `world/hosts.py`, armies
+marching to their sieges, threats' hordes, crusades; `hosts.advance`, arrival through the war code or `raid` or
+`hosts.strike`; encounters near them; drawn by `mapsigns`; refugee columns*), on branch `dlc/06-adventures-events`
+(Parts A-F are on main; Part G goes to main at G.10). Read docs/expansions/06-adventures-events.md Part G (G.7 in full),
+docs/ADVENTURES.md §5.21 (signs on the map: hosts) and §8.16, and the G.6-G.1 notes below.
+G.6 (2026-11-06, realmwalker-b): `world/reshape.py` (its docstring has it all). The ledger `politics["land"]` (records
+{id, kind, day, seed, shape, v, cells [[x, y, field, old, new]...], story?, spread?}), `land_version`, `land_log` (the
+last 64 changes' squares and fields: `changes_since(world, v)`, None when it no longer reaches back), `party_at` (set by
+GameState before `politics.tick`: never changed). `make(world, kind, shape, seed=, day=, keep=)`: rift (line, ledges
+every ~8, RAVINE, roads cut but at a ledge), blight/dead_forest/scorch (ragged blob; a ring's growth keeps the first's
+edge by `shape["root"]`), drown (lowest country first, rivers 0), crater (lake inside at r >= 2, a rim with CLIFF, +30
+m); never on settlements, sites, wonders (`wonders.avoid`), sea or lake; at most 80 squares. `undo` (refused under a
+later change), `check` (autoplay `_check_land`). Fields: biome, relief, elevation, road, river (not danger: the threat
+op `danger` changes it outside any ledger). New lands in the pack's biomes.json (rift impassable, rift_ledge, blighted,
+scorched_land, drowned, crater; 5-6 words each) and sprites.json (colours, marks dead/ash/drowned/rubble);
+`GameState.__init__` appends them to every world's `biome_ids` so the remap always covers them. Uses in play: the
+risen's "emptying" stage op `reshape` (blight r 2 round the barrow, news `land_blight`, `reshape.weekly` from
+`Politics.advance` grows a ring a week to r 5 while the king walks; laid, it stops and stays), `dragon_wakes` burning a
+village scorches r 1.5-2.6 round it; the debug console `land <kind> [size]` / `land undo`. `GameState.land_check()`
+(after politics.tick, in `travel_costs`) -> `land_changed()`: remap, cost cache, `_remaps` of touched squares, the
+journey planned again if it crosses one (a line in the log). `local.patch_land` (enter_local, maps built before: their
+`meta["land_version"]`): blighted/scorched/drowned/crater/rift_ledge patches (`local.PATCHES`; the crack keeps a ledge
+across; actors, items and the way in moved to walkable ground); a map built new on a crater or ledge square is shaped by
+the same functions (`SHAPED`). Painter: `WorldPainter._derive` (all per-square copies) and `refresh(cells, fields)`
+(rivers re-traced on biome/river, roads on road); `_draw_rift` (ink, glowing red, dark core; a pale bar at a ledge),
+flood tint for drowned, sprites dead_tree/snag/stump/rocks. `ChunkCache.refresh` marks the chunks within REACH (4
+squares) stale, `catch_up` (on the thread, or headless from `WorldView.draw`) re-derives and paints the overview again;
+the thread restarts when it had finished; stale chunks after unpainted ones, nearest first; `get_painted` gives a
+picture with its version: keys ("chunk", id, gx, gy, v) and ("map overview", id, overview_v). `WorldView.ready` follows
+`land_version` (a full rebuild when `changes_since` is None). tests/test_reshape.py (9). No save format change (G.10
+bumps it). Not here (later parts): the rift as a Wonder with its depths site (cataclysms), red light on the crack's
+close-up map, a crusaders' bridge.
 G.5 (2026-11-06, realmwalker-a): `game/story/rumours.py` (its docstring has it all). `nearest_hook(game, x, y,
 within=)`: the nearest live untaken threat `story._can_take` allows, within threats.json start.tiles (the boards'
 reach). Dialogue OUTCOMES gain `reveal_clue`; `reveal_hook` and `reveal_clue` share one branch in

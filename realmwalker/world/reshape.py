@@ -216,7 +216,8 @@ def make(world, kind: str, shape: dict, *, seed: str, day: float, keep=(), story
                 _cell(world, cells, cx, cy, "river", 0)
     elif kind in ("blight", "dead_forest", "scorch"):
         bi = biome_index(world, target)
-        taken = mask | np.isin(world.biome, have)
+        greater = [i for i, b in enumerate(world.biome_ids) if b in ("rift", "rift_ledge", "crater")]
+        taken = mask | np.isin(world.biome, have + greater)  # (a blight does not fill a rift or a crater)
         if kind == "dead_forest":
             taken |= ~np.isin(world.biome, [i for i, b in enumerate(world.biome_ids) if b in FORESTS])
         for cx, cy in _blob(world, f"{world.meta.seed}/{shape.get('root', seed)}", x, y, float(shape.get("r", 2)),
@@ -245,7 +246,7 @@ def make(world, kind: str, shape: dict, *, seed: str, day: float, keep=(), story
     if not cells:
         return None
     rec = {"id": int(world.politics.get("land_next", len(ledger(world)))), "kind": kind, "day": float(day),
-           "seed": str(seed), "shape": {k: (float(v) if isinstance(v, float) else v) for k, v in shape.items()},
+           "seed": str(seed), "shape": {k: _plain(v) for k, v in shape.items()},
            "cells": cells}
     world.politics["land_next"] = rec["id"] + 1
     if story is not None:
@@ -255,6 +256,17 @@ def make(world, kind: str, shape: dict, *, seed: str, day: float, keep=(), story
     rec["v"] = _bump(world, {(c[0], c[1]) for c in cells}, {c[2] for c in cells})
     ledger(world).append(rec)
     return rec
+
+
+def _plain(v):
+    """A value as the save keeps it (no numpy numbers in the world's politics)."""
+    if isinstance(v, (bool, np.bool_)):
+        return bool(v)
+    if isinstance(v, (int, np.integer)):
+        return int(v)
+    if isinstance(v, (float, np.floating)):
+        return float(v)
+    return v
 
 
 def record(world, rid: int) -> dict | None:

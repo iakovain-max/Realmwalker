@@ -44,6 +44,7 @@ def pass_the_years(world, tables, rng: RNG | None = None, days: int | None = Non
     from_day = news.now_days(world)
     world.time += days * 1440
     world.politics["interlude"] = True  # (a threat moves at most a stage or so while nobody plays)
+    world.politics.pop("party_at", None)  # (nobody walks the land; the new life begins in a town, never changed)
     try:
         politics.tick(world, tables)
     finally:

@@ -46,6 +46,25 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (evening): Adventures & Events Part G, task G.6 — the land itself changes — branch `dlc/06-adventures-events`
+
+- **The land can change while you play.** When a risen barrow king's dead begin to empty the hamlets, the country round
+  his barrow dies: grass gone grey, trees bare, wells bitter. The news says so, and the dead country spreads a ring a
+  week while he walks (up to about five squares out). Lay him, and it stops spreading; what died stays dead.
+- **A dragon that burns a village scorches its fields** for a mile or two round: black country with charred stumps on
+  the map, ash and burned trees when you walk there.
+- **On the world map** the changes are painted in: grey dead land with bare trees, black scorched fields, drowned
+  country under still water with dead trees standing in it, a crater with a lake and a hatched rim, and a rift as a
+  glowing red gorge with pale bars where a ledge crosses it. Only the pieces of the map that changed are painted again,
+  in the background, the old picture showing until the new one is ready.
+- **Travel follows at once**: a rift cannot be crossed except at its ledges, a crater's lake is water, drowned land is
+  slow wading; a journey whose way is cut finds another way (and says so).
+- **Places you have already walked take the change** the next time you go there: the trees dead, the ground ash or
+  flooded, the crack across a ledge's map with the one way over.
+- For testing, the debug console has `land <kind>` (rift, blight, dead_forest, scorch, drown, crater) and `land undo`.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.6 note).
+
 ### Session, 2026-11-06 (late afternoon): Adventures & Events Part G, task G.5 — rumours, letters and notice boards that lead somewhere — branch `dlc/06-adventures-events`
 
 - **Talk leads somewhere.** Win someone over with a new talk option ("[Insight] Ask what people round here are afraid

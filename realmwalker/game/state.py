@@ -1474,13 +1474,16 @@ class GameState:
             if cells is None or (x, y) in cells:
                 self._remaps.pop(key, None)
         plan = self.travel
-        if plan is not None and plan.path and (cells is None or any(tuple(c) in cells for c in plan.path)):
-            dest = plan.destination
-            self.travel = self.plan_travel(dest) if dest is not None else None
-            if self.travel is not None:
-                self.travel.destination = dest
+        here = (int(self.player.x), int(self.player.y))
+        ahead = [tuple(c) for c in plan.path if tuple(c) != here] if plan is not None else []
+        if ahead and (cells is None or any(c in cells for c in ahead)):
+            new = self.plan_travel(plan.destination) if plan.destination is not None else None
+            if new is not None:  # (the same plan, its way changed: a step under way still pops the square it is on)
+                plan.path[:] = ([plan.path[0]] if plan.path and tuple(plan.path[0]) == here else []) + new.path
+                plan.minutes, plan.miles = new.minutes, new.miles
                 self.say("The land ahead has changed; you find another way.", "warn")
             else:
+                self.travel = None
                 self.say("The land ahead has changed, and there is no way through to where you were going.", "warn")
 
     def travel_costs(self) -> np.ndarray:
