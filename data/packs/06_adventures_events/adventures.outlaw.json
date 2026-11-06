@@ -153,6 +153,7 @@
             "Whatever is said of it later, the wagons of {town} roll on with nobody watching them from the trees."
           ],
           "steps": [
+            {"kind": "infiltrate", "at": "home", "group": "bandits", "optional": true, "gives": ["key:backway"]},
             {"kind": "go", "at": "home", "beat": "outlaw_the_hideout"},
             {"kind": "finale", "at": "home.deepest"}
           ]

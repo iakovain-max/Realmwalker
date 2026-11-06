@@ -1,0 +1,215 @@
+{
+  "_comment": "The cast's secrets (Expansion 6 F.3, docs/ADVENTURES.md §5.3, §5.6; game/story/patrons.py and traitors.py). patrons: the patron's hidden motive (most have none), the kindnesses that come before any betrayal (trust), and the patron's page when the motive came out. traitors: the chance a blueprint's tale hides one (decided once its second chapter opens), whom it may be (the patron at most once in a hero's life, a companion, the tale's ally; never the ally the Reading named), their reason, the tells (two at least: 'near' for one at your side, 'far' for one you do not see every day), the creature one who turned stands as beside the villain (by tier), and the epilogue line for each fate. innocents: the line for the one who suffers if you fail (a place or a person), by how it ended. Words: the tale's, with {traitor}, {traitor_full}, {traitor_role}, their pronouns ({they} walk{s}, {they} {are}), {patron}, {motive_told}, {gift}.",
+  "patrons": {
+    "motives": {
+      "plain": {"weight": 6},
+      "debt": {
+        "weight": 1,
+        "told": [
+          "{patron} owes {villain_short} - or owed whoever {villain_short} has become - a debt that was never meant to be paid in coin. Dead, it is cancelled. That is why {they} sent for you, and why {they} paid so well.",
+          "There was a bargain, long ago, and {patron} was on the wrong side of it. While {villain_short} lives the debt stands. {They} never said so. {They} only said the people were suffering, which was also true.",
+          "{patron}'s name is in a ledger {villain_short} keeps, with a sum beside it. Your blade was cheaper than paying."
+        ],
+        "page": [
+          "{patron} burned a ledger on the day the news came, and slept, they say, for the first time in years.",
+          "{patron}'s debt died with {villain_short}. {They} never thanked you for that part, and you never asked {them} to.",
+          "In {town} they still think {patron} sent for you out of love for them. Perhaps {they} did, a little."
+        ]
+      },
+      "guilt": {
+        "weight": 1,
+        "told": [
+          "It was {patron} who let it in. A gate left open, a warning not passed on, a word in the wrong ear: the first death was {their} doing, and every one since has been {theirs} to carry.",
+          "{patron} knew, before anyone else knew. {They} said nothing for a month, hoping it would go away. The graves of that month are the ones {they} cannot look at.",
+          "It began with {patron}: a greed, a quarrel, a door that should have stayed shut. Sending you was {their} way of shutting it."
+        ],
+        "page": [
+          "{patron} goes to the graves every morning now, and stays until the sexton has finished his work.",
+          "{patron} gave away half of what {they} owned, quietly, to the families. Nobody in {town} knows why, and {they} will not say.",
+          "{patron} is a quieter {person} than {they} were. Whatever {they} did, {they} have not forgiven {themselves}."
+        ]
+      },
+      "gain": {
+        "weight": 1,
+        "told": [
+          "{patron} has already bought the land the trouble emptied, at a tenth of its worth. With {villain_short} gone it will be worth everything again.",
+          "{patron} wanted it dead, yes. {They} also wanted the fields of everyone it frightened away, and {they} have the deeds in a box under {their} bed.",
+          "The grief was real. So is the contract {patron} signed the week you rode out, for every acre between {town} and {home}."
+        ],
+        "page": [
+          "{patron} is the richest {person} in {town} now. People bow to {them} in the road, and do not look {them} in the eye.",
+          "{patron}'s new fields are the best in the country. The families who owned them work them now, for {patron}.",
+          "{patron} put up a stone in the square to the dead, with {their} own name on it larger than theirs."
+        ]
+      }
+    },
+    "answers": {
+      "forgave": [
+        "You let it lie. {patron} will not forget that you could have done otherwise.",
+        "You keep {patron}'s secret. Some debts are paid by silence."
+      ],
+      "paid": [
+        "{patron} paid for your silence, and you took it. That is a thing between you now, for good.",
+        "The purse was heavy. {patron} did not look at you as {they} handed it over."
+      ],
+      "exposed": [
+        "{town} knows what {patron} did. {They} still live there. It is not the same as living there before.",
+        "You told {town} the truth about {patron}. Some thanked you for it. More did not."
+      ]
+    },
+    "trust": {"gift_after": 1, "gifts": 2, "betray_at": 2},
+    "gift_coin": [1500, 4000, 10000, 25000],
+    "gifts": [
+      "a purse, and a new cloak against the cold",
+      "a purse, a flask of good spirits and a word for every innkeeper on the road",
+      "a purse, a fresh horse's worth of oats, and a blessing from {their} own lips",
+      "a purse, and the loan of {their} late father's sword-belt, which {they} will not hear of you refusing"
+    ]
+  },
+  "traitors": {
+    "chance": {"beast": 0.15, "risen": 0.25, "outlaw": 0.3},
+    "from": {"patron": 2, "ally": 2, "companion": 1},
+    "clock": {"tell_after": 2, "every": 3, "event_chance": 0.5, "tells": 3},
+    "reasons": {
+      "kin": {
+        "weight": 2,
+        "why": [
+          "{villain_short} has {their} child. It has had {them} since before you came. Every word {traitor} passed on was a day more of that child's life.",
+          "{traitor}'s kin are in {villain_short}'s keeping, alive, for as long as {traitor} is useful.",
+          "There is a sister, or a son - {traitor} will not say which - and {villain_short} holds them, and {traitor} has done every single thing it asked."
+        ],
+        "near": [
+          "{traitor} talks in {their} sleep. A name, over and over, that is not anyone you know. When you ask in the morning {they} say{s} it was nobody.",
+          "You come back early to the fire and find {traitor} with a lock of child's hair in {their} hand. {They} put{s} it away so fast {they} nearly drop{s} it.",
+          "{traitor} slips off before dawn and comes back from the direction of {home}, wet to the knees. {They} say{s} {they} went to fill the skins. The skins are full already.",
+          "A rag doll is tied to a thorn at the edge of the camp, where only {traitor} went last night. {traitor} will not look at it."
+        ],
+        "far": [
+          "A carter on the road says {traitor} sent a rider towards {home} the day you set out. {traitor} has no business there that anyone knows of.",
+          "In a dead servant's purse you find a little carved horse, a child's toy, and a scrap of paper in {traitor}'s hand: only a day and a road.",
+          "Someone in {town} says {traitor}'s house has been shut and dark for weeks, the children's beds empty, and {traitor} says they are visiting kin.",
+          "The servants of {villain_short} knew which road you took. Only {traitor} knew it too."
+        ]
+      },
+      "paid": {
+        "weight": 2,
+        "why": [
+          "Gold. That is all. {villain_short} paid better than anyone else ever had, and {traitor} has always known what {they} {are} worth.",
+          "{traitor} sold you by the day, and was paid by the day, and the coins are buried under {their} floor.",
+          "It was never about the dead or the living with {traitor}. It was the price, and the price was good."
+        ],
+        "near": [
+          "{traitor} pays for the ale at the inn with a coin that is far too old, and far too fine, for anything {they} ever earned with you.",
+          "There is a new ring on {traitor}'s hand, heavy gold, and when you look at it {they} turn{s} it round so the stone faces in.",
+          "{traitor}'s pack is heavier than it was. When it falls open you see the gleam before {they} close{s} it.",
+          "{traitor} knows the price of everything in the market and does not haggle once. That is new."
+        ],
+        "far": [
+          "{traitor} has paid off every debt {they} had in {town}, all at once, in old gold. The moneylender is still talking about it.",
+          "One of {villain_short}'s servants dies with a purse of coin from {town}'s own mint, still in {traitor}'s purse-string.",
+          "{traitor} is building, they say in {town}: a new wing, a new roof, a new wall. Nobody knows with what.",
+          "A letter in a dead servant's coat, unsigned, sets out your road and your numbers, and ends with a sum owed. The hand is {traitor}'s."
+        ]
+      },
+      "belief": {
+        "weight": 1,
+        "why": [
+          "{traitor} believes. {They} think{s} {villain_short} is what the world deserves, or what it needs, and nothing you say will change it.",
+          "It is faith, of a kind: {traitor} has heard {villain_short} speak, in a dream or in the dark, and has been {villain_short}'s ever since.",
+          "{traitor} chose. {They} saw what {villain_short} is and wanted to be on the winning side of it."
+        ],
+        "near": [
+          "{traitor} is drawing something in the ashes when you wake: a sign you saw last on the walls at {home}. {They} scuff{s} it out with {their} boot.",
+          "When you speak of {villain_short} {traitor} goes still, the way a man goes still in a temple.",
+          "{traitor} hums a tune by the fire, and you have heard it before, from the dark at {home}.",
+          "{traitor} does not flinch at what {villain_short} leaves for you to find. Not once. Everyone else does."
+        ],
+        "far": [
+          "A sign like the ones at {home} has been cut into the lintel of {traitor}'s door, small, where only someone looking would see it.",
+          "A dead servant of {villain_short} carries a token you last saw on {traitor}'s table in {town}.",
+          "The old woman at the well in {town} says {traitor} walks out to the crossroads at night and stands there talking to nobody.",
+          "{traitor} spoke of {villain_short}, the last time you saw {them}, as if of an old friend. You only noticed afterwards."
+        ]
+      }
+    },
+    "turned_as": [["thug"], ["bandit_captain"], ["assassin"], ["assassin"]],
+    "patron_men": [["thug"], ["thug"], ["bandit_captain"], ["bandit_captain"]],
+    "fates": {
+      "yielded": [
+        "{traitor_full} told you everything, in the end, and the lies {they} carried back to {villain_short} for you were the last thing {they} did for it.",
+        "{traitor_full} broke when you faced {them} with it. What {they} told you helped to end it. Whether that is forgiveness, you have not decided.",
+        "You caught {traitor_full} in time. {They} wept, and talked, and lived."
+      ],
+      "sent": [
+        "You sent {traitor_full} away in the night, with nothing. Nobody in {town} has seen {them} since.",
+        "{traitor_full} went where you sent {them}, which was anywhere but near you. It was kinder than {they} deserved.",
+        "You never spoke of what {traitor_full} did. You only told {them} to go, and {they} went."
+      ],
+      "fled": [
+        "{traitor_full} ran when you found {them} out, and took {their} last news to {villain_short}. It did {them} no good.",
+        "Caught out, {traitor_full} fled to {villain_short}. What became of {them} there, nobody knows.",
+        "{traitor_full} was gone before you could act. You heard {their} horse on the road, going the wrong way."
+      ],
+      "slain": [
+        "{traitor_full} died with steel in {their} hand, on the wrong side. You did not leave a stone for {them}.",
+        "You killed {traitor_full}. It was the only end {they} had left {themselves}.",
+        "{traitor_full} lies where {they} fell, beside the thing {they} sold you to."
+      ],
+      "turned": [
+        "{traitor_full} turned on you at the last, as {villain_short} had always meant {them} to, and lived through it. Somewhere {they} still live{s}, and remember{s}.",
+        "{traitor_full}'s betrayal came when it hurt most. You came through it. {They} did not stay to see that.",
+        "Nobody in {town} believes it of {traitor_full} even now. You were there."
+      ],
+      "faltered": [
+        "{traitor_full} never did it. When the moment came {they} could not, after all you had been to each other. {They} carry that, and so do you.",
+        "There was a night when {traitor_full} could have sold you, and did not. You only learned of it later.",
+        "{traitor_full} was {villain_short}'s, once. By the end {they} {are} not sure whose {they} {are}."
+      ],
+      "never": [
+        "Whatever {traitor_full} was to {villain_short}, the tale ended before it mattered.",
+        "{traitor_full} kept {their} secret. Perhaps it is still being kept.",
+        "You never knew about {traitor_full}. Perhaps that is as well."
+      ]
+    }
+  },
+  "innocents": {
+    "fates": {
+      "spared": {
+        "place": [
+          "{innocent} came through it whole. The children who were kept indoors all that time run in the lanes again, and are scolded for it.",
+          "{innocent} lost nobody more after you came. They will tell their grandchildren whose doing that was.",
+          "In {innocent} they ring the bell at dusk again, because they can."
+        ],
+        "person": [
+          "{innocent} is safe, and does not know how near it was, and you have not told them.",
+          "{innocent} lives. Some days that is the whole of what you did, and it is enough.",
+          "{innocent} sleeps at home again. Their people light a candle for you."
+        ]
+      },
+      "scarred": {
+        "place": [
+          "{innocent} lives, but it buried more than it should have. The fresh graves are a row by the wall where everyone can see them.",
+          "{innocent} paid for every day it took you, in roofs and in names. It stands. It is not what it was.",
+          "{innocent} remembers who suffered while you were away. It does not say it to your face."
+        ],
+        "person": [
+          "{innocent} came home alive and changed. They do not go out after dark now.",
+          "{innocent} lives, with scars nobody can see. They are still frightened of the dark.",
+          "{innocent} is alive. Nobody would call them whole."
+        ]
+      },
+      "lost": {
+        "place": [
+          "{innocent} paid for it all. Where there were lights there are only shapes against the sky.",
+          "Nobody goes to {innocent} now. The road there is growing over.",
+          "{innocent} is a name on a list of names, and that is all."
+        ],
+        "person": [
+          "{innocent} did not come home. Their people wait at the gate in the evenings anyway.",
+          "{innocent} was lost. Their name is the one you do not say.",
+          "There is a grave for {innocent}, and nobody in it."
+        ]
+      }
+    }
+  }
+}

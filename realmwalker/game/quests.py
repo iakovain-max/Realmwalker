@@ -2134,6 +2134,12 @@ def read_letter(game, it) -> list[str]:
     q["opened"] = True
     if it.name.startswith("sealed "):
         it.name = "opened " + it.name.removeprefix("sealed ")
+    if q.get("adventure"):
+        from realmwalker.game.story import traitors
+
+        told = traitors.read_letter(game, q, first)  # (a traitor patron's letter is a tell: Expansion 6 F.3)
+        if told:
+            return told
     if q.get("hidden") == "incriminating":
         if first:
             reveal(game, q)

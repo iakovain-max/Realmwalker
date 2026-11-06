@@ -1602,6 +1602,28 @@ ADVENTURES = Obj({
                           "who": word_list(3, 200), "band_words": word_list(3, 100)}), min_items=1),
         "fates": Map(word_list(2, 400)),
     }, optional=True),
+    # (F.3) the cast's secrets (story/patrons.py, story/traitors.py): the patron's hidden motives and their kindnesses
+    # first, a traitor's chance by blueprint, whom it may be, their reasons and tells, and the innocent's fates
+    "patrons": Obj({
+        "motives": Map(Obj({"weight": Int(min=0, max=20), "told": List(Str(max_len=400), min_items=2, optional=True),
+                            "page": List(Str(max_len=400), min_items=2, optional=True)}), min_items=1),
+        "answers": Map(word_list(2, 300)),
+        "trust": Obj({"gift_after": Int(min=0, max=60), "gifts": Int(min=0, max=5), "betray_at": Int(min=0, max=5)}),
+        "gift_coin": List(Int(min=0, max=1_000_000), min_items=4, max_items=4),
+        "gifts": word_list(2, 200),
+    }, optional=True),
+    "traitors": Obj({
+        "chance": Map(Float(min=0, max=1)),
+        "from": Map(Int(min=0, max=20)),
+        "clock": Obj({"tell_after": Int(min=0, max=60), "every": Int(min=1, max=30),
+                      "event_chance": Float(min=0, max=1), "tells": Int(min=2, max=4)}),
+        "reasons": Map(Obj({"weight": Int(min=0, max=20), "why": word_list(2, 400), "near": word_list(3, 400),
+                            "far": word_list(3, 400)}), min_items=1),
+        "turned_as": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+        "patron_men": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
+        "fates": Map(word_list(2, 400)),
+    }, optional=True),
+    "innocents": Obj({"fates": Map(Obj({"place": word_list(2, 400), "person": word_list(2, 400)}))}, optional=True),
 })
 
 GREAT_ATTACK = Obj({

@@ -10,9 +10,9 @@ A step record: {"id": "killings.2", "kind", "state" (open, done, failed), "targe
 sets one of its "flag:a|flag:b" itself).
 
 Part A's kinds: go, search, witness, read, learn, prepare, choose, slay, finale. Part D's: rescue, fetch, defeat,
-capture, recruit, rally, hold, rite, escort, confront, and E.4's endure (their game side, setup and listeners, is
-story/deeds.py). A kind may say `goal(st)`: a test of the goal language (story/goals.py) that finishes it however it
-was made true. A step's `fails_to` is the codeword a failed step leaves (a failed step still moves its chapter on: law
+capture, recruit, rally, hold, rite, escort, confront, E.4's endure and F.3's deliver and infiltrate (their game side,
+setup and listeners, is story/deeds.py). A kind may say `goal(st)`: a test of the goal language (story/goals.py)
+that finishes it however it was made true. A step's `fails_to` is the codeword a failed step leaves (a failed step still moves its chapter on: law
 6).
 """
 
@@ -452,3 +452,51 @@ class Endure(Step):
         if spec.get("beat") not in forge.tables.beats:
             forge.fail(f"no beat '{spec.get('beat')}' for the set piece")
         return {"beat": spec["beat"], "group": group, "after": [int(d) for d in spec.get("after", [0, 1])]}
+
+
+@step("deliver")
+class Deliver(Step):
+    """Carry something sealed (a letter, a token) from the patron to someone: a person of the cast (`to` a role), or
+    the one of `jobs` in a place (`to` a settlement: its priest, its lord). A step quest of the deliver kind: the
+    thing is put in your pack when its chapter opens, and the step is done when it is in their hands
+    (quests' "deliver_letter"); they may give back `item`. Opened on the way, a traitor patron's letter is a tell
+    (story/traitors.py)."""
+    fields = frozenset({"to", "jobs", "what", "item"})
+
+    @classmethod
+    def bind(cls, forge, spec):
+        to = spec["to"]
+        if to in forge.cast:
+            t = _who(forge, dict(spec, who=to))
+        else:
+            t = {"place": forge.place(to)}
+            if "settlement" not in t["place"]:
+                forge.fail("a deliver step goes to a person of the cast or to a settlement")
+            t["jobs"] = list(spec.get("jobs", ["priest", "headman", "lord", "elder"]))
+        t["what"] = spec.get("what", "a letter sealed with {patron}'s ring")
+        if spec.get("item"):
+            if spec["item"] not in forge.tables.items:
+                forge.fail(f"no item '{spec['item']}' for the one who receives it to give")
+            t["item"] = spec["item"]
+        return t
+
+
+@step("infiltrate")
+class Infiltrate(Step):
+    """Get inside a place unseen or disguised (a guarded hall, a hideout, a masquerade): at the place, its `beat`
+    (default "story_infiltrate": in disguise - the law's own, `law.disguised` -, by stealth or by talk); caught, its
+    `group` comes for you and the step fails (fails_to). Not now: another day."""
+    fields = frozenset({"at", "group", "beat"})
+
+    @classmethod
+    def bind(cls, forge, spec):
+        t = super().bind(forge, spec)
+        group = spec.get("group") or forge.tables.threats["kinds"].get(forge.threat["kind"], {}).get("minions") \
+            or "thugs"
+        if group not in forge.tables.creatures.encounters:
+            forge.fail(f"no band '{group}' to catch you")
+        t["group"] = group
+        t["beat"] = spec.get("beat", "story_infiltrate")
+        if t["beat"] not in forge.tables.beats:
+            forge.fail(f"no beat '{t['beat']}' for getting in")
+        return t

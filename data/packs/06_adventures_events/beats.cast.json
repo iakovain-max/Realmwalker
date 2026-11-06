@@ -1,0 +1,177 @@
+{
+  "_comment": "The cast's secrets (Expansion 6 F.3, docs/ADVENTURES.md §5.3, §5.6): the patron's kindness and hidden motive (game/story/patrons.py, op 'patron': gift, refuse, forgive, paid, expose), a traitor's tells, the reckoning and the betrayal (game/story/traitors.py, op 'traitor': yield, flee, send, fight, turn; condition 'traitor_tells': tells seen at least), and getting inside a place unseen (the step kind infiltrate, game/story/deeds.py, op 'infiltrate': in, caught; condition 'disguised'). Played by name (weight 0). Words: the tale's, with {patron}, {gift}, {motive_told}, {traitor}, {traitor_full}, {tell}, {doubt}, {why}, {place} and pronouns ({they} walk{s}, {they} {are}).",
+  "beats": {
+    "patron_gift": {
+      "family": "patron",
+      "picture": "here",
+      "weight": 0,
+      "title": ["{patron} sends for you", "A kindness", "Word from {patron}"],
+      "text": [
+        [
+          "{patron} has heard you are back in {town}, and comes down to the common room in person, which {they} need not have done.",
+          "A servant of {patron}'s is waiting at the inn when you come in, and will not hear of your going up before {patron} has seen you.",
+          "{patron} finds you at the inn's long table, sits down across from you, and for a while only asks how the road was."
+        ],
+        [
+          "\"Whatever comes of it,\" {they} say{s}, \"nobody else came. Take this.\" It is {gift}.",
+          "\"It is not much against what you are doing.\" {They} push{es} it across the table: {gift}.",
+          "\"For the road,\" {patron} says, and there is {gift}, and {they} will not take it back."
+        ]
+      ],
+      "choices": [
+        {
+          "label": ["Take it, with your thanks."],
+          "ops": [["patron", "gift"]],
+          "result": ["{patron} looks relieved, as if you had done {them} a kindness by taking it.", "\"Good,\" {patron} says. \"Good. Now eat something.\""]
+        },
+        {
+          "label": ["Refuse it. You have not earned it yet."],
+          "ops": [["patron", "refuse"]],
+          "result": ["\"Then you'll have it when you have,\" {patron} says, and means it.", "{patron} shakes {their} head at you, and is pleased, and pays for your supper instead."]
+        }
+      ]
+    },
+    "patron_motive": {
+      "family": "patron",
+      "picture": "here",
+      "weight": 0,
+      "title": ["What {patron} did not say", "{patron}'s reasons", "The other reason"],
+      "text": [
+        [
+          "{patron} takes you aside, into a room with a shut door, and for a long moment cannot begin.",
+          "It is late, and the common room is empty but for you and {patron}, and the wine has done what wine does.",
+          "{patron} has been drinking alone. When you sit down, {they} speak{s} as if {they} had been waiting all evening to."
+        ],
+        ["{motive_told}"]
+      ],
+      "choices": [
+        {
+          "label": ["Let it lie. The dead are still dead, whatever {patron}'s reasons."],
+          "ops": [["patron", "forgive"]],
+          "result": ["{patron} cannot speak for a while. Then {they} take{s} your hand and hold{s} it.", "\"Thank you,\" {patron} says, very quietly."]
+        },
+        {
+          "label": ["Name your price for keeping it quiet."],
+          "ops": [["patron", "paid"]],
+          "result": ["{patron} pays. {They} do{es} not argue. That is almost worse.", "The coin is counted out in silence, and you put it away in silence."]
+        },
+        {
+          "label": ["{town} should know. Tell them."],
+          "ops": [["patron", "expose"]],
+          "result": ["By noon it is all over {town}. {patron} keeps to {their} house.", "You say it in the square, where everyone can hear. Nobody looks at {patron}'s door for the rest of the day."]
+        }
+      ]
+    },
+    "traitor_tell": {
+      "family": "traitor",
+      "picture": "here",
+      "weight": 0,
+      "title": ["Something is wrong", "A small thing", "You notice"],
+      "text": [
+        ["{tell}"],
+        ["{doubt}"]
+      ],
+      "choices": [
+        {
+          "label": ["Say nothing, and watch {traitor}."],
+          "result": ["You say nothing. But you will be watching now.", "You keep it to yourself, and the night goes on as nights do."]
+        },
+        {
+          "label": ["Have it out with {traitor}: make {them} tell you everything."],
+          "requires": {"traitor_tells": 2},
+          "check": {"skill": "insight", "dc": 12},
+          "success": [["traitor", "yield"]],
+          "failure": [["traitor", "flee"]],
+          "result": ["You lay it out, all of it, and watch {traitor}'s face as you do. Before you are done {they} {are} weeping.", "\"You know,\" {traitor} says. It is not a question. \"Then you had better hear the rest.\""],
+          "fail_result": ["You have it half said when {traitor} is gone - out of the light and into the dark, running.", "{traitor} hears you out with a blank face, and in the morning {they} {are} gone, and the road to {home} has fresh tracks."]
+        },
+        {
+          "label": ["Send {traitor} away, tonight, and say why."],
+          "requires": {"traitor_tells": 2},
+          "ops": [["traitor", "send"]],
+          "result": ["{traitor} does not deny it. {They} only nod{s}, and go{es}.", "\"I'm sorry,\" {traitor} says at the end, and it might even be true."]
+        },
+        {
+          "label": ["Draw steel. {traitor} will answer for it here."],
+          "requires": {"traitor_tells": 2},
+          "ops": [["traitor", "fight"]],
+          "result": ["{traitor} sees it in your face, and steel is out on both sides.", "\"So be it,\" {traitor} says, and does not pretend any more."]
+        }
+      ]
+    },
+    "traitor_turns": {
+      "family": "traitor",
+      "picture": "camp_night",
+      "weight": 0,
+      "title": ["The night before", "Betrayed", "{traitor}"],
+      "text": [
+        [
+          "You wake to the horses screaming. {traitor}'s blanket is cold. {traitor}'s pack is gone, and so is what you could least spare, and out in the dark there are lanterns coming, more than you can count.",
+          "It is the dead hour of the night when you understand: {traitor} is not on watch. {traitor} is not anywhere. And the fire you banked has been kicked out, so that whatever is coming will not have to see you first.",
+          "{traitor} is standing at the edge of the firelight when you wake, looking out, not at you. \"I'm sorry,\" {they} say{s}, and is gone, and the dark comes in after {them}."
+        ],
+        ["{why}"]
+      ],
+      "ops": [["traitor", "turn"], ["strike"]]
+    },
+    "traitor_sells": {
+      "family": "traitor",
+      "picture": "here",
+      "weight": 0,
+      "title": ["Word from {town}", "Sold", "{traitor}"],
+      "text": [
+        [
+          "A boy from {town} has run all day to find you, and can hardly speak for it: {traitor} rode out towards {home} two nights ago, with a lantern and no servant, and has not come back.",
+          "Word comes by a carter: {traitor} has been seen on the road to {home}, alone, by night, and the people who stood ready in {town} have been told to go home.",
+          "A letter, in a hand you know: {traitor}'s. It is not for you. It was found on the road, dropped by a rider in a hurry, and it sets out everything you mean to do."
+        ],
+        ["{why}"]
+      ],
+      "ops": [["traitor", "turn"]]
+    },
+    "story_infiltrate": {
+      "family": "step",
+      "picture": "place",
+      "weight": 0,
+      "title": ["The way in", "Unseen", "Getting inside"],
+      "text": [
+        [
+          "{place} is watched. There are eyes at the way in, and the dark round it has been cleared so that nothing comes close unnoticed.",
+          "You lie up within sight of {place} until the light goes. Somebody keeps watch there, and changes the watch, and is careful.",
+          "Getting into {place} is the whole of it. Getting in without the alarm going up is the hard part."
+        ]
+      ],
+      "choices": [
+        {
+          "label": ["Walk in as one of them, in your disguise."],
+          "requires": {"disguised": true},
+          "check": {"skill": "deception", "dc": 10},
+          "success": [["infiltrate", "in"]],
+          "failure": [["infiltrate", "caught"]],
+          "result": ["Nobody stops you. Nobody even looks twice.", "A nod, a grunt, and you are inside."],
+          "fail_result": ["A face turns. A hand goes to a hilt. \"You're not one of ours.\""]
+        },
+        {
+          "label": ["Creep in by the dark side, unseen."],
+          "check": {"skill": "stealth", "dc": 14},
+          "success": [["infiltrate", "in"]],
+          "failure": [["infiltrate", "caught"]],
+          "result": ["You are in, and nobody knows it.", "A loose board, a shadow, a held breath, and you are past them."],
+          "fail_result": ["A stone turns under your foot. The shout goes up."]
+        },
+        {
+          "label": ["Talk your way past the watch."],
+          "check": {"skill": "deception", "dc": 14},
+          "success": [["infiltrate", "in"]],
+          "failure": [["infiltrate", "caught"]],
+          "result": ["You talk, and keep talking, and somewhere in it they stand aside.", "\"Go on, then,\" the watch says at last, sick of you."],
+          "fail_result": ["\"Funny,\" the watch says. \"Nobody said.\" And then louder: \"Here! To me!\""]
+        },
+        {
+          "label": ["Not now. Come back another night."],
+          "result": ["You slip away the way you came. Another night.", "Not tonight. You will be back."]
+        }
+      ]
+    }
+  }
+}

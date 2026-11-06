@@ -255,6 +255,9 @@ def prepare(battle, game) -> list[str]:
                 if line:
                     out.append(line)
         out += rivals.at_finale(battle, game, adv, f)  # (the wounds they gave it, your road sold, the truce kept: F.2)
+        from realmwalker.game.story import traitors
+
+        out += traitors.at_finale(battle, game, adv, f)  # (false word fed to it, the twist, one who turned: F.3)
     return out
 
 
