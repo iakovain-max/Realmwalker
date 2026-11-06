@@ -571,10 +571,37 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.4 (*the epilogue in full, with vignettes
-of the places as they now are; adventures as named chapters of the history in the Legends book; sequel threats*), on
-branch `dlc/06-adventures-events` (Parts A-F are on main). Read docs/expansions/06-adventures-events.md Part G,
-docs/ADVENTURES.md §5.9 and §5.13, and the G.3, G.2 and G.1 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.5 (*rumours, letters and notice boards
+that lead somewhere: `reveal_hook` repurposed, `reveal_clue` added to dialogue's OUTCOMES*), on branch
+`dlc/06-adventures-events` (Parts A-F are on main; Part G goes to main at G.10). Read
+docs/expansions/06-adventures-events.md Part G, docs/ADVENTURES.md (search reveal_hook, rumours, notice boards), and
+the G.4-G.1 notes below.
+G.4 (2026-11-06, realmwalker-b): `game/story/epilogue.py` (its docstring has it all): `compose(game, adv, before)` is
+the last thing endings.finish does after every after_tale (before = `snapshot` taken before the ops): the tale's town
+page gets a closing line for its most telling mark (VIGNETTE_MARKS), other places of the tale get "place:<key>" pages
+(VIGNETTES=2: a town by its marks; a site renamed by this tale, laid, cleared, or still held by a live threat), a
+"realm" page (the town's realm of group realms; words by won/lost/abandoned with {realm} {ruler} {town}), a "sequel"
+page (`sequels.of_tale`), and the hero's page gains `hero_lines` (standing with that realm when |standing| >= SPOKEN 10,
+a title gained since the snapshot, fame or infamy past FAMED 20 that grew); pages sorted by ORDER, at most MOST=8,
+trimmed by DROP (a second vignette or lieutenant first; the hero's never). `chronicle(game, adv)` writes
+`politics["tales"]` [{adv, title, year, began, hero, life, kind, ending, state, won, villain, villain_name, places
+(S/X refs), chapters (done or open), pages, sequel_of}] once, from finish and from story.on_death (orphaned). Legends
+(world/legends.py): category "tales" (second), refs "C<i>", `tale_page` (hero linked to the life page through
+`life_key`, villain, places, chapters, TALE_ENDS, came after / what came of it, the epilogue pages, history events
+with data.adventure); `tale_refs`/`tales_line` on figure, settlement, site and life pages. `game/story/sequels.py`:
+op `sequel_threat` (kind, chance) - "heir" (beast: a new beast Figure, parent the old, names/epithets from adventures
+consequences `sequels.heir`, in a free cave or ruin within 2x reach not yet walked, `politics["lairs"]`, its threat via
+threats.make) and "vacuum" (outlaw: `Politics.new_gang(near, quiet=True)` now returns the band and makes no threat
+when quiet; the threat made here with source `gap_of`); both dormant with `sequel`, `sequel_of` {adv, life, kind,
+told} and held_until (days from `sequels`), so threats.advance stirs them; `adv["sequel"]` {kind, threat}; forge sets
+`adv["sequel_of"]`; `sequels.daily` (story.daily) tells the hero once. Data: beast slain heir 0.5, outlaw
+broken/pardoned/spared/taken vacuum 0.5. Epilogue screen ABOUT labels; vignette.for_epilogue for place:<key> (a site:
+`for_place`, dusk), realm (hall), sequel (road at night). Words: consequences.words vignette_* (13), epilogue_realm_*
+(3), epilogue_sequel_* (3), sequel_told_* (2), hero_* (4), three variants each. Autoplay `_check_tales`.
+tests/test_epilogue.py (6); test_legends skips the empty Tales of a new world. No save format change. Decisions: no
+"fled" ending (a villain fleeing the finale leaves its tale going, as before); the fled lieutenant's sequel stays E.3's
+nemesis; the risen's sequel stays E.4's `sequel` op ("returns"); "the defeated villain's heir" is the beast's get only
+(the outlaw's band already passes to a new captain, the risen king has none).
 G.3 (2026-11-06, realmwalker-a): `game/story/consequences.py` (its docstring lists every op and its arguments) adds
 the rest of ADVENTURES.md 8.6's consequence ops to `endings.OPS` (registered by importing it at the end of
 endings.py): figure_dies ("villain" or "lord:<place>", through Politics.die with `led`, so the seat's succession runs),

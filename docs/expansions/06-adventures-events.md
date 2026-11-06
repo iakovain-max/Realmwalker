@@ -389,7 +389,7 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
   (a work by a real bard figure, sung at inns after some weeks), relics, land, rights; the marks' whole course
   (rebuilding with scaffolds, newcomers through `Politics.regrow` and `people.make_npc`, haunted, cursed, occupied); the
   ledger replay stays true.
-- [ ] G.4 The epilogue in full, with vignettes of the places as they now are; adventures as named chapters of the
+- [x] G.4 The epilogue in full, with vignettes of the places as they now are; adventures as named chapters of the
   history in the Legends book; sequel threats.
 - [ ] G.5 Rumours, letters and notice boards that lead somewhere (`reveal_hook` repurposed, `reveal_clue` added to
   dialogue's OUTCOMES).

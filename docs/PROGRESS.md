@@ -46,6 +46,24 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (afternoon, last): Adventures & Events Part G, task G.4 — the epilogue in full, tales in the Legends book, sequels — branch `dlc/06-adventures-events`
+
+- **What became of them, in full.** The pages at the end of a tale now tell of every place it touched as it now is
+  (the beast's town rebuilding with its statue in the square; the lair under its new name; a ruin with a lamp still
+  lit in one window; a town under strange banners), the one who asked, the ally, the rival, its lieutenants, the
+  innocent, then the realm (how the king took it), what is left to come back, and last you: what that realm thinks of
+  you now, the title it gave you, and how far your name goes on the roads. Four to eight pages, each with its picture.
+- **The Legends book has Tales.** Every tale you finish (or that your hero died in the middle of) is written into the
+  world's history as a named chapter: "The Hunt for Hungerfell the Night-Howler, 1047", with its hero, its villain,
+  its places, its chapters, how it ended, every epilogue page and what the world remembers of it. The villain's page,
+  the places' pages and your old lives' pages link to their tales.
+- **It is not always over.** Kill a great beast and, sometimes, its get has gone to ground in a den or ruin nearby:
+  months later it comes down on the farms, and you hear of it first. Break an outlaw band and, sometimes, the ones
+  who got away find a new captain and a new name, and the roads go bad again a few weeks on. Take that tale on and
+  the book shows it following on from the first.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.4 note).
+
 ### Session, 2026-11-06 (afternoon, later): Adventures & Events Part G, task G.3 — what the world keeps of a tale — branch `dlc/06-adventures-events`
 
 - **Win a tale and the world remembers it.** Kill the beast and its lair takes a new name ("Hungerfell's Grave"),

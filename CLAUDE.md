@@ -683,6 +683,10 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   songs sung at inns, relics, titles, holdings, rights...). Their words are adventures.consequences.json
   `consequences.words`. A ruined or emptied town's folk get their fates and a rebuilding one newcomers at a visit
   (`consequences.on_visit`); never change a settlement's owner except through `Politics.set_owner` (the ledger).
+- The epilogue and the tale's chapter (Expansion 6 G.4): `game/story/epilogue.compose` (last in endings.finish: the
+  places as they now are, the realm, the sequel, you last; 8 pages at most) and `chronicle` (`politics["tales"]`, the
+  Legends book's Tales, refs "C<i>"); sequel threats are the op `sequel_threat` in `game/story/sequels.py` (a beast's
+  heir, the gang in a broken band's gap: dormant with `sequel_of`, stirring after `held_until`).
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.
