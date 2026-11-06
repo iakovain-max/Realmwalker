@@ -14,6 +14,8 @@ Animations "calm" or "off".
     hosts(canvas, game, columns, now, tint)        hosts on the roads (G.7): a short column of figures (three to
                                                    seven, by its strength, dolls of its own creatures) behind its
                                                    banner, with a little dust; refugees without a banner
+    reaches(canvas, game, ox, oy, ppc, now, tint)  a known threat's reach (G.8): its country washed grey, red or under
+                                                   mist, a soft picture kept by the threat's reach and stage
 
 `places` is [(settlement, x, y, size, alpha)]: the mark's rectangle on the screen (x, y its top left corner, size its
 side in pixels), as WorldView.draw lays it, and how clearly it is seen (1 explored, 0.6 only known).
@@ -38,6 +40,14 @@ WISP_RGB = (150, 230, 200)
 BESET_RGB = (120, 34, 30)  # a horde has no realm's colours: its banners are old blood
 SMALLEST = 24.0  # pixels: signs round a smaller mark are laid as round one this big
 LANTERNS = ((236, 92, 60), (248, 204, 90), (120, 200, 120), (236, 140, 70), (150, 170, 240))
+
+# A threat's reach washed on the map (G.8): colour, most opacity, how ragged its edge, whether it drifts.
+WASHES = {
+    "grey": ((58, 58, 64), 110, 0.30, False),
+    "red": ((140, 28, 22), 100, 0.25, False),
+    "mist": ((222, 226, 232), 145, 0.45, True),
+}
+WASH_PX = 4  # pixels a square in a wash's picture (drawn soft over the map)
 
 # How each column of smoke looks: puffs at once, rate (columns a second), colour, opacity, how high and how wide.
 SMOKE_LOOK = {
@@ -225,6 +235,61 @@ def hosts(canvas, game, columns, now: float, tint) -> None:
             bw, bh = fs * 0.42, fs * 1.0
             canvas.under(Image(("sign", "banner"), _banner, (x - back * fs * 0.32 - bw * 0.2, y - bh * 1.15, bw, bh),
                                rgba=_lit(tint, a, colour), smooth=False))
+
+
+def reaches(canvas, game, ox: float, oy: float, ppc: float, now: float, tint) -> None:
+    """Every known threat's reach (story.known_reaches) washed over the painted country, under the fog: one soft
+    picture a threat, made once for its key (its reach and stage), laid over the squares it touches. Mist breathes
+    slowly with Animations on."""
+    from realmwalker.game import story
+
+    ambient = canvas.gfx.ambient
+    for r in story.known_reaches(game):
+        rgb, most, rag, drifts = WASHES.get(r["wash"], WASHES["grey"])
+        side = 2 * r["r"] + 1
+        x0, y0 = r["x"] - r["r"], r["y"] - r["r"]
+        alpha = r["strength"]
+        if drifts and ambient:
+            alpha *= 0.85 + 0.15 * math.sin(now * 0.5 + _seed_of(r["id"]))
+        # (only the part on the world: the margin round a small world stays bare)
+        ax, ay = max(0, x0), max(0, y0)
+        bx, by = min(game.world.width, x0 + side), min(game.world.height, y0 + side)
+        if bx <= ax or by <= ay:
+            continue
+        src = ((ax - x0) * WASH_PX, (ay - y0) * WASH_PX, (bx - ax) * WASH_PX, (by - ay) * WASH_PX)
+        canvas.under(Image(("reach",) + tuple(r["key"]),
+                           lambda r=r, rgb=rgb, most=most, rag=rag: wash_picture(r["id"], r["r"], rgb, most, rag),
+                           (ox + ax * ppc, oy + ay * ppc, (bx - ax) * ppc, (by - ay) * ppc), src=src,
+                           rgba=(*tint, max(0, min(255, int(255 * alpha)))), smooth=True))
+
+
+def _seed_of(tid: str) -> float:
+    return (sum(ord(c) * 31 ** i for i, c in enumerate(tid)) % 997) / 997 * math.tau
+
+
+def wash_picture(tid: str, radius: int, rgb, most: int, rag: float) -> np.ndarray:
+    """A reach's wash: (h, w, 4), WASH_PX pixels a square, full in the middle, fading to nothing at its edge, the
+    edge ragged by a coarse noise fixed by the threat's id (the same picture for the same threat, every time)."""
+    side = (2 * radius + 1) * WASH_PX
+    rng = np.random.default_rng(int(_seed_of(tid) * 1000) + radius)
+    coarse = rng.random((radius // 2 + 3, radius // 2 + 3))
+    # bilinear value noise over the picture, 0..1
+    gy, gx = np.mgrid[0:side, 0:side].astype(np.float32) / side * (coarse.shape[0] - 2)
+    ix, iy = gx.astype(int), gy.astype(int)
+    fx, fy = gx - ix, gy - iy
+    n = (coarse[iy, ix] * (1 - fx) * (1 - fy) + coarse[iy, ix + 1] * fx * (1 - fy)
+         + coarse[iy + 1, ix] * (1 - fx) * fy + coarse[iy + 1, ix + 1] * fx * fy)
+    c = (side - 1) / 2
+    yy, xx = np.mgrid[0:side, 0:side].astype(np.float32)
+    raw = np.hypot(xx - c, yy - c) / (side / 2)  # 0 in the middle, 1 at the edge
+    d = raw + (n - 0.5) * 2 * rag
+    edge = np.clip((1.0 - d) / 0.45, 0.0, 1.0)
+    edge = edge * edge * (3 - 2 * edge) * np.clip((1.0 - raw) / 0.15, 0.0, 1.0)  # (never cut by the picture's side)
+    body = 0.55 + 0.45 * n  # never even: patches thicker and thinner
+    out = np.zeros((side, side, 4), np.uint8)
+    out[..., :3] = rgb
+    out[..., 3] = np.clip(edge * body * most, 0, 255).astype(np.uint8)
+    return out
 
 
 def _smoke(canvas, s, x, y, size, a, tint, t, mark, night) -> None:

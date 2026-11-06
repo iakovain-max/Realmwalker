@@ -235,6 +235,7 @@ class WorldView:
         for key, make, alpha, *sharp in overlays:  # realms (in map pixels, sharp), weather (a pixel a square, soft)
             canvas.under(Image(key, make, (ox, oy, world.width * ppc, world.height * ppc), rgba=(255, 255, 255, alpha),
                                smooth=not (sharp and sharp[0])))
+        mapsigns.reaches(canvas, game, ox, oy, ppc, now, tint)  # a known threat's reach (G.8), under the fog
         fog_key = ("fog", id(world), int(explored.sum()))
         canvas.under(Image(fog_key, lambda: _fog_image(explored), (ox, oy, world.width * ppc, world.height * ppc)))
         # Places.

@@ -1301,6 +1301,39 @@ def map_signs(game) -> list[tuple[int, int, str]]:
     return out
 
 
+def known_reaches(game) -> list[dict]:
+    """The threats whose reach the hero knows (G.8, §5.21): one whose tale they have taken, or whose signs they have
+    heard and whose den they have seen. Each {id, x, y, r, wash, strength, key}: the country it touches, shown as far
+    as its scheme has come (half its reach at the first stage, all of it at the last), washed `grey`, `red` or `mist`
+    (threats.json kinds `wash`), stronger stage by stage; `key` changes only when any of that changes (the map keeps
+    the picture by it)."""
+    from realmwalker.world import threats
+
+    w = game.world
+    heard = game.renown.heard
+    mine = {a["threat"] for a in active(game)}
+    kinds = game.tables.threats.get("kinds", {})
+    out = []
+    for t in threats.live(w):
+        if t["id"] not in mine:
+            if t.get("adventure") is not None or not any(n in heard for n in t.get("signs", [])):
+                continue
+            hx, hy = threats.home_xy(w, t)
+            if not game.player.explored[hx, hy]:
+                continue
+        kind = kinds.get(t["kind"], {})
+        n = max(1, len(t["scheme"]["stages"]))
+        stage = max(0, min(n - 1, int(t["scheme"]["stage"])))
+        frac = (stage + 1) / n
+        reach = t["reach"]
+        r = max(2, round(int(reach["r"]) * (0.5 + 0.5 * frac)))
+        wash = kind.get("wash", "grey")
+        out.append({"id": t["id"], "x": int(reach["x"]), "y": int(reach["y"]), "r": r, "wash": wash,
+                    "strength": round(0.45 + 0.55 * frac, 2),
+                    "key": (t["id"], int(reach["x"]), int(reach["y"]), r, wash, stage)})
+    return out
+
+
 def notices(game, settlement) -> list[str]:
     """A notice board's hooks: every stirring threat within a week's walk that nobody has taken on."""
     from realmwalker.world import threats

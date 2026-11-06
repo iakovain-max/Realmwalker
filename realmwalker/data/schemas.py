@@ -1450,6 +1450,8 @@ THREAT_KIND = Obj({
     "band": Str(max_len=40, optional=True),  # its villain's band when the figure is no beast (story.villain_group)
     "minions": Str(max_len=40, optional=True),  # its servants without it, sent in force (the strike move: E.1)
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
+    # how its reach looks on the world map once known (G.8: ui/gfx/mapsigns.WASHES; grey when not said)
+    "wash": Str(choices=["grey", "red", "mist"], optional=True),
     "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
     # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
     "ends": Obj({"chance": Float(min=0, max=1), "outcome": Str(max_len=30), "text": Str(max_len=40)}, optional=True),

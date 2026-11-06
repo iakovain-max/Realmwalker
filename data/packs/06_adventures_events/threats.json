@@ -196,6 +196,7 @@
       "ask": "I hear something is killing your people.",
       "learn_ask": "What does {villain} fear? What will kill it?",
       "reach": 14,
+      "wash": "red",
       "ends": {
         "chance": 0.006,
         "outcome": "hunted",
@@ -403,6 +404,7 @@
       "band": "barrow_wight",
       "minions": "restless_dead",
       "reach": 30,
+      "wash": "mist",
       "creature": "wight",
       "ends": {
         "chance": 0.008,
@@ -635,6 +637,7 @@
       "band": "bandit_hideout",
       "minions": "bandits",
       "reach": 18,
+      "wash": "grey",
       "ends": {
         "chance": 0.01,
         "outcome": "fallen",
