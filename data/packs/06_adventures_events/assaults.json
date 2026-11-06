@@ -1,0 +1,86 @@
+{
+  "_comment": "Expansion 6 H.1: assaults, battles through a living town (world/assaults.py, game/assault.py; docs/ADVENTURES.md 5.20, 8.15). A kind's clock is town minutes; `strike` is the kind of hosts.strike that resolves it in the abstract (threats.json hosts strike). Waves come in at their minute; a band's `group` is one encounter group or a list to choose from ('$main': the attacker's own group, when it has one), `count` the bands by tier (hamlet and village 1, town 2, city 3), `entry` gate | wall | portal (the square), `goal` folk (the nearest townsperson) | you | square | temple | keep | gate; `leader` marks the band whose fall breaks them. Fire is set by the first wave at `at` minutes in `seeds` places by tier. Demon bands come with Tieflings & Warlocks as more groups here.",
+  "tiers": {"hamlet": 1, "village": 1, "town": 2, "city": 3},
+  "near": 1,
+  "late_days": 1,
+  "kinds": {
+    "raid": {
+      "clock": [60, 90], "strike": "raid",
+      "waves": [
+        {"at": 0, "phase": "first_wave", "bands": [
+          {"group": ["$main", "orc_raiders", "goblins", "gnoll_pack"], "count": [2, 3, 4], "entry": "gate", "goal": "folk"}]},
+        {"at": 30, "phase": "second_wave", "bands": [
+          {"group": ["orc_raiders", "goblins", "gnoll_pack"], "count": [1, 2, 3], "entry": "wall", "goal": "folk"}]},
+        {"at": 45, "phase": "leader", "bands": [
+          {"group": ["orc_warband", "goblin_warband"], "count": [1, 1, 1], "entry": "gate", "goal": "square", "leader": true}]}
+      ],
+      "fire": {"at": [10, 20], "seeds": [2, 3, 5]}
+    },
+    "sack": {
+      "clock": [90, 120], "strike": "sack",
+      "waves": [
+        {"at": 0, "phase": "first_wave", "bands": [
+          {"group": ["$main", "army_foragers"], "count": [2, 3, 4], "entry": "gate", "goal": "folk"}]},
+        {"at": 25, "phase": "second_wave", "bands": [
+          {"group": ["$main", "army_foragers", "bandit_gang"], "count": [2, 3, 4], "entry": "gate", "goal": "temple"}]},
+        {"at": 50, "phase": "leader", "bands": [
+          {"group": ["$main", "army_foragers"], "count": [1, 1, 1], "entry": "gate", "goal": "keep", "leader": true}]}
+      ],
+      "fire": {"at": [15, 30], "seeds": [3, 4, 6]}
+    },
+    "the_dead": {
+      "clock": [90, 120], "strike": "the_dead",
+      "waves": [
+        {"at": 0, "phase": "first_wave", "bands": [
+          {"group": ["$main", "zombies", "restless_dead"], "count": [2, 3, 4], "entry": "wall", "goal": "folk"}]},
+        {"at": 30, "phase": "second_wave", "bands": [
+          {"group": ["zombies", "restless_dead", "ghouls"], "count": [2, 3, 4], "entry": "gate", "goal": "folk"}]},
+        {"at": 60, "phase": "leader", "bands": [
+          {"group": ["barrow_wight"], "count": [1, 1, 1], "entry": "gate", "goal": "temple", "leader": true}]}
+      ]
+    },
+    "summoned": {
+      "clock": [60, 100], "strike": "summoned",
+      "waves": [
+        {"at": 0, "phase": "first_wave", "bands": [
+          {"group": ["cult_circle"], "count": [1, 1, 1], "entry": "portal", "goal": "square", "leader": true},
+          {"group": ["portal_imps", "portal_quasits"], "count": [1, 2, 3], "entry": "portal", "goal": "folk"}]},
+        {"at": 20, "phase": "second_wave", "bands": [
+          {"group": ["portal_imps", "portal_quasits"], "count": [1, 2, 3], "entry": "portal", "goal": "folk"}]},
+        {"at": 40, "phase": "third_wave", "bands": [
+          {"group": ["portal_imps", "portal_quasits"], "count": [1, 2, 2], "entry": "portal", "goal": "you"}]}
+      ],
+      "fire": {"at": [25, 40], "seeds": [1, 2, 3]}
+    },
+    "dragon": {
+      "clock": [40, 70], "strike": "dragon",
+      "waves": [
+        {"at": 0, "phase": "leader", "bands": [
+          {"group": ["$main", "town_dragon"], "count": [1, 1, 1], "entry": "wall", "goal": "square", "leader": true}]}
+      ],
+      "fire": {"at": [1, 5], "seeds": [4, 6, 9]}
+    }
+  },
+  "words": {
+    "begin": {
+      "raid": ["<danger>A horn sounds at the gate, and then the screaming starts: raiders are in {town}!</>", "<danger>Smoke over the roofs of {town} and shouting from the gate: raiders!</>", "<danger>Someone runs past crying that the raiders are in. Doors slam all down the street.</>"],
+      "sack": ["<danger>The gates of {town} are down. Soldiers pour in, and they have come to take what they like.</>", "<danger>A roar from the gate: {town} has fallen, and the sack begins.</>", "<danger>Armed men in the streets of {town}, breaking doors. The town is being sacked.</>"],
+      "the_dead": ["<danger>A bell rings and rings: the dead are over the wall of {town}!</>", "<danger>Grey shapes come shambling up the lanes of {town}, and the living run before them.</>", "<danger>Screams from the edge of {town}: the dead have come, as the old women said they would.</>"],
+      "summoned": ["<danger>The air in the square of {town} splits with a sound like tearing cloth, and things climb out.</>", "<danger>A ring of fire opens in the square of {town}, and something laughs on the far side of it.</>", "<danger>Candles flare in the square of {town}, a chant rises, and the air goes wrong.</>"],
+      "dragon": ["<danger>A shadow passes over {town}, and then the fire comes down.</>", "<danger>A roar shakes the shutters of {town}. The dragon has come.</>", "<danger>Wings like sails over the roofs of {town}, and the thatch bursts into flame.</>"]
+    },
+    "arrive": {
+      "raid": ["<danger>{town} is under attack: raiders in the streets, and smoke.</> You have come in the middle of it.", "<danger>You come into {town} to screams: raiders are in the lanes.</>", "<danger>The gate of {town} stands open and nobody guards it. Somewhere inside, people are fighting for their lives.</>"],
+      "sack": ["<danger>{town} is being sacked as you come in.</> Soldiers break doors in the street ahead.", "<danger>You come into {town} in the middle of its sack: fire, shouting, and men with torches.</>", "<danger>The gates of {town} are broken, and the sack is going on inside.</>"],
+      "the_dead": ["<danger>The dead walk the streets of {town}.</> You have come in the middle of it.", "<danger>You come into {town} as the dead come through it: a bell ringing, people running.</>", "<danger>Doors barred, a bell ringing, and grey things in the lanes of {town}. The dead are here.</>"],
+      "summoned": ["<danger>Things from below are loose in {town}.</> A wrong light burns over the square.", "<danger>You come into {town} to find its square split open and devils in the lanes.</>", "<danger>A chant from the square of {town}, and small horned things running in the streets.</>"],
+      "dragon": ["<danger>{town} burns under a dragon's wings.</> You have come in the middle of it.", "<danger>You come into {town} as the dragon comes down on it.</>", "<danger>Fire on the roofs of {town}, and the shadow of wings over the smoke.</>"]
+    },
+    "wave": ["<danger>More of them are coming in by the {entry}!</>", "<danger>Shouts from the {entry}: another band is in.</>", "<danger>A fresh band comes in by the {entry}.</>"],
+    "fire": ["<danger>Smoke rises over the roofs: they have set {town} alight.</>", "<danger>Fire! A house is burning, and the wind takes it.</>", "<danger>Flames climb a wall near the {entry}. They are burning the town.</>"],
+    "broken": ["<good>Their leader has fallen, and the rest break and run.</>", "<good>With their leader dead, the attackers lose heart and flee {town}.</>", "<good>A cry goes up: their leader is down! The attackers scatter.</>"],
+    "over": ["The attackers draw off from {town}, taking what they carry.", "The fighting in {town} dies away; the attackers are gone.", "It is over. The attackers leave {town} to count its dead."],
+    "left": ["You leave {town} behind you, and the sounds of it.", "Behind you, {town} fights on without you.", "The smoke of {town} follows you out onto the road."],
+    "entries": {"gate": "gate", "wall": "wall", "portal": "square"}
+  }
+}

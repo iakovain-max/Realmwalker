@@ -1968,6 +1968,26 @@ FAVOURS = Obj({  # favours and contacts (game/story/favours.py, C.7)
 }, optional=True)
 DATA_FILES.update({"favours.json": FAVOURS})
 PACK_ONLY.update({"favours.json": {}})
+_ASSAULT_BAND = Obj({"group": List(Str(max_len=40), min_items=1), "count": List(Int(min=0, max=12), min_items=3,
+                                                                                max_items=3),
+                     "entry": Str(choices=["gate", "wall", "portal"]),
+                     "goal": Str(choices=["folk", "you", "square", "temple", "keep", "gate"]),
+                     "leader": Bool(optional=True)})
+ASSAULTS = Obj({  # assaults: battles through a living town (world/assaults.py, game/assault.py; H.1)
+    "tiers": Map(Int(min=1, max=3), min_items=1), "near": Int(min=0, max=5), "late_days": Float(min=0, max=30),
+    "kinds": Map(Obj({
+        "clock": List(Int(min=10, max=600), min_items=2, max_items=2), "strike": Str(max_len=30),
+        "waves": List(Obj({"at": Int(min=0, max=600), "phase": Str(max_len=30),
+                           "bands": List(_ASSAULT_BAND, min_items=1)}), min_items=1),
+        "fire": Obj({"at": List(Int(min=0, max=600), min_items=2, max_items=2),
+                     "seeds": List(Int(min=0, max=20), min_items=3, max_items=3)}, optional=True),
+    }), min_items=1),
+    "words": Obj({"begin": Map(word_list(3, 300)), "arrive": Map(word_list(3, 300)), "wave": word_list(3, 300),
+                  "fire": word_list(3, 300), "broken": word_list(3, 300), "over": word_list(3, 300),
+                  "left": word_list(3, 300), "entries": Map(Str(max_len=30))}),
+}, optional=True)
+DATA_FILES.update({"assaults.json": ASSAULTS})
+PACK_ONLY.update({"assaults.json": {}})
 _CARD = Obj({"name": Str(max_len=40), "meaning": Str(max_len=200), "tags": List(Str(max_len=30), min_items=2),
              "signs": word_list(3, 300), "marks": word_list(2, 300)})
 _TAGGED = Obj({"words": word_list(1, 300), "tags": List(Str(max_len=30), min_items=1)})

@@ -883,7 +883,11 @@
           0.0
         ],
         "marks": []
-      }
+      },
+      "raid": {"losses": [0.05, 0.15], "marks": ["raided"], "days": 30},
+      "sack": {"losses": [0.2, 0.45], "marks": ["sacked"]},
+      "summoned": {"losses": [0.1, 0.25], "marks": ["beset"], "days": 20},
+      "dragon": {"losses": [0.2, 0.5], "marks": ["burned"]}
     },
     "refugees": {
       "share": 0.4,
@@ -929,7 +933,11 @@
         "a column of refugees",
         "people fleeing with what they could carry",
         "a train of refugees"
-      ]
+      ],
+      "raid": ["the raiders of {who}", "{who}'s raiders", "a raiding band of {who}"],
+      "sack": ["the soldiers of {who}", "{who}'s men", "the army of {who}"],
+      "summoned": ["the things from {who}'s portal", "{who}'s devils", "what {who} called up"],
+      "dragon": ["{who}", "the dragon {who}", "{who} the dragon"]
     },
     "near_words": {
       "army": [

@@ -140,5 +140,6 @@ class Tables:
         self.lives = data["lives.json"]  # townsfolk's lives (game/story/lives.py)
         self.situations = data["situations.json"]  # predicaments, roots, meetings, turns (game/story/situations.py)
         self.favours = data["favours.json"]  # favours and contacts (game/story/favours.py)
+        self.assaults = data["assaults.json"]  # battles through a living town (world/assaults.py, H.1)
         self.reading = data["reading.json"]  # the Reading and the Wayfarer's Deck (game/story/reading.py)
         self.travel_events = {k: v for k, v in data["travel_events.json"]["events"].items() if not k.startswith("_")}

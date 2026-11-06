@@ -361,6 +361,12 @@ def render_panel(gs, canvas: Canvas, x: int, y: int, w: int, h: int) -> None:
         lm = game.local
         b = lm.building_at(p.lx, p.ly) if lm else None
         line("", "<dim>On foot, looking closely" + (f"; inside a {b.kind}" if b else "") + ".</>")
+    if game.in_local and game.local is not None and game.local.kind == "settlement":
+        from realmwalker.game import assault
+
+        said = assault.panel_line(game, game.local)  # (a town under assault: who, how far on, how long: H.1)
+        if said:
+            line("danger", said, 2)
     if game.sneaking:
         line("sneak", f"<info>Creeping</> <dim>(Stealth {game.sneak_roll}; z to stop)</>")
     if game.lost:

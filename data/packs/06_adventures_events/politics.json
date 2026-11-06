@@ -150,6 +150,30 @@
       "The last tents at {camp} have come down: it is a village in its own right.",
       "Those who stayed at {camp} have built it into a village. Their children will not remember the tents.",
       "{camp} has houses where the tents stood, and a market day. The camp has become a place."
+    ],
+    "host_raid_strikes": [
+      "{host} fell on {place}: barns burned, folk cut down in the lanes, and the raiders gone before help came.",
+      "Raiders were in {place}. {host} took what they could carry and killed whoever stood in the way.",
+      "{place} counts its dead after {host} came through it with torch and axe.",
+      "{host} raided {place} and rode off laughing. The town will remember."
+    ],
+    "host_sack_strikes": [
+      "{place} was sacked by {host}: doors broken, the market burned, the dead in the streets.",
+      "{host} were let loose on {place}, and did as soldiers do. The town is a ruin of what it was.",
+      "The sack of {place} went on until dark. {host} left little standing and less unbroken.",
+      "{host} sacked {place}. Those who could fled; the rest are counted among the dead."
+    ],
+    "host_summoned_strikes": [
+      "Something was called up in the square of {place}, and {host} ran loose in its streets until the portal closed.",
+      "{place} has seen devils in its lanes: {host} killed and burned before the light in the square went out.",
+      "A wrong fire burned in {place}, and {host} came out of it. The town is still counting.",
+      "{host} came through a door in the air of {place}. The people speak of it only in whispers."
+    ],
+    "host_dragon_strikes": [
+      "{host} came down on {place} with fire. Roofs burned, and the people with them.",
+      "{place} burned under the wings of {host}. Those who lived dug through the ash for those who did not.",
+      "Fire from the sky over {place}: {host} took cattle, gold and lives, and flew back to its lair.",
+      "{host} burned {place}. The smoke could be seen for a day's ride."
     ]
   }
 }

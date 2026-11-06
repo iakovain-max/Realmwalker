@@ -371,6 +371,9 @@ def settle(game, lm) -> None:
     from realmwalker.game import fire
 
     fire.settle(game, lm)  # (the fire moved on for the time that passed)
+    from realmwalker.game import assault
+
+    assault.settle(game, lm)  # (an assault where it would be by now: H.1)
     town = _town(game, lm)
     town.paths.clear()
     if "life_gathering" in _flags(game, s):
@@ -467,6 +470,9 @@ def tick(game, lm, s) -> None:
             from realmwalker.game import story
 
             story.on_town_tick(game, lm, s)  # (the inside man slips out at midnight: D.3)
+        from realmwalker.game import assault
+
+        assault.tick(game, lm, s)  # (waves, fire and the bands' march through an assault: H.1)
     if lm.meta.get("fire") or "burning" in s.status:
         from realmwalker.game import fire
 

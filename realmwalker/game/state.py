@@ -418,6 +418,10 @@ class GameState:
             from realmwalker.game import story
 
             story.daily(self)  # (adventures: Expansion 6)
+            if self.in_local and self.local is not None and self.local.kind == "settlement":
+                from realmwalker.game import assault
+
+                assault.notice(self, self.local)  # (an assault begun while you stand in the town: H.1)
             here = self.world.settlement_at(self.player.x, self.player.y)
             if here is not None and here.status.get("plague") and self.survival:
                 from realmwalker.rules import health
@@ -1068,6 +1072,9 @@ class GameState:
                 from realmwalker.game import story
 
                 story.on_enter_town(self, where)  # (a tale at the town's door: Expansion 6)
+                from realmwalker.game import assault
+
+                assault.on_enter(self, lm, where)  # (a town under assault as you come in: H.1)
                 if not town.seen and town.description:
                     from realmwalker.core.textgen import escape_markup
 
@@ -1096,6 +1103,9 @@ class GameState:
             from realmwalker.game import fire
 
             fire.settle(self, self.local)  # (the fire's last steps, before the map is left to itself)
+            from realmwalker.game import assault
+
+            assault.left(self, self.local)  # (an assault goes on without you: H.1)
         self.player.local_key = None
         self.sneaking = False
         self.say("You return to the road and the wider land.", "flavor")

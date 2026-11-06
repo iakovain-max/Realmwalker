@@ -86,6 +86,10 @@ class Politics:
         from realmwalker.world import hosts
 
         hosts.advance(self)  # (armies, warbands, the dead and refugees on the roads: G.7)
+        if self.w.politics.get("assaults"):
+            from realmwalker.world import assaults
+
+            assaults.due(self.w, self.t, max(self.day, self.w.time / 1440.0), self.rng)  # (assaults nobody saw: H.1)
         from realmwalker.world import founding
 
         founding.weekly(self)  # (camps going home, growing, fortifying: G.9)
@@ -561,7 +565,12 @@ class Politics:
                     v.liege = winner.id
         else:
             self.set_owner(target, winner.id)
-        if sacked:
+        from realmwalker.world import assaults
+
+        if sacked and assaults.party_near(w, self.t, target) and assaults.begin(
+                w, self.t, target, "sack", day=self.day, rng=self.rng, faction=winner.id, who=winner.name) is not None:
+            sacked = False  # (the party is there: the sack is fought through the town, H.1; it is news at its end)
+        elif sacked:
             was = target.population
             target.population = max(10, int(target.population * self.rng.uniform(0.55, 0.8)))
             marks.add(w, target, "sacked", self.day, self.t)
@@ -710,7 +719,13 @@ class Politics:
         s = self.rng.choice(near)
         d["last_seen"] = self.year
         realm = fx.realm_of_settlement(w, s)
-        if self.rng.chance(0.45):
+        from realmwalker.world import assaults
+
+        burns = self.rng.chance(0.45)
+        if burns and assaults.party_near(w, self.t, s) and assaults.begin(
+                w, self.t, s, "dragon", day=self.day, rng=self.rng, who=d["name"]) is not None:
+            pass  # (the party is there: the dragon comes down on the town while you stand in it, H.1)
+        elif burns:
             marks.add(w, s, "burned", self.day, self.t)
             s.population = max(10, int(s.population * self.rng.uniform(0.5, 0.8)))
             from realmwalker.world import reshape  # (G.6: its fields burned black for miles round, on the map too)
@@ -817,6 +832,18 @@ class Politics:
 
                 if hosts.ride_out(self, tribe, s) is not None:
                     return
+        from realmwalker.world import assaults, hosts as _hosts
+
+        if assaults.party_near(w, self.t, s) and assaults.begin(
+                w, self.t, s, "raid", day=self.day, rng=self.rng, faction=tribe.id, who=tribe.name,
+                group=_hosts.spec(self.t).get("groups", {}).get("warband")) is not None:
+            realm = fx.realm_of_settlement(w, s)  # (the party is there: the raid is fought through the town, H.1)
+            if realm is not None:
+                fx.change_relation(w, tribe.id, realm.id, -8)
+            from realmwalker.world import threats
+
+            threats.seed_from(self, "warband", faction=tribe, place=s.id)
+            return
         burned = s.kind == "hamlet" and self.rng.chance(0.3)
         was = s.population
         s.population = max(10, int(s.population * (0.5 if burned else self.rng.uniform(0.85, 0.95))))

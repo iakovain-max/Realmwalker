@@ -46,14 +46,25 @@ class LocalActor:
     creatures: list[Creature] = field(default_factory=list)
     alert: bool = False
     seen: bool = False  # the player can see them right now
+    goal: object = None  # where it goes when not hunting you (an assault's band, H.1): [x, y], "folk" or "you"
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "group": self.group, "x": self.x, "y": self.y, "alert": self.alert,
-                "creatures": [c.to_dict() for c in self.creatures]}
+        d = {"id": self.id, "group": self.group, "x": self.x, "y": self.y, "alert": self.alert,
+             "creatures": [c.to_dict() for c in self.creatures]}
+        if self.goal is not None:
+            d["goal"] = list(self.goal) if isinstance(self.goal, (list, tuple)) else self.goal
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> LocalActor:
-        return cls(d["id"], d["group"], d["x"], d["y"], [Creature.from_dict(c) for c in d["creatures"]], d.get("alert", False))
+        a = cls(d["id"], d["group"], d["x"], d["y"], [Creature.from_dict(c) for c in d["creatures"]], d.get("alert", False))
+        a.goal = d.get("goal")
+        return a
+
+
+def new_id(lm) -> int:
+    """An id for a new band on a map: one past the largest (ids could repeat when bands were only ever added)."""
+    return max((a.id for a in lm.actors), default=0) + 1
 
 
 DEADLY_RATIO = 2.0  # a band worth twice the party's High budget "will very likely kill you" (threat_words)

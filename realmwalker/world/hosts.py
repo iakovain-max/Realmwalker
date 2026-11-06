@@ -171,6 +171,10 @@ def name_of(world, tables, h: dict) -> str:
 def advance_world(world, tables, day: float) -> None:
     from realmwalker.world.politics import Politics
 
+    if world.politics.get("assaults"):
+        from realmwalker.world import assaults
+
+        assaults.due(world, tables, float(day), world.rng.child(f"assaults/{int(day * 1440)}"))  # (H.1)
     last = world.politics.get("hosts_tick")
     if last is None or float(day) - float(last) <= 0:
         if last is None:
@@ -285,8 +289,11 @@ def _words(world, tables, h: dict, s=None) -> dict:
     return out
 
 
-def strike(world, tables, host: dict, s, *, day: float, rng) -> list[str]:
-    """A host with no war or tribe behind it reaches a town (the dead, a horde, a crusade). Returns the news."""
+def strike(world, tables, host: dict, s, *, day: float, rng, scale: float = 1.0, live: bool = True) -> list[str]:
+    """A host with no war or tribe behind it reaches a town (the dead, a horde, a crusade). Returns the news.
+    With the party at the town (`live`, world/assaults.party_near) the dead and a horde begin an assault there
+    instead, played on the map or resolved later; an assault's end comes back here with `live` False and its
+    `scale` (how much of the harm is done) and its own kinds (raid, sack, summoned, dragon)."""
     sp = spec(tables).get("strike", {})
     said = []
     if host["kind"] == "crusade":
@@ -307,9 +314,25 @@ def strike(world, tables, host: dict, s, *, day: float, rng) -> list[str]:
         said.append(_say(world, tables, "host_crusade_broken", {**_words(world, tables, guard, s),
                                                                  "foe": name_of(world, tables, host)},
                          rng, day=day, where=(s.x, s.y), importance=3, places=[s.id]))
+    if live and host["kind"] in ("the_dead", "horde"):
+        from realmwalker.world import assaults
+
+        if assaults.party_near(world, tables, s) and assaults.begin(
+                world, tables, s, "the_dead" if host["kind"] == "the_dead" else "raid", day=day, rng=rng,
+                faction=host["faction"], who=_words(world, tables, host)["who"], group=host.get("group"),
+                strike=host["kind"], threat=host.get("threat"), strength=host["strength"], figure=host.get("figure"),
+                also=host.get("also", ())) is not None:
+            if host in records(world):
+                records(world).remove(host)
+            return said  # (the party is there: it is fought through the town, H.1)
     k = sp.get(host["kind"], {"losses": [0.15, 0.3], "marks": ["beset"]})
     was = s.population
-    if host["kind"] == "the_dead":
+    scale = max(0.0, min(1.0, float(scale)))
+    if host["kind"] == "the_dead" and scale < 0.5:  # (held off: the town is beset, not emptied)
+        floor = float(tables.threats.get("emptied", {}).get("floor", 0.2))
+        s.population = max(10, int(s.population * (1.0 - (1.0 - floor) * scale)))
+        k = {"marks": ["beset"], "days": 30}
+    elif host["kind"] == "the_dead":
         floor = float(tables.threats.get("emptied", {}).get("floor", 0.2))
         s.population = max(10, int(s.population * floor))
         days = float(tables.threats.get("emptied", {}).get("rebuild_days", 90))
@@ -317,11 +340,11 @@ def strike(world, tables, host: dict, s, *, day: float, rng) -> list[str]:
                   threat=host.get("threat"))
     else:
         lo, hi = k.get("losses", [0.15, 0.3])
-        s.population = max(10, int(s.population * (1.0 - rng.uniform(float(lo), float(hi)))))
+        s.population = max(10, int(s.population * (1.0 - rng.uniform(float(lo), float(hi)) * scale)))
     for mark in list(k.get("marks", [])) + list(host.get("also", [])):
         if mark == "burned" and s.kind not in ("hamlet", "village"):
             continue
-        extra = {"until": day + float(k.get("days", 30))} if mark == "beset" else {}
+        extra = {"until": day + float(k.get("days", 30))} if mark in ("beset", "raided") else {}
         marks.add(world, s, mark, day, tables, by=host.get("who", ""), **extra,
                   **({"threat": host["threat"]} if host.get("threat") else {}))
     figs = [host["figure"]] if host.get("figure") is not None else []

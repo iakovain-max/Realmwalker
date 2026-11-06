@@ -197,6 +197,36 @@ class DebugConsole(Screen):
             self.say(f"{h['id']}: {args[0]} from {near[0].name} to {near[1].name}, {len(h['path'])} squares."
                      if h else "<warn>No road goes there.</>")
 
+        @self.command("assault", "assault <kind> [minutes] — the town you are in (or at) is attacked now (raid, sack, "
+                                 "the_dead, summoned, dragon); minutes: how far into it you come")
+        def _assault(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.game import assault
+            from realmwalker.world import assaults
+
+            if not args or args[0] not in assaults.KINDS:
+                self.say("Kinds: " + ", ".join(assaults.KINDS))
+                return
+            w, p = game.world, game.player
+            s = w.settlement_at(p.x, p.y)
+            if s is None:
+                self.say("<warn>Stand in a town, or at its gate.</>")
+                return
+            ago = float(args[1]) if len(args) > 1 and args[1].replace(".", "", 1).isdigit() else 0.0
+            rec = assaults.begin(w, game.tables, s, args[0], day=w.time / 1440.0, rng=w.rng.child(f"console/{w.time}"),
+                                 who="the debug console")
+            if rec is None:
+                self.say("<warn>assaults.json has no such kind.</>")
+                return
+            rec["since"] = w.time / 1440.0 - ago / 1440.0
+            if game.in_local and game.local is not None and game.local.kind == "settlement":
+                assault.notice(game, game.local)
+            game.dirty = True
+            self.say(f"{rec['id']}: {args[0]} on {s.name}, {rec['clock']} minutes, "
+                     f"{sum(len(x['bands']) for x in rec['waves'])} bands in {len(rec['waves'])} waves.")
+
         @self.command("quest", "quest <kind> — take on work of that kind (quest list: show kinds)")
         def _quest(args):
             game = need_game()
