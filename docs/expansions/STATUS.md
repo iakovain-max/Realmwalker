@@ -575,12 +575,34 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part H, task H.1 (*the assault record
-`politics["assaults"]`, assaults.json, its tick inside townlife's loop, phases and clock, waves as LocalActors, the
-attackers from what the game has, the abstract resolution when the player is away through `hosts.strike`, arriving in
-the middle of one*), on branch `dlc/06-adventures-events` (Parts A-G are on main). Read
-docs/expansions/06-adventures-events.md Part H, docs/ADVENTURES.md §5.20 and §8.15, and the G.7 (hosts.strike), G.3
-(marks, ruin) and B.7 (fire) notes below.
+Stopped by Anton at 2026-11-06 20:24 during H.1 (realmwalker-a); the next session continues it.
+Next session starts at: Expansion 6, **Adventures & Events**, Part H, finishing task H.1 (*the code is committed in
+dbe480b with tests/test_assaults.py green; left: the three big checks side by side, the fresh review, the H.1 note
+here, PROGRESS, CLAUDE.md's line, the design note ticked*), then H.2, on branch `dlc/06-adventures-events` (Parts A-G
+are on main). Read docs/expansions/06-adventures-events.md Part H, docs/ADVENTURES.md §5.20 and §8.15, and the H.1
+draft note below.
+H.1 draft (2026-11-06, realmwalker-a; the docstrings of world/assaults.py and game/assault.py have it all): records
+`politics["assaults"][str(sid)]` (one a town; `next_assault`) made by `assaults.begin` from assaults.json (kinds raid,
+sack, the_dead, summoned, dragon: clock in town minutes, waves {at, phase, bands {group ("$main" = the attacker's own
+group), count by tier, entry gate|wall|portal, goal folk|you|square|temple|keep|gate, leader}}, fire {at, seeds by
+tier}; tiers by settlement kind, +1 great). Begun instead of the abstract outcome when `party_at` is within `near`
+(1) squares: `Politics.raid` (warband group), `Politics.take`'s sack, `dragon_wakes`' burning, `hosts.strike` for the
+dead and a horde (`live=True`; strike kind kept in rec["strike"]). Not played: `assaults.due` (Politics.advance, and
+hosts.advance_world before its no-hosts return) resolves it past its clock through `hosts.strike(scale=, live=False)`
+(new kinds raid/sack/summoned/dragon in threats.json hosts strike + names, politics.json host_<kind>_strikes; the dead
+under scale 0.5 beset instead of emptied; `_scale`: 1 - 0.8 x slain worth, leaders double, floor 0.15). Played
+(game/assault.py): `on_enter` (enter_local, after story.on_enter_town: live, "arrive" words, the time passed laid out
+at once), `notice` (pass_time's day change, the console), `tick` (townlife.tick, inside its game.local block), `settle`
+(townlife.settle: by rec["ran"], not by seconds), `left` (leave_local: state back to "coming"; its bands stay on the
+kept map and go when it ends: `_clear`). Bands are LocalActors with `encounters.new_id` and a saved `goal` ([x, y],
+"folk", "you": alert from the start), walked by `_walk` along townlife's A* (paths in `_paths`, not saved; folk
+re-aimed every 8 steps); move_actors still notices you and starts the fight. The leader band slain (gone from the
+map) breaks them; else the clock ends it; `_end` removes the bands, says the words and resolves with the scale, then
+placemarks.stamp. Side panel `assault.panel_line`. Console `assault <kind> [minutes in]`. New groups in
+creatures.hosts.json: portal_imps, portal_quasits, town_dragon. Measured headless on a big town: 3 ms a town tick
+on average, 25 ms at worst (a wave spawning). Not here: townsfolk fleeing or killed and blocking bands (H.2),
+reinforcements (H.3), objectives (H.4), the tally's marks and names (H.5), autoplay `_check_assaults` and
+FORMAT_VERSION (H.6). No save format change yet.
 G.10 (2026-11-06, realmwalker-b): the showcase for Part G. `debug_console.showcase_world(console, game)` (the
 console's `showcase world`): `LAND_SHOWN` one of each land change at fixed offsets about the party (dead_forest on
 the nearest forest within 3..15 squares; `keep` the party's square), a host of each `hosts.KINDS` between successive
