@@ -1787,6 +1787,8 @@ MARK = Obj({
     "colour": Str(max_len=20),
     "ages": Obj({"into": Any_(), "after": DAY_SPAN}, optional=True),  # into: the next mark, or null
     "lasts": List(Int(min=0, max=3650), min_items=2, max_items=2, optional=True),  # a record's days with no until
+    # (G.3) when it ends, the mark it may leave behind and the chance: a town rebuilt raises a memorial
+    "leaves": Obj({"mark": Str(max_len=30), "chance": Float(min=0, max=1)}, optional=True),
     "troubles": word_list(3, 300),  # walking in ({town}, {by}, {by_part})
     "moments": word_list(3, 300),  # a thing seen in its streets
     "description": word_list(1, 300),  # a line for a town's first description

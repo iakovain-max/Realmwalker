@@ -265,6 +265,17 @@ class Politics:
             base = int(f.flags.setdefault("base_military", f.military))
             if f.military < base:
                 f.military = min(base, int(round(f.military + base * rate * share + 0.5)))
+        # (G.3) a town rebuilding fills again toward the people it had: 1-3% of them a month (its newcomers are
+        # given faces at the next visit: game/story/consequences.newcomers)
+        for s in self.w.settlements:
+            r = s.status.get("rebuilding")
+            if not isinstance(r, dict):
+                continue
+            was = int(r.get("was", s.population))
+            if s.population >= was:
+                continue
+            monthly = 0.01 + 0.02 * ((int(s.id) * 2654435761) % 1000) / 999.0
+            s.population = min(was, s.population + max(1, int(round(was * monthly * 12 * share))))
 
     # ------------------------------------------------------------------ relations
     def powers(self) -> list:
@@ -583,6 +594,9 @@ class Politics:
     def fall(self, f) -> None:
         f.fallen = self.year
         for s in self.w.settlements:
+            occ = s.status.get("occupied")
+            if s.owner == f.id and isinstance(occ, dict) and occ.get("by") == f.id:
+                self.free(s)  # (a town it held by force goes back to its own lord: G.3)
             if s.owner == f.id:
                 self.set_owner(s, f.liege if f.liege >= 0 else -1)
         for site in self.w.sites:
@@ -674,6 +688,31 @@ class Politics:
     def expire_status(self) -> None:
         """Marks grow older (world/marks.py): a plague passes, a burned town begins to build again."""
         marks.age(self.w, self.t, self.day)
+        for s in self.w.settlements:  # (G.3) an occupied town is freed when its occupier has gone
+            occ = s.status.get("occupied")
+            if not isinstance(occ, dict):
+                continue
+            by = self.w.factions.get(occ.get("by"))
+            if s.owner != occ.get("by"):
+                marks.lift(self.w, s, "occupied")  # (taken by someone else: the occupation is theirs to tell)
+            elif by is None or not by.active or self.day >= float(occ.get("until", 1e12)):
+                self.free(s)
+
+    def free(self, s) -> None:
+        """An occupied town goes back to whoever held it before (or, gone, to their liege), and is told of it."""
+        occ = s.status.get("occupied")
+        if not isinstance(occ, dict):
+            return
+        marks.lift(self.w, s, "occupied")
+        was = self.w.factions.get(occ.get("was"))
+        while was is not None and not was.active and was.liege >= 0:
+            was = self.w.factions.get(was.liege)
+        if was is not None and was.active and s.owner != was.id:
+            self.set_owner(s, was.id)
+            self.changed = True
+            if "occupation_ended" in self.data["text"]:
+                self.say("occupation_ended", {"place": s.name, "holder": was.name}, where=(s.x, s.y),
+                         importance=2, places=[s], factions=[was])
 
     def plague(self, realm) -> None:
         w = self.w

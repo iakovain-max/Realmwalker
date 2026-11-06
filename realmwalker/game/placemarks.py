@@ -62,8 +62,11 @@ def stamp(game, lm, s) -> bool:
             _restore(lm, have.pop(m))
             changed = True
     for m in want:
+        if m in have and "since" in have[m] and have[m]["since"] != marks.since(s, m):
+            _restore(lm, have.pop(m))  # (the same mark made anew: a second monument in the square, G.3)
         if m not in have:
             have[m] = _apply(game, lm, s, m, _dress(game, m))
+            have[m]["since"] = marks.since(s, m)
             changed = True
     if changed:
         _after(game, lm, s)
@@ -208,6 +211,9 @@ def _streets(game, lm, s, mark: str, spec: dict, rec: dict, clear: set) -> None:
 
     scatter = spec.get("scatter") or []
     props = spec.get("props") or []
+    v = s.status.get(mark)
+    if spec.get("forms") and isinstance(v, dict) and v.get("what") in spec["forms"]:
+        props = [[spec["forms"][v["what"]], 1]]  # (a monument's own form: a statue, a cairn, the villain's cage: G.3)
     if not scatter and not props:
         return
     T = game.tables.terrain
@@ -245,6 +251,7 @@ def _streets(game, lm, s, mark: str, spec: dict, rec: dict, clear: set) -> None:
         _set(lm, rec, x, y, to)
         walk[x, y] = bool(T.walk[T.index[to]])
         placed.append((x, y))
+    rec["props"] = [list(c) for c in placed]  # (where they stand: a monument's Look words, story/consequences)
 
 
 def _reach(walk, start) -> np.ndarray:

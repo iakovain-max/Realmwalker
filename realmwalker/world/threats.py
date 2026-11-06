@@ -543,6 +543,7 @@ def _recover(pol) -> None:
         if isinstance(r, dict) and pol.day >= float(r.get("until", 0)):
             marks.lift(w, s, "rebuilding")
             s.population = max(s.population, int(int(r.get("was", s.population)) * 0.8))
+            marks.leave(w, pol.t, s, "rebuilding", pol.day)  # (perhaps a memorial to what it went through: G.3)
 
 
 # ---------------------------------------------------------------------------- waking (G.2)

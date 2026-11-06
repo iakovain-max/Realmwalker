@@ -94,7 +94,8 @@
     "rebuilding": {
       "form": "record", "label": "rebuilding", "colour": "warn", "lasts": [215, 275],
       "prices": {"other": 1.1},
-      "dress": {"share": 0.15, "near": "centre", "roofless": 0.7, "floor": "floor_earth", "furniture": "rubble", "walls": [["ruin_wall", 0.2]], "doors": "doorway", "look": {"walls": "charred", "roof": "charred"}, "shut": true, "props": [["woodpile", 5], ["crates", 2]]},
+      "dress": {"share": 0.15, "near": "centre", "roofless": 0.7, "floor": "floor_earth", "furniture": "rubble", "walls": [["ruin_wall", 0.2]], "doors": "doorway", "look": {"walls": "charred", "roof": "charred"}, "shut": true, "props": [["scaffold", 4], ["woodpile", 4], ["crates", 2], ["cart", 1]]},
+      "leaves": {"mark": "memorial", "chance": 0.35},
       "troubles": [
         "<warn>{town} is building itself again.</> New timber stands pale among the blackened beams.",
         "<warn>Scaffolds stand over half of {town}.</> The hammering never stops while it is light.",
@@ -119,6 +120,7 @@
       "form": "record", "label": "plague", "colour": "danger",
       "prices": {"food": 1.1, "arms": 1.1, "other": 1.1},
       "dress": {"props": [["cart", 2]]},
+      "leaves": {"mark": "memorial", "chance": 0.2},
       "troubles": [
         "<danger>Plague is in {town}.</> Doors are marked with chalk, and the dead-carts go by.",
         "<danger>{town} is sick.</> Masked healers go from door to door, and the pyres smoke outside the walls.",
@@ -208,7 +210,8 @@
     },
     "memorial": {
       "form": "record", "label": "remembering", "colour": "dim",
-      "dress": {"props": [["statue", 1]], "props_near": "square"},
+      "dress": {"props": [["statue", 1]], "props_near": "square",
+                "forms": {"statue": "statue", "shrine": "statue_small", "cairn": "cairn", "gibbet": "cage", "stone": "standing_stone"}},
       "troubles": [
         "<dim>In the square of {town} stands a new memorial.</> Flowers are left at its foot.",
         "<dim>{town} remembers what happened here.</> A stone in the square names the dead.",
@@ -250,6 +253,46 @@
       ],
       "moments": ["A cart piled with sacks and a tied calf goes out of the gate towards the hills, a gang's rider beside it.", "Two of the gang's men drink in the doorway of the inn, and nobody asks them to pay.", "The headman counts coins into a bag at the well, while a stranger with a crossbow watches."],
       "description": ["It pays tribute to outlaws, and their riders come and go as they like."]
+    },
+    "ruined": {
+      "_comment": "Expansion 6 G.3: a settlement ruined in full by an ending (story/consequences.ruin): a floor of survivors, the rest dead or fled, most of its buildings shells; people creep back after a year or so (it ages into rebuilding, which remembers the town it was).",
+      "form": "record", "label": "in ruins", "colour": "danger", "ages": {"into": "rebuilding", "after": [300, 480]},
+      "prices": {"food": 1.6, "arms": 1.3, "other": 1.4},
+      "dress": {"share": 0.8, "near": "centre", "spare": ["temple"], "roofless": 0.85, "floor": "floor_earth", "furniture": "rubble", "doors": "door_broken", "walls": [["ruin_wall", 0.3], ["rubble", 0.1]], "look": {"walls": "charred", "roof": "charred"}, "shut": true, "scatter": [["rubble", 0.05], ["tall_grass", 0.05], ["leaf_litter", 0.03], ["ash", 0.02]], "props": [["grave_fresh", 6], ["fallen_beam", 3]]},
+      "troubles": [
+        "<danger>{town} is a ruin{by_part}.</> Roofless walls, doors hanging open, and a handful of people who would not leave.",
+        "<danger>What is left of {town} is not a town.</> A few families camp in the shells round the temple; the rest is weeds and rubble.",
+        "<danger>{town} fell{by_part}, and has not got up.</> The graves by the road are new, and there are a great many of them.",
+        "<danger>Nobody keeps {town} now.</> The survivors watch you come in from the doorways, and do not come out to meet you."
+      ],
+      "moments": ["A woman picks through the rubble of a house, putting what she finds into a basket: a cup, a spoon, a shoe.", "Weeds grow in the middle of the street. Nobody has walked there in months.", "A dog sits by a door that is no longer there, waiting.", "Two men carry a beam out of a fallen house. They will burn it tonight; there is nothing else to burn.", "Someone has chalked names on a wall, a long list of them, and crossed most of them out."],
+      "description": ["It was a town once. Now it is walls without roofs, and the few who stayed."]
+    },
+    "cursed": {
+      "_comment": "Expansion 6 G.3: a wrongness left on a town by a dark ending (the risen's doom): grey grass, silent birds, dead trees; it fades in its time (cleansed).",
+      "form": "record", "label": "cursed", "colour": "danger", "lasts": [150, 260],
+      "prices": {"food": 1.2, "other": 1.1},
+      "dress": {"scatter": [["dry_grass", 0.06], ["leaf_litter", 0.02]], "props": [["dead_tree", 3], ["skull_post", 1]], "props_near": "square"},
+      "troubles": [
+        "<danger>Something is wrong with {town}{by_part}.</> The grass is grey, the birds are silent, and the light seems thin.",
+        "<danger>{town} lies under a curse{by_part}.</> Milk sours in the pail, and the trees in the square have died standing.",
+        "<danger>The people of {town} say they are cursed{by_part}.</> Looking at the dead trees and the grey fields, you believe them."
+      ],
+      "moments": ["A crow lands on a dead branch, looks at you, and does not call.", "A child holds up a flower to show its mother. It is grey, like everything else here.", "An old woman ties a red thread round a doorpost and spits three times.", "The well-water comes up cold and smelling faintly of earth. People drink it anyway."],
+      "description": ["A wrongness lies on it: grey grass, silent birds and dead trees."]
+    },
+    "occupied": {
+      "_comment": "Expansion 6 G.3: a town held by force (story/consequences set_owner to the villain): the occupier's standards and patrols, a gallows; freed when the occupier falls or its time runs out (Politics.expire_status and Politics.free: it goes back to its own lord).",
+      "form": "record", "label": "occupied", "colour": "danger", "lasts": [120, 240],
+      "prices": {"food": 1.25, "arms": 1.5, "other": 1.2},
+      "dress": {"props": [["standard", 3], ["gallows", 1], ["barricade", 2]], "props_near": "square"},
+      "troubles": [
+        "<danger>{town} is held{by_part}.</> Their standards fly over the square, and their men stop anyone they like.",
+        "<danger>Strangers rule {town} now{by_part}.</> The old lord's banners were burned in the square; the new ones are not loved.",
+        "<danger>{town} is occupied{by_part}.</> A gallows stands by the well, and people speak quietly in the street."
+      ],
+      "moments": ["Two armed men lounge by the well, watching who comes for water. Nobody meets their eyes.", "A shopkeeper pays something to a man with a cudgel, and does not count the change.", "Someone has scratched the old lord's sign on a wall. It has been scraped half away, and scratched again.", "A patrol goes by. The street empties in front of it and fills again behind."],
+      "description": ["It is held by force, and its people wait for that to end."]
     }
   }
 }

@@ -95,10 +95,26 @@ def age(world, tables, day: float) -> list[tuple]:
             into = ages.get("into") if ages else None
             lift(world, s, mark)
             if into:
-                extra = {"was": int(s.population)} if into == "rebuilding" else {}
+                was = v.get("was") if isinstance(v, dict) else None  # (a ruin remembers the town it was)
+                extra = {"was": int(was if was is not None else s.population)} if into == "rebuilding" else {}
                 add(world, s, into, day, tables, **extra)
+            else:
+                leave(world, tables, s, mark, day)
             out.append((s, mark, into))
     return out
+
+
+def leave(world, tables, s, mark: str, day: float) -> str | None:
+    """A mark has ended: what it may leave behind (marks.json `leaves`), by a steady roll of the town and the day -
+    a town rebuilt raises a memorial to what it went through. Returns the mark left, or None."""
+    spec = table(tables).get(mark, {}).get("leaves")
+    if not spec or spec["mark"] in s.status:
+        return None
+    h = (int(s.id) * 104729 + int(day) * 7 + sum(map(ord, mark))) % 1000
+    if h >= float(spec["chance"]) * 1000:
+        return None
+    add(world, s, spec["mark"], day, tables, after=mark)
+    return spec["mark"]
 
 
 # ---------------------------------------------------------------------------- words
