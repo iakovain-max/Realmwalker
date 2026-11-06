@@ -378,43 +378,44 @@ ADVENTURES.md §5.3, §5.6, §5.7.
 *Done when*: every ending's consequences are applied and seen; marks run their whole course (a burned town rebuilds
 and regrows, a memorial stands); the land itself can change through the ledger and the map repaints; hosts march on
 the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, §5.21, §8.13, §8.16.
-- [ ] G.1 Full sign sets for every threat kind's stages, as news, scenes, marks and map signs; overlays on road
+- [x] G.1 Full sign sets for every threat kind's stages, as news, scenes, marks and map signs; overlays on road
   encounters (`story.overlay` from `encounters.roll_encounter`), on prices (marks read by `game/economy`) and on the
   land's flavour (only the extra lines behind Text detail).
-- [ ] G.2 Waking dormant threats (triggers, the Storyteller's need, chance); `seed_from` from every `Politics` method
+- [x] G.2 Waking dormant threats (triggers, the Storyteller's need, chance); `seed_from` from every `Politics` method
   that can make one; threats in the interlude's "what changed"; the world's own endings for every kind.
-- [ ] G.3 Every consequence op of ADVENTURES.md §8.6: owners (`Politics.set_owner`), successions, relations, laws,
+- [x] G.3 Every consequence op of ADVENTURES.md §8.6: owners (`Politics.set_owner`), successions, relations, laws,
   emptying and rebuilding, **ruin in full** (designed here: a `ruined` mark, a floor of survivors, the townsfolk's
   fates, the map re-stamped), monuments (a thing on the town map with Look words: the memorial mark), renaming, songs
   (a work by a real bard figure, sung at inns after some weeks), relics, land, rights; the marks' whole course
   (rebuilding with scaffolds, newcomers through `Politics.regrow` and `people.make_npc`, haunted, cursed, occupied); the
   ledger replay stays true.
-- [ ] G.4 The epilogue in full, with vignettes of the places as they now are; adventures as named chapters of the
+- [x] G.4 The epilogue in full, with vignettes of the places as they now are; adventures as named chapters of the
   history in the Legends book; sequel threats.
-- [ ] G.5 Rumours, letters and notice boards that lead somewhere (`reveal_hook` repurposed, `reveal_clue` added to
+- [x] G.5 Rumours, letters and notice boards that lead somewhere (`reveal_hook` repurposed, `reveal_clue` added to
   dialogue's OUTCOMES).
-- [ ] G.6 **Land changes** (`world/reshape.py`): the ledger and its records, apply (never under the party's square or
+- [x] G.6 **Land changes** (`world/reshape.py`): the ledger and its records, apply (never under the party's square or
   the map it is on) and undo, the new biomes (`biomes.json`), `game.land_changed()` (`_biome_remap`, `_cost_cache`,
   `_remaps`, the route), the repaint of only what changed (`WorldPainter.refresh(cells)`, `ChunkCache` queuing the
   touched chunks again and restarting its thread, a version per chunk in its key; the old pictures standing in), the
   painter's rift, blight, scorch, drowned land and crater, and `local.patch_land` for maps already built. Tests:
   `tests/test_reshape.py` (the ledger replays; travel and caches follow; a built map takes the change; a weekly blight
   repaints only its chunks; the repaint recorded headless); autoplay `_check_land`.
-- [ ] G.7 **Hosts** (`world/hosts.py`): armies marching to their sieges, threats' hordes, crusades; `hosts.advance` by
+- [x] G.7 **Hosts** (`world/hosts.py`): armies marching to their sieges, threats' hordes, crusades; `hosts.advance` by
   its own stamp from `story.daily` and `Politics.advance`; arrival through the war code (`sieges`, `take`) for armies,
   `raid` for a tribe's warband, and the world layer's `hosts.strike` (marks such as `beset`, losses with the floor,
   refugees, news) for hordes, the dead and crusades; encounters near them; `news.faction_place`; drawn by `mapsigns`
   as a column of figures behind a banner, with dust; refugee columns on the roads. Tests:
   `tests/test_hosts.py`; autoplay `_check_hosts`.
-- [ ] G.8 A threat's reach washed on the map once known (the `overlays` hook, cached by reach and version).
-- [ ] G.9 **Founding** (`world/founding.py`) by the checklist of ADVENTURES.md §8.16; `politics["styles"]` read by
+- [x] G.8 A threat's reach washed on the map once known (the `overlays` hook, cached by reach and version):
+  `story.known_reaches`, threats.json kinds `wash`, `mapsigns.reaches` / `wash_picture`. Tests: `tests/test_reaches.py`.
+- [x] G.9 **Founding** (`world/founding.py`) by the checklist of ADVENTURES.md §8.16; `politics["styles"]` read by
   `plan.style_for` and `worldview.town_mark` (both gaining a `world` argument); the **encampment** layout, built on the
   `camp` layout's method, and the canvas tent form (`ui/gfx/houses.py`); its stages (a camp → a fortified camp → a
   town), each a re-stamp; its world-map composite in `mapsigns`, growing with it; the first use: a refugee camp
   outside a besieged city. Tests:
   `tests/test_founding.py` (autoplay's invariants hold; the camp's map passes `check_works`; the ownership ledger
   replays); autoplay `_check_founded`.
-- [ ] G.10 Showcase pages for all of it; FORMAT_VERSION +1; tests; Part G to `main`.
+- [x] G.10 Showcase pages for all of it; FORMAT_VERSION +1; tests; Part G to `main`.
 
 ### Part H – Assaults: battles through a living town
 *Done when*: a sack by politics while the player is in the town, and an adventure's assault, play as a battle through

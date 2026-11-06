@@ -703,6 +703,11 @@ def _words_for(game, npc, roll: int) -> str | None:
         words = lives.bark(game, npc, roll)
         if words:
             return words
+    from realmwalker.game.story import signs
+
+    words = signs.bark(game, npc, roll)  # (a threat at the town's door, in its people's mouths: Expansion 6 G.1)
+    if words:
+        return words
     if npc.job == "crier" and roll % 3 == 0:  # the news, cried
         from realmwalker.game.news import heard_items
 

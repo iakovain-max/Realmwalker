@@ -74,6 +74,9 @@ def finish(game, adv: dict) -> list[str]:
     e = choose(game, adv)
     adv["ending"] = e["id"]
     lines: list[str] = []
+    from realmwalker.game.story import epilogue
+
+    before = epilogue.snapshot(game)  # (what the epilogue's last page tells changed: G.4)
     for op in e["ops"]:
         lines += OPS[op[0]](game, adv, *op[1:]) or []
     adv["state"] = "won" if e["id"] in WON else "abandoned" if e["id"] == "abandoned" else "lost"
@@ -104,6 +107,8 @@ def finish(game, adv: dict) -> list[str]:
 
     patrons.after_tale(game, adv)  # (what the patron did not tell, once it came out; the innocent's fate: F.3)
     traitors.after_tale(game, adv)  # (the traitor's fate and page: F.3)
+    epilogue.compose(game, adv, before)  # (the places as they now are, the realm, the sequel, you last: G.4)
+    epilogue.chronicle(game, adv)  # (a named chapter of the world's history, for the Legends book: G.4)
     t = threats.records(game.world).get(adv["threat"])
     if t is not None and t.get("adventure") == adv["id"]:
         t["adventure"] = None  # (the threat goes on in the world if it was not ended)
@@ -383,11 +388,8 @@ def _lay(game, adv, kind: str, said: str) -> list[str]:
     if t is None or "site" not in t["home"]:
         return []
     site = w.sites[int(t["home"]["site"])]
-    w.politics.setdefault("laid", {})[str(site.id)] = game.moment.year
-    scars = w.politics.get("scars") or []
-    i = (t.get("source") or {}).get("scar")
-    if i is not None and 0 <= int(i) < len(scars):
-        scars[int(i)]["laid"] = True
+    OPS["lay_barrow"](game, dict(adv, places=dict(adv["places"], home={"site": site.id})), "home")
+    OPS["lay_scar"](game, adv)
     name = fig.full_name() if fig is not None else adv["title"]
     text = f"{game.leader.name} {kind} {name}, who had walked in {site.name} since they died"
     remember(w, game.moment.year, "laid_to_rest", text, importance=3, sites=[site.id],
@@ -448,7 +450,8 @@ def _outlaw_broken(game, adv, *args) -> list[str]:
 @consequence("outlaw_pardoned")
 def _outlaw_pardoned(game, adv, *args) -> list[str]:
     """A parley that ends it without blood: the band disbands and its men are pardoned through the lord of the
-    town (a law outcome): the gang is no more, its captain lives, the lord owes the hero a little."""
+    town (a law outcome): its captain lives, the lord owes the hero a little. (The band itself falls by the ending's
+    next op, `faction_falls`: G.3.)"""
     from realmwalker.core.textgen import escape_markup as esc
     from realmwalker.game import past, reputation
     from realmwalker.game.story import places
@@ -461,7 +464,6 @@ def _outlaw_pardoned(game, adv, *args) -> list[str]:
     if t is None or gang is None or not gang.active:
         return []
     pol = past._politics(game)
-    pol.fall(gang)
     town = adv["places"].get("town")
     s = w.settlements[int(town["settlement"])] if town and "settlement" in town else None
     realm = fx.realm_of_settlement(w, s) if s is not None else None
@@ -475,3 +477,7 @@ def _outlaw_pardoned(game, adv, *args) -> list[str]:
     _settle(game)
     return [f"<good>{esc(gang.name[:1].upper() + gang.name[1:])} are no more.</> <dim>Their men go home, or into "
             f"{esc(lord)}'s service, with their lives.</>"]
+
+
+from realmwalker.game.story import consequences as _consequences  # noqa: E402,F401  (the rest of the ops: G.3)
+from realmwalker.game.story import sequels as _sequels  # noqa: E402,F401  (the sequel threats: G.4)

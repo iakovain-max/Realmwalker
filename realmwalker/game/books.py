@@ -165,9 +165,16 @@ def _lore(game, rng, first: bool) -> list[str]:
 
 
 def _letter(game, rng, first: bool) -> list[str]:
-    """A dead stranger's letter: what they found, and what found them."""
+    """A dead stranger's letter: what they found, and what found them (often a live threat in reach, whose tale it
+    then offers: Expansion 6 G.5)."""
     w = game.world
     p = game.player
+    if first:
+        from realmwalker.game.story import rumours
+
+        about = rumours.letter_lines(game, rng)
+        if about:
+            return about
     unknown = [s for s in w.sites if not p.explored[s.x, s.y]]
     cults = [f for f in fx.active_factions(w, "cult") if 0 <= f.site < len(w.sites) and f.id not in game.renown.known]
     if cults and rng.chance(0.4):

@@ -10,6 +10,7 @@ import math
 import numpy as np
 
 from realmwalker.ui.gfx import dolls, mapsigns
+from realmwalker.world import hosts as host_rules
 from realmwalker.ui.gfx.paint import CANON, OVERVIEW, ChunkCache, WorldPainter
 from realmwalker.ui.gfx.scene import Clip, Image, Lines, Rect, Sprite, Text, tile_batch
 
@@ -24,8 +25,12 @@ LAND_HALO = (232, 218, 182, 190)
 WATER_HALO = (206, 224, 232, 150)
 
 
-def town_mark(tables, s, default: str) -> str:
-    """The picture of a settlement on the map: its people's manner of building, by its size."""
+def town_mark(tables, s, default: str, world=None) -> str:
+    """The picture of a settlement on the map: its people's manner of building, by its size; a founded camp's own
+    ("map/town_encampment_small|big", drawn by mapsigns.founded rather than from the tile sheet: G.9)."""
+    if world is not None and (world.politics.get("styles") or {}).get(str(s.id)):
+        style = world.politics["styles"][str(s.id)]
+        return f"map/town_encampment_{'big' if style.endswith('fortified') else 'small'}"
     if s.kind in ("hamlet", "village", "town", "city"):
         style = tables.cultures.town_style(s.culture) if s.culture in tables.cultures.ids else s.culture
         if style in TOWN_STYLES:
@@ -109,11 +114,21 @@ class WorldView:
         self.shared = True
 
     def ready(self, game) -> None:
+        from realmwalker.world import reshape
+
+        v = reshape.version(game.world)
+        if self.world is game.world and self.cache is not None and self.cache.land_version != v:
+            changed = reshape.changes_since(game.world, self.cache.land_version)
+            if changed is not None:  # (the land changed: only what it touched is painted again, on the thread)
+                self.cache.refresh(*changed, v)
+            else:
+                self.world = None  # (too much has changed to follow: the whole map is painted again)
         if self.world is not game.world:
             self.close()
             self.world = game.world
             self.painter = WorldPainter(game.world, game.tables)
             self.cache = ChunkCache(self.painter)
+            self.cache.land_version = v
             self.cache.paint_overview()  # small and quick: it stands in until the map is painted in full
             self.cam = None
             self.glide = None
@@ -191,10 +206,13 @@ class WorldView:
         # The painted country: far out, the small picture of the whole world; nearer, the chunks of the map painted
         # in full (the small picture standing in for any not painted yet).
         cache = self.cache
+        if not canvas.gfx.background and (cache.pending is not None or cache.overview_stale):
+            cache.catch_up()  # (headless, no thread paints: the changed land is read at once)
         overview = cache.overview or cache.paint_overview()
+        ov_key = ("map overview", id(world), cache.overview_v)
         W, H = world.width, world.height
         if ppc <= 2 * OVERVIEW:
-            canvas.under(Image(("map overview", id(world)), lambda: overview, (ox, oy, W * ppc, H * ppc),
+            canvas.under(Image(ov_key, lambda: overview, (ox, oy, W * ppc, H * ppc),
                                rgba=(*tint, 255), smooth=not sharp_at(ppc, OVERVIEW)))
         else:
             n = cache.n
@@ -206,12 +224,12 @@ class WorldView:
                 for gy in range(gy0, gy1 + 1):
                     cw, ch = min(n, W - gx * n), min(n, H - gy * n)
                     dst = (ox + gx * n * ppc, oy + gy * n * ppc, cw * ppc, ch * ppc)
-                    im = cache.get((gx, gy))
+                    im, cv = cache.get_painted((gx, gy))
                     if im is not None:
-                        canvas.under(Image(("chunk", id(world), gx, gy), lambda im=im: im, dst, rgba=(*tint, 255),
+                        canvas.under(Image(("chunk", id(world), gx, gy, cv), lambda im=im: im, dst, rgba=(*tint, 255),
                                            smooth=not sharp))
                     else:
-                        canvas.under(Image(("map overview", id(world)), lambda: overview, dst,
+                        canvas.under(Image(ov_key, lambda: overview, dst,
                                            src=(gx * n * OVERVIEW, gy * n * OVERVIEW, cw * OVERVIEW, ch * OVERVIEW),
                                            rgba=(*tint, 255), smooth=True))
             if canvas.gfx.background:
@@ -221,14 +239,16 @@ class WorldView:
         for key, make, alpha, *sharp in overlays:  # realms (in map pixels, sharp), weather (a pixel a square, soft)
             canvas.under(Image(key, make, (ox, oy, world.width * ppc, world.height * ppc), rgba=(255, 255, 255, alpha),
                                smooth=not (sharp and sharp[0])))
+        mapsigns.reaches(canvas, game, ox, oy, ppc, now, tint)  # a known threat's reach (G.8), under the fog
         fog_key = ("fog", id(world), int(explored.sum()))
         canvas.under(Image(fog_key, lambda: _fog_image(explored), (ox, oy, world.width * ppc, world.height * ppc)))
         # Places.
         sp = game.tables.sprites["world"]
         stypes = sp["settlements"]
         names, dst, cols = [], [], []
-        labels, signs = [], []
+        labels, signs, camps = [], [], []
         light = tint[0] / 255
+        own = world.politics.get("styles") or {}
         for s in world.settlements:
             known = s.id in p.known_settlements
             if not explored[s.x, s.y] and not known:
@@ -239,9 +259,19 @@ class WorldView:
             size = max(10, ppc * {"hamlet": 1.1, "village": 1.35, "town": 1.6, "city": 2.0}.get(s.kind, 1.5))
             if getattr(s, "great", False):  # a great city: twice the mark of any other
                 size = max(16, ppc * 3.0)
-            names.append(town_mark(game.tables, s, stypes.get(s.kind, "map/village")))
-            dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             a = 1.0 if explored[s.x, s.y] else 0.6
+            mark = town_mark(game.tables, s, stypes.get(s.kind, "map/village"), world if own else None)
+            if mark.startswith("map/town_encampment"):  # a founded camp: drawn larger than any town mark (G.9)
+                size = max(16, ppc * (2.6 if mark.endswith("small") else 3.0))
+                box = (sx + ppc / 2 - size / 2, sy + ppc - size * 0.86, size, size)
+                camps.append((s, box[0], box[1], size, a))
+                if s.status:
+                    signs.append((s, box[0], box[1], size, a))
+                if ppc >= 6:
+                    labels.append((sx + ppc / 2, sy + ppc + 1, s.name, "town", a))
+                continue
+            names.append(mark)
+            dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             if s.status:
                 signs.append((s, dst[-1][0], dst[-1][1], size, a))
             cols.append((light, light, min(1.0, light * 1.05), a))
@@ -259,10 +289,22 @@ class WorldView:
             cols.append((light, light, light, 1.0))
         if signs:  # what the towns are going through (Expansion 6): the far side of it behind their marks
             mapsigns.under(canvas, game, signs, now, tint)
+        if camps:  # founded camps (G.9), growing with their stages
+            mapsigns.founded(canvas, game, camps, now, tint)
         if names:
             canvas.under(*tile_batch(gfx.atlas, names, np.array(dst, np.float32), np.array(cols, np.float32)))
         if signs:
             mapsigns.over(canvas, game, signs, now, tint)
+        columns = []  # hosts on the roads (G.7), where you have seen the land
+        for h in world.politics.get("hosts", ()):
+            if h["state"] != "marching" or not explored[h["x"], h["y"]]:
+                continue  # (a crusade holding a town is inside it)
+            hx, hy, _ = host_rules.heading(h)
+            sx, sy = self.cell_px(hx, hy)
+            if X0 - 3 * ppc < sx < X0 + VW + 3 * ppc and Y0 - 3 * ppc < sy < Y0 + VH + 3 * ppc:
+                columns.append((h, sx + ppc / 2, sy + ppc * 0.95, ppc, 1.0))
+        if columns:
+            mapsigns.hosts(canvas, game, columns, now, tint)
         town_boxes = []
         for lx, ly, name, kind, a in labels:
             big = kind in ("town", "city", "hold", "great")

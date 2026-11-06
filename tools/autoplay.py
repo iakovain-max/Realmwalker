@@ -55,6 +55,7 @@ class AutoplayReport:
     quests: int = 0
     quest_trips: int = 0
     battle_turns: int = 0
+    camps: int = 0
     elapsed: float = 0.0
 
     @property
@@ -69,7 +70,7 @@ class AutoplayReport:
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
             f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  work taken on: "
             f"{self.quests} (visited: {self.quest_trips})  troubles acted on: {getattr(self, 'sits', 0)}  "
-            f"turns spent in battle: {self.battle_turns}",
+            f"turns spent in battle: {self.battle_turns}  camps founded or grown: {self.camps}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -312,6 +313,9 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{f.name} still shares a draconic spirit's resistance without holding Summon Dragon")
         _check_factions(game, fail)
         _check_threats(game, fail)
+        _check_land(game, fail)
+        _check_hosts(game, fail)
+        _check_founded(game, fail)
         _check_adventures(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
@@ -364,6 +368,9 @@ def _check_adventures(game, fail) -> None:
     _check_lieutenants(game, fail)
     _check_allies(game, fail)
     _check_rivals(game, fail)
+    _check_threat_signs(game, fail)
+    _check_consequences(game, fail)
+    _check_tales(game, fail)
     _check_secrets(game, fail)
     _check_reading(game, fail)
     _check_early(game, fail)
@@ -400,6 +407,92 @@ def _check_allies(game, fail) -> None:
             fail(f"{where}: joined, but not in the company under oath (nor carried, fallen)")
         if c is not None and (npc is None or not npc.alive):
             fail(f"{where}: with you, and dead")
+
+
+def _check_consequences(game, fail) -> None:
+    """Expansion 6 G.3: what the world keeps of a tale. An occupied town is held by its occupier (alive) and knows
+    whom it was taken from; a ruin or a rebuilding town remembers at least the people it has; a monument has words; a
+    song to be sung has a living author's record; the fallen townsfolk are not about; a holding and a right name a
+    real town; a renamed place is called by its new name."""
+    w = game.world
+    for s in w.settlements:
+        occ = s.status.get("occupied")
+        if isinstance(occ, dict) and s.owner == occ.get("by"):
+            by = w.factions.get(occ.get("by"))
+            if by is None or not by.active:
+                fail(f"{s.name} is occupied by a faction that has fallen")
+        for m in ("ruined", "rebuilding"):
+            v = s.status.get(m)
+            if isinstance(v, dict) and int(v.get("was", s.population)) < s.population // 2:
+                fail(f"{s.name} is {m} but remembers fewer people than it has ({v.get('was')} < {s.population})")
+        mem = s.status.get("memorial")
+        if isinstance(mem, dict) and mem.get("what") and not mem.get("words"):
+            fail(f"{s.name}'s monument has no words")
+    for work in w.politics.get("works") or ():
+        if isinstance(work, dict) and work.get("sung") and work.get("author") not in w.figures:
+            fail(f"the song {work.get('title')!r} has no author")
+    for npc in w.npcs.values():
+        if (not npc.alive or npc.flags.get("gone")) and npc.present:
+            fail(f"{npc.name} is about in town, though {npc.flags.get('fate', 'gone')}")
+            break
+    n = len(w.settlements)
+    for rec in list(game.renown.flags.get("lands") or ()) + list(game.renown.flags.get("rights") or ()):
+        if "settlement" in rec and not 0 <= int(rec["settlement"]) < n:
+            fail(f"a holding or right in a town that does not exist ({rec})")
+    for key, r in (w.politics.get("renamed") or {}).items():
+        thing = w.sites[int(key[1:])] if key[0] == "X" else w.settlements[int(key[1:])]
+        if thing.name != r["new"]:
+            fail(f"{r['old']} was renamed {r['new']}, but is called {thing.name}")
+
+
+def _check_tales(game, fail) -> None:
+    """Expansion 6 G.4: every ended or orphaned tale is a chapter of the history, once, and its epilogue ends with
+    you (8 pages at most); a sequel threat names a tale that exists, is a real threat of its kind (the heir in its own
+    lair, the new gang standing) while it lives, and the tale forged on it follows on from that tale."""
+    from realmwalker.game import story
+    from realmwalker.game.story import epilogue
+    from realmwalker.world import threats
+
+    w = game.world
+    advs = story.adventures(w)
+    tales = w.politics.get("tales") or []
+    seen = [r.get("adv") for r in tales]
+    if len(seen) != len(set(seen)):
+        fail("a tale is written twice in the history")
+    for adv in advs.values():
+        if adv.get("state") in ("won", "lost", "abandoned", "orphaned") and adv["id"] not in seen:
+            fail(f"the tale {adv.get('title')!r} ended ({adv['state']}) but is not in the history")
+        pages = adv.get("epilogue") or []
+        if adv.get("ending") and pages and (len(pages) > epilogue.MOST or pages[-1].get("about") != "hero"):
+            fail(f"the epilogue of {adv.get('title')!r} is out of order ({[p.get('about') for p in pages]})")
+        if adv.get("sequel_of") and adv["sequel_of"] not in advs:
+            fail(f"the tale {adv.get('title')!r} follows on from a tale that does not exist")
+        hints = adv.get("hints") or []  # (G.5: a rumour points at each of a tale's steps once)
+        if len(hints) != len(set(hints)):
+            fail(f"a pointer of {adv.get('title')!r} was told twice ({hints})")
+    for t in threats.records(w).values():
+        rec = t.get("sequel_of")
+        if not rec or t["state"] == "ended":
+            continue
+        if rec.get("adv") not in advs:
+            fail(f"the sequel threat {t['id']} names a tale that does not exist")
+        if not threats.villain_lives(w, t):
+            fail(f"the sequel threat {t['id']} ({rec.get('kind')}) has no villain, yet goes on")
+
+
+def _check_threat_signs(game, fail) -> None:
+    """Expansion 6 G.1: a threat's scenes were played only for stages of its own kind, each once; the step of the last
+    line on the land is not ahead of the walk."""
+    from realmwalker.world import threats
+
+    kinds = game.tables.threats.get("kinds", {})
+    for t in threats.records(game.world).values():
+        staged = t.get("staged", [])
+        ids = [st["id"] for st in kinds.get(t["kind"], {}).get("stages", [])]
+        if len(set(staged)) != len(staged) or any(s not in ids for s in staged):
+            fail(f"threat {t['id']}: scenes played for stages not its own, or twice ({staged})")
+    if int(game.renown.flags.get("land_sign", -1)) > int(game.player.steps):
+        fail("a threat's line on the land is ahead of the walk")
 
 
 def _check_rivals(game, fail) -> None:
@@ -647,6 +740,97 @@ def _check_part_d(game, fail) -> None:
                     fail(f"{c.name} is wanted alive by a step that is no capture")
 
 
+def _check_hosts(game, fail) -> None:
+    """Hosts on the map (G.7): each on its own road (no jumps, inside the world, ending at its goal), at a square of
+    it, of a known kind and state, an army's war and a host's faction real; a war marching has its host."""
+    from realmwalker.world import hosts
+
+    for problem in hosts.check(game.world, game.tables):
+        fail(problem)
+
+
+def _check_founded(game, fail) -> None:
+    """Founded places (G.9): each record names a real settlement at its index and square, held by a realm, with
+    people, at a known stage laid out in that stage's style; every style override names a real place and style; a
+    founded camp's map, once laid out, is for its stage or waits for its folk (game/founding.free)."""
+    from realmwalker.game import founding as play
+    from realmwalker.world import founding
+    from realmwalker.world.local import local_key
+
+    w = game.world
+    for problem in founding.check(w, game.tables):
+        fail(problem)
+    for rec in founding.records(w):
+        s = w.settlements[int(rec["settlement"])] if 0 <= int(rec["settlement"]) < len(w.settlements) else None
+        lm = w.local_maps.get(local_key(s.x, s.y)) if s is not None else None
+        if lm is not None and lm.kind != "settlement":
+            fail(f"{s.name}, founded, keeps a wilderness map on its square")
+        elif lm is not None and int(lm.meta.get("founded_stage", -1)) not in range(len(founding.STAGES)):
+            fail(f"{s.name}'s map does not say which stage it was laid out for")
+
+
+def _found_a_camp(app, report) -> None:
+    """Now and then (G.9): a refugee camp outside the town nearest the party, or the camp there is grows a stage, so
+    founding, its maps and its pictures are lived through in play (the invariants and the save round trip follow)."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.world import factions as fx, founding, news
+    from realmwalker.world.politics import Politics
+
+    game = app.game
+    if game is None or game.busy:
+        return
+    w = game.world
+    pol = Politics(w, game.tables, RNG(int(w.time), "autoplay camp"), day=news.now_days(w))
+    here = (game.player.x, game.player.y)
+    w.politics["party_at"] = list(here)
+    camps = [r for r in founding.records(w) if r["stage"] < len(founding.STAGES) - 1]
+    if camps and len(camps) >= 2:
+        rec = camps[0]
+        founding.set_stage(pol, rec, w.settlements[int(rec["settlement"])], int(rec["stage"]) + 1)
+        report.camps += 1
+        return
+    towns = sorted((s for s in w.settlements if s.kind in ("town", "city") and s.owner in w.factions),
+                   key=lambda s: abs(s.x - here[0]) + abs(s.y - here[1]))
+    sp = founding.spec(game.tables).get("refugee_camp") or {}
+    old = sp.get("chance")
+    sp["chance"] = 1.0
+    try:
+        for s in towns[:4]:
+            realm = fx.top_liege(w, w.factions.get(s.owner))
+            enemy = next((f for f in fx.active_factions(w, *fx.REALM_KINDS) if realm is None or f.id != realm.id), None)
+            camp = founding.refugee_camp(pol, s, enemy)
+            if camp is not None:
+                report.camps += 1
+                break
+    finally:
+        sp["chance"] = old
+    if pol.changed:
+        fx.touch(w)
+    game.land_check()
+
+
+def _check_land(game, fail) -> None:
+    """Changes to the land (G.6): the ledger replays to today's land, every square of it inside the world, never on a
+    settlement or a site; the game has followed the change (its biome remap covers every land the world knows)."""
+    from realmwalker.world import reshape
+
+    w = game.world
+    for problem in reshape.check(w):
+        fail(problem)
+    for rec in reshape.ledger(w):
+        if rec["kind"] not in reshape.KINDS:
+            fail(f"land change {rec['id']} of an unknown kind {rec['kind']!r}")
+        for x, y, field, old, new in rec["cells"]:
+            if not w.in_bounds(x, y):
+                fail(f"land change {rec['id']} outside the world at {x},{y}")
+            elif w.settlement_grid[x, y] >= 0 or w.site_grid[x, y] >= 0:
+                fail(f"land change {rec['id']} fell on a settlement or site at {x},{y}")
+    if len(game._biome_remap) < len(w.biome_ids):
+        fail("the game has not followed the land: a biome the world knows has no remap")
+    if game._land_seen != reshape.version(w) and not game.busy:
+        game.land_check()
+
+
 def _check_threats(game, fail) -> None:
     """Expansion 6: every threat points at real places and a real villain; a live one's villain still lives and its
     clock is on a real stage; a doom never takes a settlement to nobody."""
@@ -675,6 +859,15 @@ def _check_threats(game, fail) -> None:
                 fail(f"outlaw threat {tid} has no band")
         elif t["state"] == "ended" and not t.get("outcome"):
             fail(f"threat {tid} ended without an outcome")
+        woke = t.get("woke")  # (G.2: why it woke - a trigger, the Storyteller's need, chance or politics' seed)
+        if woke is not None:
+            why = str(woke.get("why", ""))
+            known = why in game.tables.threats.get("triggers", {}) or why in ("need", "chance") or \
+                why.startswith("seed:")
+            if not known:
+                fail(f"threat {tid} woke for no reason the game knows ({why!r})")
+            if t["state"] == "dormant" and not t.get("sequel"):
+                fail(f"threat {tid} woke and is asleep again")
     for s in w.settlements:
         if s.population <= 0:
             fail(f"{s.name} has nobody left in it")
@@ -1547,6 +1740,8 @@ def run_autoplay(*, turns: int = 3000, seed: int = 1, home: Path | None = None) 
                     _check_save_round_trip(app, report, turn)
                 if report.game_turns % 150 == 0:
                     _start_a_fight(app, rng, report)
+                if report.game_turns % 500 == 250:
+                    _found_a_camp(app, report)
                 if app.game is not None and app.game.battle is not None:
                     report.battle_turns += 1
             report.turns = turn + 1

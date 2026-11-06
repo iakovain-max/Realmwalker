@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part G (the world changes) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part H (assaults: battles through a living town) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -32,7 +32,11 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   phases, great attacks, every key, retreat and defeat, measured fair; every move in its temper's words, seals,
   the villain's shadow in the journal; saves format 23) · Part F (2026-11-06: allies with stakes under oath, rivals on
   their own clocks, patrons' hidden motives and traitors with their tells, the innocent's fate, the Reading of the
-  Wayfarer's Deck with seers and hermits, each tale's own rival and traitor; saves format 24)
+  Wayfarer's Deck with seers and hermits, each tale's own rival and traitor; saves format 24) · Part G (2026-11-06:
+  the world changes - threats' signs and wakings, endings' consequences in full with ruin, memorials, songs and relics,
+  the epilogue of places and the Legends book's Tales, rumours that lead somewhere, land changes through a ledger with
+  the map repainted, hosts marching on the roads, a threat's reach on the map, refugee camps founded and growing;
+  saves format 25)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -571,10 +575,307 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.1 (*full sign sets for every threat
-kind's stages, as news, scenes, marks and map signs; overlays on road encounters, prices and the land's flavour*), on
-branch `dlc/06-adventures-events` (Parts A-F are on main). Read docs/expansions/06-adventures-events.md Part G,
-docs/ADVENTURES.md §5.1, §5.9, §5.19, §5.21, §8.13, §8.16, and the Part B notes below on marks and map signs.
+Next session starts at: Expansion 6, **Adventures & Events**, Part H, task H.1 (*the assault record
+`politics["assaults"]`, assaults.json, its tick inside townlife's loop, phases and clock, waves as LocalActors, the
+attackers from what the game has, the abstract resolution when the player is away through `hosts.strike`, arriving in
+the middle of one*), on branch `dlc/06-adventures-events` (Parts A-G are on main). Read
+docs/expansions/06-adventures-events.md Part H, docs/ADVENTURES.md §5.20 and §8.15, and the G.7 (hosts.strike), G.3
+(marks, ruin) and B.7 (fire) notes below.
+G.10 (2026-11-06, realmwalker-b): the showcase for Part G. `debug_console.showcase_world(console, game)` (the
+console's `showcase world`): `LAND_SHOWN` one of each land change at fixed offsets about the party (dead_forest on
+the nearest forest within 3..15 squares; `keep` the party's square), a host of each `hosts.KINDS` between successive
+nearest towns (`most=999`, set a third of the way along its path), `camp` run through the console, the nearest live
+threat's signs heard and den explored (so `story.known_reaches` shows it), the 16-square disc about the party
+explored. tools/showcase.py sheets `world` (that, on the world map at 32 px a square), `founded` (`--stage 0|1|2`:
+`camp`, `camp grow` and the camp's close-up map at noon from its middle), `tales` (`_tale("epilogue")` then the
+Legends book with `set_category` tales), MARKS now every mark with `dress` in marks.json. The console's camp grow
+says "a fortified camp" / "a village". tests/test_beast_shown.py `test_the_console_stages_the_world_showcase`
+(the ledger replays, every host kind out on its road, a camp, a reach, the world map drawn headless with no error).
+FORMAT_VERSION 25 for Part G (threat signs and wakings, consequences, tales, land ledger, hosts, foundings).
+Checks: autoplay OK (a camp founded or grown, three save round trips), smoke OK; the fresh review found nothing
+serious (fixed from it: names escaped in `showcase world`'s lines, the camp's line only when a camp was made); the
+full suite after the fixes green but the known enemy-turn timing test under load (hobgoblin, 156 ms against 150),
+which passes alone. Part G merged into main.
+G.9 (2026-11-06, realmwalker-a): `world/founding.py` (its docstring has it all). `found(pol, x, y, kind=, people=,
+owner=, population=, name=, of=, story=)` by the checklist: Settlement appended (id = index; kind "hamlet"),
+`rebuild_index`, `Politics.set_owner` (refuses a non-realm), `fx.touch`, `world.culture` (culture_ids appended if new),
+the square's local map popped, `politics["styles"][str(id)]` = "encampment", `politics["founded"][str(id)]` = year
+(Legends), a record in `politics["foundings"]` {id "F<n>", kind, settlement, stage, since, staged, of, home?, story?}
+(`next_founded`), and a road by `lay_road` (path2d cardinal from the camp to road squares within 14 steps, round
+keep_out) through the land ledger: new reshape kind "road" (shape {x, y, cells}; wilderness maps on its squares popped);
+no road found: `reshape._bump` the camp's square. `spot_near`: 2..3.6 squares off, passable, not keep_out, nothing
+within one square, no land change there, away from `away` (the besieger's `place_of`), dry open ground (move_hours,
+not coast/marsh), near a road. `refugee_camp(pol, target, besieger)` from `Politics.begin_siege` (threats.json
+"founding" refugee_camp: chance 0.45, kinds town/city, share 0.08, least 40, most 600 and at most a third of the town,
+home 0.5, most_camps 8 not yet villages; one stage-0 camp a town; the realm is `top_liege` of the owner; news "camp_pitched", importance
+3 so history). `weekly(pol)` from `Politics.advance`: a refugee camp waits while its town is besieged; 7+ days after
+the siege lifts, `home` share go back (floor 30, "camp_home"); then growth 1.2% a week, `set_stage` 1 after 60 days
+(style encampment_fortified, walled, "camp_fortified"), 2 after 300 days with 150 people (style popped, kind village,
+"camp_grown"). Layout `layouts.encampment` (towns.json pack styles; style key `fortified`, schema): `plan.target` at
+least 8 + population/10 (max 48); CAMP_KINDS hall, temple, smithy, store first; tent lines every 7 squares; fire pits,
+standards, horse lines; palisade by `finish_town` when fortified. `plan.style_for(tables, s, world=None)` and
+`worldview.town_mark(tables, s, default, world=None)` read the override first (`map/town_encampment_small|big`, drawn by
+`mapsigns.founded` from `camp_picture(stage)`, not the atlas). `plan.look_for` falls back to the style's "house" look
+(pack fragments drop "_" keys). Tent: roof/walls "canvas" (ROOFS, WALL_TERRAIN wall_felt, roofs.WALLS, houses ROOF/FACE,
+placemarks OWN_ROOFS), `houses.form_of` -> "tent" (a swept front triangle; a back door leaves no hole). `game/founding.
+before_entry` (from `enter_local` and `prepare_town`): a map whose `meta["founded_stage"]` (set in `get_local_map`) is
+not the record's is dropped with its Town, the folk `moved_on`, `townlife.forget()`, unless `free` is False (TIES flags
+companion/story/grateful, or a giver/target npc of an offered/active quest) or the party is on it. Autoplay
+`_check_founded` and `_found_a_camp` (game turn 250 of every 500: a camp by the nearest town, or with two camps one
+grows). Debug `camp`, `camp grow`. tests/test_founding.py (9). No save format change. Not in G.9: sites founded while
+you play (the same checklist; their first use comes with the rift's depths), the crusaders' camp-city and a realm's
+border fort (other kinds for `KINDS` when their stories come).
+Checks: full suite green (the first run failed only the known mage turn-time test under load, 156 ms against 150; it
+passes alone), autoplay OK (two camps founded or grown in play, three save round trips), smoke OK. The fresh review
+found nothing serious; fixed from it: a small camp still grows the week its refugees go home, and `most_camps` counts
+only camps not yet villages. The full suite again after the fixes: green.
+G.8 (2026-11-06, realmwalker-b): `story.known_reaches(game)` (beside `map_signs`): live threats whose tale the hero
+has taken (`active`), or whose signs they have heard (`renown.heard`) with the den explored (the claw marks' test);
+each {id, x, y, r, wash, strength, key}: r is half the kind's reach at the first stage up to all of it at the last
+(min 2), strength 0.45..1.0 likewise, `key` = (id, x, y, r, wash, stage). threats.json kinds `wash` (beast red, risen
+mist, outlaw grey; schema choices grey/red/mist, grey when not said). `mapsigns.reaches` (called by `WorldView.draw`
+right after the `overlays` loop and before the fog, so both the side map and the world map screen draw it and unseen
+country stays hidden): one Image a threat keyed ("reach", *key), made by `wash_picture` (WASH_PX 4 pixels a square,
+a soft disc with a ragged edge from value noise seeded by the threat's id, patchy body, never cut by its side), laid
+over its bounding squares clipped to the world (src), alpha by strength and the daylight tint; mist breathes with
+Animations on (`WASHES` colour, most opacity, raggedness, drift). The design's "overlays hook, whole-world picture"
+became a picture a threat over its own squares (same layer, a fraction of the pixels). tests/test_reaches.py (6). No
+save format change.
+Checks: full suite green, smoke OK, the fresh review found nothing. Autoplay's first run failed on a townsperson's
+'{son}' left in their words: `lives.write_profile` wrote the want again after the son died and the tie was marked dead
+(values() fills only living ties); it now picks only lines it can fill, and the words lapse when none fit
+(tests/test_lives.py braces test). Autoplay OK after; the full suite again after the fix: green.
+G.7 (2026-11-06, realmwalker-a): `world/hosts.py` (its docstring has it all). Records `politics["hosts"]` {id "H<n>",
+kind (army, horde, the_dead, crusade, warband, refugees), faction (-1 none), group, strength, x, y, path (start..goal,
+8-connected, roads cost 1, land 3, impassable 0 by the biome remap; cached by land_version), at, goal {settlement},
+speed, since, state marching|holding, war / threat / against / people / came_from / also / who / figure / until},
+`hosts_tick`, `next_host`. `raise_host` returns None with no road or a march over threats.json hosts `most_days` (60):
+the caller then acts at once as before. `advance(pol, days=None)`: by the stamp (from `Politics.advance` after
+reshape.weekly, and `story.daily` through `advance_world`, which makes a Politics of the day); a host never walks
+time before its `since`; `_still_wanted` drops an army whose war ended or no longer marks it (`war["march"]`), the
+dead whose threat ended other than by its doom (the doom stage ends the threat at once: its dead still walk) or whose
+king no longer `villain_lives` (laid or slain on the way), a
+faction's host whose faction fell. Arrival: army/horde of a war -> `Politics.begin_siege` (new: refuses when the town
+left the enemy's holdings or is besieged already); warband -> `Politics.raid(tribe, target=)`; refugees -> the
+town's population grows; the rest -> `strike`: the dead empty the place (threats.json emptied floor and days, its
+`also` marks: haunted), a horde costs 20-40% and leaves `beset` (30 days) and `burned` (hamlet/village); a crusade
+holding the town meets them first (strength odds: the dead broken, or the crusade); a crusade arriving after the dead
+lifts `haunted`, else holds the town 30 days. Refugees (`refugees`): 40% of a town's losses when 20 or more, to the
+nearest same-size-or-bigger place within 30 squares not besieged/beset/emptied/burning/plague/sacked; from a sack
+(`take`), a hamlet burned by a raid, a strike. Raising: `Politics.sieges` -> `march_to_siege` (a tribe's is a horde;
+the nearest holding musters; within 2 squares the siege begins at once);
+`pressures` -> `raid(tribe, ride=True)` -> `ride_out`; the risen's march stage effect is now `["host", "the_dead",
+"village", "haunted"]` (threats op `host`: chooses as `emptied` does, one host per threat, else `_emptied` at once) ->
+`the_dead_march` -> `crusade` (chance 0.7: the nearest knightly order before a temple within 45 squares, else the
+realm). Encounters: `hosts.near` (3 squares, a marching host with a group) raises the chance x2.5 and a share of the
+meetings are its group (army_foragers, crusaders in creatures.hosts.json; orc_raiders, zombies) with a near_words line
+first. `news.faction_place` ends with `hosts.place`. `mapsigns.hosts` (from WorldView.draw after the towns' signs, for
+marching hosts on explored squares): dust puffs, 3-7 dolls of the group's first creature (refugees: commoner), the
+banner in the faction's colours (BESET_RGB without one), gliding by `hosts.heading`. Debug console `host <kind>`.
+Autoplay `_check_hosts` (`hosts.check`). News words politics.json host_* (4 each); numbers threats.json "hosts"
+(schema in THREATS). tests/test_hosts.py (11); test_politics and test_threat_kinds march their hosts. No save format
+change. Measured over three years of a medium world's politics: two marches of the dead (both struck), two crusades
+(one broken, one cleansed), two refugee columns, three warbands, no problems. Not here: walking onto a host offers no
+beat (its camp: parley, join, slip past) - a later part may add it; the interlude moves hosts a week at a time, so a
+warband or an army marching under a week is never seen there.
+Checks: full suite (first run: only the known turn-time tests under load, enemy casters 3 and 24-1 and tactics
+coverage archmage), autoplay OK, smoke OK, three years of politics measured (above). The fresh review's fixes (the
+dead go back when their king is laid or slain on the way; the route cache keyed by the world's id; no unused march
+flag) and the measure's (the doom ending the threat no longer drops its dead; no walking before `since`); the full
+suite again after (only enemy casters 3 under load; it passes alone).
+G.6 (2026-11-06, realmwalker-b): `world/reshape.py` (its docstring has it all). The ledger `politics["land"]` (records
+{id, kind, day, seed, shape, v, cells [[x, y, field, old, new]...], story?, spread?}), `land_version`, `land_log` (the
+last 64 changes' squares and fields: `changes_since(world, v)`, None when it no longer reaches back), `party_at` (set by
+GameState before `politics.tick`: never changed). `make(world, kind, shape, seed=, day=, keep=)`: rift (line, ledges
+every ~8, RAVINE, roads cut but at a ledge), blight/dead_forest/scorch (ragged blob; a ring's growth keeps the first's
+edge by `shape["root"]`), drown (lowest country first, rivers 0), crater (lake inside at r >= 2, a rim with CLIFF, +30
+m); never on settlements, sites, wonders (`wonders.avoid`), sea or lake; at most 80 squares. `undo` (refused under a
+later change), `check` (autoplay `_check_land`). Fields: biome, relief, elevation, road, river (not danger: the threat
+op `danger` changes it outside any ledger). New lands in the pack's biomes.json (rift impassable, rift_ledge, blighted,
+scorched_land, drowned, crater; 5-6 words each) and sprites.json (colours, marks dead/ash/drowned/rubble);
+`GameState.__init__` appends them to every world's `biome_ids` so the remap always covers them. Uses in play: the
+risen's "emptying" stage op `reshape` (blight r 2 round the barrow, news `land_blight`, `reshape.weekly` from
+`Politics.advance` grows a ring a week to r 5 while the king walks; laid, it stops and stays), `dragon_wakes` burning a
+village scorches r 1.5-2.6 round it; the debug console `land <kind> [size]` / `land undo`. `GameState.land_check()`
+(after politics.tick, in `travel_costs`) -> `land_changed()`: remap, cost cache, `_remaps` of touched squares, the
+journey planned again if it crosses one (a line in the log). `local.patch_land` (enter_local, maps built before: their
+`meta["land_version"]`): blighted/scorched/drowned/crater/rift_ledge patches (`local.PATCHES`; the crack keeps a ledge
+across; actors, items and the way in moved to walkable ground); a map built new on a crater or ledge square is shaped by
+the same functions (`SHAPED`). Painter: `WorldPainter._derive` (all per-square copies) and `refresh(cells, fields)`
+(rivers re-traced on biome/river, roads on road); `_draw_rift` (ink, glowing red, dark core; a pale bar at a ledge),
+flood tint for drowned, sprites dead_tree/snag/stump/rocks. `ChunkCache.refresh` marks the chunks within REACH (4
+squares) stale, `catch_up` (on the thread, or headless from `WorldView.draw`) re-derives and paints the overview again;
+the thread restarts when it had finished; stale chunks after unpainted ones, nearest first; `get_painted` gives a
+picture with its version: keys ("chunk", id, gx, gy, v) and ("map overview", id, overview_v). `WorldView.ready` follows
+`land_version` (a full rebuild when `changes_since` is None). tests/test_reshape.py (9). No save format change (G.10
+bumps it). Not here (later parts): the rift as a Wonder with its depths site (cataclysms), red light on the crack's
+close-up map, a crusaders' bridge. Known: an undo (debug console only) is not followed by close-up maps already built
+(they keep their dead trees); a newer change may lie over an older one (a rift over blight; `undo` refuses the older
+until the newer is undone), but a blight never fills a rift or a crater.
+Checks: full suite (first run: only the known turn-time tests under load, enemy casters 3 and 16-0 and tactics
+coverage mage), autoplay OK, smoke OK; the fresh review's fixes (overview stale kept when the land changes while it is
+painted, a failed read repaints the whole map, the interlude drops the dead hero's `party_at`, a re-planned journey
+keeps its plan object, blights keep out of rifts and craters, plain numbers in shapes); the full suite again after
+(only enemy casters 3 under load; it and the other two pass alone).
+G.5 (2026-11-06, realmwalker-a): `game/story/rumours.py` (its docstring has it all). `nearest_hook(game, x, y,
+within=)`: the nearest live untaken threat `story._can_take` allows, within threats.json start.tiles (the boards'
+reach). Dialogue OUTCOMES gain `reveal_clue`; `reveal_hook` and `reveal_clue` share one branch in
+`Conversation.apply_outcome`: `tell_clue` (a taken tale's current chapter: a learn step's talk routes (the person,
+known now) and place routes, a witness's person, a step's place (not choose/slay/prepare/endure); required steps
+first; the teller never points at themselves; each pointer once, `adv["hints"]` "<step>/<route i>|w|p"; the line goes
+into the tale's journal and the place on the map), else `tell_hook` (the hook line in a rumour's words, the den
+explored, its latest sign put in `renown.heard` so map_signs shows the claw marks, and `offer_hook(staged=False)`
+unless `beats.director["pending"]` already holds a beat: never pushed aside), else the news as before (a note).
+`tell_rumour` first tries `rumour_line` (RUMOUR_CHANCE 0.3: the nearest threat's den on the map, no offer). The found
+letter (`books._letter`, first reading only; the words are kept as before) tries `letter_lines` first (LETTER_CHANCE
+0.7 within LETTER_REACH 2x the boards' reach of the player: den, hook offered). Special options: pack dialogue.json
+`special` appends any (reveal_hook insight, reveal_clue investigation), innkeeper (reveal_hook), guard
+(reveal_clue); `builtin_special` drops reveal_clue options while no tale is taken. Words: adventures.rumours.json
+(rumour_hook, rumour_near, rumour_clue_who/_saw/_place, letter_hook, letter_den; 3+ each). Autoplay: hints unique.
+tests/test_rumours.py (8). No save format change. Notice boards already showed every stirring threat within a week's
+walk (G.1/C), so nothing changed there. Decision: a rumour's clue gives no `clues` count (those finish confronts and
+needs; a rumour only points the way).
+Checks: full suite twice (the first: the storybook check found {where} in words it fills only with the tale's words,
+removed; conftest's quiet offer_hook needed `staged`; two tactics coverage turn times under load; the second only the
+known turn-time tests, enemy casters 3 and tactics coverage ogre, both pass alone), autoplay OK, smoke OK. The fresh
+review's fixes: distance before `_can_take`, a clue's {villain} never raw, "that is all I know" when a clue is asked
+for and none is left, `_offer`'s answer true.
+G.4 (2026-11-06, realmwalker-b): `game/story/epilogue.py` (its docstring has it all): `compose(game, adv, before)` is
+the last thing endings.finish does after every after_tale (before = `snapshot` taken before the ops): the tale's town
+page gets a closing line for its most telling mark (VIGNETTE_MARKS), other places of the tale get "place:<key>" pages
+(VIGNETTES=2: a town by its marks; a site renamed by this tale, laid, cleared, or still held by a live threat), a
+"realm" page (the town's realm of group realms; words by won/lost/abandoned with {realm} {ruler} {town}), a "sequel"
+page (`sequels.of_tale`), and the hero's page gains `hero_lines` (standing with that realm when |standing| >= SPOKEN 10,
+a title gained since the snapshot, fame or infamy past FAMED 20 that grew); pages sorted by ORDER, at most MOST=10 (a full cast has that many people),
+trimmed by DROP (a second vignette, the bystanders and the realm first, each lieutenant last; the hero's never). `chronicle(game, adv)` writes
+`politics["tales"]` [{adv, title, year, began, hero, life, kind, ending, state, won, villain, villain_name, places
+(S/X refs), chapters (done or open), pages, sequel_of}] once, from finish and from story.on_death (orphaned). Legends
+(world/legends.py): category "tales" (second), refs "C<i>", `tale_page` (hero linked to the life page through
+`life_key`, villain, places, chapters, TALE_ENDS, came after / what came of it, the epilogue pages, history events
+with data.adventure); `tale_refs`/`tales_line` on figure, settlement, site and life pages. `game/story/sequels.py`:
+op `sequel_threat` (kind, chance) - "heir" (beast: a new beast Figure, parent the old, names/epithets from adventures
+consequences `sequels.heir`, in a free cave or ruin within 2x reach not yet walked, `politics["lairs"]`, its threat via
+threats.make) and "vacuum" (outlaw: `Politics.new_gang(near, quiet=True)` now returns the band and makes no threat
+when quiet; the threat made here with source `gap_of`); both dormant with `sequel`, `sequel_of` {adv, life, kind,
+told} and held_until (days from `sequels`), so threats.advance stirs them; `adv["sequel"]` {kind, threat}; forge sets
+`adv["sequel_of"]`; `sequels.daily` (story.daily) tells the hero once. Data: beast slain heir 0.5, outlaw
+broken/pardoned/spared/taken vacuum 0.5. Epilogue screen ABOUT labels; vignette.for_epilogue for place:<key> (a site:
+`for_place`, dusk), realm (hall), sequel (road at night). Words: consequences.words vignette_* (13), epilogue_realm_*
+(3), epilogue_sequel_* (3), sequel_told_* (2), hero_* (4), three variants each. Autoplay `_check_tales`.
+tests/test_epilogue.py (6); test_legends skips the empty Tales of a new world. No save format change. Decisions: no
+"fled" ending (a villain fleeing the finale leaves its tale going, as before); the fled lieutenant's sequel stays E.3's
+nemesis; the risen's sequel stays E.4's `sequel` op ("returns"); "the defeated villain's heir" is the beast's get only
+(the outlaw's band already passes to a new captain, the risen king has none).
+Checks: full suite twice (the first run: the known turn-time test under load, tactics coverage priest, and two epilogue
+page tests that showed eight pages were too few for a full cast, fixed with MOST 10; the second run only the known
+turn-time tests, enemy casters 3 and tactics coverage bugbear, both pass alone), autoplay OK, smoke OK. The fresh
+review's fixes: a full cast keeps its pages, a stale settlement index skipped, no empty place links, a sleeping sequel
+not woken early by seed_from.
+G.3 (2026-11-06, realmwalker-a): `game/story/consequences.py` (its docstring lists every op and its arguments) adds
+the rest of ADVENTURES.md 8.6's consequence ops to `endings.OPS` (registered by importing it at the end of
+endings.py): figure_dies ("villain" or "lord:<place>", through Politics.die with `led`, so the seat's succession runs),
+figure_rests (the risen's `politics["tombs"]` entry goes; `politics["rested"]`), faction_falls (Politics.fall, then
+threats.settle; never a kingdom), set_owner (Politics.set_owner, the ledger: to "villain" = an occupation, the new
+`occupied` mark {by, was}; "freed" = Politics.free; or to the holder of another place), succession (the place's lord
+steps down, Politics.succeed), relation, law (the realm that makes the laws there; words `law_<key>`), standing,
+status (add or lift a mark), rebuild (lifts ruined/emptied/burned/sacked/burned_out into `rebuilding` with the
+greatest `was`), ruin (min_tier; `ruined` mark {was, by, adv}, population to `consequences.ruin` floor 0.1 / least 5,
+news and history, `fates`, re-stamped at once if you stand there), lay_barrow / lay_scar (endings._lay now calls
+them), monument (memorial mark {what, words, adv}: marks.json memorial `dress.forms` statue/shrine/cairn/gibbet
+(cage)/stone; the prop's square is kept in `lm.meta["marks"]["memorial"]["props"]`; `monument_look` from
+describe_local), rename (a site, or a hamlet or village; `politics["renamed"]` {key X<id>/S<id>: old, new, year, adv};
+dungeon metas renamed too), song (a bard figure made by fx.make_figure, a work in `politics["works"]` with `sung`
+{from, x, y, reach}; `song_at_inn` from services._room and _meal, once a town: `renown.flags["songs_heard"]`), relic
+(to "hero": a trinket named from the words, tag relic:<adv>; to "temple": `politics["relics"]`, `relic_line`), title
+(reputation.grant_title(earned=True): the honour past its thresholds, once a realm), land (`renown.flags["lands"]`
+{settlement, realm, name, rent, paid}; `rent` paid by `on_visit` in whole months), right (board:
+`renown.flags["rights"]`, services.stay_price 0; letter: a letters.py page in a sealed_letter tagged
+recommends:<realm>, read by people.papers_impression through `recommends`), threat_grows (tier +1 once), ally_fate
+("broke": dismissed, stakes.after_tale writes the fate). Their words are adventures.consequences.json
+`consequences.words` (not the story words: the storybook would flag a tale's words in another's), checked per tale
+by the test. The marks' course: new marks ruined (ages into rebuilding after 300-480 days; age() carries `was`),
+cursed (lasts 150-260), occupied (lasts 120-240; Politics.expire_status frees it when its time is out or its
+occupier is gone, Politics.fall frees a town held by force before handing the rest to the liege; politics.json
+occupation_ended); marks.json `leaves` {mark, chance}: rebuilding (0.35) and plague (0.2) may leave a memorial
+(`marks.leave`, from age and threats._recover); rebuilding's dressing has scaffolds; Politics.regrow fills a
+rebuilding town 1-3% of its `was` a month; `consequences.on_visit` (story.on_enter_town) gives a ruined or emptied
+town's folk their fates (by hash: ruined 20% stay, 45% die, the rest `gone`; emptied 35/15; notables, story people,
+figures and companions always stay; `town.flags` fates, folk_full) and newcomers to a rebuilding one (`newcomers`:
+into the homes and posts of the departed, at most 6 a visit, then lives.ensure). placemarks: a mark whose record is
+made anew (its `since` changed) is re-stamped; a prop that finds no square open all round stands where blocking it
+cuts no square off (`_props_squeezed`: before this, hamlets got no props at all). The endings: beast slain (rebuild,
+statue, the lair renamed at tier 2+, ballad, tooth, standing +5, title and land at tier 3), beast doom (lament, the
+lord put aside and the town ruined at tier 3); outlaw bargained (realm-gang relation +15, harsh law "cruel", the ally
+walks away), pardoned (faction_falls moved out of outlaw_pardoned, a letter, ballad), broken/spared/taken (freed,
+free board, the gibbet's cage when taken, ballad, title at tier 3), doom (occupation at tier 3, lament); risen
+bargained (threat_grows, the ally walks away), laid_to_rest (figure_rests, haunting lifted, rebuild, shrine, relic
+to the temple, lament, title at 4), destroyed (cairn, relic to you, title and land at 4), doom (cursed, the lord
+taken by the dead at 3, ruin at 4). Autoplay `_check_consequences`. tests/test_consequences.py (10). No save format
+change (every new record is optional). Decisions: a kingdom never falls to a tale; only hamlets and villages are
+renamed (a town keeps its name); a ruin spares the temple's building (the survivors gather there); the dead and the
+fled stay so (newcomers replace them, they do not come back); a title from a tale ignores the standing and fame
+thresholds but not "once a realm".
+Checks: full suite twice (the first run: only the known turn-time tests under load, enemy casters 3 and 24-1, which pass alone, and test_gear's papers test, fixed: `recommends` reads any npc-like; the second run all green), autoplay OK twice, smoke OK. The fresh review's fixes: an occupation whose time runs out gives the town back (marks.age leaves `occupied` to Politics.expire_status), `free` with nobody left to give it to hands it to the occupier's liege or no lord, a tale never kills or unseats a crown (kingdom, empire) nor ruins or occupies a city or a great one, no second occupation over the first, the person you are talking to is spared a ruin's fates, the dead without a fate leave homes for newcomers, the meal's free-board words.
+G.2 (2026-11-06, realmwalker-b): world/threats.py "waking (G.2)" (its docstring has it all). `threats.wake(world,
+tables, t, rng, day=, why=, force=)` is the one door from dormant to stirring (keeps `t["woke"]` {why, day}; minds
+`room_for` unless forced); the weekly chance in `advance` goes through it (why "chance"). Triggers: threats.json
+`triggers` {why: {kinds, chance, within (x reach), force, felt}} fired by `threats.trigger(pol, why, points)` /
+`trigger_world(world, tables, rng, why, points, day=, site=)`: Politics.battle "battle" (risen), take when sacked
+"sacked" (outlaw, risen), plague "plague" (risen, every struck town), famine "famine" (beast, outlaw, every holding),
+raid "raid" (outlaw), dragon_wakes "dragon" (beast); the hero's own: `story.disturbed(game, site, why)` from
+dungeon.open_chest (a coffin or a hoard: "tomb_robbed", forced, chance 1) and story.on_descend ("lair_disturbed",
+forced, 0.6), the hero told by a `felt` line. The Storyteller's need: threats.json `need` {tiles 40, chance 0.5,
+every_days 7, over 1, levels [1,5,11,17]}; `story._need` from story.daily (not while the opening waits: its state
+"waiting") calls `threats.needed(world, tables, rng, x, y, level, day=, taken=)`: no live threat within `tiles` but
+those your tales engage, the budget's hi + `over` not reached, then the nearest dormant one of `hero_tier(level)` or
+below wakes (why "need"). `seed_from(pol, kind, figure=, site=, faction=, **more)` now finds a threat of that kind by
+figure, faction or home site, and is called by dragon_wakes ("dragon"), plague ("sickness"), raid ("warband"), a cult
+spreading ("circle") and the crown crisis in `succeed` ("crown"): those kinds do not exist yet, so it returns None
+(each kind's maker comes with it). World endings: every kind has `ends`; `ENDINGS[kind](pol, t)` returns the extra
+words for its news or None (could not happen this week; `_ends_alone` then does nothing): risen `_laid_by_others`,
+beast `_great_hunt` (the realm of `_lord_near`: kills the figure, pops the lair; outcome "hunted", politics.json
+threat_great_hunt, chance 0.006), outlaw `_broken_by_riders` (pol.fall(gang), the captain hanged; outcome "fallen",
+threat_broken, chance 0.01); `_lord_near` is the top liege at the home, never a tribe, gang or cult. The interlude:
+`snapshot` keeps threats {id: (state, stage)}; `interlude.threat_changes` writes threats.json `interlude` lines
+(woke, grew, doom, ended; rumour words, escaped), nearest `director["at"]` first, THREAT_LINES=4 at most. Autoplay
+`_check_threats` checks `woke.why` is known and that a woken threat is not asleep again (sequels aside).
+tests/test_threat_waking.py (10). No save format change (`woke`, `need_day` optional). Decisions: the hero's own
+deeds wake past the budget (you did it, you should see it); the Storyteller may stretch the budget by one; a battle
+or plague wakes only the dead, a famine only the hungry (beast, outlaw); a first-level hero is never handed a wight
+by the need (risen are tier 2 or more); threats born and ended inside one interlude are not mentioned.
+Checks: full suite twice (only the known turn-time tests under load: enemy casters 1, tactics coverage bugbear and the
+brown bear boss; all pass alone), autoplay OK, smoke OK. The first suite run found a twin situation in
+test_situations' thirty-met measure: the world's dice changed (the Storyteller wakes threats), and the forge's last
+fallback in `situations._meeting` allowed a meeting already met with the same root and predicament; it now returns
+None (the trouble is not forged; another is). The fresh review's fixes: room kept for the threat lines on a busy
+interlude page, no line for the end of a threat nobody had heard of, only a realm (group "realms") calls a great hunt
+or sends riders, the captain hanged is the one the news names, a lair rouses only on the way in (level 1).
+G.1 (2026-11-06, realmwalker-a): `game/story/signs.py` (its docstring has it all). Every stage of every threat kind
+(threats.json) has `signs` (news, as before) >= 4, `flavour` >= 4 (words on the land: `signs.on_the_land` after each
+overworld step in GameState's walk, behind `flavour(1)`, at most one line in LAND_GAP=30 steps (20 at rich), chance
+0.35, step kept in `renown.flags["land_sign"]`), `barks` >= 5 at <= 70 chars (`signs.bark` from townlife._words_for,
+one roll in BARK_SHARE=3, for npcs of a town in the threat's `stakes[:6]`), `overlay` >= 4 (`story.overlay` =
+`signs.overlay` from encounters.roll_encounter's ordinary path: one line after the intro, only for an all-humanoid
+band that is not hostile, only once the stage's effects are applied, nearest threat first), and an optional `scene`
+(scenes.signs.json: threat_mourning on beast killings, threat_wake on risen walking, threat_robbed on outlaw bleeding,
+threat_refugees on beast hunger / risen emptying / outlaw bold; `signs.on_enter_town` from story.on_enter_town after
+villain.seen_in_town, once a stage, kept in the threat's `staged`; check.py reports unknown scenes). The beast's
+killings and hunger stages have `roads` (wolf_pack, boost 1.5 / 2.0). Every non-doom stage after the first now has
+roads. Prices: marks.json `prices` {food, arms, other} on 14 marks, read by `economy.troubles_factor` for every mark
+(siege/famine/plague/sacked keep the old numbers, now as data; `economy.OLD_PRICES` only where a mark has none);
+`economy.dear_because` gives the labels, shown on the trade screen's head ("dear: ..."). Map signs
+(ui/gfx/mapsigns.py): SHOWN gains emptied, beast (crows wheeling: one flight a town, 5 for emptied, 3 for beast),
+haunted (cold lights, Image key "wisp"), extorted, bled (an outlaw's rag on a pole, RAG_RGB; one a town).
+Autoplay `_check_threat_signs`. tests/test_threat_signs.py (7), test_mapsigns covers the new marks. No save format
+change (the threat's `staged` list is optional). Decisions: overlays only on folk who mean no harm (the words are of
+people met on the road; hostile bands and beasts are their own story); the doom stages have no roads (a doom ends its
+threat at once); scenes ask nothing of the player (no hold, no talk). Words by two sonnet helpers, read over.
+Checks: full suite twice (only the known turn-time tests under load: tactics coverage archmage, enemy casters 1, 3
+and 7; all pass alone), autoplay OK, smoke OK. The fresh review's fixes: a scene's {place} is the town you are in
+(barks too), the land's line escaped, no overlay on a camp's night visitor, the overlay lines rewritten to fit any
+company met on the road (the people met there are mages, priests, deserters, spies, bandits who let you pass: never
+plain travellers, so no carts or children). Not in G.1: signs of kinds still to come (hidden circle, mad mage...: they
+come with their kinds); a threat's reach washed on the map (G.8).
 F.5 (2026-11-06, realmwalker-b): the full forms' cast. Rivals: a kind may say `blueprints` (only those tales) and
 `prize` (what it wants when there is no thing to fetch: `rivals.prize_name`); the own kinds `hunter` (beast),
 `graverobbers` (risen, relation -1), `captain` (outlaw), weight 5 against the others' 2-3; `decide` gives no rival when

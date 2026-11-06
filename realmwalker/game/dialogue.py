@@ -15,8 +15,11 @@ from realmwalker.rules.items import money_text
 
 DIFFICULTY_DC = {"easy": 10, "medium": 13, "hard": 16, "very hard": 19}
 
-OUTCOMES = ("reveal_info", "reveal_hook", "disposition_up", "disposition_down", "reputation_up", "reputation_down",
+OUTCOMES = ("reveal_info", "reveal_hook", "reveal_clue", "disposition_up", "disposition_down", "reputation_up", "reputation_down",
             "price_down", "price_up", "give_item", "agree", "refuse", "fight", "call_guards", "flee", "unlock_topic", "none")
+CLUE_NONE = ("\"I've told you all I know of it. Ask someone who was there.\"",
+             "\"That's the lot. I wish there were more.\"",
+             "They shake their head. \"Nothing you don't know already.\"")  # (reveal_clue with nothing left to point)
 BRIBES = (50, 200, 1000)  # 5 silver, 2 gold, 10 gold
 SKILLS_ALLOWED = {"insight", "persuasion", "deception", "intimidation", "performance", "investigation", "history",
                   "religion", "nature", "medicine", "athletics", "sleight_of_hand", "arcana", "survival", "animal_handling"}
@@ -374,6 +377,12 @@ class Conversation:
             self.tell_rumour()
 
     def tell_rumour(self) -> None:
+        from realmwalker.game.story import rumours
+
+        real = rumours.rumour_line(self.game, self.settlement.x, self.settlement.y, self.rng)
+        if real:  # (now and then it is about a real trouble near here: G.5)
+            self.npc_says(real)
+            return
         roll = self.rng.random()
         if roll < 0.4:
             line = danger_rumour(self.game, self.rng)
@@ -548,10 +557,23 @@ class Conversation:
         game = self.game
         if outcome == "reveal_info":
             self.tell_rumour()
-        elif outcome == "reveal_hook":
-            from realmwalker.game.events import hear_news
+        elif outcome in ("reveal_hook", "reveal_clue"):  # (rumours that lead somewhere: Expansion 6 G.5)
+            from realmwalker.game.story import rumours
 
-            self.note(hear_news(game, self.rng))
+            lines = rumours.tell_clue(game, npc, self.rng) if outcome == "reveal_clue" else None
+            if lines is None and outcome == "reveal_clue" and _has_tale(game):
+                self.npc_says(self.fill(self.rng.choice(CLUE_NONE)))
+                return
+            if lines is None:
+                lines = rumours.tell_hook(game, self.settlement, self.rng)
+            if lines is None:
+                from realmwalker.game.events import hear_news
+
+                self.note(hear_news(game, self.rng))
+                return
+            self.npc_says(lines[0])
+            for line in lines[1:]:
+                self.note(line)
         elif outcome == "disposition_up":
             change_disposition(npc, 15)
             npc.remember(f"was helped or pleased by the traveller on {game.moment.date_text()}")
@@ -656,8 +678,16 @@ def builtin_special(game, npc: NPC, rng: RNG) -> list[dict]:
     occ = game.tables.people["occupations"].get(npc.job, {})
     if occ.get("trade") and "merchant" in sp:
         options += sp["merchant"]
+    if not _has_tale(game):  # (pointing at a tale's next step needs a tale: G.5)
+        options = [o for o in options if o.get("success", {}).get("outcome") != "reveal_clue"]
     rng.shuffle(options)
     return options[:2]
+
+
+def _has_tale(game) -> bool:
+    from realmwalker.game import story
+
+    return bool(story.active(game))
 
 
 def danger_rumour(game, rng: RNG) -> str:

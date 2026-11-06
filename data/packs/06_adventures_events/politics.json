@@ -1,5 +1,5 @@
 {
-  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold.",
+  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold, a beast killed in a lord's great hunt, an outlaw's band broken by a lord's riders (G.2), an occupied town freed (G.3). Hosts on the roads (G.7): armies and hordes marching to their sieges, the dead on the march, crusades, refugees.",
   "text": {
     "threat_hunted": [
       "{hero} brought {beast} down at last, in its lair at {home}, and came home with its head.",
@@ -30,6 +30,126 @@
       "{villain}'s men rode through {area} forty strong. {gang} is no longer a band of robbers but a little army.",
       "Recruits keep coming to {gang} at {home}. {villain} pays in silver taken off the roads.",
       "There are more of {gang} every week. {villain} turns nobody away who can hold a blade."
+    ],
+    "threat_great_hunt": [
+      "{lord} called a great hunt on {villain}: hounds and beaters went up to {home}, and its head hangs on a gate now.",
+      "{villain} is dead. The huntsmen of {lord} ran it down near {home} with a hundred spears, and lost good men doing it.",
+      "Word from {area}: the great hunt of {lord} found {villain} at {home} and finished it. The farms of {place} feast tonight.",
+      "The horns of {lord} were heard over {area} for three days. On the fourth, they brought {villain} down below {home}."
+    ],
+    "threat_broken": [
+      "The riders of {lord} burned {gang} out of {home}. {villain} was hanged at the crossroads above {place}.",
+      "{gang} is finished: {lord} sent soldiers to {home}, and {villain} swung for it before the week was out.",
+      "Word from {area}: {lord}'s men took {home} by night, and the roads round {place} are free of {gang}.",
+      "{villain} is dead on a rope, and {gang} scattered to the hills. {lord} has had enough of tolls on its roads."
+    ],
+    "occupation_ended": [
+      "{place} is free: those who held it by force are gone, and {holder} has it back.",
+      "The standards over {place} are down. {holder} rules there again, and the gallows in the square came down first.",
+      "Word from {place}: the occupiers are gone, and the town has gone back to {holder}.",
+      "{holder} holds {place} again. Its people took down the strangers' banners with their own hands."
+    ],
+    "land_blight": [
+      "The country round {home} is dying: the grass gone grey, the trees bare in their season, the wells of {area} gone bitter. The people of {place} say {villain} breathes it out.",
+      "A blight has come down on {area}. Whatever grows near {home} withers in a night, and the herders of {place} are driving their beasts the other way.",
+      "Word from {place}: the fields towards {home} have died, every blade, as if frost and fire had passed together. No one has seen a bird there since.",
+      "The dead land spreads from {home}. The charcoal-burners of {area} say it creeps a field's width a week, and nothing they burn will stop it."
+    ],
+    "host_marches": [
+      "{attacker} has called its banners: an army marches on {place}.",
+      "The army of {attacker} is on the road, and every road it takes leads to {place}.",
+      "{attacker}'s host has left its musters. {place} looks to its walls.",
+      "Soldiers of {attacker} on the march, thousands of them, and they say {place} is where they will stop."
+    ],
+    "host_horde_marches": [
+      "The horde of {attacker} is moving, and the farms in its way empty ahead of it. It goes for {place}.",
+      "{attacker} has gathered every spear it has. The horde goes for {place}.",
+      "Drums in the hills: the horde of {attacker} comes down on the road to {place}.",
+      "Word runs ahead of the horde of {attacker}: it is bound for {place}, and it is not in a hurry."
+    ],
+    "host_the_dead_marches": [
+      "The dead of {villain} have left the barrow. They walk the roads now, and they walk towards {place}.",
+      "A column of the dead is on the road, and {villain} rides at its head. Its way leads to {place}.",
+      "Shepherds have seen the dead of {villain} walking in a long line by night, towards {place}.",
+      "{villain} has called his dead out of the earth, and they march on {place}."
+    ],
+    "host_crusade_marches": [
+      "{who} has taken up arms against {villain}: a crusade marches to save {place}.",
+      "The bells of {who} rang all night. At dawn its crusade set out for {place}.",
+      "Knights and pilgrims under the banners of {who}, bound for {place} to stand against the dead.",
+      "{who} has preached a crusade. Its host goes to {place}, to meet the dead of {villain} there."
+    ],
+    "host_crusade_arrives": [
+      "The crusade of {who} has come to {place}. Its banners stand at the gates, and the town breathes again.",
+      "{place} has the knights of {who} in its streets now, and fires burning at every gate.",
+      "The crusade of {who} holds {place}. Let the dead come, its captains say.",
+      "Hymns in the square of {place}: the crusade of {who} is there, and means to stay."
+    ],
+    "host_crusade_holds": [
+      "The dead came to {place} and the crusade of {who} met them at the fences. {foe} is broken.",
+      "At {place} the knights of {who} stood their ground all night, and at dawn {foe} was dust.",
+      "{foe} fell on {place} and broke on the crusade of {who}. The town stands.",
+      "The crusade of {who} held {place}. Of {foe}, nothing is left but bones on the fields."
+    ],
+    "host_crusade_broken": [
+      "The crusade of {who} met {foe} at {place}, and was broken. Few came back.",
+      "At {place} the knights of {who} went down under {foe}. Their banners lie in the mud.",
+      "{foe} broke the crusade of {who} at {place}, and went on into the town.",
+      "The crusade of {who} could not hold {place}. Its dead have joined the other side."
+    ],
+    "host_crusade_cleanses": [
+      "The crusade of {who} came to {place} too late to save it, but in time to lay its dead: the haunting is lifted.",
+      "Priests of {who} walked the empty lanes of {place} with bell and book. The dead do not walk there now.",
+      "{place} is clean again: the crusade of {who} burned what the dead left and blessed the rest.",
+      "The knights of {who} have cleared {place} of the dead. The living may come home."
+    ],
+    "host_the_dead_strikes": [
+      "The dead came to {place} in the night, and by morning it was theirs. Those who lived fled.",
+      "{host} has taken {place}. Its people are on the roads, or in the dead's ranks.",
+      "{place} is empty: {host} walked in, and nobody stayed to stop it.",
+      "No smoke over {place}. {host} came, and the living went."
+    ],
+    "host_horde_strikes": [
+      "{host} fell on {place}. The fields are burning, and the town is shut tight behind what is left of its walls.",
+      "{place} is beset: {host} is camped at its gates, and has burned all it could reach.",
+      "{host} came down on {place}, killing and burning. The town holds, just.",
+      "The horde is at {place}. Those who could not get inside the walls did not live."
+    ],
+    "host_refugees_flee": [
+      "Refugees from {place} on the road to {to}, carrying what they could.",
+      "The road from {place} to {to} is full of its people: carts, bundles, children on shoulders.",
+      "Those who got out of {place} are making for {to}. There are a great many of them.",
+      "A long column of folk from {place}, bound for {to}, and nothing to go back to."
+    ],
+    "host_refugees_arrive": [
+      "Refugees from {from} have come to {place}. They sleep in the barns and the churchyard.",
+      "{place} is crowded with the people of {from}, and the price of bread has gone up.",
+      "The folk of {from} have reached {place}. Some will stay.",
+      "{place} has taken in the refugees of {from}. Not everyone is pleased."
+    ],
+    "camp_pitched": [
+      "With {attacker} at the walls of {place}, those who got out have pitched a camp at {camp}, a short walk off.",
+      "Refugees from besieged {place} have raised tents at {camp}. They watch the smoke over their homes.",
+      "A camp has grown up at {camp}, outside {place}: the families who fled when {attacker} came.",
+      "The people who left {place} ahead of {attacker} are living in tents at {camp}, and more come every night."
+    ],
+    "camp_home": [
+      "The siege of {place} is over, and half of {camp} has packed its tents and gone home.",
+      "Carts are rolling back from {camp} to {place}. Not everyone has a home left to go to.",
+      "Many of the refugees at {camp} have gone back to {place}. The rest say they will stay a while.",
+      "{camp} is half empty now that {place} is free; the ones who stayed are digging in."
+    ],
+    "camp_fortified": [
+      "{camp} has a palisade now, and timber halls among its tents. It is beginning to look like it means to stay.",
+      "The people of {camp} have cut stakes and ringed it with a wall. Nobody calls it a refugee camp any more.",
+      "{camp} has dug a ditch and raised a stockade; its smith has a roof over his forge.",
+      "Timber roofs rise among the tents at {camp}, and a gate stands where the road comes in."
+    ],
+    "camp_grown": [
+      "{camp} was a camp of tents not long ago. It is a village now, with houses, a chapel and a name on the maps.",
+      "The last tents at {camp} have come down: it is a village in its own right.",
+      "Those who stayed at {camp} have built it into a village. Their children will not remember the tents.",
+      "{camp} has houses where the tents stood, and a market day. The camp has become a place."
     ]
   }
 }

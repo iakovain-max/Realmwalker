@@ -46,6 +46,209 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (night, closing): Adventures & Events Part G, task G.10 — the world changes, shown and merged — branch `dlc/06-adventures-events` → `main`
+
+- **Part G is finished and on main.** Everything it added in one place: dangers asleep in the world wake and send their
+  signs ahead of them (news, scenes, marks on towns, signs on the world map, dearer bread); a tale's ending changes the
+  world for good (owners, successions, a town ruined in full or emptied and rebuilt, memorials, songs sung at inns,
+  relics), told in an epilogue of how the places now stand and kept as a chapter in the Legends book's Tales; rumours,
+  letters and notice boards that point at real dangers; the land itself can change (a rift, a blight, scorched or
+  drowned country, a crater) and the map repaints only what changed; armies, hordes, the dead, crusades, warbands and
+  refugees march along the roads as columns you can see; a danger's reach is washed over the map once you know it;
+  and refugees of a besieged city pitch a camp that can grow into a village.
+- **To see it all at once** (for looking, not for play): the debug console's `showcase world` changes the land about
+  you (one of each kind), sets a host of each kind out on the roads between the nearest towns, pitches a refugee camp
+  and makes the nearest danger's reach known, then shows you the country; open the world map (m). The contact sheets
+  are `tools/showcase.py --sheet world`, `--sheet founded --stage 0|1|2` (the camp, the palisade, the village),
+  `--sheet tales` (the Legends book's Tales) and `--sheet mark --mark ruined` (every mark that dresses a town now has
+  its sheet: ruined, cursed, haunted, occupied, gibbet...); `--sheet all` saves every one in build/showcase.
+- Small fix: the console said a camp "is now a fortified"; it now says "a fortified camp" (and "a village").
+- **Saves: a new world is needed** (save format 25). Old saves are refused with the usual friendly message; the files
+  stay untouched.
+  Checks: see STATUS.md (G.10 note).
+
+### Session, 2026-11-06 (night, last): Adventures & Events Part G, task G.9 — new places: a refugee camp outside a besieged city — branch `dlc/06-adventures-events`
+
+- **New places now appear while you play.** When an army lays siege to a town or a city, some of its people may flee
+  and pitch a camp a short walk outside the walls, on the side away from the besiegers, on dry open ground. The camp is
+  a real place: it has its own name in its people's tongue, it belongs to the besieged town's realm, it has a road to
+  the nearest road, and it is in the news, the history and the Legends book ("Founded in ...").
+- **Walking in**: rows of canvas tents along straight tent lines, two ways crossing at a muster ground with standards
+  and a notice board, the captain's pavilion, a chapel tent, a forge and a sutler's tent, cook fires between the rows,
+  horse lines at the end; mud underfoot; a tent for every ten or so people. It has its own words when you arrive
+  ("Smoke from a hundred cook fires...", the names of the missing chalked on a board).
+- **It changes with time**: when the siege lifts about half the refugees go home. Those who stay dig in: after two
+  months the camp is ringed by a palisade and timber halls rise among the tents; after most of a year more, with
+  enough people, it becomes a village built its people's own way. Each change is news. Its close-up map is laid out
+  anew at your next visit (its old folk move on and new ones live there) - but never while a companion, someone a tale
+  or a job is about, or someone grateful to you lives there.
+- **On the world map** a camp is drawn larger than any town's mark: rows of little tents round a fire, later a ring of
+  stakes with two timber halls and the forge's smoke, its realm's banners over it.
+- Debug console: `camp` (refugees pitch a camp by the town nearest you), `camp grow` (the nearest camp grows a stage).
+- Choices made while Anton was away: how often (45% of besieged towns and cities), how many flee (8% of the town, 40 to
+  600), how long each stage takes (60 days, then 300 more with 150 people); the camp counts as a hamlet for shops and
+  prices until it becomes a village; the world-map picture is drawn in code (the tile sheets were not rebuilt: the
+  source art pack is not on this PC). The canvas tent is a new building picture (a ridge tent with its door flap tied
+  back).
+- No save change (old saves simply have no camps).
+  Checks: see STATUS.md (G.9 note).
+
+### Session, 2026-11-06 (night, later): Adventures & Events Part G, task G.8 — a threat's shadow on the map — branch `dlc/06-adventures-events`
+
+- **The country a threat troubles is shaded on the world map once you know of it**: once you have heard its signs
+  (news, rumours, a townsperson's tale) and seen its den, or have taken on its tale. A beast's hunting ground is washed
+  a dull blood red, a risen barrow king's country lies under a pale mist (which slowly breathes, with Animations on),
+  an outlaw band's roads are washed smoke grey. Each shadow has its own ragged edge.
+- **It grows with the danger**: at a threat's first stage it covers half its reach, faintly; stage by stage it spreads
+  and thickens until, at the last, it covers all the country the threat touches. When the threat ends it lifts.
+- It lies under the fog: country you have never seen stays unknown. Both the side map and the full world map show it.
+- Choices made while Anton was away: which colour goes with which kind (red for beasts, mist for the risen, grey for
+  outlaws), and showing only part of the reach at early stages (so the map tells you how far along a threat is).
+- No save change.
+  Checks: see STATUS.md (G.8 note).
+
+### Session, 2026-11-06 (night): Adventures & Events Part G, task G.7 — hosts on the roads — branch `dlc/06-adventures-events`
+
+- **Armies march to their sieges.** When a war goes well enough for one side to besiege a town, its army now sets out
+  from its nearest town and walks there along the roads, a few squares a day: the news says it is coming, and the siege
+  begins only when it arrives. If the war ends first, the army goes home. A tribe at war sends a horde the same way.
+- **A tribe's warband rides out** before it raids: the raid falls on the village when the riders get there.
+- **The dead march.** At the last stage of a risen barrow king's scheme his dead leave the barrow in a column and walk
+  to the village he will empty. A temple or a knightly order (or the realm, if none is near) may preach a crusade and
+  march to the same village: if it gets there first it holds the village for a month, and the dead may break on it;
+  if it comes after, it lays the dead the village was left with.
+- **Refugees.** A town sacked, a hamlet burned by raiders, a village emptied by the dead or beset by a horde sends a
+  column of its people down the road to the nearest bigger place that is not in trouble itself; they settle there.
+- **On the world map** each host is a short column of figures (three to seven, by its size; soldiers, the dead,
+  orcs, priests and men-at-arms, common folk for refugees) behind its banner in its realm's colours, with dust
+  behind it, a little further along its road each day.
+- **Near a host** (three squares) you meet its bands far more often: an army's foragers, a crusade's outriders, the
+  dead, the horde's raiders, each with a line saying what you have walked into.
+- For testing, the debug console has `host <kind>` (army, horde, the_dead, crusade, warband, refugees): a host sets
+  out from the town nearest you for the next one.
+- No save change: your current world keeps working (hosts start appearing as wars and threats move).
+- Not yet: walking onto a host does not yet offer a scene of its own (a parley, joining, slipping past); that waits for
+  a later part.
+  Checks: see STATUS.md (G.7 note).
+
+### Session, 2026-11-06 (evening): Adventures & Events Part G, task G.6 — the land itself changes — branch `dlc/06-adventures-events`
+
+- **The land can change while you play.** When a risen barrow king's dead begin to empty the hamlets, the country round
+  his barrow dies: grass gone grey, trees bare, wells bitter. The news says so, and the dead country spreads a ring a
+  week while he walks (up to about five squares out). Lay him, and it stops spreading; what died stays dead.
+- **A dragon that burns a village scorches its fields** for a mile or two round: black country with charred stumps on
+  the map, ash and burned trees when you walk there.
+- **On the world map** the changes are painted in: grey dead land with bare trees, black scorched fields, drowned
+  country under still water with dead trees standing in it, a crater with a lake and a hatched rim, and a rift as a
+  glowing red gorge with pale bars where a ledge crosses it. Only the pieces of the map that changed are painted again,
+  in the background, the old picture showing until the new one is ready.
+- **Travel follows at once**: a rift cannot be crossed except at its ledges, a crater's lake is water, drowned land is
+  slow wading; a journey whose way is cut finds another way (and says so).
+- **Places you have already walked take the change** the next time you go there: the trees dead, the ground ash or
+  flooded, the crack across a ledge's map with the one way over.
+- For testing, the debug console has `land <kind>` (rift, blight, dead_forest, scorch, drown, crater) and `land undo`.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.6 note).
+
+### Session, 2026-11-06 (late afternoon): Adventures & Events Part G, task G.5 — rumours, letters and notice boards that lead somewhere — branch `dlc/06-adventures-events`
+
+- **Talk leads somewhere.** Win someone over with a new talk option ("[Insight] Ask what people round here are afraid
+  of", or at the inn "[Persuasion] Ask who has been asking strangers for help") and they tell you of the nearest real
+  trouble within a week's walk: its den goes on your map with its claw marks, and you are asked whether you will take
+  the tale on (the same choice the board and the headman give). With nothing near, you hear the news as before.
+- **Clues for a tale you have taken.** While you are on a tale, "[Investigation] Ask what they know about the trouble
+  you are chasing" (or asking a guard what the watch has heard) points you onward: the herbwife in the next village
+  who knows what the beast fears, the boy who saw it, the old mill where to look. The person becomes known to you, the
+  place goes on your map, and the line is written in the tale's journal. Nobody tells you the same thing twice.
+- **Rumours are about real things.** Now and then the ordinary rumours of the tavern are about a real threat near
+  here, and its den goes on your map (no offer: you go and see, or you ask).
+- **A letter in a chest.** A dead stranger's water-stained letter is now usually about a live threat in reach: who
+  wrote it, where the thing lairs, which town would pay for its end; the den is on your map and its tale is offered.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.5 note).
+
+### Session, 2026-11-06 (afternoon, last): Adventures & Events Part G, task G.4 — the epilogue in full, tales in the Legends book, sequels — branch `dlc/06-adventures-events`
+
+- **What became of them, in full.** The pages at the end of a tale now tell of every place it touched as it now is
+  (the beast's town rebuilding with its statue in the square; the lair under its new name; a ruin with a lamp still
+  lit in one window; a town under strange banners), the one who asked, the ally, the rival, its lieutenants, the
+  innocent, then the realm (how the king took it), what is left to come back, and last you: what that realm thinks of
+  you now, the title it gave you, and how far your name goes on the roads. Four to ten pages, each with its picture.
+- **The Legends book has Tales.** Every tale you finish (or that your hero died in the middle of) is written into the
+  world's history as a named chapter: "The Hunt for Hungerfell the Night-Howler, 1047", with its hero, its villain,
+  its places, its chapters, how it ended, every epilogue page and what the world remembers of it. The villain's page,
+  the places' pages and your old lives' pages link to their tales.
+- **It is not always over.** Kill a great beast and, sometimes, its get has gone to ground in a den or ruin nearby:
+  months later it comes down on the farms, and you hear of it first. Break an outlaw band and, sometimes, the ones
+  who got away find a new captain and a new name, and the roads go bad again a few weeks on. Take that tale on and
+  the book shows it following on from the first.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.4 note).
+
+### Session, 2026-11-06 (afternoon, later): Adventures & Events Part G, task G.3 — what the world keeps of a tale — branch `dlc/06-adventures-events`
+
+- **Win a tale and the world remembers it.** Kill the beast and its lair takes a new name ("Hungerfell's Grave"),
+  the town raises a statue in its square with words cut in it (walk up to it and Look), and you keep its tooth. Lay
+  the dead king to rest and the haunting lifts, a shrine stands for the dead, his grave-gold goes to the temple.
+  Hang the outlaw captain and his cage swings from a gibbet by the well.
+- **Songs.** A few weeks after a tale, a real bard of the world (you can find them in the Legends book) has made a
+  ballad of it, and it is sung at the inns round about: once in each town, and the room raises a cup to you.
+- **Rewards that last.** For a great deed a realm may make you a knight (or its like), grant you a holding whose
+  steward brings you the rent whenever you come back to that town, give you free board at the town's inns for life,
+  or a letter of recommendation that makes lords and guards think better of you wherever that realm rules.
+- **Lose, and the world remembers that too.** If a great beast's or the risen king's scheme wins, the town itself
+  can be ruined in full: most of its houses roofless shells, fresh graves by the road, a handful of survivors
+  living round the temple (the rest dead or fled, and they stay so). A failed lord may be put aside by his own people;
+  the dead may take the lord himself, and his heir takes the seat. An outlaw lord who wins may take the town and hold
+  it, his standards in the square and a gallows by the well, until his band is broken; then it goes back to its own
+  lord. A town under the risen king's curse turns grey and silent for a season.
+- **Places come back.** A ruin creeps back to life after a year or so: scaffolds and new timber, the people growing
+  back month by month, newcomers moving into the empty houses (new faces you can talk to); when it is done, it may
+  raise a memorial to what it went through. A town that lived through a plague may do the same.
+- Take the outlaw's bargain and the lord's justice grows cruel, and your ally, sickened, walks away.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.3 note).
+
+### Session, 2026-11-06 (afternoon): Adventures & Events Part G, task G.2 — sleeping dangers wake — branch `dlc/06-adventures-events`
+
+- **What happens in the world wakes what sleeps in it.** A battle fought near an old barrow, or a plague that fills
+  the pits, can rouse the barrow's dead king; a famine makes a beast hungry and outlaws bold; a sacked town leaves
+  the roads unguarded for the gangs; a dragon's fire drives the beasts of the hills down onto the farms.
+- **And so do you.** Open the coffins of a barrow or take its king's hoard and he wakes, at once, and you feel it
+  (the air goes cold; something far below answers the lid). Walk into a beast's own lair and it may be roused too.
+- **The Storyteller makes sure you have something to face.** If you are out in the land with nothing stirring within
+  a week or so's walk that you could take on, the nearest sleeping danger fit for your level begins to stir (never a
+  barrow king for a first-level band).
+- **The world fights back without you.** Besides the priests who lay the dead to rest and the heroes who hunt
+  beasts, a lord may now call a great hunt on a beast that eats his farms, or send riders to burn out an outlaw's
+  hideout and hang its captain. You hear of it on the roads.
+- **Between lives.** When a new character starts in an old world, the "while you were away" page now also says which
+  dangers woke, grew worse, had their way, or were ended by others.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.2 note).
+
+### Session, 2026-11-06 (afternoon): Adventures & Events Part G, task G.1 — a threat's signs, everywhere — branch `dlc/06-adventures-events`
+
+- **The country shows what is happening in it.** Walking near a threat now and then gives a line of what it has done
+  to the land, different at every stage (a ewe opened and left; a grave dug out from below; hoofprints going off
+  into the scrub). These lines follow the Text detail setting: with the least detail they are not shown.
+- **Its towns talk about it.** People in a threatened village say things as you pass ("Keep the children in after
+  dark."; "Tithe day tomorrow. Count the barley."), five sayings for each stage of each threat.
+- **Folk met on the road carry its shadow.** Travellers and pedlars met near a threat whose harm has begun get an
+  extra line in their meeting: a bloodied bandage, a lantern lit at midday, a tally-stick that proves they have paid.
+- **Small scenes in the streets.** At the stage where a threat begins to do harm, its villages show it once when you
+  walk in: the beast's dead carried in on a hurdle with a mourner keening; a priest blessing the doors while
+  someone tells of a buried father seen walking; a carter at the gate, robbed and beaten. When people begin to flee,
+  refugees come in at the gate, and one of them falls in the square.
+- **The beast's wolves.** While the beast kills, wolves grown bold on what it leaves come out on the roads more often.
+- **Prices tell the story.** Food costs more where a beast is at the door or a village emptied; everything costs more
+  where the roads are robbed or the town pays the outlaws (sieges, hunger, plague and sacking keep their old
+  prices). The trade screen says why ("dear: robbed roads").
+- **On the world map:** crows circle over a beast's killing ground or an emptied village, cold lights drift round a
+  haunted one, and an outlaw's rag flies where the roads are robbed or the town pays the gang.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.1 note).
+
 ### Session, 2026-11-06 (midday): Adventures & Events Part F, task F.5 — the three tales' full casts — **Part F merged into `main`**
 
 - **Each tale has its own rival now.** When the Beast is hunted, the one racing you is usually a glory-hunter with a

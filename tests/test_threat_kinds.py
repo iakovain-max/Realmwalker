@@ -78,6 +78,13 @@ def test_the_risen_scheme_haunts_then_empties_a_hamlet_then_a_village(world, tab
     emptied = [s for s in world.settlements if (s.status.get("emptied") or {}).get("threat") == t["id"]]
     assert len(emptied) == 1
     _apply(pol, t, "march")
+    from realmwalker.world import hosts
+
+    for _ in range(90):  # (the dead march there: a host on the roads, G.7)
+        if not any(h.get("threat") == t["id"] for h in hosts.records(world)):
+            break
+        pol.day += 1
+        hosts.advance(pol, days=1)
     again = [s for s in world.settlements if (s.status.get("emptied") or {}).get("threat") == t["id"]]
     assert len(again) == 2, "the doom empties another place, not the same one twice"
     held = [s for s in again if s not in emptied][0]

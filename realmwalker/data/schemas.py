@@ -1359,10 +1359,11 @@ DATA_FILES.update({"wonders.json": WONDERS})
 
 # ---------------------------------------------------------------------------- how each people builds (world/towns)
 TOWN_LAYOUTS = ("organic", "grid", "medina", "camp", "kremlin", "terraces", "plaza", "longhouse", "hold", "grove",
-                "burrows", "stockade")
+                "burrows", "stockade", "encampment")
 TOWN_STYLE = Obj(
     {
         "layout": Str(choices=list(TOWN_LAYOUTS)),
+        "fortified": Bool(optional=True),  # (an encampment behind its palisade: world/founding.py stage 1)
         "city_layout": Str(choices=list(TOWN_LAYOUTS), optional=True),
         "street": Str(max_len=40), "lane": Str(max_len=40), "plaza": Str(max_len=40),
         "wall": Str(max_len=40), "palisade": Str(max_len=40),
@@ -1428,7 +1429,10 @@ THREAT_STAGE = Obj({
     "id": Str(max_len=30),
     "days": DAY_BAND,  # how long the stage lasts at tier 1 (threats.json stage_days stretches it for the tiers above)
     "signs": word_list(1, 300),  # news when it begins ({villain}, {home}, {place}, {area})
-    "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail
+    "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail (story/signs.py)
+    "barks": List(Str(max_len=70), optional=True),  # said in passing in the towns it threatens ({villain}, {home})
+    "overlay": List(Str(max_len=200), optional=True),  # after an ordinary meeting's words in its reach
+    "scene": Str(max_len=40, optional=True),  # played once in a town it threatens, while the stage holds
     "effects": ops_list(optional=True),  # world/threats.STAGE_OPS
     "doom": Bool(optional=True),
     # while its effects hold, its bands are met more often on the land in its reach (game/encounters.py)
@@ -1447,6 +1451,8 @@ THREAT_KIND = Obj({
     "band": Str(max_len=40, optional=True),  # its villain's band when the figure is no beast (story.villain_group)
     "minions": Str(max_len=40, optional=True),  # its servants without it, sent in force (the strike move: E.1)
     "reach": Int(min=1, max=60),  # tiles round its home that its signs and effects touch
+    # how its reach looks on the world map once known (G.8: ui/gfx/mapsigns.WASHES; grey when not said)
+    "wash": Str(choices=["grey", "red", "mist"], optional=True),
     "creature": Str(max_len=40, optional=True),  # what its villain fights as when the figure has no creature
     # the world's own ending of it: a weekly chance while it stirs (world/threats.ENDINGS), news from politics.json
     "ends": Obj({"chance": Float(min=0, max=1), "outcome": Str(max_len=30), "text": Str(max_len=40)}, optional=True),
@@ -1465,7 +1471,42 @@ THREATS = Obj({
     "emptied": Obj({"floor": Float(min=0.05, max=1), "rebuild_days": Int(min=7, max=3650)}, optional=True),
     "hunters": Obj({"chance": Float(min=0, max=1), "per_fame": Float(min=0, max=1)}, optional=True),
     "interlude_stages": Int(min=0, max=5, optional=True),
+    # what wakes a dormant threat (G.2): {why: the kinds it touches, a chance, how far beyond their reach it is felt,
+    # whether it wakes them past the world's budget (the hero did it), and what the hero feels when they did it}
+    "triggers": Map(Obj({"kinds": List(Str(max_len=30), min_items=1), "chance": Float(min=0, max=1),
+                         "within": Float(min=0.1, max=4, optional=True), "force": Bool(optional=True),
+                         "felt": List(Str(max_len=160), min_items=3, optional=True)}), optional=True),
+    # the Storyteller's need: nothing live near the hero (tiles), so the nearest dormant threat of their tier wakes
+    "need": Obj({"tiles": Int(min=5, max=200), "chance": Float(min=0, max=1), "every_days": Int(min=1, max=60),
+                 "over": Int(min=0, max=5), "levels": List(Int(min=1, max=20), min_items=4, max_items=4)},
+                optional=True),
+    # the interlude's "what changed" for threats ({villain}, {home}, {place}, {area})
+    "interlude": Obj({"woke": word_list(4, 160), "grew": word_list(4, 160), "doom": word_list(4, 160),
+                      "ended": word_list(4, 160)}, optional=True),
     "kinds": Map(THREAT_KIND),
+    # hosts on the map (world/hosts.py, G.7)
+    "hosts": Obj({
+        "speed": Map(Float(min=0.5, max=20)), "groups": Map(Str(max_len=40)), "near": Int(min=0, max=10),
+        "boost": Float(min=1, max=10), "most_days": Int(min=1, max=365),
+        "strike": Map(Obj({"losses": List(Float(min=0, max=0.9), min_items=2, max_items=2),
+                           "marks": List(Str(max_len=30)), "days": Int(min=1, max=365, optional=True)})),
+        "refugees": Obj({"share": Float(min=0, max=1), "least": Int(min=1, max=10000), "reach": Int(min=1, max=200)}),
+        "crusade": Obj({"chance": Float(min=0, max=1), "reach": Int(min=1, max=200),
+                        "strength": List(Int(min=1, max=10000), min_items=2, max_items=2),
+                        "hold_days": Int(min=1, max=365)}),
+        "names": Map(word_list(3, 80)), "near_words": Map(word_list(3, 200)),
+    }, optional=True),
+    # founded places (world/founding.py, G.9): the refugee camp outside a besieged town, and how camps grow
+    "founding": Obj({
+        "refugee_camp": Obj({"chance": Float(min=0, max=1), "kinds": List(Str(choices=["hamlet", "village", "town",
+                                                                                         "city"]), min_items=1),
+                             "share": Float(min=0, max=1), "least": Int(min=1, max=10000),
+                             "most": Int(min=1, max=100000), "home": Float(min=0, max=1),
+                             "most_camps": Int(min=0, max=100)}),
+        "stages": Obj({"fortified_days": Int(min=1, max=3650), "town_days": Int(min=1, max=3650),
+                       "town_people": Int(min=1, max=100000), "growth": Float(min=0, max=0.2),
+                       "floor": Int(min=1, max=10000)}),
+    }, optional=True),
 })
 
 CHOICE = Obj({
@@ -1550,6 +1591,26 @@ ADVENTURES = Obj({
     "words": Map(word_list(1, 400), optional=True),  # nested tables for the story's text (story/words.py)
     "epithets": Map(word_list(3, 40), optional=True),  # by tag
     "blueprints": Map(BLUEPRINT),
+    # (G.3) what the world keeps of a tale (story/consequences.py): the ruin's floor, the townsfolk's fates, newcomers,
+    # a holding's rent, a letter's weight, a song's reach
+    "consequences": Obj({
+        "ruin": Obj({"floor": Float(min=0.01, max=1), "least": Int(min=1, max=200)}),
+        "fates": Obj({"ruined_stay": Float(min=0, max=1), "ruined_die": Float(min=0, max=1),
+                      "emptied_stay": Float(min=0, max=1), "emptied_die": Float(min=0, max=1)}),
+        "rebuild_days": Int(min=7, max=3650),
+        "newcomers_a_visit": Int(min=1, max=40),
+        "land": Obj({"rent": List(Int(min=0, max=100000), min_items=2, max_items=2), "per_tier": Int(min=0, max=10000)}),
+        "letter_bonus": Int(min=0, max=20),
+        "song_reach": Int(min=1, max=200),
+        "words": Map(word_list(1, 400)),  # (each filled with its own tale's words: tests/test_consequences.py)
+        # (G.4) sequel threats (story/sequels.py): the villain's heir (a beast's get: its names and epithets, filled
+        # with {beast}, and the days it grows), the gang that fills the gap a broken band leaves
+        "sequels": Obj({
+            "heir": Obj({"names": word_list(3, 60), "epithets": word_list(2, 40),
+                         "days": List(Int(min=7, max=3650), min_items=2, max_items=2)}),
+            "vacuum": Obj({"days": List(Int(min=7, max=3650), min_items=2, max_items=2)}),
+        }, optional=True),
+    }, optional=True),
     # the first hour (story/opening.py, D.4): crisis, summons, terror; `kinds` of threat it fits (none: any), `near`
     # (the start town within the threat's reach or among its stakes), and extra weight by the hero's background
     "openings": Map(Obj({"weight": Int(min=0, max=20), "kinds": List(Str(max_len=30), optional=True),
@@ -1772,10 +1833,15 @@ MARK = Obj({
     "colour": Str(max_len=20),
     "ages": Obj({"into": Any_(), "after": DAY_SPAN}, optional=True),  # into: the next mark, or null
     "lasts": List(Int(min=0, max=3650), min_items=2, max_items=2, optional=True),  # a record's days with no until
+    # (G.3) when it ends, the mark it may leave behind and the chance: a town rebuilt raises a memorial
+    "leaves": Obj({"mark": Str(max_len=30), "chance": Float(min=0, max=1)}, optional=True),
     "troubles": word_list(3, 300),  # walking in ({town}, {by}, {by_part})
     "moments": word_list(3, 300),  # a thing seen in its streets
     "description": word_list(1, 300),  # a line for a town's first description
     "dress": Obj({"share": Float(min=0, max=1, optional=True)}, strict=False, optional=True),  # (game/placemarks.py)
+    # what it does to prices in its shops: food (and drink), arms, and everything else (game/economy.troubles_factor)
+    "prices": Obj({"food": Float(min=0.2, max=5, optional=True), "arms": Float(min=0.2, max=5, optional=True),
+                   "other": Float(min=0.2, max=5, optional=True)}, optional=True),
 })
 FIRE = Obj({  # live fire on a town's map (game/fire.py)
     "burns": Map(List(Float(min=0, max=100), min_items=2, max_items=2)),

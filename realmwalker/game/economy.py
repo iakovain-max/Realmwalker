@@ -86,20 +86,31 @@ def local_factor(game, settlement, item_id: str) -> float:
     return factor * troubles_factor(game, settlement, cat)
 
 
+OLD_PRICES = {"siege": {"food": 2.0, "arms": 1.3, "other": 1.15}, "famine": {"food": 1.7},
+              "plague": {"food": 1.1, "arms": 1.1, "other": 1.1}, "sacked": {"food": 1.2, "arms": 1.2, "other": 1.2}}
+# (what the game had before marks said their own prices: used only where marks.json has no `prices` for one)
+
+
+def marks_of_settlement(settlement) -> list[str]:
+    from realmwalker.world import marks
+
+    return marks.marks_of(settlement) if hasattr(settlement, "status") else []
+
+
 def troubles_factor(game, settlement, cat: str) -> float:
-    """War, siege, famine and plague make things dear."""
-    st = getattr(settlement, "status", {})
+    """War and what a town is going through make things dear: every mark it carries (world/marks.py) by its
+    `prices` in marks.json (food and drink, arms, everything else) - a siege, hunger, a beast at the door, robbed
+    roads, an outlaw's cut."""
+    from realmwalker.world import marks
+
     factor = 1.0
     food = cat in ("food", "drink")
     arms = cat in ("weapon", "armor", "shield", "helmet", "ammo")
-    if st.get("siege"):
-        factor *= 2.0 if food else 1.3 if arms else 1.15
-    if st.get("famine"):
-        factor *= 1.7 if food else 1.0
-    if st.get("plague"):
-        factor *= 1.1
-    if st.get("sacked") is not None:
-        factor *= 1.2
+    key = "food" if food else "arms" if arms else "other"
+    table = marks.table(game.tables)
+    for m in marks_of_settlement(settlement):
+        prices = table.get(m, {}).get("prices") or OLD_PRICES.get(m) or {}
+        factor *= float(prices.get(key, 1.0))
     if getattr(game.world, "wars", None):
         from realmwalker.world import factions as fx
         from realmwalker.world.politics import at_war
@@ -108,6 +119,19 @@ def troubles_factor(game, settlement, cat: str) -> float:
         if realm is not None and at_war(game.world, realm.id):
             factor *= 1.15 if food else 1.3 if arms else 1.0
     return factor
+
+
+def dear_because(game, settlement) -> list[str]:
+    """What makes this town's goods dear, as the trade screen says it: the labels of its marks that raise prices."""
+    from realmwalker.world import marks
+
+    table = marks.table(game.tables)
+    out = []
+    for m in marks_of_settlement(settlement):
+        prices = table.get(m, {}).get("prices") or OLD_PRICES.get(m) or {}
+        if any(float(v) > 1.0 for v in prices.values()):
+            out.append(str(table.get(m, {}).get("label", m)))
+    return out
 
 
 # ---------------------------------------------------------------------------- the shop

@@ -1,0 +1,222 @@
+{
+  "_comment": "Expansion 6 G.3: what the world keeps of a tale (game/story/consequences.py): the numbers of the ruin in full, the townsfolk's fates, newcomers, a holding's rent, a letter's weight, a song's reach; and the words of monuments, new names, relics, laws, holdings, letters and songs at inns. {hero} is the hero's first name; {villain}, {villain_short}, {beast}, {home} and {town} are the tale's.",
+  "consequences": {
+    "ruin": {"floor": 0.1, "least": 5},
+    "fates": {"ruined_stay": 0.2, "ruined_die": 0.45, "emptied_stay": 0.35, "emptied_die": 0.15},
+    "rebuild_days": 240,
+    "newcomers_a_visit": 6,
+    "land": {"rent": [300, 600], "per_tier": 200},
+    "letter_bonus": 6,
+    "song_reach": 30,
+    "words": {
+      "monument_beast": [
+        "Here {hero} killed {villain_short}, that took our sheep and our children. Let no one forget either.",
+        "To {hero}, who went into the dark at {home} and came back with {villain_short}'s head.",
+        "{villain_short} is dead. Raised by the people of {town} in thanks to {hero}.",
+        "For those {villain_short} took, and for {hero}, who ended it."
+      ],
+      "monument_gibbet": [
+        "An iron cage hangs from the gibbet, and in it what is left of a captain of {gang}. A board beneath says: so end all who rob these roads.",
+        "The cage on the gibbet creaks in the wind. Somebody has chalked on the post: taken by {hero}, hanged by the lord.",
+        "A gibbet with a cage, and a captain of {gang} in it. The crows have been at him; the carters touch their caps as they pass."
+      ],
+      "monument_risen": [
+        "Here {villain_short} sleeps at last. {hero} laid {him} down. Light a candle, and walk on.",
+        "A shrine to the dead of {home}, who walk no more. The people of {town} keep its candle lit.",
+        "For the {king} who walked, and for {hero}, who sent {him} back to the dark.",
+        "Rest. Cut beneath, in a rougher hand: and stay there."
+      ],
+      "rename_beast": [
+        "{villain_short}'s Grave",
+        "{villain_short}'s End",
+        "{hero}'s Hollow",
+        "the Den of {villain_short}'s Bane"
+      ],
+      "relic_beast": [
+        "tooth of {villain_short}",
+        "claw of {villain_short}",
+        "tusk of {villain_short}, as long as a hand"
+      ],
+      "relic_risen": [
+        "grave-crown of {villain_short}",
+        "rusted sword of the {king} who walked",
+        "ring of {villain_short}, cold to the touch"
+      ],
+      "relic_risen_hero": [
+        "broken grave-crown of {villain_short}",
+        "black ring of {villain_short}, that no longer burns",
+        "shard of {villain_short}'s sword"
+      ],
+      "cause_failed": [
+        "put aside by their own people, who said they did nothing while {town} suffered",
+        "stepped down, broken by what happened to {town}"
+      ],
+      "cause_risen": [
+        "taken by the dead of {home}, on the night {town} fell",
+        "dragged into the dark by {villain_short}'s dead"
+      ],
+      "ruin_news": [
+        "{place} has fallen. The few who are left live in the shells of their houses, and bury their dead.",
+        "{place} is a ruin now. Those who could fled down the roads; the rest are in the ground.",
+        "There is no town at {place} any more: roofless walls, open doors, new graves and a handful who stayed.",
+        "{place} fell, and nobody came. What is left would not fill a village."
+      ],
+      "law_harshness": [
+        "{realm} hardens its law: since the business with {gang}, justice in its lands is {value}.",
+        "In the lands of {realm} the gallows are busy now. Its justice is {value}, they say, and shamed into it.",
+        "{realm} has changed its law after {gang}: its judges are {value} now, and the roads are watched."
+      ],
+      "land_name": [
+        "a holding near {place}, with three farms and a mill",
+        "the manor of Hollin Garth, near {place}",
+        "a farmstead and its fields outside {place}",
+        "lands on the river by {place}, with tenants who pay on quarter days"
+      ],
+      "letter_line": [
+        "To all who serve {realm}: the bearer, {hero}, has done this realm a service it will not forget. Help them as you would help me.",
+        "Whoever reads this, in {realm}'s name: open your doors to {hero}, who did for {place} what we could not.",
+        "Let {hero} pass, and be given what they need. I answer for them myself.",
+        "The bearer is a friend of {realm}. Treat them as one, or answer to me."
+      ],
+      "song_at_inn": [
+        "After the meal {singer} sings {title}. The whole room knows the chorus; some of them glance at you.",
+        "Someone calls for {title}, and {singer} obliges. It is about you, more or less, and the room cheers the end.",
+        "{singer} sings {title} by the fire. They have made you taller in it, and braver; nobody asks you if it is true.",
+        "The room goes quiet for {title}. When {singer} is done, a man at the next table raises his cup to you."
+      ],
+      "vignette_ruined": [
+        "{place} is a ruin now. A few chimneys stand, and a few people live among them, in the rooms that still have roofs.",
+        "Nettles grow in the square at {place}. The ones who stayed keep to the temple, and the crows keep to the rest.",
+        "At {place} the doors hang open and the wells are full of leaves. Somebody still lights a lamp in one window."
+      ],
+      "vignette_occupied": [
+        "Strange banners hang over the gate at {place}, and strangers keep its watch. The people keep their heads down.",
+        "{place} pays its taxes to new masters now. The old lord's men are gone, and nobody says where.",
+        "At {place} the market still runs, but every cart is searched, and the new watch takes its cut."
+      ],
+      "vignette_cursed": [
+        "The cows at {place} give sour milk, and the bread will not rise. People say the place is cursed, and leave when they can.",
+        "Nothing grows well at {place} now. The priests have blessed the fields twice, and the blight comes back.",
+        "At {place} the children dream the same dream, and will not say what it is."
+      ],
+      "vignette_emptied": [
+        "Half the houses at {place} stand empty. The ones left behind count who did not come back.",
+        "{place} is quiet, too quiet: the people who fled have not come home, and the fields go to seed.",
+        "At {place} there are more graves than there were, and fewer people to tend them."
+      ],
+      "vignette_burned": [
+        "The black beams of {place} still smell of smoke. They are clearing it, a cart at a time.",
+        "{place} burned. Where the houses were there is ash, and the people sleep in barns and in the church.",
+        "At {place} the fire took the roofs, and the winter will take more if the timber does not come."
+      ],
+      "vignette_rebuilding": [
+        "At {place} there is scaffolding on every second house, and the sound of saws from dawn till dark.",
+        "{place} is building again. New thatch, new beams, and a few new faces among the old.",
+        "The wheelwrights and the masons are busy at {place}. It will never be what it was, people say, and they build anyway."
+      ],
+      "vignette_haunted": [
+        "At {place} they bar the doors at dusk, and the dogs will not go near the old graves.",
+        "People at {place} still see lights on the hill at night, and nobody goes up to look.",
+        "{place} keeps its dead badly: there are footsteps in empty rooms, and the bell rings by itself."
+      ],
+      "vignette_memorial": [
+        "In the square at {place} a memorial stands, and there are always flowers at its foot.",
+        "{place} has raised a stone for what happened. Children climb it; old people stop and read it.",
+        "At {place} the memorial is the first thing a traveller sees, and the people make sure of it."
+      ],
+      "vignette_festival": [
+        "{place} is decked for a feast: garlands over the doors, and music in the square till late.",
+        "At {place} they have not stopped celebrating. There is a feast-day now, and your name is in its songs.",
+        "Lanterns hang across the streets of {place}, and the inns are full."
+      ],
+      "vignette_renamed": [
+        "The place that was {old} is called {place} now, on the maps and in the mouths of carters.",
+        "Nobody calls it {old} any more. It is {place}, and they tell travellers why.",
+        "{place}, the people call it now. The old name, {old}, is only in the old songs."
+      ],
+      "vignette_laid": [
+        "{place} is only a grave now. The grass has grown back over the stones, and the cold has gone out of the ground.",
+        "At {place} the dead keep still. A shepherd sleeps there in summer, and wakes rested.",
+        "The barrow at {place} is quiet. Somebody has left a cup of milk at the door, as the old people did."
+      ],
+      "vignette_cleared": [
+        "{place} is empty now. The bones have been carried out, and the wind goes in and out of it as it likes.",
+        "Nothing lives at {place} but bats and foxes. The hunters walk past it without lowering their voices.",
+        "At {place} the old stink has gone, and the first brambles are growing over the way in."
+      ],
+      "vignette_held": [
+        "{place} is still what it was. Nobody goes near it, and the paths round it are growing over.",
+        "At {place} nothing has changed, and that is the worst of it. The smoke still rises there at night.",
+        "{place} waits. The people who live in sight of it keep their shutters closed."
+      ],
+      "epilogue_realm_won": [
+        "{ruler} of {realm} heard of it within the month. There were words said at court, and a cup raised to the one who ended it.",
+        "In {realm} they say {ruler} spoke of you at table: a name to remember, and to use, perhaps.",
+        "{realm} took it as its own victory, as realms do. {ruler} sent riders to {town} to make sure everyone knew whose land it was."
+      ],
+      "epilogue_realm_lost": [
+        "{ruler} of {realm} did nothing, or nothing anyone saw. The tax-men still came to {town}, a little later than before.",
+        "In {realm} there was talk of soldiers and of hunts, and none came. {ruler} had other troubles.",
+        "{realm} counted what it lost and wrote it down. {ruler} sent condolences, and no help."
+      ],
+      "epilogue_realm_abandoned": [
+        "{ruler} of {realm} has not heard your name. It is better that way, perhaps.",
+        "In {realm} the trouble at {town} is a line in a steward's letter, and nobody has read it yet.",
+        "{realm} goes on as it did. Whatever happens at {town} now, it will happen without you."
+      ],
+      "epilogue_sequel_heir": [
+        "But the shepherds near {place} say they have seen tracks again: smaller, and fresh. {villain_short} did not die alone in the world.",
+        "There was a litter, it seems. Something of {villain_short}'s blood has gone to ground at {place}, and it is growing.",
+        "A woodcutter near {place} swears he heard it: the same cry, younger. The old ones say the get of a beast like that remembers."
+      ],
+      "epilogue_sequel_vacuum": [
+        "The roads were quiet for a week. Then a new band took up where the old one left off: {gang}, out of {place}.",
+        "Where one gang falls another stands up. They call themselves {gang} now, and they have their hideout at {place}.",
+        "Not everyone who rode with the old band was taken. The rest found a new captain, and a new name: {gang}."
+      ],
+      "epilogue_sequel_returns": [
+        "And yet the cold has not gone out of {place}. What you put down there is not done with the world, nor with you.",
+        "The priests at {town} do not ring the bell for it. They say the dead who keep their anchor come back, and they are waiting.",
+        "At {place} the ground is still cold. {villain_short} will walk again, and will remember whose hand it was."
+      ],
+      "sequel_told_heir": [
+        "Word on the road: something has come down from {place} on the farms - young, they say, and as savage as {villain_short} ever was.",
+        "You hear it at a well: tracks by {place}, smaller than the old beast's, and sheep gone. {villain_short}'s blood is hunting.",
+        "A carter tells you: the get of {villain_short} is grown, and it has found its way out of {place}."
+      ],
+      "sequel_told_vacuum": [
+        "Word on the road: {gang} is robbing the carts again out of {place}. The gap you left did not stay empty for long.",
+        "You hear it at an inn: a new band, {gang}, has the roads near {place} now. Some of the faces are the old ones.",
+        "A pedlar says the roads by {place} are bad again: {gang}, and a captain who wants the old one's name."
+      ],
+      "hero_standing": [
+        "In {realm} your name stands at {standing} now.",
+        "{realm} holds you {standing} now, and says so.",
+        "What {realm} thinks of you now: {standing}."
+      ],
+      "hero_title": [
+        "They call you {title} there, and mean it.",
+        "You are {title} now, by their word.",
+        "{title}: it is written down, with a seal."
+      ],
+      "hero_fame": [
+        "Your name goes before you on the roads: more people know it than you will ever meet.",
+        "Strangers have heard of you now. Some of them want to see if it is true.",
+        "In the inns of three counties they know your name, and argue about what you did."
+      ],
+      "hero_infamy": [
+        "Your name goes before you on the roads, and doors close when it does.",
+        "Mothers know your name now, and use it to frighten their children.",
+        "In the inns they lower their voices when you come in."
+      ]
+    },
+    "sequels": {
+      "heir": {
+        "names": ["{beast}'s Get", "the Whelp of {beast}", "Young {beast}", "{beast}'s Blood", "the Spawn of {beast}"],
+        "epithets": ["the Younger", "of the Same Blood", "the Hungry", "Who Came After"],
+        "days": [90, 200]
+      },
+      "vacuum": {"days": [45, 120]}
+    }
+  }
+}

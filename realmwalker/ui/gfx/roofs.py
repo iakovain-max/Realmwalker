@@ -45,6 +45,7 @@ WALLS = {
     "limestone": ((228, 220, 196), (160, 150, 124), (190, 182, 160)),
     "dark_wood": ((96, 70, 48), (60, 42, 28), (76, 56, 38)),
     "charred": ((58, 48, 42), (28, 22, 20), (42, 34, 30)),  # (a house the fire went through: game/placemarks.py)
+    "canvas": ((230, 220, 194), (150, 132, 100), (186, 172, 142)),  # (a hut of a camp still half canvas: G.9)
 }
 STYLES.setdefault("hide", ((150, 116, 80), (116, 88, 60), (178, 144, 104)))
 OUTLINE = (34, 26, 20)

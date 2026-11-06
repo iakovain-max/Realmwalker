@@ -404,7 +404,7 @@ def party_figures(game, most: int = 3) -> list:
     return [dolls.character(c, game.tables) for c in game.party if c.alive][:most]
 
 
-PERSON_BACKDROP = {"patron": "hall", "ally": "camp", "witness": "street"}
+PERSON_BACKDROP = {"patron": "hall", "ally": "camp", "witness": "street", "realm": "hall"}
 
 
 def for_epilogue(game, adv: dict, about: str) -> dict:
@@ -415,9 +415,13 @@ def for_epilogue(game, adv: dict, about: str) -> dict:
 
     w = game.world
     spec: dict = {"seed": int(str(adv.get("id", "A0"))[1:] or 0) * 7 + len(about), "time": "day"}
-    if about in ("place", "innocent"):
+    other = adv["places"].get(about.split(":", 1)[1]) if about.startswith("place:") else None
+    if other is not None and "settlement" not in other:  # (G.4: a site of the tale as it now is)
+        spec.update(backdrop=for_place(game, other), time="dusk")
+        return spec
+    if about in ("place", "innocent") or other is not None:
         entry = adv["cast"].get("innocent") if about == "innocent" else None
-        sid = (entry or {}).get("settlement", (adv["places"].get("town") or {}).get("settlement"))
+        sid = other["settlement"] if other is not None else             (entry or {}).get("settlement", (adv["places"].get("town") or {}).get("settlement"))
         s = w.settlements[int(sid)] if sid is not None and 0 <= int(sid) < len(w.settlements) else None
         st = s.status if s is not None else {}
         scarred = _scarred(s)
@@ -455,6 +459,9 @@ def for_epilogue(game, adv: dict, about: str) -> dict:
         elif rec is not None and rec.get("creature") in game.tables.creatures:
             spec["figures"] = [dolls.creature(rec["creature"], game.tables, f"lt/{adv.get('id')}/{rec['name']}",
                                               culture=rec.get("culture", ""))]
+        return spec
+    if about == "sequel":  # (G.4: what is left to come back, at night on the road)
+        spec.update(backdrop="road", time="night")
         return spec
     spec.update(backdrop="road", time="dusk", figures=party_figures(game, 3))
     return spec

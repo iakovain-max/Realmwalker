@@ -651,8 +651,10 @@ def npc_factions(game, npc: NPC) -> list:
 
 def prepare_town(game, settlement) -> Town:
     """Make a settlement's close-up map and people ahead of arrival (when work there must name them)."""
+    from realmwalker.game import founding
     from realmwalker.world.local import get_local_map
 
+    founding.before_entry(game, settlement.x, settlement.y)  # (a founded camp grown since: G.9)
     lm = get_local_map(game.world, game.tables, settlement.x, settlement.y)
     if lm.kind != "settlement":
         return town_of(game.world, settlement.id)
@@ -727,7 +729,7 @@ def outdoor_cells(game, lm, walk=None, settlement=None) -> list[tuple[int, int]]
     if settlement is not None and getattr(game.tables, "towns", None):
         from realmwalker.world.towns.plan import style_for
 
-        style = style_for(game.tables, settlement)
+        style = style_for(game.tables, settlement, game.world)
         names |= {style.get(k) for k in ("street", "lane", "plaza") if style.get(k)}
     terrain = game.remap_for(lm)[lm.terrain]
     mask = np.isin(terrain, [ids[n] for n in names if n in ids]) & walk
@@ -834,6 +836,11 @@ def papers_impression(game, npc: NPC) -> int:
 
     if glamour.scripted(game):  # (Illusory Script: the letter shows each reader the seal they would honour)
         best["script"] = glamour.SCRIPT_IMPRESS
+    from realmwalker.game.story import consequences
+
+    letter = consequences.recommends(game, npc)  # (a letter of recommendation where its writer holds sway: G.3)
+    if letter:
+        best["letter"] = letter
     seen = game.renown.flags.get("seen_living_well")  # the best rooms in town (game/services.py, a wealthy stay)
     if seen and seen[0] == npc.settlement and game.world.time < seen[1] and IMPRESSED["high"](npc):
         best["high"] = best.get("high", 0) + int(seen[2])

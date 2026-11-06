@@ -75,6 +75,110 @@
     "per_fame": 0.002
   },
   "interlude_stages": 1,
+  "triggers": {
+    "battle": {
+      "kinds": [
+        "risen"
+      ],
+      "chance": 0.5
+    },
+    "plague": {
+      "kinds": [
+        "risen"
+      ],
+      "chance": 0.35
+    },
+    "famine": {
+      "kinds": [
+        "beast",
+        "outlaw"
+      ],
+      "chance": 0.15
+    },
+    "sacked": {
+      "kinds": [
+        "outlaw",
+        "risen"
+      ],
+      "chance": 0.4
+    },
+    "raid": {
+      "kinds": [
+        "outlaw"
+      ],
+      "chance": 0.25
+    },
+    "dragon": {
+      "kinds": [
+        "beast"
+      ],
+      "chance": 0.3
+    },
+    "tomb_robbed": {
+      "kinds": [
+        "risen"
+      ],
+      "chance": 1.0,
+      "force": true,
+      "felt": [
+        "<warn>The air in the barrow goes cold all at once, as if a door had opened somewhere below.</>",
+        "<warn>Far down in the dark, something answers the sound of the lid: a long scrape of stone.</>",
+        "<warn>The torch gutters. For a moment you are sure that someone below said your name.</>",
+        "<warn>Dust falls from the roof. Deeper in the barrow, something old has been disturbed.</>"
+      ]
+    },
+    "lair_disturbed": {
+      "kinds": [
+        "beast"
+      ],
+      "chance": 0.6,
+      "force": true,
+      "felt": [
+        "<warn>The bones here are fresh, and the musk is strong. Whatever lairs here knows you came.</>",
+        "<warn>Something has marked this place against you: a low sound in the dark that is not wind.</>",
+        "<warn>You have walked into its larder. It will not forgive that, and it will come down hungry.</>",
+        "<warn>Tracks over your own tracks. It was close behind you all the while, and now it is roused.</>"
+      ]
+    }
+  },
+  "need": {
+    "tiles": 40,
+    "chance": 0.5,
+    "every_days": 7,
+    "over": 1,
+    "levels": [
+      1,
+      5,
+      11,
+      17
+    ]
+  },
+  "interlude": {
+    "woke": [
+      "<warn>Folk round {place} say that something has begun near {home}.</>",
+      "<warn>The talk in {area} is of {villain} again.</>",
+      "<warn>Something stirs near {home}: {place} keeps its doors barred at night now.</>",
+      "<warn>In {area} they have started to speak of {villain} in low voices.</>"
+    ],
+    "grew": [
+      "<danger>Whatever troubles {area} has grown worse: {place} is afraid.</>",
+      "<danger>{villain} is bolder now, and {area} knows it.</>",
+      "<danger>The trouble near {home} has not passed. It has grown.</>",
+      "<danger>Things are worse round {place}: the shadow of {villain} lies longer.</>"
+    ],
+    "doom": [
+      "<danger>Nobody stopped {villain}: {area} has paid for it.</>",
+      "<danger>{villain} had its way in {area}, and {place} will not forget it.</>",
+      "<danger>What was feared near {home} has come to pass.</>",
+      "<danger>{area} lost to {villain} what nobody came to defend.</>"
+    ],
+    "ended": [
+      "<good>{villain} troubles {area} no more.</>",
+      "<good>The trouble near {home} is over, and {place} sleeps again.</>",
+      "<good>{area} is rid of {villain}, and it was not your doing.</>",
+      "<good>Nobody in {place} fears {villain} now.</>"
+    ]
+  },
   "kinds": {
     "beast": {
       "name": "the beast",
@@ -92,6 +196,12 @@
       "ask": "I hear something is killing your people.",
       "learn_ask": "What does {villain} fear? What will kill it?",
       "reach": 14,
+      "wash": "red",
+      "ends": {
+        "chance": 0.006,
+        "outcome": "hunted",
+        "text": "threat_great_hunt"
+      },
       "stages": [
         {
           "id": "spoor",
@@ -109,7 +219,21 @@
           "flavour": [
             "Here and there along the track, tufts of wool caught on the thorns, and dark patches in the grass that the flies like.",
             "A dead ewe lies by the path, opened and left. Whatever did it ate only the best of it.",
-            "Deep prints in the mud by the stream, and the bank torn where something heavy went up it."
+            "Deep prints in the mud by the stream, and the bank torn where something heavy went up it.",
+            "The hens here are shut in behind new boards, and the farmer's dog sits against the door, shaking."
+          ],
+          "barks": [
+            "Lost another ewe last night.",
+            "Those tracks were never a wolf's.",
+            "Count your flock twice, neighbour.",
+            "The dogs would not settle again last night.",
+            "Something has been at the fences."
+          ],
+          "overlay": [
+            "They say they saw tracks on the road that morning, larger than any wolf's, and have looked over their shoulders since.",
+            "One of them asks whether you have heard of any beast in these hills, and watches your face while you answer.",
+            "They would sooner not speak of {home}, and glance towards it once and look away.",
+            "They mention that the dogs at the last place they stopped would not be quieted, and no one there could say why."
           ]
         },
         {
@@ -130,7 +254,36 @@
             "Two children of {place} went for firewood and one came back. They are saying {villain} is down from {home}.",
             "{place} keeps its gates shut by day now. {villain} took a woman at the well, and nobody saw it come.",
             "The bell at {place} rang all night: {villain} was among the houses, and a family is gone."
-          ]
+          ],
+          "flavour": [
+            "A cart stands abandoned on the verge, one wheel in the ditch, the ox's harness cut loose and trailing.",
+            "Scraps of a child's wool cap hang on a briar, and flies hum over the ground beneath.",
+            "A cross is chalked on the lintel of a lonely cottage, and the door behind it is barred from within.",
+            "Crows rise from the roadside as you come, and settle again as soon as you have passed."
+          ],
+          "barks": [
+            "Keep the children in after dark.",
+            "Bar the door and keep it barred.",
+            "Did you hear it last night?",
+            "Nobody goes to the well alone now.",
+            "{villain} was in the lane again last night."
+          ],
+          "overlay": [
+            "They ask whether you have heard of the killings hereabouts, and listen closely to the answer.",
+            "One of them makes a small sign over the heart whenever the trees close in on the road.",
+            "They mean to be under a roof before dusk, and say so more than once without being asked.",
+            "They tell you something took a person not far from here, and that the name whispered for it is {villain}."
+          ],
+          "roads": {
+            "group": "wolf_pack",
+            "boost": 1.5,
+            "intro": [
+              "Wolves come out of the brush, thin and unafraid. They have been eating well off what {villain} leaves, and they have lost their fear of the road.",
+              "A grey shape lopes alongside in the trees, then another. The wolves of {area} have followed the beast's leavings down to the road.",
+              "Eyes in the dusk beside the track: wolves, grown bold on the leavings of {villain}, spreading to cut you off."
+            ]
+          },
+          "scene": "threat_mourning"
         },
         {
           "id": "hunger",
@@ -149,7 +302,36 @@
             "Farms round {place} stand empty, their people crowded into the village. {villain} grows bolder every week.",
             "The lord's men went up to {home} after {villain}, and two of them came back. The country round is no one's now.",
             "They are leaving the outlying farms of {area}. {villain} has the taste for people, the old women say, and will not stop."
-          ]
+          ],
+          "flavour": [
+            "A farmhouse stands with its door open and its hearth cold, the table laid for a meal nobody came back to.",
+            "The barley here is unharvested, going over in the wind with no one left to cut it.",
+            "Someone has nailed a row of sharpened stakes across a gap in the hedge, as though that would help.",
+            "A heap of picked bones lies in the ditch, and not all of them are a beast's."
+          ],
+          "barks": [
+            "Don't go out after sundown. Not for anything.",
+            "We leave at the new moon, all of us.",
+            "My brother went to the high fields. Nothing since.",
+            "Sleep in the loft and pull the ladder up.",
+            "Whatever lives in {home} has found a taste for us."
+          ],
+          "overlay": [
+            "They warn you not to be on this road after dark, and say they have seen what is left of those who were.",
+            "One of them says the country round {home} has gone quiet, no birds and no dogs, nothing at all.",
+            "They keep close together in the middle of the road, and start at every sound from the hedge.",
+            "They ask how far it is to the next place with a gate that shuts, and do not wait to hear the whole answer."
+          ],
+          "roads": {
+            "group": "wolf_pack",
+            "boost": 2.0,
+            "intro": [
+              "The wolves are starving and past caution. They come at you in the open road, in daylight, with {villain}'s kills still on their muzzles.",
+              "A pack has been feeding on what {villain} leaves round {home}, and now it wants fresher meat. They circle you in the road.",
+              "Lean, hollow wolves spread out across the way, long used to men as meat since {villain} began its work."
+            ]
+          },
+          "scene": "threat_refugees"
         },
         {
           "id": "doom",
@@ -174,6 +356,25 @@
             "Refugees from {place} are on the roads with what they could carry. {villain} has had the last of their patience and their kin.",
             "The headman of {place} has given up: the village will be left by the next new moon, and {villain} can have it.",
             "There is talk in {area} of nothing but {villain}. {place} cannot hold another month of it."
+          ],
+          "flavour": [
+            "A line of abandoned carts stands along the road, left where their axles failed.",
+            "Houses with their thatch torn down for cart-covers, and the wells stopped with stones before the people left.",
+            "A gate is broken, and deep claw-marks are gouged into the doorpost at the height of a man's head.",
+            "Smoke stands over the valley, thin and black. Somewhere below it a bell is tolling and nobody answers."
+          ],
+          "barks": [
+            "Leave it. Leave it all and walk.",
+            "Take the cart. We can buy another.",
+            "Mind the old woman, she's slow.",
+            "It'll have the place when we're gone.",
+            "Don't look back at the hill, love."
+          ],
+          "overlay": [
+            "They say no one will be left in {area} by winter, and speak as though it had already happened.",
+            "They will not stop to talk, and ask only that you turn back, since nothing ahead is worth the going.",
+            "One of them says that {villain} cannot be stopped, and that those who tried are not spoken of any more.",
+            "They look back along the road more than they look ahead, and none will say what they expect to see."
           ]
         }
       ],
@@ -203,6 +404,7 @@
       "band": "barrow_wight",
       "minions": "restless_dead",
       "reach": 30,
+      "wash": "mist",
       "creature": "wight",
       "ends": {
         "chance": 0.008,
@@ -226,7 +428,21 @@
           "flavour": [
             "A grave by the track has been opened. The earth is thrown outwards, as if whoever lay there dug his own way up.",
             "The birds are quiet here. Even the crows keep off the barrow-ward side of the road.",
-            "Someone has driven an iron nail into every gatepost along this lane, and hung a sprig of rowan from each."
+            "Someone has driven an iron nail into every gatepost along this lane, and hung a sprig of rowan from each.",
+            "A cold patch lies on the road where no cloud shadows it, and the frost has not lifted from it all day."
+          ],
+          "barks": [
+            "Heard the dogs again last night?",
+            "There's earth on the churchyard path.",
+            "Hang iron over your door, I say.",
+            "My mother said it would come to this.",
+            "They say {home} has been opened."
+          ],
+          "overlay": [
+            "They avoid looking towards {home}, and one of them touches a bit of iron at his belt.",
+            "One of them says the ground felt wrong underfoot a little way back, and laughs as if it were a joke.",
+            "They ask if you have seen lights on the hills by night, and look no easier when you say you have not.",
+            "They speak low about a cold mist they passed through that morning, and break off when you come near."
           ]
         },
         {
@@ -259,7 +475,27 @@
             "Nobody in {area} travels after sunset now: things in old armour stand at the crossroads, waiting.",
             "{place} keeps fires burning at every gate all night. The dead came to the fence and stood there till cockcrow.",
             "They are saying in {place} that {villain} is awake, and has called his old guard out of the ground."
-          ]
+          ],
+          "flavour": [
+            "A line of bare footprints crosses the road at dusk, narrow, and all going the same way, up towards the barrow.",
+            "A black spear-haft stands in the verge, newly pushed up out of the ground.",
+            "Bonfires burn at the gate of every steading, and nobody sits near one alone.",
+            "A sword rusted to red crumbs lies in the road, as though its bearer forgot it."
+          ],
+          "barks": [
+            "Keep the gate fire lit till cockcrow.",
+            "They stood at the fence again last night.",
+            "Don't answer if they call your name.",
+            "Salt on the sill, and iron by the bed.",
+            "{villain} is awake. You can feel it."
+          ],
+          "overlay": [
+            "They say they saw figures standing at a crossroads last night, and did not wait to learn who they were.",
+            "One of them carries a lantern lit at midday and will not put it out.",
+            "They watch the shadows between the trees as if expecting them to move.",
+            "They tell you the dead are abroad by night in {area}, and that you should be behind a barred door by dusk."
+          ],
+          "scene": "threat_wake"
         },
         {
           "id": "emptying",
@@ -275,6 +511,12 @@
             [
               "danger",
               1
+            ],
+            [
+              "reshape",
+              "blight",
+              2,
+              5
             ]
           ],
           "roads": {
@@ -292,7 +534,27 @@
             "Refugees on the road from {area} tell of their own kin getting up at midnight and walking out towards {home}, and not hearing when called.",
             "The priest of {place} rang the bell all night, and still the sleepers went out to {villain}. In the morning there were only the old and the children.",
             "There are new dead walking with the old ones round {home} now. People of {area} know their faces."
-          ]
+          ],
+          "flavour": [
+            "A cottage door hangs open, the bed inside still rumpled, and bare footprints go out through the dew.",
+            "A hamlet lies silent at midday, no smoke from any chimney, a cradle on its side by the door.",
+            "The churchyard grass is trampled flat in a path from the village houses straight up towards {home}.",
+            "Washing hangs on a line, three days dry, in a yard where no one comes to take it in."
+          ],
+          "barks": [
+            "Old Wen's lad walked out in his sleep.",
+            "Hold the children's hands at night.",
+            "I saw her face. She did not know me.",
+            "Lock the doors from within.",
+            "Half the street is gone, and no one sings."
+          ],
+          "overlay": [
+            "They look hollow-eyed and grey, as people do who have kept watch through too many nights.",
+            "One of them asks if you have seen anyone walking the road alone by night, and does not say why.",
+            "They keep a cord tied from wrist to wrist as they walk, so that none can wander off in the dark.",
+            "They say sleepers have been getting up and walking out towards {home}, and that they will not sleep apart tonight."
+          ],
+          "scene": "threat_refugees"
         },
         {
           "id": "march",
@@ -303,7 +565,8 @@
           "doom": true,
           "effects": [
             [
-              "emptied",
+              "host",
+              "the_dead",
               "village",
               "haunted"
             ],
@@ -326,6 +589,25 @@
             "{villain} has come out of {home} in his old crown, they say, and his dead walk before him towards {place}.",
             "There is no more sleeping in {area}. {villain} means to have the living country back, and {place} is the first of it.",
             "Bells all night in {area}: the dead are on the march, and {place} is emptying ahead of them."
+          ],
+          "flavour": [
+            "Rows of footprints cross the fields in good order, the wheat trampled flat in a swathe as wide as a road.",
+            "The sky over {home} is grey at noon, and the grey is spreading towards the road like a stain on cloth.",
+            "A village stands with every door open and every house empty, each road out of it trodden bare.",
+            "The rooks have deserted the trees. Only the cold wind talks in the branches."
+          ],
+          "barks": [
+            "Run! Run for the river!",
+            "Leave the flocks. Leave everything.",
+            "They're coming down the north lane.",
+            "The crown. I saw the crown.",
+            "Gather the children. Gather them now."
+          ],
+          "overlay": [
+            "They are in a great hurry, and point back along the road towards {home} before they say a word.",
+            "One of them says they saw ranks of armoured figures on the far hill at dawn, and not one cast a shadow.",
+            "They tell you there is no safe road left in {area}, and advise you to turn back while you can.",
+            "They make no effort to hide their fear, and ask only which way the road is clear."
           ]
         }
       ],
@@ -355,6 +637,12 @@
       "band": "bandit_hideout",
       "minions": "bandits",
       "reach": 18,
+      "wash": "grey",
+      "ends": {
+        "chance": 0.01,
+        "outcome": "fallen",
+        "text": "threat_broken"
+      },
       "creature": "bandit_captain",
       "stages": [
         {
@@ -381,7 +669,21 @@
           "flavour": [
             "A wagon lies on its side in the ditch, its load gone, its axle cut through.",
             "A rag is tied round a milestone here - the gang's mark, the carters say: this road pays.",
-            "Fresh hoofprints leave the road here, many of them, and go off into the scrub towards nowhere honest."
+            "Fresh hoofprints leave the road here, many of them, and go off into the scrub towards nowhere honest.",
+            "A notched stick hangs from a tree beside the road, one notch for every cart that has paid."
+          ],
+          "barks": [
+            "Another toll. We'll starve at this rate.",
+            "Pay them and they leave you alone.",
+            "The price of salt has doubled, mind.",
+            "Don't travel alone on the north road.",
+            "{villain}'s men were at the ford again."
+          ],
+          "overlay": [
+            "They say there is a chain across the road ahead, and that men there will want a word with you.",
+            "One of them glances up at every ridge and tree line as they talk.",
+            "They ask which side you are on, and watch your hands while you answer.",
+            "They say the road is not what it was, and that you will soon see why."
           ]
         },
         {
@@ -411,7 +713,27 @@
             "The lord's toll-keeper on the road to {place} was found hanged from his own gate. {villain} does not like competition.",
             "{place} sent to its lord for soldiers against {gang}, and the messenger came back without his ears.",
             "They say {villain} knows every wagon that leaves {place} before it is loaded. Someone in town is talking."
-          ]
+          ],
+          "flavour": [
+            "A milestone has been pushed over, and under it lies a hollow where something was hidden and since dug out.",
+            "The inn at the crossroads is shuttered, its sign painted over with a red rag.",
+            "A man hangs from a roadside tree, a placard on his chest in a hand that can scarcely write.",
+            "Wheel-ruts turn aside from the old road into the fields: carters now go the long way round the bend."
+          ],
+          "barks": [
+            "No wagon's come in for a fortnight.",
+            "Watch who you talk to in the tavern.",
+            "Somebody is selling our days to them.",
+            "They hanged the toll-keeper from his own gate.",
+            "{villain} has eyes in every yard."
+          ],
+          "overlay": [
+            "They keep their voices low, and look at you as though weighing whether you ride with {villain}.",
+            "They say someone in the towns is passing word of who travels and when, and so they trust no stranger.",
+            "One of them says the lord's men have stopped coming this way, and nobody asks why.",
+            "They are anxious to be out of the open, and choose their words with care."
+          ],
+          "scene": "threat_robbed"
         },
         {
           "id": "bold",
@@ -442,7 +764,27 @@
             "Deserters and runaways are going up to {home} to join {villain}. They say he pays better than the lord.",
             "{villain} has sent word to {place}: a tenth of everything, every month, or the barns burn.",
             "The lord's patrol met {gang} on the road and came off worst. Nobody in {area} expects another."
-          ]
+          ],
+          "flavour": [
+            "Horse-dung lies thick on the road, and the verge is trampled by many riders.",
+            "A burned barn stands at the roadside, still smoking at the beams, and no one has come to look at it.",
+            "An inn-yard is full of strange horses, and someone has scratched a crude mark into the sign with a knife.",
+            "Fresh graves lie in a row at the edge of a village, and a lord's torn livery lies on the nearest."
+          ],
+          "barks": [
+            "They drank the inn dry and paid nothing.",
+            "The lord's men ran. I saw them run.",
+            "My son's gone up to join them, the fool.",
+            "A tenth, they said. A tenth or the barns.",
+            "Never seen so many riders on one road."
+          ],
+          "overlay": [
+            "They talk of riders in numbers they never saw before, and keep a nervous eye on the wood.",
+            "One of them says men are going up to {home} to join {villain}, and that it spreads like a fever.",
+            "They say a patrol went by that morning and came back wounded, or did not come back.",
+            "They ask whether you have heard of anyone standing against {villain}, and seem to doubt it."
+          ],
+          "scene": "threat_refugees"
         },
         {
           "id": "tribute",
@@ -467,6 +809,25 @@
             "The headman of {place} has sworn to {villain} on the green, with the gang's riders round him. The town pays now.",
             "{gang} rules the roads of {area}. {place} pays its tribute, and the lord does nothing.",
             "There is a new law in {place}, and it is {villain}'s: pay, and keep your roof."
+          ],
+          "flavour": [
+            "A tithe-cart rolls along the road under guard, piled high, its driver not looking at anyone.",
+            "A new post stands at the village edge, painted in the gang's colour, with a pole across the road.",
+            "Every door in the lane bears the same chalk mark: paid this month.",
+            "The lord's banner hangs from the village gate, upside down and mouldering, and no one has taken it down."
+          ],
+          "barks": [
+            "Pay and keep your roof, that's the law.",
+            "Tithe day tomorrow. Count the barley.",
+            "Say nothing in front of the riders.",
+            "It could be worse. It will be.",
+            "{villain}'s law is the only law now."
+          ],
+          "overlay": [
+            "They say the road is safe now if you know whom to pay, and the way they say it is no comfort.",
+            "They are polite and wary, and quick to name {villain} as the one who keeps order here.",
+            "They offer no trouble and ask for none, with the flat look of people long past arguing.",
+            "One of them says it is wiser not to ask what the law is in {area}, only to learn it."
           ]
         }
       ],
@@ -475,6 +836,126 @@
         "Wanted, alive or otherwise: {villain}, captain of {gang}. Ask at the gate of {town}. The gang keeps to {home}, {where}.",
         "{town} has had enough of paying {gang}. Whoever breaks {villain} at {home}, {where}, will want for nothing here.",
         "A robbed carter of {town} offers all he has left to whoever brings down {villain}. His men lie up at {home}, {where}."
+      ]
+    }
+  },
+  "founding": {
+    "_comment": "Founded places (world/founding.py, G.9). refugee_camp: the chance a besieged place of these kinds gets a camp outside it, the share of its people who go there (the fewest that make a camp, the most), the share who go home when the siege lifts, the most founded places a world keeps. stages: days at a stage before a camp fortifies and before a fortified camp becomes a village (with at least town_people), how much a camp grows each week, the fewest who ever stay.",
+    "refugee_camp": {"chance": 0.45, "kinds": ["town", "city"], "share": 0.08, "least": 40, "most": 600, "home": 0.5,
+                     "most_camps": 8},
+    "stages": {"fortified_days": 60, "town_days": 300, "town_people": 150, "growth": 0.012, "floor": 30}
+  },
+  "hosts": {
+    "_comment": "Hosts on the map (world/hosts.py, G.7): squares a day by kind (a square is three miles), the encounter group met near each, how near (squares) and how much likelier a meeting is there, the longest march (days; longer and the thing happens at once), what a host with no war behind it does to a town, refugees (the share of a town's losses who take to the road, the fewest that make a column, how far they go), the crusade (its chance to set out against the dead, how far an order or temple answers, its strength, the days it holds a town). Names: {who} is its faction or its master.",
+    "speed": {
+      "army": 4,
+      "horde": 4,
+      "the_dead": 2.5,
+      "crusade": 4.5,
+      "warband": 6,
+      "refugees": 3
+    },
+    "groups": {
+      "army": "army_foragers",
+      "horde": "orc_raiders",
+      "the_dead": "zombies",
+      "crusade": "crusaders",
+      "warband": "orc_raiders"
+    },
+    "near": 3,
+    "boost": 2.5,
+    "most_days": 60,
+    "strike": {
+      "horde": {
+        "losses": [
+          0.2,
+          0.4
+        ],
+        "marks": [
+          "beset",
+          "burned"
+        ],
+        "days": 30
+      },
+      "the_dead": {
+        "losses": [
+          0.0,
+          0.0
+        ],
+        "marks": []
+      }
+    },
+    "refugees": {
+      "share": 0.4,
+      "least": 20,
+      "reach": 30
+    },
+    "crusade": {
+      "chance": 0.7,
+      "reach": 45,
+      "strength": [
+        60,
+        160
+      ],
+      "hold_days": 30
+    },
+    "names": {
+      "army": [
+        "the army of {who}",
+        "the host of {who}",
+        "{who}'s army"
+      ],
+      "horde": [
+        "the horde of {who}",
+        "the warhost of {who}",
+        "{who}'s horde"
+      ],
+      "the_dead": [
+        "the dead of {who}",
+        "the host of {who}",
+        "{who}'s dead"
+      ],
+      "crusade": [
+        "the crusade of {who}",
+        "the knights of {who}",
+        "{who}'s crusade"
+      ],
+      "warband": [
+        "a warband of {who}",
+        "the riders of {who}",
+        "{who}'s warband"
+      ],
+      "refugees": [
+        "a column of refugees",
+        "people fleeing with what they could carry",
+        "a train of refugees"
+      ]
+    },
+    "near_words": {
+      "army": [
+        "The road is churned to mud by many feet, and the hedges are stripped: an army has passed this way, or is passing.",
+        "Smoke from a hundred cookfires hangs over the next valley. An army is camped there.",
+        "Foragers with a soldier's badge are driving off a farmer's cows. The army they feed is not far."
+      ],
+      "horde": [
+        "Every farm along this road is empty, its gate open. Something big is coming, and the people knew it first.",
+        "Drums, far off, all day. The horde is close.",
+        "A burned cart in the ditch, and the tracks of hundreds going the same way."
+      ],
+      "the_dead": [
+        "The birds have gone quiet, and there is a smell on the wind like an opened grave.",
+        "Tracks on the road: bare feet, hundreds of them, and none of them ever turning aside.",
+        "A dog by the roadside will not stop howling at the empty country to the east."
+      ],
+      "crusade": [
+        "Hymns carry over the fields: a crusade is on the march, banners and all.",
+        "A knight in a white surcoat rides by with his squire, and asks if you have seen the dead.",
+        "Pilgrims with staves hurry along the road, following the banners of a crusade."
+      ],
+      "warband": [
+        "Fresh hoofprints by the score, and none of them shod: a warband rode this way today.",
+        "A herdsman runs past without a word, his flock left behind him. Riders are out.",
+        "A beacon burns on the hill behind you. Raiders in the country."
       ]
     }
   }

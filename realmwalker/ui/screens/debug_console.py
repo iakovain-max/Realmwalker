@@ -88,6 +88,115 @@ class DebugConsole(Screen):
             game.encounter = make_encounter(game, args[0], game.world.rng.child(f"debug/{game.world.time}/{args[0]}"))
             self.close()
 
+        @self.command("land", "land <kind> [size] — change the land near you (rift, blight, dead_forest, scorch, "
+                              "drown, crater; land undo: the last change)")
+        def _land(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.world import reshape
+
+            w = game.world
+            if args and args[0] == "undo":
+                led = reshape.ledger(w)
+                ok = bool(led) and reshape.undo(w, led[-1]["id"])
+                game.land_check()
+                self.say("The last change to the land is undone." if ok else "<warn>Nothing to undo.</>")
+                return
+            if not args or args[0] not in reshape.KINDS:
+                self.say("Kinds: " + ", ".join(reshape.KINDS))
+                return
+            kind = args[0]
+            size = float(args[1]) if len(args) > 1 and args[1].replace(".", "", 1).isdigit() else None
+            x, y = game.player.x, game.player.y
+            off = 1 if kind == "rift" else 4
+            shape = {"x": min(w.width - 1, x + off), "y": y}
+            if kind == "rift":
+                shape.update({"dir": 1.5708, "len": int(size or 24)})
+                shape["y"] = max(0, y - int(size or 24) // 2)
+            elif kind == "drown":
+                shape["n"] = int(size or 24)
+            else:
+                shape["r"] = size or 2.5
+            rec = reshape.make(w, kind, shape, seed=f"debug/{w.time}/{kind}", day=w.time / 1440.0,
+                               keep=[(x, y)])
+            game.land_check()
+            game.dirty = True
+            self.say(f"Changed {len(rec['cells'])} cells ({kind})." if rec else "<warn>Nothing there to change.</>")
+
+        @self.command("camp", "camp — refugees pitch a camp outside the town nearest you; camp grow: the nearest "
+                              "founded camp grows a stage (a palisade, then a village)")
+        def _camp(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.core.rng import RNG
+            from realmwalker.world import factions as fx, founding, news
+            from realmwalker.world.politics import Politics
+
+            w = game.world
+            x, y = game.player.x, game.player.y
+            w.politics["party_at"] = [x, y]
+            pol = Politics(w, game.tables, RNG(int(w.time), "debug camp"), day=news.now_days(w))
+
+            def far(s):
+                return abs(s.x - x) + abs(s.y - y)
+
+            if args and args[0] == "grow":
+                recs = [r for r in founding.records(w) if r["stage"] < len(founding.STAGES) - 1]
+                if not recs:
+                    self.say("<warn>No camp to grow.</>")
+                    return
+                rec = min(recs, key=lambda r: far(w.settlements[int(r["settlement"])]))
+                s = w.settlements[int(rec["settlement"])]
+                founding.set_stage(pol, rec, s, int(rec["stage"]) + 1)
+                now = ("a camp", "a fortified camp", "a village")[min(2, int(rec["stage"]))]
+                self.say(f"{markup.escape(s.name)} is now {now} (its map changes at your next visit).")
+                return
+            sp = founding.spec(game.tables).get("refugee_camp") or {}
+            old = sp.get("chance")
+            sp["chance"] = 1.0
+            try:
+                for s in sorted((s for s in w.settlements if s.kind in ("town", "city")), key=far)[:5]:
+                    realm = fx.top_liege(w, w.factions.get(s.owner))
+                    enemy = next((f for f in fx.active_factions(w, *fx.REALM_KINDS)
+                                  if realm is None or f.id != realm.id), None)
+                    camp = founding.refugee_camp(pol, s, enemy)
+                    if camp is not None:
+                        fx.touch(w)
+                        game.land_check()
+                        game.player.known_settlements.add(camp.id)
+                        game.dirty = True
+                        self.say(f"Refugees of {s.name} have pitched {camp.name} at {camp.x},{camp.y}.")
+                        return
+            finally:
+                sp["chance"] = old
+            self.say("<warn>No room for a camp outside the towns near you.</>")
+
+        @self.command("host", "host <kind> — a host sets out from the town nearest you for the next one (army, horde, "
+                              "the_dead, crusade, warband, refugees)")
+        def _host(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.world import hosts
+
+            if not args or args[0] not in hosts.KINDS:
+                self.say("Kinds: " + ", ".join(hosts.KINDS))
+                return
+            w, p = game.world, game.player
+            near = sorted(w.settlements, key=lambda s: (abs(s.x - p.x) + abs(s.y - p.y), s.id))
+            if len(near) < 2:
+                self.say("<warn>Nowhere to march to.</>")
+                return
+            fid = next((f.id for f in w.factions.values() if f.active), -1) if args[0] != "refugees" else -1
+            h = hosts.raise_host(w, game.tables, args[0], (near[0].x, near[0].y), near[1].id, day=w.time / 1440.0,
+                                 faction=fid if args[0] not in ("horde", "the_dead") else -1, strength=150,
+                                 who="the debug console", people=60)
+            game.dirty = True
+            self.say(f"{h['id']}: {args[0]} from {near[0].name} to {near[1].name}, {len(h['path'])} squares."
+                     if h else "<warn>No road goes there.</>")
+
         @self.command("quest", "quest <kind> — take on work of that kind (quest list: show kinds)")
         def _quest(args):
             game = need_game()
@@ -215,10 +324,16 @@ class DebugConsole(Screen):
                 return
             self.close()
 
-        @self.command("showcase", "showcase — mark the towns about you, one of each sign, to see on the world map")
+        @self.command("showcase", "showcase — mark the towns about you, one of each sign, to see on the world map; "
+                                  "showcase world: the land changed about you, hosts on the roads, a refugee camp, "
+                                  "a threat's reach known")
         def _showcase(args):
             game = need_game()
             if game is None:
+                return
+            if args and args[0] == "world":
+                for line in showcase_world(self, game):
+                    self.say(line)
                 return
             from realmwalker.world import marks
 
@@ -297,3 +412,75 @@ class DebugConsole(Screen):
 
     def autoplay_keys(self) -> list[KeyEvent]:
         return [KeyEvent(c) for c in "status"] + [KeyEvent("enter"), KeyEvent("escape")]
+
+
+# ---------------------------------------------------------------------------- showcase world (Expansion 6 G.10)
+LAND_SHOWN = (("rift", (9, -12)), ("blight", (-8, -6)), ("dead_forest", (-9, 5)), ("scorch", (8, 6)),
+              ("drown", (2, 11)), ("crater", (-2, -11)))
+
+
+def showcase_world(console, game) -> list[str]:
+    """Everything Part G does to the world, staged about the party for the world map (the console's `showcase
+    world`, tools/showcase.py's world sheet): one of each land change at a few days' walk, a host of each kind set out
+    on the roads between the nearest towns (a third of the way along), refugees of the nearest town in a camp outside
+    it, and the nearest live threat's reach known (its signs heard, its den seen)."""
+    from realmwalker.world import hosts, reshape, threats
+
+    w, p = game.world, game.player
+    x, y = p.x, p.y
+    day = w.time / 1440.0
+    said = []
+    for kind, (dx, dy) in LAND_SHOWN:
+        cx, cy = max(0, min(w.width - 1, x + dx)), max(0, min(w.height - 1, y + dy))
+        if kind == "dead_forest":  # (it takes only forest: the nearest wood to its spot, within a week's walk)
+            import numpy as np
+
+            woods = np.argwhere(np.isin(w.biome, [i for i, b in enumerate(w.biome_ids) if b in reshape.FORESTS]))
+            woods = [(int(a), int(b)) for a, b in woods if max(abs(a - x), abs(b - y)) in range(3, 16)]
+            if woods:
+                cx, cy = min(woods, key=lambda c: (c[0] - cx) ** 2 + (c[1] - cy) ** 2)
+        shape = {"x": cx, "y": cy}
+        if kind == "rift":
+            shape.update({"dir": 1.5708, "len": 18, "y": max(0, cy - 9)})
+        elif kind == "drown":
+            shape["n"] = 20
+        else:
+            shape["r"] = 2.5
+        rec = reshape.make(w, kind, shape, seed=f"showcase/{w.time}/{kind}", day=day, keep=[(x, y)])
+        said.append(f"{kind}: {len(rec['cells'])} cells at {cx},{cy}" if rec else f"<warn>{kind}: nothing to change</>")
+    game.land_check()
+    near = sorted(w.settlements, key=lambda s: (abs(s.x - x) + abs(s.y - y), s.id))
+    fid = next((f.id for f in w.factions.values() if f.active), -1)
+    for i, kind in enumerate(hosts.KINDS):
+        if len(near) < 2:
+            break
+        a, b = near[i % len(near)], near[(i + 1) % len(near)]
+        h = hosts.raise_host(w, game.tables, kind, (a.x, a.y), b.id, day=day,
+                             faction=fid if kind not in ("horde", "the_dead", "refugees") else -1,
+                             strength=60 + 40 * i, who="the showcase", people=60, most=999)
+        if h is None:
+            said.append(f"<warn>{kind}: no road from {markup.escape(a.name)} to {markup.escape(b.name)}</>")
+            continue
+        h["at"] = float(len(h["path"]) // 3)
+        h["x"], h["y"] = h["path"][int(h["at"])]
+        for s in (a, b):
+            p.known_settlements.add(s.id)
+        said.append(f"{kind}: {markup.escape(a.name)} to {markup.escape(b.name)}")
+    from realmwalker.world import founding
+
+    camps = len(founding.records(w))
+    console.run("camp")
+    said += console.output[-1:] if len(founding.records(w)) > camps else ["<warn>No room for a camp near you.</>"]
+    t = min(threats.live(w), key=lambda t: threats.distance(w, t, x, y), default=None)
+    if t is not None:
+        game.renown.heard.update(t.get("signs", []))
+        hx, hy = threats.home_xy(w, t)
+        p.explored[hx, hy] = True
+        said.append(f"the reach of {t['id']} ({t['kind']}) at {t['reach']['x']},{t['reach']['y']} is known")
+    for dx in range(-16, 17):  # (the country it was all staged in, seen)
+        for dy in range(-16, 17):
+            if w.in_bounds(x + dx, y + dy) and dx * dx + dy * dy <= 256:
+                p.explored[x + dx, y + dy] = True
+    game.dirty = True
+    said.append("Open the world map (m) to see it all.")
+    return said

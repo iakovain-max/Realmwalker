@@ -1,0 +1,42 @@
+{
+  "_comment": "Expansion 6 G.5: rumours, clues and found letters that lead somewhere (game/story/rumours.py). rumour_hook has {hook} {villain} {home} {town}; rumour_near and the letter the same without {hook} (no {where}: the storybook check fills only the tale's words); the clue tables have the tale's words and {who} or {place}.",
+  "words": {
+    "rumour_hook": [
+      "\"You want to know what's wrong? I'll tell you.\" {hook}",
+      "They look about before they speak. \"Nobody says it out loud, but everybody knows.\" {hook}",
+      "\"If you're the sort who goes looking for trouble, there's trouble enough.\" {hook}",
+      "\"I'll tell you, and you didn't hear it from me.\" {hook}"
+    ],
+    "rumour_near": [
+      "\"There's talk of {villain}, out by {home}. Folk go the long way round now.\"",
+      "\"Something's wrong at {home}. It's {villain}, they say, though nobody who's seen it says much.\"",
+      "\"Keep clear of {home}. That's where {villain} is, and the ones who went to look didn't come back.\"",
+      "\"My cousin swears {villain} is at {home}. He doesn't drink, my cousin. That's what frightens me.\""
+    ],
+    "rumour_clue_who": [
+      "\"You're after {villain}? Then you want {who}. Knows more than they let on, that one.\"",
+      "\"Ask {who}. I've heard them talk about it when they think nobody's listening.\"",
+      "\"If anyone knows what {villain} fears, it's {who}. Don't say I sent you.\""
+    ],
+    "rumour_clue_saw": [
+      "\"There's {who}. Saw it with their own eyes, and hasn't been the same since.\"",
+      "\"Go and find {who}. They were there, that night. They'll tell you, if you ask kindly.\"",
+      "\"There's one who saw it and lived: {who}. Ask them.\""
+    ],
+    "rumour_clue_place": [
+      "\"If it's {villain} you're after, look at {place}. That's where the trouble is.\"",
+      "\"They've been seen at {place}. Not lately, but the tracks don't lie.\"",
+      "\"Everyone who knows anything says the same thing: {place}. Go there, if you must.\""
+    ],
+    "letter_hook": [
+      "The hand is cramped and hurried. It writes of {villain} at {home}, of the dead it left near {town}, and of how much the writer meant to be paid for it. It ends in the middle of a word.",
+      "Someone wrote this to the people of {town}: that they had found where {villain} lairs, at {home}, and would go in at first light. There is no signature, and no second letter.",
+      "A letter never sent. The writer had tracked {villain} to {home}, and knew {town} would pay for its end. The last lines are smudged, as if written in the rain, or in a hurry."
+    ],
+    "letter_den": [
+      "Whoever wrote it never came back for it.",
+      "The road to {home} is drawn in the margin, in the same shaking hand.",
+      "At the bottom, in another hand: the people of {town} will pay well."
+    ]
+  }
+}

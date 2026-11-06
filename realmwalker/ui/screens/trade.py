@@ -140,6 +140,9 @@ class MarketScreen(Screen):
                 f"<loot>{money_text(shop['coin'])}</>   <dim>Load:</> {s.pack_load():g} / {s.pack_capacity()[0]:g} lb")
         if haggle:
             head += f"   <good>haggled: {int(haggle * 100)}% better</>"
+        dear = economy.dear_because(game, game.world.settlements[npc.settlement]) if npc.settlement is not None else []
+        if dear:  # (what the town is going through, in its prices: marks.json `prices`)
+            head += f"   <warn>dear: {markup.escape(', '.join(dear[:3]))}</>"
         canvas.markup(2, 1, head, max_width=w - 4)
         col_w = (w - 5) // 2
         longest = max(len(self.theirs()), len(self.yours())) + 2

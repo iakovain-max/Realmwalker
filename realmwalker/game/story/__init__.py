@@ -35,6 +35,13 @@ STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "
                  "story_reading"}  # (a seer asked to read the cards: story/reading.py, F.4)
 
 
+def overlay(game, enc, rng):
+    """A threat's shadow on an ordinary meeting in its reach (story/signs.overlay, from encounters.roll_encounter)."""
+    from realmwalker.game.story import signs
+
+    return signs.overlay(game, enc, rng)
+
+
 def load_all() -> None:
     import importlib
 
@@ -251,6 +258,10 @@ def daily(game) -> None:
         return
     d["day"] = today
     d["at"] = [int(game.player.x), int(game.player.y)]
+    _need(game, d, today)  # (nothing stirring near you: the Storyteller wakes something, G.2)
+    from realmwalker.world import hosts
+
+    hosts.advance_world(game.world, game.tables, float(game.moment.total_days))  # (hosts on the roads, G.7)
     for adv in active(game):  # (a villain taken alive whom no aftermath judged: the lord's justice, D.3)
         if adv.get("boss_taken") and int(adv.get("taken_day", today)) < today:
             for line in endings.finish(game, adv):
@@ -297,6 +308,9 @@ def daily(game) -> None:
     from realmwalker.game.story import early
 
     early.daily(game)  # (a villain you put down walks again: you hear of it first, E.4)
+    from realmwalker.game.story import sequels
+
+    sequels.daily(game)  # (what your tale left behind stirs: the heir, the new gang - you hear of it, G.4)
     from realmwalker.game.story import rivals
 
     rivals.daily(game)  # (a rival for each tale, their race run, a band left pinned: F.2)
@@ -308,6 +322,40 @@ def daily(game) -> None:
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
             _play_scheduled(game, item)
+
+
+def _need(game, d: dict, today: int) -> None:
+    """The Storyteller's need (world/threats.needed), once in `every_days`: out in the land, with nothing live near
+    that the hero has not already taken on, the nearest dormant threat of the hero's tier wakes. Not before the
+    opening has had its say (story.begin chose the first)."""
+    from realmwalker.world import news, threats
+
+    spec = game.tables.threats.get("need")
+    if not spec or (d.get("opening") or {}).get("state") == "waiting":
+        return
+    if today < int(d.get("need_day", -10 ** 6)) + int(spec["every_days"]):
+        return
+    d["need_day"] = today
+    w = game.world
+    taken = {adv.get("threat") for adv in active(game)}
+    threats.needed(w, game.tables, w.rng.child(f"need/{today}"), game.player.x, game.player.y, game.leader.level,
+                   day=news.now_days(w), taken=taken)
+
+
+def disturbed(game, site: int | None, why: str) -> bool:
+    """The hero did something that may wake a dormant threat at this site (threats.json triggers: the barrow's dead
+    robbed, the beast's lair walked into). The hero feels it (law 7: a sign before anything comes of it)."""
+    from realmwalker.world import news, threats
+
+    if site is None:
+        return False
+    w = game.world
+    woke = threats.trigger_world(w, game.tables, w.rng.child(f"disturbed/{why}/{site}/{int(w.time)}"), why,
+                                 day=news.now_days(w), site=int(site))
+    felt = game.tables.threats.get("triggers", {}).get(why, {}).get("felt")
+    if woke and felt:
+        game.say(w.rng.child(f"felt/{why}/{site}").choice(felt), "warn")
+    return bool(woke)
 
 
 def _play_scheduled(game, item: dict) -> None:
@@ -481,6 +529,9 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.world import threats
 
     lives.ensure(game, settlement.id)  # (a town peopled before lives were kept)
+    from realmwalker.game.story import consequences
+
+    consequences.on_visit(game, settlement)  # (a fallen town's people, a rebuilding one's newcomers, your rent: G.3)
     from realmwalker.game.story import goals
 
     goals.notify(game, "town")  # (into its streets: a situation's goals, C.5)
@@ -500,6 +551,10 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.game.story import villain
 
     if villain.seen_in_town(game, settlement):  # (one who helped you, made an example of: E.2)
+        return
+    from realmwalker.game.story import signs
+
+    if _on_its_map(game, settlement) and signs.on_enter_town(game, settlement):  # (a threat's stage, shown: G.1)
         return
     for t in threats.live(game.world):
         if settlement.id in t["stakes"][:6] and t.get("adventure") is None and _can_take(game, t):
@@ -703,6 +758,8 @@ def on_descend(game, lm) -> None:
     from realmwalker.game.story import deeds
 
     deeds.on_descend(game, lm)  # (a step's band on a level filled before: D.2)
+    if int(lm.meta.get("level", 1)) == 1:  # (one chance a visit, on the way in)
+        disturbed(game, lm.meta.get("site"), "lair_disturbed")  # (into the beast's own lair: it knows, G.2)
     from realmwalker.game.story import rivals
 
     rivals.on_descend(game, lm)  # (a rival who went in ahead of you, found: F.2)
@@ -995,8 +1052,9 @@ def hook_line(game, t: dict, town=None) -> str:
     return textgen.fill(rng.choice(kind["hooks"]), rng, {}, hook_words(game, t, town))
 
 
-def offer_hook(game, t: dict, town=None) -> None:
-    """A threat's people ask the hero to take it on (the hook beat: take it, or not now)."""
+def offer_hook(game, t: dict, town=None, staged: bool = True) -> None:
+    """A threat's people ask the hero to take it on (the hook beat: take it, or not now). `staged` False: no one of
+    the town comes up to the hero with it (it was already told: a rumour, a letter, G.5)."""
     from realmwalker.game.story import beats
 
     if not _can_take(game, t):
@@ -1007,7 +1065,7 @@ def offer_hook(game, t: dict, town=None) -> None:
     words["hook"] = hook_line(game, t, town)
     words["threat"] = t["id"]
     then = {"beat": "story_hook", "where": _where(game), "words": words}
-    if town is not None and _on_its_map(game, town):  # (show, don't tell: someone of the town comes to you with it)
+    if staged and town is not None and _on_its_map(game, town):  # (show, don't tell: someone of the town comes to you with it)
         from realmwalker.game.story import stage
 
         scene = ("runner", "plea")[int(game.moment.total_days + town.id) % 2]
@@ -1243,6 +1301,39 @@ def map_signs(game) -> list[tuple[int, int, str]]:
     return out
 
 
+def known_reaches(game) -> list[dict]:
+    """The threats whose reach the hero knows (G.8, §5.21): one whose tale they have taken, or whose signs they have
+    heard and whose den they have seen. Each {id, x, y, r, wash, strength, key}: the country it touches, shown as far
+    as its scheme has come (half its reach at the first stage, all of it at the last), washed `grey`, `red` or `mist`
+    (threats.json kinds `wash`), stronger stage by stage; `key` changes only when any of that changes (the map keeps
+    the picture by it)."""
+    from realmwalker.world import threats
+
+    w = game.world
+    heard = game.renown.heard
+    mine = {a["threat"] for a in active(game)}
+    kinds = game.tables.threats.get("kinds", {})
+    out = []
+    for t in threats.live(w):
+        if t["id"] not in mine:
+            if t.get("adventure") is not None or not any(n in heard for n in t.get("signs", [])):
+                continue
+            hx, hy = threats.home_xy(w, t)
+            if not game.player.explored[hx, hy]:
+                continue
+        kind = kinds.get(t["kind"], {})
+        n = max(1, len(t["scheme"]["stages"]))
+        stage = max(0, min(n - 1, int(t["scheme"]["stage"])))
+        frac = (stage + 1) / n
+        reach = t["reach"]
+        r = max(2, round(int(reach["r"]) * (0.5 + 0.5 * frac)))
+        wash = kind.get("wash", "grey")
+        out.append({"id": t["id"], "x": int(reach["x"]), "y": int(reach["y"]), "r": r, "wash": wash,
+                    "strength": round(0.45 + 0.55 * frac, 2),
+                    "key": (t["id"], int(reach["x"]), int(reach["y"]), r, wash, stage)})
+    return out
+
+
 def notices(game, settlement) -> list[str]:
     """A notice board's hooks: every stirring threat within a week's walk that nobody has taken on."""
     from realmwalker.world import threats
@@ -1287,8 +1378,11 @@ def on_death(game) -> None:
     """The hero is dead: their tales are orphaned (the threats go on, and remember), and no beat waits."""
     from realmwalker.game.story import beats
 
+    from realmwalker.game.story import epilogue
+
     for adv in active(game):
         adv["state"] = "orphaned"
+        epilogue.chronicle(game, adv)  # (the tale as far as it went, in the world's history: G.4)
         t = threat_of(game, adv)
         if t is not None and t.get("adventure") == adv["id"]:
             t["adventure"] = None

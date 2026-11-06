@@ -1,5 +1,6 @@
 """What became of them (Expansion 6, docs/ADVENTURES.md §5.9): one page for each thing the tale touched - the place,
-the patron, the ally, the witness - and last, you, with the epithet the tale has given you to take or leave."""
+the other places as they now are, the patron, the ally, the rival, its lieutenants, the realm, what is left to come
+back (game/story/epilogue.compose, G.4) - and last, you, with the epithet the tale has given you to take or leave."""
 
 from __future__ import annotations
 
@@ -10,7 +11,10 @@ from realmwalker.ui.widgets import Canvas
 
 PICTURE_ROWS = 9  # (a picture above each page: ui/gfx/vignette.for_epilogue)
 ABOUT = {"place": "The place", "patron": "The one who asked", "ally": "The one who helped", "witness": "The one who saw",
-         "innocent": "The ones it would have taken", "hero": "You", "lieutenant": "Its right hand"}
+         "innocent": "The ones it would have taken", "hero": "You", "lieutenant": "Its right hand",
+         "rival": "The one who raced you", "traitor": "The one who lied", "carter": "The one who helped",
+         "suspect": "The one they blamed", "taken": "The ones who were taken", "realm": "The realm",
+         "sequel": "It is not over", "place:": "As it is now"}  # (G.4: places as they now are, the realm, the sequel)
 
 
 class EpilogueScreen(Screen):
@@ -78,7 +82,7 @@ class EpilogueScreen(Screen):
         pic = PICTURE_ROWS if self.adv and canvas.height >= len(body) + extra + PICTURE_ROWS + 14 else 0
         x, y, w, h = modal_box(canvas, width, len(body) + extra + 9 + (pic + 1 if pic else 0),
                                self.adv["title"] if self.adv else self.title)
-        canvas.markup(x + 3, y + 2, f"<title>{ABOUT.get(page['about'].split(':')[0], 'What became of them')}</>  "
+        canvas.markup(x + 3, y + 2, f"<title>{ABOUT.get('place:' if page['about'].startswith('place:') else page['about'].split(':')[0], 'What became of them')}</>  "
                                     f"<dim>{self.page + 1} of {len(self.pages)}</>", max_width=iw)
         row = y + 4
         if pic:  # the place as it now is, the one the page tells of (B.9)

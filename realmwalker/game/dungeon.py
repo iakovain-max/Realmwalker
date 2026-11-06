@@ -629,6 +629,10 @@ def open_chest(game, lm, x: int, y: int) -> None:
             react(game, "desecration")
         if f.get("rouse"):
             rouse_the_dead(game, lm, x, y, rng)
+    if grave or f.get("hoard"):
+        from realmwalker.game import story
+
+        story.disturbed(game, lm.meta.get("site"), "tomb_robbed")  # (a barrow king robbed wakes: Expansion 6 G.2)
 
 
 def _roll_chest(game, lm, f: dict, rng: RNG) -> tuple[list, int]:

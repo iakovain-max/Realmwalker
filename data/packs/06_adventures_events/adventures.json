@@ -388,6 +388,53 @@
               "history",
               "beast_hunt",
               3
+            ],
+            [
+              "rebuild",
+              "town"
+            ],
+            [
+              "monument",
+              "town",
+              "statue",
+              "monument_beast"
+            ],
+            [
+              "rename",
+              "home",
+              "rename_beast",
+              2
+            ],
+            [
+              "song",
+              "ballad",
+              21,
+              42
+            ],
+            [
+              "relic",
+              "hero",
+              "relic_beast"
+            ],
+            [
+              "standing",
+              "town",
+              5
+            ],
+            [
+              "title",
+              "town",
+              3
+            ],
+            [
+              "land",
+              "town",
+              3
+            ],
+            [
+              "sequel_threat",
+              "heir",
+              0.5
             ]
           ],
           "pages": {
@@ -432,6 +479,23 @@
             [
               "fame",
               -1
+            ],
+            [
+              "song",
+              "lament",
+              30,
+              60
+            ],
+            [
+              "succession",
+              "town",
+              3,
+              "cause_failed"
+            ],
+            [
+              "ruin",
+              "town",
+              3
             ]
           ],
           "pages": {

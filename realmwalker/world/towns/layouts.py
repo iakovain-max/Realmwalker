@@ -931,3 +931,56 @@ def stockade(plan: Plan) -> None:
     plan.along([tuple(int(v) for v in c) for c in np.argwhere(sq)] + paths, todo, gap=1, sizes=((5, 8), (4, 6)),
                near=(cx, cy))
     finish_town(plan, paths, walled_with="palisade", fields=False)
+
+
+# ---------------------------------------------------------------------------- encampment: a camp of canvas tents
+CAMP_KINDS = ["hall", "temple", "smithy", "store"]  # the captain's pavilion, the chapel tent, the forge, the sutler
+
+
+def encampment(plan: Plan) -> None:
+    """A camp pitched to stay a while (G.9, world/founding.py): a refugee camp outside a besieged city, later a
+    crusaders' camp. Two ways cross at the muster ground, where the standards stand; the captain's pavilion, the
+    chapel tent, the forge and the sutler's tent round it; rows of canvas tents along straight tent lines either side,
+    fire pits between them; the horse lines at the end. Fortified (its style's `fortified`, the second stage), a
+    palisade rings it and timber halls stand among the tents (by the style's looks)."""
+    st = plan.style
+    plan.target = max(plan.target, min(48, 8 + plan.s.population // 10))  # (a tent for every ten or so)
+    cx, cy = centre(plan, 2)
+    span_x, span_y = 16 + 5 * plan.size, 10 + 3 * plan.size
+    x0, x1 = max(6, cx - span_x), min(plan.W - 7, cx + span_x)
+    y0, y1 = max(6, cy - span_y), min(plan.H - 7, cy + span_y)
+    streets = plan.pave(plan.line((x0, cy), (x1, cy)), st["street"], 2)
+    streets += plan.pave(plan.line((cx, y0), (cx, y1)), st["street"], 1)
+    tent_lines = []
+    for y in list(range(cy - 7, y0 - 1, -7)) + list(range(cy + 7, y1 + 1, 7)):
+        tent_lines += plan.pave(plan.line((x0 + 2, y), (x1 - 2, y)), st["lane"], 1)
+    for end in road_ends(plan):  # the roads in, to the middle way
+        target = min(streets, key=lambda c: (c[0] - end[0]) ** 2 + (c[1] - end[1]) ** 2)
+        streets += plan.pave(plan.wander(end, target, 0.3), st["street"], 1)
+    ground = square(plan, cx, cy, 4 + plan.size, 2, st.get("plaza", st["street"]))
+    square_things(plan, ground, cx, cy)
+    rest = kinds(plan)
+    todo = list(CAMP_KINDS) + [k for k in rest if k != "house" and k not in CAMP_KINDS] + [k for k in rest if k == "house"]
+    rim = [tuple(int(v) for v in c) for c in np.argwhere(ground)]
+    specials_by(plan, rim + streets, todo, (cx, cy), gap=1, sizes=((5, 7), (4, 5)))
+    plan.along(tent_lines + streets, todo, gap=1, sizes=((4, 5), (4, 4)), near=(cx, cy))
+    # Fire pits by the tent lines, standards along the middle way, the horse lines at its end.
+    for i, (x, y) in enumerate(tent_lines):
+        if i % 9 == 4:
+            for dy in (-1, 1):
+                if plan.inside(x, y + dy, 2) and not plan.used[x, y + dy] and not plan.water[x, y + dy]:
+                    if plan.thing(x, y + dy, "fire_pit", light=True):
+                        break
+    for x in range(x0 + 3, x1 - 2, 8):
+        if abs(x - cx) > 5 and plan.inside(x, cy - 2, 2) and not plan.used[x, cy - 2]:
+            plan.thing(x, cy - 2, "standard")
+    for hx in (x1 + 3, x0 - 3):
+        cells = [(hx, y) for y in range(cy - 5, cy + 6, 2)]
+        if all(plan.inside(x, y, 2) and not plan.used[x, y] and not plan.water[x, y] for x, y in cells):
+            for x, y in cells:
+                plan.thing(x, y, "horse_post")
+            plan.thing(hx + (1 if hx > cx else -1), cy, "haystack")
+            plan.thing(hx + (1 if hx > cx else -1), cy + 3, "trough")
+            break
+    finish_town(plan, streets + tent_lines, walled_with=st.get("wall") if st.get("fortified") else None,
+                fields=False)

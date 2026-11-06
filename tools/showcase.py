@@ -5,8 +5,10 @@
 Sheets: vignettes (the fourteen backdrops at day and at night, with figures); letter (a letter's page, in each of the
 three hands); mark (a town's close-up map dressed for a mark: --mark burned, festival, siege...); signs (the world map
 with a town under each sign, B.8); titlecard (the Beast's first chapter opening); epilogue (its first page, with its
-picture); camp (the camp at dawn with the carcass the beast left); all (every sheet, and the mark sheet for each mark
-that dresses a town). Opens the game's window for a moment, draws the sheet, saves it as a PNG and closes. Anton
+picture); camp (the camp at dawn with the carcass the beast left); world (Part G: the world map with the land changed
+about you, a host of each kind on the roads, a refugee camp and a threat's reach: the console's `showcase world`);
+founded (a refugee camp's close-up map at --stage 0, 1 or 2: tents, a palisade, a village); tales (the Legends book's
+Tales after a beast's tale ended); all (every sheet, the mark sheet for each mark that dresses a town, each stage). Opens the game's window for a moment, draws the sheet, saves it as a PNG and closes. Anton
 looks at these to judge the pictures.
 """
 
@@ -19,8 +21,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-SHEETS = ("vignettes", "letter", "mark", "signs", "titlecard", "epilogue", "camp")
-MARKS = ("burning", "burned", "sacked", "siege", "plague", "festival", "memorial", "rebuilding", "emptied")
+SHEETS = ("vignettes", "letter", "mark", "signs", "titlecard", "epilogue", "camp", "world", "founded", "tales")
+MARKS = ("burning", "burned", "sacked", "siege", "beset", "plague", "festival", "memorial", "rebuilding", "emptied",
+         "gibbet", "burned_out", "haunted", "ruined", "cursed", "occupied")
 
 
 def _letter_screen(app, hand: str):
@@ -97,6 +100,72 @@ def _signs(app) -> None:
     game.world.time = (game.world.time // 1440 + 1) * 1440 + 15 * 60
     DebugConsole(app).run("showcase")
     app.push(WorldMapScreen(app, app.top))
+
+
+def _world(app) -> None:
+    """The world map after Part G's changes, staged about the start (the console's `showcase world`)."""
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import DebugConsole, showcase_world
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    world = copy.deepcopy(cached_world(WorldOptions("Signland", 21, "small", history=60), app.tables))
+    game = new_game(world, app.tables)
+    game.survival = False
+    app.start_game(game)
+    game.world.time = (game.world.time // 1440 + 1) * 1440 + 13 * 60
+    for line in showcase_world(DebugConsole(app), game):
+        print(line)
+    app.push(WorldMapScreen(app, app.top))
+
+
+def _founded(app, stage: int, world_name: str = "Signland:21") -> None:
+    """A refugee camp outside the town nearest the start, grown to `stage`, seen from inside at noon."""
+    import copy
+
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import DebugConsole
+    from realmwalker.world import founding
+    from realmwalker.world.generator import WorldOptions
+    from tests.worlds import cached_world
+
+    name, seed = world_name.split(":")
+    world = copy.deepcopy(cached_world(WorldOptions(name, int(seed), "small", history=60), app.tables))
+    game = new_game(world, app.tables)
+    game.survival = False
+    app.start_game(game)
+    console = DebugConsole(app)
+    console.run("camp")
+    for _ in range(stage):
+        console.run("camp grow")
+    print("\n".join(console.output[1:]))
+    rec = founding.records(game.world)[-1]
+    s = game.world.settlements[int(rec["settlement"])]
+    game.player.local_key = None
+    game.player.x, game.player.y = s.x, s.y
+    game.world.time = (game.world.time // 1440 + 1) * 1440 + 12 * 60
+    game.enter_local()
+    lm = game.local
+    walk = app.tables.terrain.walk[game.remap_for(lm)[lm.terrain]]
+    cx, cy = lm.width // 2, lm.height // 2
+    spot = min(((x, y) for x in range(lm.width) for y in range(lm.height) if walk[x, y]),
+               key=lambda c: (c[0] - cx) ** 2 + (c[1] - cy) ** 2)
+    game.player.lx, game.player.ly = spot
+
+
+def _tales(app) -> None:
+    """The Legends book open at the tale a beast's ending wrote (G.4)."""
+    _tale(app, "epilogue")
+    from realmwalker.ui.screens.legends import LegendsScreen
+
+    from realmwalker.world import legends
+
+    book = LegendsScreen(app, app.game.world, app.tables)
+    book.set_category([c for c, _ in legends.CATEGORIES].index("tales"))  # (newest first: the tale just ended)
+    app.push(book)
 
 
 def _zoom_in(app) -> None:
@@ -191,6 +260,7 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=str(ROOT / "build" / "showcase"))
     ap.add_argument("--hand", default="plain", choices=("plain", "fine", "dark"))
     ap.add_argument("--mark", default="burned")
+    ap.add_argument("--stage", type=int, default=0, choices=(0, 1, 2), help="founded: the camp's stage")
     ap.add_argument("--world", default="Townland:21", help="the test world, name:seed (Lifeland:33 has timber towns)")
     args = ap.parse_args(argv)
     if args.sheet == "all":
@@ -199,6 +269,9 @@ def main(argv=None) -> int:
             if sheet == "mark":
                 for mark in MARKS:
                     main(["--sheet", "mark", "--mark", mark] + rest)
+            elif sheet == "founded":
+                for stage in (0, 1, 2):
+                    main(["--sheet", "founded", "--stage", str(stage)] + rest)
             elif sheet == "letter":
                 for hand in ("plain", "fine", "dark"):
                     main(["--sheet", "letter", "--hand", hand] + rest)
@@ -211,7 +284,8 @@ def main(argv=None) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     app = App(home=str(ROOT / "build" / "showcase_home"))
-    shot = out / {"letter": f"letter_{args.hand}.png", "mark": f"mark_{args.mark}.png"}.get(args.sheet, f"{args.sheet}.png")
+    shot = out / {"letter": f"letter_{args.hand}.png", "mark": f"mark_{args.mark}.png",
+                      "founded": f"founded_{args.stage}.png"}.get(args.sheet, f"{args.sheet}.png")
     app.showcase_hand = args.hand
 
     def show(app):
@@ -221,13 +295,22 @@ def main(argv=None) -> int:
         if args.sheet == "signs":
             _signs(app)
             return
+        if args.sheet == "world":
+            _world(app)
+            return
+        if args.sheet == "founded":
+            _founded(app, args.stage)
+            return
+        if args.sheet == "tales":
+            _tales(app)
+            return
         if args.sheet in ("titlecard", "epilogue", "camp"):
             _tale(app, args.sheet)
             return
         app.push(_sheet_screen(app, args.sheet))
 
     try:
-        script = [(10, show)] + ([(30, _zoom_in)] if args.sheet == "signs" else [])
+        script = [(10, show)] + ([(30, _zoom_in)] if args.sheet in ("signs", "world") else [])
         window.run(app, script=script, max_frames=70, screenshots_at={60: shot})
     finally:
         app.shutdown()

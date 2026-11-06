@@ -1,0 +1,100 @@
+{
+  "_comment": "Expansion 6 G.9: the town styles of founded places (world/founding.py; politics['styles'] names them by settlement): a camp of canvas tents, and the same camp fortified behind a palisade with timber halls among its tents. A camp that grows into a town is laid out its people's own way.",
+  "styles": {
+    "encampment": {
+      "words": {
+        "approach": [
+          "Smoke from a hundred cook fires hangs over {name} long before you make out the tents.",
+          "The road to {name} is churned to mud by carts, and the carts are still coming.",
+          "{name} is rows of tents in a trampled field, and a standard over the middle of it.",
+          "Children watch the road from the ditch outside {name}, as if waiting for someone in particular."
+        ],
+        "sight": [
+          "Canvas tents stand in lines along straight lanes, their guy ropes crossing underfoot.",
+          "Bundles, chairs and a bedstead are stacked outside one tent: a whole house carried out on a cart.",
+          "Women queue at the water butts; a sergeant with a ledger counts them through.",
+          "A chapel tent stands at the heart of it, a bell hung from a pole before the flap."
+        ],
+        "smell": [
+          "It smells of wet canvas, woodsmoke and too many people.",
+          "The air smells of porridge, latrines and the mud of a field that was grass a month ago."
+        ],
+        "detail": [
+          "Someone has painted a house number on a tent flap, out of habit.",
+          "A smith has set up an anvil on a stump and is mending pots for a queue of them.",
+          "Names are chalked on a board by the muster ground: the missing, and who asks after them.",
+          "Nothing here is meant to last, and everyone is careful to say so."
+        ]
+      },
+      "layout": "encampment",
+      "street": "mud",
+      "lane": "dirt",
+      "plaza": "dirt",
+      "wall": "palisade",
+      "palisade": "palisade",
+      "look": {
+        "hall": [["canvas"], ["canvas"], ["rect"]],
+        "temple": [["canvas"], ["canvas"], ["rect"]],
+        "smithy": [["canvas"], ["canvas"], ["rect"]],
+        "store": [["canvas"], ["canvas"], ["rect"]],
+        "inn": [["canvas"], ["canvas"], ["rect"]],
+        "healer": [["canvas"], ["canvas"], ["rect"]],
+        "house": [["canvas"], ["canvas"], ["rect"]]
+      },
+      "floor": "dirt",
+      "square": ["standard", "fire_pit", "notice_board", "cart"],
+      "street_things": ["cart", "sacks", "woodpile", "fire_pit"],
+      "trees": [],
+      "light": "fire_pit",
+      "extra": []
+    },
+    "encampment_fortified": {
+      "words": {
+        "approach": [
+          "A palisade of fresh-cut stakes rings {name} now, and a gate with a watchman on it.",
+          "{name} has dug itself in: a ditch, a bank, stakes along the top of it.",
+          "From the road {name} looks half a fort and half a fair, timber roofs among the tents.",
+          "Axes ring in the wood beyond {name}: they are cutting more stakes for the wall."
+        ],
+        "sight": [
+          "Timber halls with shingled roofs stand among the tents, the newest still white where they were cut.",
+          "The tent lines have become streets, and the streets have names chalked on boards.",
+          "Men drill with spears on the muster ground while their children copy them behind.",
+          "A wooden bell tower rises over the chapel tent, the bell brought from somewhere else."
+        ],
+        "smell": [
+          "It smells of sawdust, pitch and smoke.",
+          "The air smells of fresh timber, mud and the forge."
+        ],
+        "detail": [
+          "A family is fitting a door to a hut that was a tent last month.",
+          "The smith's forge has a roof of its own now, and a queue that never ends.",
+          "Someone has planted beans along the inside of the palisade.",
+          "They still call it the camp, though nobody here means to leave."
+        ]
+      },
+      "layout": "encampment",
+      "fortified": true,
+      "street": "dirt",
+      "lane": "dirt",
+      "plaza": "dirt",
+      "wall": "palisade",
+      "palisade": "palisade",
+      "look": {
+        "hall": [["shingle"], ["logs"], ["rect"]],
+        "temple": [["shingle"], ["logs"], ["rect"]],
+        "smithy": [["shingle"], ["logs"], ["rect"]],
+        "store": [["shingle"], ["logs"], ["rect"]],
+        "inn": [["shingle"], ["logs"], ["rect"]],
+        "healer": [["canvas"], ["canvas"], ["rect"]],
+        "house": [["canvas", "canvas", "shingle"], ["canvas", "canvas", "logs"], ["rect"]]
+      },
+      "floor": "floor_wood",
+      "square": ["standard", "fire_pit", "notice_board", "well"],
+      "street_things": ["cart", "sacks", "woodpile", "fire_pit"],
+      "trees": [],
+      "light": "fire_pit",
+      "extra": []
+    }
+  }
+}

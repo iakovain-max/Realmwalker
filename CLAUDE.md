@@ -677,6 +677,42 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   writes what would be heard (float32 stereo 48 kHz raw) for `audio/levels` to measure. A new sound: add it
   to tools/build_sounds.py EFFECTS (or make it there), run it, add the entry to data/sounds.json, commit
   assets/sounds; tests/test_audio.py checks every name the code asks for exists and every file is at one loudness.
+- What a tale's ending does to the world (Expansion 6 G.3): consequence ops in `game/story/endings.py` and
+  `game/story/consequences.py` (its docstring lists them: owners through `Politics.set_owner` and occupations
+  (`occupied` mark, `Politics.free`), deaths and successions through `Politics.die`/`succeed`, ruin in full, monuments,
+  songs sung at inns, relics, titles, holdings, rights...). Their words are adventures.consequences.json
+  `consequences.words`. A ruined or emptied town's folk get their fates and a rebuilding one newcomers at a visit
+  (`consequences.on_visit`); never change a settlement's owner except through `Politics.set_owner` (the ledger).
+- The epilogue and the tale's chapter (Expansion 6 G.4): `game/story/epilogue.compose` (last in endings.finish: the
+  places as they now are, the realm, the sequel, you last; 10 pages at most) and `chronicle` (`politics["tales"]`, the
+  Legends book's Tales, refs "C<i>"); sequel threats are the op `sequel_threat` in `game/story/sequels.py` (a beast's
+  heir, the gang in a broken band's gap: dormant with `sequel_of`, stirring after `held_until`).
+- Land changes (Expansion 6 G.6): `world/reshape.py` (its docstring): the ledger `politics["land"]` + `land_version` +
+  `land_log`; `reshape.make` / `undo` / `check` (autoplay `_check_land`) / `changes_since`; never on a town, site,
+  wonder, water or `politics["party_at"]`. Never write `world.biome`/`relief`/`elevation`/`road`/`river` in play except
+  through it. `GameState.land_check()` -> `land_changed()` (remap, costs, the journey); `local.patch_land` on entry;
+  the painter follows `land_version` (`WorldView.ready` -> `ChunkCache.refresh`, keys carry chunk versions).
+- Hosts on the map (Expansion 6 G.7): `world/hosts.py` (its docstring): `politics["hosts"]` + `hosts_tick` +
+  `next_host`; `raise_host` (a road by `route`, None when none or longer than threats.json hosts `most_days`: then act
+  at once), `advance` (from `Politics.advance` and `story.daily` by the one stamp), `arrive` (an army/horde of a war:
+  `Politics.begin_siege`, `war["march"]` while it walks; a warband: `Politics.raid(target=)`; else `strike`),
+  `refugees`, `near` (encounters), `check` (autoplay `_check_hosts`). Raise one through `march_to_siege`, `ride_out`,
+  `the_dead_march` (threat op `host`) or `crusade`; never set a war's siege while its army marches.
+- A threat's reach on the map (Expansion 6 G.8): `story.known_reaches` (a tale taken, or signs heard with the den
+  seen; spreading by stage) drawn by `mapsigns.reaches` under the fog, one soft picture a threat keyed by reach and
+  stage; its look is threats.json kinds `wash` (grey, red, mist: `mapsigns.WASHES`).
+- Founding (Expansion 6 G.9): `world/founding.py` (its docstring): new settlements only through `found` (appended,
+  never reordered or deleted; a realm holds it through `Politics.set_owner`; a road through the land ledger, reshape
+  kind "road"); records `politics["foundings"]`, the layout override `politics["styles"]` (read by `plan.style_for` /
+  `worldview.town_mark` with a `world`); stages by `set_stage` (a grown camp's map is laid out again by
+  `game/founding.before_entry` unless someone tied to the player lives there). First use: `refugee_camp` from
+  `Politics.begin_siege`; `weekly` from `Politics.advance`. Layout `encampment`, the canvas tent (`houses` form "tent"),
+  `mapsigns.founded` on the world map. Autoplay `_check_founded`; debug `camp`. All of Part G staged at once: the
+  console's `showcase world` (`debug_console.showcase_world`), tools/showcase.py sheets world, founded, tales.
+- Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
+  nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
+  and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found
+  letters (`books._letter`) may be about a real threat. Words: adventures.rumours.json.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

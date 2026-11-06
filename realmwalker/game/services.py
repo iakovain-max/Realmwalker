@@ -289,6 +289,10 @@ def grades(game, npc: NPC) -> list[str]:
 def stay_price(game, npc: NPC, what: str, grade: str) -> int:
     """For the whole party: the book's price for each of them (the innkeeper's mood still counts)."""
     each = int(inn_spec(game)[what].get(grade, 0))
+    from realmwalker.game.story import consequences
+
+    if consequences.board_free(game, npc.settlement):
+        return 0  # (free board here for life: a tale's thanks, G.3)
     return fee(game, npc, each * len([c for c in game.party if c.alive])) if each else 0
 
 
@@ -350,7 +354,11 @@ def _room(game, npc, svc, arg):
     price = stay_price(game, npc, "stay", grade)
     charge(game, npc, price)
     rng = game.world.rng.child(f"inn/{npc.id}/{game.world.time}")
-    msgs = [f"You pay {money_text(price)}: {ROOM_WORDS[grade]}."]
+    msgs = [f"You pay {money_text(price)}: {ROOM_WORDS[grade]}." if price or not _board(game, npc) else
+            f"The innkeeper waves your coin away: {ROOM_WORDS[grade]}, and welcome."]
+    from realmwalker.game.story import consequences
+
+    msgs += consequences.song_at_inn(game, npc)  # (a song of your deeds, if one is sung here: G.3)
     msgs += rest(game, "night", inn=True)  # a bed for the night is until morning, not until two in it
     return msgs + _night(game, npc, grade, rng)
 
@@ -363,8 +371,22 @@ def _meal(game, npc, svc, arg):
     game.pass_time(40, "rest")
     rng = game.world.rng.child(f"meal/{npc.id}/{game.world.time}")
     text = MEAL_WORDS[grade]
-    return [f"{text[:1].upper()}{text[1:]} ({money_text(price)})." + (" You feel almost human." if grade not in
-                                                                     ("squalid", "poor") else "")] + _bad_food(game, grade, rng)
+    paid = f" ({money_text(price)})" if price or not _board(game, npc) else ", and the innkeeper will take no coin"
+    return [f"{text[:1].upper()}{text[1:]}{paid}." + (" You feel almost human." if grade not in
+                                                      ("squalid", "poor") else "")] + _bad_food(game, grade, rng) + \
+        _sung(game, npc)
+
+
+def _board(game, npc) -> bool:
+    from realmwalker.game.story import consequences
+
+    return consequences.board_free(game, npc.settlement)
+
+
+def _sung(game, npc) -> list[str]:
+    from realmwalker.game.story import consequences
+
+    return consequences.song_at_inn(game, npc)
 
 
 def _stay(game, npc, svc, arg):

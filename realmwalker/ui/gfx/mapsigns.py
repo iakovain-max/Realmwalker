@@ -2,13 +2,22 @@
 seen from afar over its mark - smoke rising from a burning, burned or sacked town (darker, and lit from below at night,
 while it burns), a ring of tents and banners round a besieged one (in the besieger's colours; a beset one's in the
 horde's), the black flag of plague, a dragon's shadow circling over a town that pays it tribute, lanterns strung for a
-festival, a statue beside a town that keeps a memorial. Drawn every frame from the marks (world/marks.py) in a handful
+festival, a statue beside a town that keeps a memorial; and a threat's marks (G.1): crows wheeling over a beast's killing
+ground or an emptied village, cold lights about a haunted place, an outlaw's rag on a pole where the roads are robbed
+or the town pays the gang. Drawn every frame from the marks (world/marks.py) in a handful
 of small pictures made once; nothing is painted into the map's chunks, and nothing here changes the game. Still with
 Animations "calm" or "off".
 
     signed(s)                                      the marks of s that show on the map, strongest first
     under(canvas, game, places, now, tint)         what stands behind the towns' marks (the far tents, a fire's glow)
     over(canvas, game, places, now, tint)          what stands before them (smoke, flags, the near tents, lanterns)
+    hosts(canvas, game, columns, now, tint)        hosts on the roads (G.7): a short column of figures (three to
+                                                   seven, by its strength, dolls of its own creatures) behind its
+                                                   banner, with a little dust; refugees without a banner
+    founded(canvas, game, camps, now, tint)        founded camps (G.9): a camp's picture by its stage, larger
+                                                   than any town mark, its realm's banners, a fire's smoke
+    reaches(canvas, game, ox, oy, ppc, now, tint)  a known threat's reach (G.8): its country washed grey, red or under
+                                                   mist, a soft picture kept by the threat's reach and stage
 
 `places` is [(settlement, x, y, size, alpha)]: the mark's rectangle on the screen (x, y its top left corner, size its
 side in pixels), as WorldView.draw lays it, and how clearly it is seen (1 explored, 0.6 only known).
@@ -24,10 +33,23 @@ import numpy as np
 from realmwalker.ui.gfx.scene import Image, Lines
 
 SMOKE = ("burning", "sacked", "burned")  # one column of smoke a town, the strongest of these
-SHOWN = SMOKE + ("siege", "beset", "plague", "tribute", "festival", "memorial")
+SHOWN = SMOKE + ("siege", "beset", "plague", "tribute", "festival", "memorial", "emptied", "beast", "haunted",
+                 "extorted", "bled")
+CROWS = ("emptied", "beast")  # one flight of crows a town, the first of these (G.1: a threat's marks)
+RAGS = ("extorted", "bled")  # one outlaw's rag a town
+RAG_RGB = (128, 30, 26)
+WISP_RGB = (150, 230, 200)
 BESET_RGB = (120, 34, 30)  # a horde has no realm's colours: its banners are old blood
 SMALLEST = 24.0  # pixels: signs round a smaller mark are laid as round one this big
 LANTERNS = ((236, 92, 60), (248, 204, 90), (120, 200, 120), (236, 140, 70), (150, 170, 240))
+
+# A threat's reach washed on the map (G.8): colour, most opacity, how ragged its edge, whether it drifts.
+WASHES = {
+    "grey": ((58, 58, 64), 110, 0.30, False),
+    "red": ((140, 28, 22), 100, 0.25, False),
+    "mist": ((222, 226, 232), 145, 0.45, True),
+}
+WASH_PX = 4  # pixels a square in a wash's picture (drawn soft over the map)
 
 # How each column of smoke looks: puffs at once, rate (columns a second), colour, opacity, how high and how wide.
 SMOKE_LOOK = {
@@ -40,8 +62,11 @@ SMOKE_LOOK = {
 def signed(s) -> list[str]:
     st = s.status
     out = [m for m in SHOWN if st.get(m) is not None and st.get(m) is not False]
-    smoke = [m for m in out if m in SMOKE]
-    return [m for m in out if m not in SMOKE or m == (smoke[0] if smoke else None)]
+    keep = []
+    for group in (SMOKE, CROWS, RAGS):  # (the strongest of each kind only)
+        first = next((m for m in out if m in group), None)
+        keep += [m for m in out if m in group and m != first]
+    return [m for m in out if m not in keep]
 
 
 def _seed(s) -> float:
@@ -133,10 +158,223 @@ def over(canvas, game, places, now: float, tint) -> None:
                 _shadow(canvas, s, x, y, size, a, t)
             elif mark == "festival":
                 _lanterns(canvas, s, x, y, size, a, tint, t, animate, night)
+            elif mark in CROWS:
+                _crows(canvas, s, x, y, size, a, tint, t, 5 if mark == "emptied" else 3)
+            elif mark == "haunted":
+                _wisps(canvas, s, x, y, size, a, t, night)
+            elif mark in RAGS:
+                h = max(9.0, size * 0.48)
+                w = h * 0.62
+                frame = int(t * 1.7 + _seed(s) * 2) % 2 if animate else 0
+                canvas.under(Image(("sign", "rag", frame), lambda f=frame: _rag(f),
+                                   (x + size * 0.02 - w * 0.2, y + size * 0.55 - h, w, h),
+                                   rgba=_lit(tint, a, RAG_RGB), smooth=False))
             elif mark == "memorial":
                 h = max(9.0, size * 0.42)
                 canvas.under(Image(("sign", "statue"), _statue, (x - h * 0.2, y + size * 0.92 - h, h * 0.64, h),
                                    rgba=_lit(tint, a), smooth=False))
+
+
+DUST_RGB = (168, 146, 112)
+_HOST_PARTS: dict = {}  # (creature id, figure, id(tables)) -> its doll's parts (the same few, every frame)
+
+
+def _host_parts(game, atlas, def_id: str, i: int):
+    from realmwalker.ui.gfx import dolls
+
+    key = (def_id, i % 3, id(game.tables), id(atlas))
+    parts = _HOST_PARTS.get(key)
+    if parts is None:
+        parts = dolls.creature(def_id, game.tables, f"host/{def_id}/{i % 3}", atlas=atlas)
+        _HOST_PARTS[key] = parts
+    return parts
+
+
+def host_creature(tables, h: dict) -> str:
+    """Whom its column shows: the first of its encounter group (the dead's zombies, an army's soldiers), or
+    common folk for refugees."""
+    g = tables.creatures.encounters.get(h.get("group") or "")
+    if g and g.get("members"):
+        return str(g["members"][0][0])
+    return "commoner"
+
+
+def hosts(canvas, game, columns, now: float, tint) -> None:
+    """`columns` is [(host, x, y, ppc, alpha)]: the screen point of its square's middle foot, the map's pixels a
+    square, how clearly it is seen."""
+    from realmwalker.ui.gfx import dolls
+    from realmwalker.world import hosts as host_rules
+
+    animate = canvas.gfx.ambient
+    t = now if animate else 0.0
+    atlas = canvas.gfx.atlas
+    light = (tint[0] / 255, tint[1] / 255, tint[2] / 255)
+    for h, x, y, ppc, a in columns:
+        fs = max(10.0, ppc * 0.95)
+        n = host_rules.figures(h)
+        _, _, dx = host_rules.heading(h)
+        back = -1.0 if dx > 0 else 1.0  # (the column trails behind the way it goes)
+        gap = fs * 0.42
+        who = host_creature(game.tables, h)
+        seed = (int(h["id"][1:]) * 0.618034) % 1.0
+        for k in range(3):  # dust behind it
+            p = (t * 0.25 + k / 3 + seed) % 1.0 if animate else k / 3
+            r = fs * (0.25 + 0.35 * p)
+            px = x + back * (gap * (n - 0.5) + fs * 0.3 * p)
+            py = y - fs * 0.15 - fs * 0.3 * p
+            canvas.under(Image(("sign", "puff", k), lambda v=k: _puff(v), (px - r, py - r, 2 * r, 2 * r),
+                               rgba=_lit(tint, a, DUST_RGB, int(150 * (1.0 - p)))))
+        for i in reversed(range(n)):  # the far end first, the leader last (in front)
+            bob = math.sin(t * 6.0 + i * 1.3) * fs * 0.03 if animate else 0.0
+            px = x + back * gap * i - fs / 2
+            py = y - fs * (0.96 + 0.06 * (i % 2)) + bob
+            cmd = dolls.draw(atlas, _host_parts(game, atlas, who, i), px, py, fs, light, a)
+            if cmd is not None:
+                canvas.under(cmd)
+        if h["kind"] != "refugees":  # its banner, carried before it
+            f = game.world.factions.get(h["faction"]) if h["faction"] >= 0 else None
+            colour = tuple(f.color) if f is not None else BESET_RGB
+            bw, bh = fs * 0.42, fs * 1.0
+            canvas.under(Image(("sign", "banner"), _banner, (x - back * fs * 0.32 - bw * 0.2, y - bh * 1.15, bw, bh),
+                               rgba=_lit(tint, a, colour), smooth=False))
+
+
+CAMP_W, CAMP_H = 36, 28  # a founded camp's picture (G.9), in its own pixels
+CANVAS = (232, 222, 196, 255)
+CANVAS_SHADE = (184, 170, 140, 255)
+FORGE_RGB = (96, 92, 90)
+
+
+def founded(canvas, game, camps, now: float, tint) -> None:
+    """Founded camps (G.9): `camps` is [(settlement, x, y, size, alpha)], the box the camp stands in. One picture by
+    its stage (rows of tents; then a palisade round tents and timber halls, smoke from the forge), its realm's banners
+    over it, a fire's smoke rising with Animations on."""
+    from realmwalker.world import founding
+
+    animate = canvas.gfx.ambient
+    t = now if animate else 0.0
+    for s, x, y, size, a in camps:
+        stage = min(1, founding.stage_of(game.world, s) or 0)
+        h = size * CAMP_H / CAMP_W
+        top = y + size - h
+        canvas.under(Image(("sign", "camp", stage), lambda st=stage: camp_picture(st), (x, top, size, h),
+                           rgba=_lit(tint, a), smooth=False))
+        f = game.world.factions.get(s.owner)
+        colour = tuple(f.color) if f is not None else (160, 40, 36)
+        k = size / CAMP_W
+        poles = ((17.5, 3.0),) if stage == 0 else ((17.5, 1.0), (15.0, 21.0), (21.0, 21.0))
+        for px, py in poles:
+            bw, bh = 6 * k, 11 * k
+            canvas.under(Image(("sign", "banner"), _banner, (x + px * k, top + py * k - bh * 0.25, bw, bh),
+                               rgba=_lit(tint, a, colour), smooth=False))
+        seed = _seed(s)
+        fires = ((16.0, 17.0),) if stage == 0 else ((16.0, 17.0), (26.0, 4.0))
+        for j, (fx_, fy_) in enumerate(fires):  # the cook fire's smoke; the forge's, darker, in a fortified camp
+            rgb = (150, 146, 140) if j == 0 else FORGE_RGB
+            for i in range(3):
+                p = (t * 0.2 + i / 3 + seed + j * 0.3) % 1.0 if animate else (i + 1) / 4
+                r = size * (0.05 + 0.1 * p)
+                cx = x + fx_ * k + size * 0.08 * p
+                cy = top + fy_ * k - size * 0.45 * p
+                canvas.under(Image(("sign", "puff", i), lambda v=i: _puff(v), (cx - r, cy - r, 2 * r, 2 * r),
+                                   rgba=_lit(tint, a, rgb, int(170 * (1.0 - p)))))
+
+
+@lru_cache(maxsize=2)
+def camp_picture(stage: int) -> np.ndarray:
+    """A camp seen from afar, in sharp pixels: rows of canvas tents round a fire (stage 0); behind a palisade of
+    stakes, with two timber halls and a forge among the tents (stage 1)."""
+    pic = np.zeros((CAMP_H, CAMP_W, 4), np.uint8)
+
+    def put(rows, x0, y0, pal):
+        for dy, row in enumerate(rows):
+            for dx, ch in enumerate(row):
+                if ch in pal and 0 <= y0 + dy < CAMP_H and 0 <= x0 + dx < CAMP_W:
+                    pic[y0 + dy, x0 + dx] = pal[ch]
+
+    tent = ("...#...", "..#w#..", ".#wws#.", "#wwdss#", "#######")
+    hall = (".########.", "#rrrrrrrr#", "#RRRRRRRR#", "#llllllll#", "#ll#dd#ll#", "##########")
+    pal = {"#": INK, "w": CANVAS, "s": CANVAS_SHADE, "d": (74, 52, 36, 255), "r": (122, 84, 52, 255),
+           "R": (98, 66, 42, 255), "l": (150, 108, 68, 255)}
+    if stage == 0:
+        spots = ((3, 9), (11, 7), (21, 7), (28, 9), (5, 15), (24, 15), (9, 21), (17, 21), (26, 21))
+        halls = ()
+    else:
+        spots = ((5, 13), (12, 12), (24, 12), (8, 19), (19, 19))
+        halls = ((5, 6), (19, 6))
+        yy, xx = np.mgrid[0:CAMP_H, 0:CAMP_W]
+        d = ((xx - 17.5) / 16.5) ** 2 + ((yy - 15.5) / 11.0) ** 2
+        ring = (d <= 1.0) & (d > 0.78)
+        gate = (np.abs(xx - 17.5) < 2.6) & (yy > 20)
+        stake = ring & ~gate
+        pic[stake] = (128, 90, 56, 255)
+        tips = stake & ~np.roll(stake, 1, 0)
+        pic[tips] = INK
+        pic[stake & (xx % 2 == 0) & ~tips] = (104, 72, 44, 255)
+    for hx, hy in halls:
+        put(hall, hx, hy, pal)
+    if stage:
+        put(("#.#", "###"), 25, 4, {"#": (70, 66, 64, 255)})  # (the forge's chimney stones, on its hall)
+    for tx, ty in spots:
+        put(tent, tx, ty, pal)
+    pic[17:19, 15:18] = (226, 120, 50, 255)  # the fire in the middle
+    pic[18, 16] = (250, 210, 110, 255)
+    return pic
+
+
+def reaches(canvas, game, ox: float, oy: float, ppc: float, now: float, tint) -> None:
+    """Every known threat's reach (story.known_reaches) washed over the painted country, under the fog: one soft
+    picture a threat, made once for its key (its reach and stage), laid over the squares it touches. Mist breathes
+    slowly with Animations on."""
+    from realmwalker.game import story
+
+    ambient = canvas.gfx.ambient
+    for r in story.known_reaches(game):
+        rgb, most, rag, drifts = WASHES.get(r["wash"], WASHES["grey"])
+        side = 2 * r["r"] + 1
+        x0, y0 = r["x"] - r["r"], r["y"] - r["r"]
+        alpha = r["strength"]
+        if drifts and ambient:
+            alpha *= 0.85 + 0.15 * math.sin(now * 0.5 + _seed_of(r["id"]))
+        # (only the part on the world: the margin round a small world stays bare)
+        ax, ay = max(0, x0), max(0, y0)
+        bx, by = min(game.world.width, x0 + side), min(game.world.height, y0 + side)
+        if bx <= ax or by <= ay:
+            continue
+        src = ((ax - x0) * WASH_PX, (ay - y0) * WASH_PX, (bx - ax) * WASH_PX, (by - ay) * WASH_PX)
+        canvas.under(Image(("reach",) + tuple(r["key"]),
+                           lambda r=r, rgb=rgb, most=most, rag=rag: wash_picture(r["id"], r["r"], rgb, most, rag),
+                           (ox + ax * ppc, oy + ay * ppc, (bx - ax) * ppc, (by - ay) * ppc), src=src,
+                           rgba=(*tint, max(0, min(255, int(255 * alpha)))), smooth=True))
+
+
+def _seed_of(tid: str) -> float:
+    return (sum(ord(c) * 31 ** i for i, c in enumerate(tid)) % 997) / 997 * math.tau
+
+
+def wash_picture(tid: str, radius: int, rgb, most: int, rag: float) -> np.ndarray:
+    """A reach's wash: (h, w, 4), WASH_PX pixels a square, full in the middle, fading to nothing at its edge, the
+    edge ragged by a coarse noise fixed by the threat's id (the same picture for the same threat, every time)."""
+    side = (2 * radius + 1) * WASH_PX
+    rng = np.random.default_rng(int(_seed_of(tid) * 1000) + radius)
+    coarse = rng.random((radius // 2 + 3, radius // 2 + 3))
+    # bilinear value noise over the picture, 0..1
+    gy, gx = np.mgrid[0:side, 0:side].astype(np.float32) / side * (coarse.shape[0] - 2)
+    ix, iy = gx.astype(int), gy.astype(int)
+    fx, fy = gx - ix, gy - iy
+    n = (coarse[iy, ix] * (1 - fx) * (1 - fy) + coarse[iy, ix + 1] * fx * (1 - fy)
+         + coarse[iy + 1, ix] * (1 - fx) * fy + coarse[iy + 1, ix + 1] * fx * fy)
+    c = (side - 1) / 2
+    yy, xx = np.mgrid[0:side, 0:side].astype(np.float32)
+    raw = np.hypot(xx - c, yy - c) / (side / 2)  # 0 in the middle, 1 at the edge
+    d = raw + (n - 0.5) * 2 * rag
+    edge = np.clip((1.0 - d) / 0.45, 0.0, 1.0)
+    edge = edge * edge * (3 - 2 * edge) * np.clip((1.0 - raw) / 0.15, 0.0, 1.0)  # (never cut by the picture's side)
+    body = 0.55 + 0.45 * n  # never even: patches thicker and thinner
+    out = np.zeros((side, side, 4), np.uint8)
+    out[..., :3] = rgb
+    out[..., 3] = np.clip(edge * body * most, 0, 255).astype(np.uint8)
+    return out
 
 
 def _smoke(canvas, s, x, y, size, a, tint, t, mark, night) -> None:
@@ -170,6 +408,36 @@ def _shadow(canvas, s, x, y, size, a, t) -> None:
     canvas.under(Image(("sign", "dragon_shadow"), _dragon, (px - w / 2, py - h / 2, w, h), rgba=(255, 255, 255,
                                                                                                 int(105 * a)),
                        angle=heading))
+
+
+def _crows(canvas, s, x, y, size, a, tint, t, n: int) -> None:
+    """Crows wheeling over a place where the dead lie unburied (a beast's killing ground, a village emptied)."""
+    seed = _seed(s)
+    cx, cy = x + size / 2, y - size * 0.05
+    bw = max(4.0, size * 0.16)
+    for i in range(n):
+        ang = t * (0.55 + 0.08 * i) + seed * math.tau + math.tau * i / n
+        rx, ry = size * (0.38 + 0.07 * (i % 3)), size * (0.16 + 0.03 * (i % 2))
+        px, py = cx + math.cos(ang) * rx, cy + math.sin(ang) * ry - size * 0.05 * (i % 2)
+        frame = int(t * 4.0 + i) % 2 if t else i % 2
+        canvas.under(Image(("sign", "crow", frame), lambda f=frame: _crow(f), (px - bw / 2, py - bw * 0.3, bw, bw * 0.6),
+                           rgba=_lit(tint, a, (255, 255, 255), 235), smooth=False))
+
+
+def _wisps(canvas, s, x, y, size, a, t, night) -> None:
+    """Cold lights going slowly about a haunted place, the brighter the darker the hour."""
+    seed = _seed(s)
+    for i in range(3):
+        k = seed * 7 + i * 2.1
+        px = x + size * (0.2 + 0.6 * ((math.sin(t * 0.21 + k) + 1) / 2))
+        py = y + size * (0.45 + 0.25 * math.sin(t * 0.33 + k * 1.7)) - size * 0.1 * i
+        pulse = 0.65 + 0.35 * math.sin(t * 1.9 + k * 3) if t else 0.8
+        g = max(6.0, size * 0.34)
+        canvas.under(Image(("sign", "wisp"), _glow, (px - g / 2, py - g / 2, g, g),
+                           rgba=(*WISP_RGB, int((50 + 150 * night) * pulse * a))))
+        d = max(2.0, size * 0.06)
+        canvas.under(Image(("sign", "wisp"), _glow, (px - d, py - d, 2 * d, 2 * d),
+                           rgba=(220, 255, 240, int((110 + 140 * night) * pulse * a))))
 
 
 def _lanterns(canvas, s, x, y, size, a, tint, t, animate, night) -> None:
@@ -248,6 +516,22 @@ def _black_flag(frame: int):
     cloth = (("#bbbbb.", "#bbbbbb", "#bbbbg.", "#bbbb..", "#bb...."),
              ("#bbbb..", "#bbbbbb", "#bbbbbg", "#bbbb..", "#b....."))[frame]
     return _grid(cloth + ("#......",) * 6, {"#": (70, 58, 48, 255), "b": (20, 18, 20, 255), "g": (44, 40, 42, 255)})
+
+
+@lru_cache(maxsize=2)
+def _crow(frame: int):
+    """A crow from below, its wings up or down."""
+    rows = (("b.......b", ".bb...bb.", "...bbb...", "....b...."),
+            (".........", "...bbb...", "bbbbbbbbb", "b...b...b"))[frame]
+    return _grid(rows, {"b": (22, 20, 24, 255)})
+
+
+@lru_cache(maxsize=2)
+def _rag(frame: int):
+    """A pole with a torn rag on it, the outlaws' (white, tinted to old blood as it is drawn)."""
+    cloth = (("#cccc.", "#ccckc", "#cc.c.", "#c.c..", "#c...."),
+             ("#ccc..", "#cccck", "#ccc.c", "#c.c..", "#.c..."))[frame]
+    return _grid(cloth + ("#.....",) * 6, {"#": (60, 52, 46, 255), "c": (255, 255, 255, 255), "k": (200, 200, 200, 255)})
 
 
 @lru_cache(maxsize=1)

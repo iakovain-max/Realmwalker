@@ -1,0 +1,76 @@
+{
+  "_comment": "Lands made while you play (Part G.6, world/reshape.py): a god's rift and its ledges, the blight round a risen king's barrow, a dragon's scorched fields, drowned country and a fallen star's crater. Appended to a world's biome_ids when first made.",
+  "biomes": {
+    "rift": {
+      "name": "the rift", "family": "mountains", "move_hours": 0, "passable": false,
+      "local": {"ground": [["chasm", 1]], "trees": 0, "tree_types": [], "rocks": 0, "bushes": 0, "water": 0},
+      "descriptions": [
+        "The ground stops. Below, a long way below, something glows a dull red, and the air coming up smells of hot stone.",
+        "A crack in the world, wider than a river and deeper than anyone has let down a rope. Nothing grows on its lips.",
+        "The rift: raw rock torn open, and a warm wind breathing out of it that sets the teeth on edge.",
+        "Here the land was split like a loaf. The far edge is close enough to throw a stone to, and there is no way over.",
+        "A gorge with no river in it, only a red light far down and a sound like breathing.",
+        "The earth lies open here, its broken edges still sharp, as if the blow fell last week and not long ago."
+      ]
+    },
+    "rift_ledge": {
+      "name": "a ledge over the rift", "family": "mountains", "move_hours": 3.5, "passable": true,
+      "local": {"ground": [["rock_floor", 4], ["gravel", 2], ["red_rock", 1]], "trees": 0, "tree_types": [], "rocks": 0.06, "bushes": 0, "water": 0},
+      "descriptions": [
+        "A shelf of rock has held where the rest fell away: a way over the rift, if you keep to the middle and do not look down.",
+        "Here the crack narrows to a lip of stone two strides wide. Someone has piled cairns at either end, and scratched prayers on them.",
+        "A tongue of rock runs out across the rift and meets the far side. It shifts under your boots, a little, now and then.",
+        "The only crossing for miles: a broken ledge, and the red light glowing up between the cracks in it.",
+        "A ledge where the rift pinches shut. Stones roll off its edge as you pass and you never hear them land."
+      ]
+    },
+    "blighted": {
+      "name": "blighted land", "family": "plains", "move_hours": 1.2, "passable": true,
+      "local": {"ground": [["dry_earth", 4], ["dirt", 3], ["dry_grass", 2]], "trees": 0.03, "tree_types": ["dead_tree"], "rocks": 0.02, "bushes": 0.005, "water": 0.0, "scatter": [["bones", 0.004]]},
+      "descriptions": [
+        "Everything here has died at once: grass gone grey, trees standing bare in summer, not a bird anywhere.",
+        "A dead country. The leaves lie where they fell, and they do not rot, and nothing comes to eat them.",
+        "Grey grass that breaks underfoot like old straw, and the trees bare and silver, and a silence over all of it.",
+        "The land is sick. The streams run clear and nothing drinks from them; the fields have gone to dust in their rows.",
+        "Ash-grey country, dead to the roots, and a cold in the air that the sun does not lift.",
+        "Here the blight has taken hold: the trees are dead, the hedges are dead, and the crows will not settle."
+      ]
+    },
+    "scorched_land": {
+      "name": "scorched country", "family": "hills", "move_hours": 1.3, "passable": true,
+      "local": {"ground": [["scorched", 4], ["ash", 3], ["dirt", 1]], "trees": 0.02, "tree_types": ["dead_tree"], "rocks": 0.03, "bushes": 0, "water": 0},
+      "descriptions": [
+        "Burned country, black to the horizon: stumps, ash, a farm's chimney standing alone where the house was.",
+        "Fire came this way from the sky. The fields are ash, the hedges charcoal, and the smell of it will not leave your clothes.",
+        "Black earth and grey drifts, and here and there the burned shape of a sheep that did not run fast enough.",
+        "The dragon's road: a swathe of country burned bare, the stones split by the heat, nothing yet growing back.",
+        "Scorched land, crusted and cracked. The wind lifts the ash in little whirls that follow you a while and die.",
+        "Everything that would burn has burned. What is left is stone, and soot, and a few black trees like hands."
+      ]
+    },
+    "drowned": {
+      "name": "drowned country", "family": "marsh", "move_hours": 3.4, "passable": true,
+      "local": {"ground": [["shallow_water", 5], ["mud", 3], ["marsh_reeds", 1]], "trees": 0.03, "tree_types": ["dead_tree"], "rocks": 0, "bushes": 0, "water": 0.4},
+      "descriptions": [
+        "The land has gone under: fields become a lake knee-deep, hedges standing out of it, a roof-ridge here and there.",
+        "Drowned country. The water is brown and still, and the tops of fence-posts mark where the roads used to run.",
+        "A flood that never went down. Dead trees stand in it to their waists, and the frogs have the place to themselves.",
+        "Water over everything, shallow and cold, and under it the furrows of fields nobody will plough again.",
+        "The valley is a mere now. You wade where carts once went, and the mud takes your boots at every step.",
+        "Grey water to the knees and a drowned church tower standing up out of it, its bell long fallen."
+      ]
+    },
+    "crater": {
+      "name": "the crater's rim", "family": "hills", "move_hours": 2.4, "passable": true,
+      "local": {"ground": [["ash", 3], ["rubble", 3], ["basalt", 2], ["scorched", 2]], "trees": 0.005, "tree_types": ["dead_tree"], "rocks": 0.08, "bushes": 0, "water": 0},
+      "descriptions": [
+        "The ground rises to a lip of broken rock, and beyond it falls away into the bowl where the star came down.",
+        "A crater's rim: the earth thrown up in a ring, glassy here and there where the heat melted it.",
+        "Everything here was flung outwards: boulders, trees laid flat in rows all pointing away from the middle.",
+        "Torn and heaped ground, scorched black, and in the stones a glint like slag from a smith's hearth.",
+        "The rim of the great pit, still warm to the touch, they say, on the coldest morning.",
+        "A ring of wrecked country round the place where the sky fell, and the grass only now creeping back."
+      ]
+    }
+  }
+}
