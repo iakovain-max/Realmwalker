@@ -619,7 +619,7 @@ change (every new record is optional). Decisions: a kingdom never falls to a tal
 renamed (a town keeps its name); a ruin spares the temple's building (the survivors gather there); the dead and the
 fled stay so (newcomers replace them, they do not come back); a title from a tale ignores the standing and fame
 thresholds but not "once a realm".
-Checks: (pending).
+Checks: full suite twice (the first run: only the known turn-time tests under load, enemy casters 3 and 24-1, which pass alone, and test_gear's papers test, fixed: `recommends` reads any npc-like; the second run all green), autoplay OK twice, smoke OK. The fresh review's fixes: an occupation whose time runs out gives the town back (marks.age leaves `occupied` to Politics.expire_status), `free` with nobody left to give it to hands it to the occupier's liege or no lord, a tale never kills or unseats a crown (kingdom, empire) nor ruins or occupies a city or a great one, no second occupation over the first, the person you are talking to is spared a ruin's fates, the dead without a fate leave homes for newcomers, the meal's free-board words.
 G.2 (2026-11-06, realmwalker-b): world/threats.py "waking (G.2)" (its docstring has it all). `threats.wake(world,
 tables, t, rng, day=, why=, force=)` is the one door from dormant to stirring (keeps `t["woke"]` {why, day}; minds
 `room_for` unless forced); the weekly chance in `advance` goes through it (why "chance"). Triggers: threats.json
