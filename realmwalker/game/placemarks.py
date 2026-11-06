@@ -251,7 +251,42 @@ def _streets(game, lm, s, mark: str, spec: dict, rec: dict, clear: set) -> None:
         _set(lm, rec, x, y, to)
         walk[x, y] = bool(T.walk[T.index[to]])
         placed.append((x, y))
+    if want:  # (a close little place has no square open all round: one that cuts no way off will do, G.3)
+        _props_squeezed(game, lm, rec, order, want, walk, placed)
     rec["props"] = [list(c) for c in placed]  # (where they stand: a monument's Look words, story/consequences)
+
+
+def _props_squeezed(game, lm, rec: dict, order, want: list, walk, placed: list, tries: int = 60) -> None:
+    """Props still waiting stand on street squares whose blocking leaves every other square reached as before."""
+    T = game.tables.terrain
+    doors = np.zeros_like(walk)
+    remap = np.array([T.index.get(n, 0) for n in lm.terrain_ids], np.int32)
+    ids = remap[lm.terrain]
+    doors |= np.isin(ids, [T.index[n] for n in DOORS + ("gate_open",) if n in T.index])
+    start = tuple(lm.entry)
+    for x, y in order:
+        if not want or tries <= 0:
+            break
+        if (x, y) == start or not walk[x, y] or lm.building_at(x, y) is not None or \
+                any(abs(x - px) <= 1 and abs(y - py) <= 1 for px, py in placed):
+            continue
+        if any(doors[x + dx, y + dy] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+               if 0 <= x + dx < lm.width and 0 <= y + dy < lm.height):
+            continue  # (never before a door)
+        to = want[0]
+        if to not in T.index:
+            want.pop(0)
+            continue
+        tries -= 1
+        base = walk | doors
+        before = int(_reach(base, start).sum())
+        base[x, y] = False
+        if int(_reach(base, start).sum()) != before - 1:
+            continue
+        want.pop(0)
+        _set(lm, rec, x, y, to)
+        walk[x, y] = bool(T.walk[T.index[to]])
+        placed.append((x, y))
 
 
 def _reach(walk, start) -> np.ndarray:

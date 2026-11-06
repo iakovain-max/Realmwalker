@@ -523,6 +523,9 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.world import threats
 
     lives.ensure(game, settlement.id)  # (a town peopled before lives were kept)
+    from realmwalker.game.story import consequences
+
+    consequences.on_visit(game, settlement)  # (a fallen town's people, a rebuilding one's newcomers, your rent: G.3)
     from realmwalker.game.story import goals
 
     goals.notify(game, "town")  # (into its streets: a situation's goals, C.5)

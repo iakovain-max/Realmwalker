@@ -1,0 +1,89 @@
+{
+  "_comment": "Expansion 6 G.3: what the world keeps of a tale (game/story/consequences.py): the numbers of the ruin in full, the townsfolk's fates, newcomers, a holding's rent, a letter's weight, a song's reach; and the words of monuments, new names, relics, laws, holdings, letters and songs at inns. {hero} is the hero's first name; {villain}, {villain_short}, {beast}, {home} and {town} are the tale's.",
+  "consequences": {
+    "ruin": {"floor": 0.1, "least": 5},
+    "fates": {"ruined_stay": 0.2, "ruined_die": 0.45, "emptied_stay": 0.35, "emptied_die": 0.15},
+    "rebuild_days": 240,
+    "newcomers_a_visit": 6,
+    "land": {"rent": [300, 600], "per_tier": 200},
+    "letter_bonus": 6,
+    "song_reach": 30,
+    "words": {
+      "monument_beast": [
+        "Here {hero} killed {villain_short}, that took our sheep and our children. Let no one forget either.",
+        "To {hero}, who went into the dark at {home} and came back with {villain_short}'s head.",
+        "{villain_short} is dead. Raised by the people of {town} in thanks to {hero}.",
+        "For those {villain_short} took, and for {hero}, who ended it."
+      ],
+      "monument_gibbet": [
+        "An iron cage hangs from the gibbet, and in it what is left of a captain of {gang}. A board beneath says: so end all who rob these roads.",
+        "The cage on the gibbet creaks in the wind. Somebody has chalked on the post: taken by {hero}, hanged by the lord.",
+        "A gibbet with a cage, and a captain of {gang} in it. The crows have been at him; the carters touch their caps as they pass."
+      ],
+      "monument_risen": [
+        "Here {villain_short} sleeps at last. {hero} laid {him} down. Light a candle, and walk on.",
+        "A shrine to the dead of {home}, who walk no more. The people of {town} keep its candle lit.",
+        "For the {king} who walked, and for {hero}, who sent {him} back to the dark.",
+        "Rest. Cut beneath, in a rougher hand: and stay there."
+      ],
+      "rename_beast": [
+        "{villain_short}'s Grave",
+        "{villain_short}'s End",
+        "{hero}'s Hollow",
+        "the Den of {villain_short}'s Bane"
+      ],
+      "relic_beast": [
+        "tooth of {villain_short}",
+        "claw of {villain_short}",
+        "tusk of {villain_short}, as long as a hand"
+      ],
+      "relic_risen": [
+        "grave-crown of {villain_short}",
+        "rusted sword of the {king} who walked",
+        "ring of {villain_short}, cold to the touch"
+      ],
+      "relic_risen_hero": [
+        "broken grave-crown of {villain_short}",
+        "black ring of {villain_short}, that no longer burns",
+        "shard of {villain_short}'s sword"
+      ],
+      "cause_failed": [
+        "put aside by their own people, who said they did nothing while {town} suffered",
+        "stepped down, broken by what happened to {town}"
+      ],
+      "cause_risen": [
+        "taken by the dead of {home}, on the night {town} fell",
+        "dragged into the dark by {villain_short}'s dead"
+      ],
+      "ruin_news": [
+        "{place} has fallen. The few who are left live in the shells of their houses, and bury their dead.",
+        "{place} is a ruin now. Those who could fled down the roads; the rest are in the ground.",
+        "There is no town at {place} any more: roofless walls, open doors, new graves and a handful who stayed.",
+        "{place} fell, and nobody came. What is left would not fill a village."
+      ],
+      "law_harshness": [
+        "{realm} hardens its law: since the business with {gang}, justice in its lands is {value}.",
+        "In the lands of {realm} the gallows are busy now. Its justice is {value}, they say, and shamed into it.",
+        "{realm} has changed its law after {gang}: its judges are {value} now, and the roads are watched."
+      ],
+      "land_name": [
+        "a holding near {place}, with three farms and a mill",
+        "the manor of Hollin Garth, near {place}",
+        "a farmstead and its fields outside {place}",
+        "lands on the river by {place}, with tenants who pay on quarter days"
+      ],
+      "letter_line": [
+        "To all who serve {realm}: the bearer, {hero}, has done this realm a service it will not forget. Help them as you would help me.",
+        "Whoever reads this, in {realm}'s name: open your doors to {hero}, who did for {place} what we could not.",
+        "Let {hero} pass, and be given what they need. I answer for them myself.",
+        "The bearer is a friend of {realm}. Treat them as one, or answer to me."
+      ],
+      "song_at_inn": [
+        "After the meal {singer} sings {title}. The whole room knows the chorus; some of them glance at you.",
+        "Someone calls for {title}, and {singer} obliges. It is about you, more or less, and the room cheers the end.",
+        "{singer} sings {title} by the fire. They have made you taller in it, and braver; nobody asks you if it is true.",
+        "The room goes quiet for {title}. When {singer} is done, a man at the next table raises his cup to you."
+      ]
+    }
+  }
+}

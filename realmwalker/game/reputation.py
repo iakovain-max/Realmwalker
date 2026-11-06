@@ -360,8 +360,11 @@ def title_problem(game, realm) -> str | None:
     return None
 
 
-def grant_title(game, realm) -> str:
+def grant_title(game, realm, earned: bool = False) -> str:
+    """`earned`: a tale's ending honours you (Expansion 6 G.3): only a title already given by that realm stops it."""
     problem = title_problem(game, realm)
+    if earned and problem and not any(t.get("realm") == realm.id for t in game.renown.flags.get("titles", [])):
+        problem = None if realm.kind in game.tables.law["titles"]["names"] else problem
     if problem:
         return f"No title for you: {problem}."
     names = game.tables.law["titles"]["names"][realm.kind]

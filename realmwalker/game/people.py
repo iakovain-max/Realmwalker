@@ -834,6 +834,11 @@ def papers_impression(game, npc: NPC) -> int:
 
     if glamour.scripted(game):  # (Illusory Script: the letter shows each reader the seal they would honour)
         best["script"] = glamour.SCRIPT_IMPRESS
+    from realmwalker.game.story import consequences
+
+    letter = consequences.recommends(game, npc)  # (a letter of recommendation where its writer holds sway: G.3)
+    if letter:
+        best["letter"] = letter
     seen = game.renown.flags.get("seen_living_well")  # the best rooms in town (game/services.py, a wealthy stay)
     if seen and seen[0] == npc.settlement and game.world.time < seen[1] and IMPRESSED["high"](npc):
         best["high"] = best.get("high", 0) + int(seen[2])

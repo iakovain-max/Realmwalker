@@ -156,6 +156,11 @@ def describe_local(game: GameState, x: int, y: int) -> str:
     if (x, y) == (p.lx, p.ly):
         lines.append("<name>You are here.</>")
     lines.append(f"<fg>{cap(t['name'])}.</> {t['desc']}")
+    from realmwalker.game.story import consequences
+
+    carved = consequences.monument_look(game, lm, x, y)  # (what is cut in a monument: G.3)
+    if carved:
+        lines.append(carved)
     pile = lm.items.get((x, y))
     if pile:
         names = ", ".join(game.tables.items.name(i) for i in pile[:5])

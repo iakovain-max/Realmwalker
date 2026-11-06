@@ -1,5 +1,5 @@
 {
-  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold, a beast killed in a lord's great hunt, an outlaw's band broken by a lord's riders (G.2).",
+  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold, a beast killed in a lord's great hunt, an outlaw's band broken by a lord's riders (G.2), an occupied town freed (G.3).",
   "text": {
     "threat_hunted": [
       "{hero} brought {beast} down at last, in its lair at {home}, and came home with its head.",
@@ -42,6 +42,12 @@
       "{gang} is finished: {lord} sent soldiers to {home}, and {villain} swung for it before the week was out.",
       "Word from {area}: {lord}'s men took {home} by night, and the roads round {place} are free of {gang}.",
       "{villain} is dead on a rope, and {gang} scattered to the hills. {lord} has had enough of tolls on its roads."
+    ],
+    "occupation_ended": [
+      "{place} is free: those who held it by force are gone, and {holder} has it back.",
+      "The standards over {place} are down. {holder} rules there again, and the gallows in the square came down first.",
+      "Word from {place}: the occupiers are gone, and the town has gone back to {holder}.",
+      "{holder} holds {place} again. Its people took down the strangers' banners with their own hands."
     ]
   }
 }

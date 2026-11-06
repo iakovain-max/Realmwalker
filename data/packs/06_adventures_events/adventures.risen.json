@@ -198,7 +198,7 @@
         {
           "id": "bargained",
           "if": ["flag:bargain_taken"],
-          "ops": [["bargained", 60, 120], ["mark", "town", "haunted"], ["infamy", 3], ["history", "bargained", 2]],
+          "ops": [["bargained", 60, 120], ["mark", "town", "haunted"], ["infamy", 3], ["history", "bargained", 2], ["threat_grows"], ["ally_fate", "broke"]],
           "pages": {
             "place": [
               "{town} is spared, and does not feel spared. At night the dead stand at the fences, in their old ranks, facing the houses, and do not come in.",
@@ -226,7 +226,7 @@
         {
           "id": "laid_to_rest",
           "if": ["flag:laid"],
-          "ops": [["risen_laid"], ["danger", "home", -1], ["fame", 3]],
+          "ops": [["risen_laid"], ["danger", "home", -1], ["fame", 3], ["figure_rests"], ["status", "town", "haunted", "lift"], ["rebuild", "town"], ["monument", "town", "shrine", "monument_risen"], ["relic", "temple", "relic_risen"], ["song", "lament", 21, 42], ["standing", "town", 4], ["title", "town", 4]],
           "pages": {
             "place": [
               "{town} took the iron down from its doors at midsummer. The children go up past {home} to the berry bushes again, and nothing watches them.",
@@ -263,7 +263,7 @@
         {
           "id": "destroyed",
           "if": ["boss_dead", "key:anchor"],
-          "ops": [["risen_destroyed"], ["clear_site", "home"], ["danger", "home", -1], ["fame", 3]],
+          "ops": [["risen_destroyed"], ["clear_site", "home"], ["danger", "home", -1], ["fame", 3], ["status", "town", "haunted", "lift"], ["rebuild", "town"], ["monument", "town", "cairn", "monument_risen"], ["relic", "hero", "relic_risen_hero"], ["song", "ballad", 21, 42], ["title", "town", 4], ["land", "town", 4]],
           "pages": {
             "place": [
               "{town} burned what was left of {villain_short} on the green, and broke the crown with a smith's hammer, and threw the pieces in the river. Nobody sleeps badly in {town} now.",
@@ -325,7 +325,7 @@
         {
           "id": "doom",
           "if": ["scheme_done"],
-          "ops": [["fame", -1]],
+          "ops": [["fame", -1], ["status", "town", "cursed"], ["figure_dies", "lord:town", "cause_risen", 3], ["ruin", "town", 4], ["song", "lament", 30, 60]],
           "pages": {
             "place": [
               "{town} is empty. The dead walk its street at night, in their old ranks, and {villain} sits in the hall as if it were {his} own.",

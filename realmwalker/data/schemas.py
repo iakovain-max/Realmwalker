@@ -1565,6 +1565,19 @@ ADVENTURES = Obj({
     "words": Map(word_list(1, 400), optional=True),  # nested tables for the story's text (story/words.py)
     "epithets": Map(word_list(3, 40), optional=True),  # by tag
     "blueprints": Map(BLUEPRINT),
+    # (G.3) what the world keeps of a tale (story/consequences.py): the ruin's floor, the townsfolk's fates, newcomers,
+    # a holding's rent, a letter's weight, a song's reach
+    "consequences": Obj({
+        "ruin": Obj({"floor": Float(min=0.01, max=1), "least": Int(min=1, max=200)}),
+        "fates": Obj({"ruined_stay": Float(min=0, max=1), "ruined_die": Float(min=0, max=1),
+                      "emptied_stay": Float(min=0, max=1), "emptied_die": Float(min=0, max=1)}),
+        "rebuild_days": Int(min=7, max=3650),
+        "newcomers_a_visit": Int(min=1, max=40),
+        "land": Obj({"rent": List(Int(min=0, max=100000), min_items=2, max_items=2), "per_tier": Int(min=0, max=10000)}),
+        "letter_bonus": Int(min=0, max=20),
+        "song_reach": Int(min=1, max=200),
+        "words": Map(word_list(1, 400)),  # (each filled with its own tale's words: tests/test_consequences.py)
+    }, optional=True),
     # the first hour (story/opening.py, D.4): crisis, summons, terror; `kinds` of threat it fits (none: any), `near`
     # (the start town within the threat's reach or among its stakes), and extra weight by the hero's background
     "openings": Map(Obj({"weight": Int(min=0, max=20), "kinds": List(Str(max_len=30), optional=True),
