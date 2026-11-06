@@ -594,7 +594,12 @@ test_traitors' `_with_traitor` clears `from_by`. FORMAT_VERSION 24. Decisions: t
 tale's chapter needs no recruit); the Risen's waker stays a cultist lieutenant (the patron paid it: the design's "the
 waker's identity, sometimes the patron" as a hidden hand, not the same body, so the defeat step and the patron's town
 life never clash); the Beast's own rival is a beast-hunter beside the old hero kind (the design: "a glory-hunter").
-Checks: CHECKS_PLACEHOLDER
+Checks: full suite (only the known timing tests under load: enemy casters 1 and 3, tactics coverage wight; they
+pass alone), autoplay OK, smoke OK; story tests with storyplay 204/204. The fresh review's fixes: the hunter's prize
+without the rival's pronoun (prize words get only the tale's), {king} in the waker's lines, words.py gives "the gang"
+when the outlaw's faction is gone and "king" for a risen without a figure, the waker's tell fits a waker beaten but
+alive, `traitors._reason` always finds one. Not in F.5: a traitor among a situation's people; a rival as a
+townsperson you can visit.
 F.4 (2026-11-06, realmwalker-a): `game/story/reading.py` (its docstring has it all), data reading.json (its own
 data file, schema READING; tables.reading; keys starting "_" are comments, so the fallbacks are "any"/"default"),
 beats.reading.json (beat reading_offer, picture "reading"), people.json and dialogue.json pack fragments (job
