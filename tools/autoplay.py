@@ -364,6 +364,7 @@ def _check_adventures(game, fail) -> None:
     _check_lieutenants(game, fail)
     _check_allies(game, fail)
     _check_rivals(game, fail)
+    _check_threat_signs(game, fail)
     _check_secrets(game, fail)
     _check_reading(game, fail)
     _check_early(game, fail)
@@ -400,6 +401,21 @@ def _check_allies(game, fail) -> None:
             fail(f"{where}: joined, but not in the company under oath (nor carried, fallen)")
         if c is not None and (npc is None or not npc.alive):
             fail(f"{where}: with you, and dead")
+
+
+def _check_threat_signs(game, fail) -> None:
+    """Expansion 6 G.1: a threat's scenes were played only for stages of its own kind, each once; the step of the last
+    line on the land is not ahead of the walk."""
+    from realmwalker.world import threats
+
+    kinds = game.tables.threats.get("kinds", {})
+    for t in threats.records(game.world).values():
+        staged = t.get("staged", [])
+        ids = [st["id"] for st in kinds.get(t["kind"], {}).get("stages", [])]
+        if len(set(staged)) != len(staged) or any(s not in ids for s in staged):
+            fail(f"threat {t['id']}: scenes played for stages not its own, or twice ({staged})")
+    if int(game.renown.flags.get("land_sign", -1)) > int(game.player.steps):
+        fail("a threat's line on the land is ahead of the walk")
 
 
 def _check_rivals(game, fail) -> None:

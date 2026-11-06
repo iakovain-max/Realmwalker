@@ -120,10 +120,10 @@
             "Something has been at the fences."
           ],
           "overlay": [
-            "They hold their packs close and watch the hills, like people who have lately lost stock.",
-            "One of them has a scrap of fleece caught on his boot and does not seem to know it.",
-            "Their dog will not stop whining, and keeps its tail low towards {home}.",
-            "They speak of tracks they saw that morning, and do not quite look you in the eye while they do."
+            "They say they saw tracks on the road that morning, larger than any wolf's, and have looked over their shoulders since.",
+            "One of them asks whether you have heard of any beast in these hills, and watches your face while you answer.",
+            "They would sooner not speak of {home}, and glance towards it once and look away.",
+            "They mention that the dogs at the last place they stopped would not be quieted, and no one there could say why."
           ]
         },
         {
@@ -159,10 +159,10 @@
             "{villain} was in the lane again last night."
           ],
           "overlay": [
-            "Their eyes keep going to the tree line, and one has a hand on a knife he plainly does not often carry.",
-            "They are in a hurry to be indoors before dusk, and say so without being asked.",
-            "One of them wears a bloodied bandage, and tells of something that was neither man nor wolf.",
-            "They walk close together and talk too loudly, the way frightened people do."
+            "They ask whether you have heard of the killings hereabouts, and listen closely to the answer.",
+            "One of them makes a small sign over the heart whenever the trees close in on the road.",
+            "They mean to be under a roof before dusk, and say so more than once without being asked.",
+            "They tell you something took a person not far from here, and that the name whispered for it is {villain}."
           ],
           "roads": {
             "group": "wolf_pack",
@@ -207,10 +207,10 @@
             "Whatever lives in {home} has found a taste for us."
           ],
           "overlay": [
-            "They look thin and sleepless, and say they have not slept in a house for three nights.",
-            "They are carrying all they own, and want to be far from {area} before dark.",
-            "There is a smear of old blood on their cart, and none of them will say whose.",
-            "They keep to the middle of the road, away from the trees, and flinch at every sound from the hedge."
+            "They warn you not to be on this road after dark, and say they have seen what is left of those who were.",
+            "One of them says the country round {home} has gone quiet, no birds and no dogs, nothing at all.",
+            "They keep close together in the middle of the road, and start at every sound from the hedge.",
+            "They ask how far it is to the next place with a gate that shuts, and do not wait to hear the whole answer."
           ],
           "roads": {
             "group": "wolf_pack",
@@ -261,10 +261,10 @@
             "Don't look back at the hill, love."
           ],
           "overlay": [
-            "They are leaving, and have the look of people who will not be back.",
-            "All they own is on their backs, and they talk of nothing but how far the next village is from {home}.",
-            "Their children are silent, and one woman wears her good shawl, as if for a funeral.",
-            "They are heading away from {area} as fast as their feet will carry them, and do not mean to stop for you."
+            "They say no one will be left in {area} by winter, and speak as though it had already happened.",
+            "They will not stop to talk, and ask only that you turn back, since nothing ahead is worth the going.",
+            "One of them says that {villain} cannot be stopped, and that those who tried are not spoken of any more.",
+            "They look back along the road more than they look ahead, and none will say what they expect to see."
           ]
         }
       ],
@@ -328,10 +328,10 @@
             "They say {home} has been opened."
           ],
           "overlay": [
-            "They avoid looking towards {home}, and the eldest touches a lump of iron at his belt.",
-            "One of them says the dogs would not go into the lane that morning, and laughs badly.",
-            "There is cold sweat on their faces, though the day is not warm.",
-            "They speak low about lights they saw by night, and break off when you come near."
+            "They avoid looking towards {home}, and one of them touches a bit of iron at his belt.",
+            "One of them says the ground felt wrong underfoot a little way back, and laughs as if it were a joke.",
+            "They ask if you have seen lights on the hills by night, and look no easier when you say you have not.",
+            "They speak low about a cold mist they passed through that morning, and break off when you come near."
           ]
         },
         {
@@ -379,10 +379,10 @@
             "{villain} is awake. You can feel it."
           ],
           "overlay": [
+            "They say they saw figures standing at a crossroads last night, and did not wait to learn who they were.",
+            "One of them carries a lantern lit at midday and will not put it out.",
             "They watch the shadows between the trees as if expecting them to move.",
-            "One carries a lantern at midday and will not put it out.",
-            "They say something on the road last night bowed to them as they passed.",
-            "Grave-black mud clings to their boots, and none of them can say where from."
+            "They tell you the dead are abroad by night in {area}, and that you should be behind a barred door by dusk."
           ],
           "scene": "threat_wake"
         },
@@ -432,10 +432,10 @@
             "Half the street is gone, and no one sings."
           ],
           "overlay": [
-            "Hollow-eyed and grey, they look as though they have not slept since the first sleeper walked.",
-            "They are searching the roadside for a missing kinsman, and have been for days.",
-            "One keeps starting at nothing, and says there were more of them when they set out.",
-            "They have a cord tied wrist to wrist among them, so that none can wander in the night."
+            "They look hollow-eyed and grey, as people do who have kept watch through too many nights.",
+            "One of them asks if you have seen anyone walking the road alone by night, and does not say why.",
+            "They keep a cord tied from wrist to wrist as they walk, so that none can wander off in the dark.",
+            "They say sleepers have been getting up and walking out towards {home}, and that they will not sleep apart tonight."
           ],
           "scene": "threat_refugees"
         },
@@ -486,10 +486,10 @@
             "Gather the children. Gather them now."
           ],
           "overlay": [
-            "They are running, and do not stop to speak, only to point behind them towards {home}.",
-            "Dead leaves cling to their hair, and their eyes are those of people who saw an army that was not living.",
-            "Their cart is overloaded and their horse nearly dead; they have fled with everything but hope.",
-            "They say there is no road left in {area} that the dead have not walked."
+            "They are in a great hurry, and point back along the road towards {home} before they say a word.",
+            "One of them says they saw ranks of armoured figures on the far hill at dawn, and not one cast a shadow.",
+            "They tell you there is no safe road left in {area}, and advise you to turn back while you can.",
+            "They make no effort to hide their fear, and ask only which way the road is clear."
           ]
         }
       ],
@@ -556,9 +556,9 @@
             "{villain}'s men were at the ford again."
           ],
           "overlay": [
-            "They look like people who have paid once already and expect to pay again before the day is out.",
-            "They glance up at every ridge and tree line, and one has a purse hidden in his boot.",
-            "Their wagon is lighter than it should be, with a rope-cut where a crate stood.",
+            "They say there is a chain across the road ahead, and that men there will want a word with you.",
+            "One of them glances up at every ridge and tree line as they talk.",
+            "They ask which side you are on, and watch your hands while you answer.",
             "They say the road is not what it was, and that you will soon see why."
           ]
         },
@@ -604,10 +604,10 @@
             "{villain} has eyes in every yard."
           ],
           "overlay": [
-            "They keep their voices low, and glance at you as though weighing whether you ride with the gang.",
-            "They are anxious to be out of the open, and travel with their goods under sacking.",
-            "Two of the company have fresh cuts, and none of them will say how they were earned.",
-            "They have come the long way round to avoid the bend in the road, and the reason shows in their faces."
+            "They keep their voices low, and look at you as though weighing whether you ride with {villain}.",
+            "They say someone in the towns is passing word of who travels and when, and so they trust no stranger.",
+            "One of them says the lord's men have stopped coming this way, and nobody asks why.",
+            "They are anxious to be out of the open, and choose their words with care."
           ],
           "scene": "threat_robbed"
         },
@@ -656,9 +656,9 @@
           ],
           "overlay": [
             "They talk of riders in numbers they never saw before, and keep a nervous eye on the wood.",
-            "One of them wears a sash, newly torn, in the colours of no lord you know.",
+            "One of them says men are going up to {home} to join {villain}, and that it spreads like a fever.",
             "They say a patrol went by that morning and came back wounded, or did not come back.",
-            "They have the look of men who were robbed and thanked the robbers for leaving the horses."
+            "They ask whether you have heard of anyone standing against {villain}, and seem to doubt it."
           ],
           "scene": "threat_refugees"
         },
@@ -700,10 +700,10 @@
             "{villain}'s law is the only law now."
           ],
           "overlay": [
-            "They carry a chalked tally-stick, and say it is proof they have paid, for what it is worth.",
-            "They are polite and wary, and quick to name {villain} as the one who keeps this country in order.",
+            "They say the road is safe now if you know whom to pay, and the way they say it is no comfort.",
+            "They are polite and wary, and quick to name {villain} as the one who keeps order here.",
             "They offer no trouble and ask for none, with the flat look of people long past arguing.",
-            "They tell you the road is safe now, and the way they say it is no comfort."
+            "One of them says it is wiser not to ask what the law is in {area}, only to learn it."
           ]
         }
       ],

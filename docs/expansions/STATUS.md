@@ -571,10 +571,32 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.1 (*full sign sets for every threat
-kind's stages, as news, scenes, marks and map signs; overlays on road encounters, prices and the land's flavour*), on
-branch `dlc/06-adventures-events` (Parts A-F are on main). Read docs/expansions/06-adventures-events.md Part G,
-docs/ADVENTURES.md §5.1, §5.9, §5.19, §5.21, §8.13, §8.16, and the Part B notes below on marks and map signs.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.2 (*waking dormant threats: triggers,
+the Storyteller's need, chance; `seed_from` from every `Politics` method that can make one; threats in the
+interlude's "what changed"; the world's own endings for every kind*), on branch `dlc/06-adventures-events` (Parts A-F
+are on main). Read docs/expansions/06-adventures-events.md Part G, docs/ADVENTURES.md §5.1, and the G.1 and D.1 notes
+below.
+G.1 (2026-11-06, realmwalker-a): `game/story/signs.py` (its docstring has it all). Every stage of every threat kind
+(threats.json) has `signs` (news, as before) >= 4, `flavour` >= 4 (words on the land: `signs.on_the_land` after each
+overworld step in GameState's walk, behind `flavour(1)`, at most one line in LAND_GAP=30 steps (20 at rich), chance
+0.35, step kept in `renown.flags["land_sign"]`), `barks` >= 5 at <= 70 chars (`signs.bark` from townlife._words_for,
+one roll in BARK_SHARE=3, for npcs of a town in the threat's `stakes[:6]`), `overlay` >= 4 (`story.overlay` =
+`signs.overlay` from encounters.roll_encounter's ordinary path: one line after the intro, only for an all-humanoid
+band that is not hostile, only once the stage's effects are applied, nearest threat first), and an optional `scene`
+(scenes.signs.json: threat_mourning on beast killings, threat_wake on risen walking, threat_robbed on outlaw bleeding,
+threat_refugees on beast hunger / risen emptying / outlaw bold; `signs.on_enter_town` from story.on_enter_town after
+villain.seen_in_town, once a stage, kept in the threat's `staged`; check.py reports unknown scenes). The beast's
+killings and hunger stages have `roads` (wolf_pack, boost 1.5 / 2.0). Every non-doom stage after the first now has
+roads. Prices: marks.json `prices` {food, arms, other} on 14 marks, read by `economy.troubles_factor` for every mark
+(siege/famine/plague/sacked keep the old numbers, now as data; `economy.OLD_PRICES` only where a mark has none);
+`economy.dear_because` gives the labels, shown on the trade screen's head ("dear: ..."). Map signs
+(ui/gfx/mapsigns.py): SHOWN gains emptied, beast (crows wheeling: one flight a town, 5 for emptied, 3 for beast),
+haunted (cold lights, Image key "wisp"), extorted, bled (an outlaw's rag on a pole, RAG_RGB; one a town).
+Autoplay `_check_threat_signs`. tests/test_threat_signs.py (7), test_mapsigns covers the new marks. No save format
+change (the threat's `staged` list is optional). Decisions: overlays only on folk who mean no harm (the words are of
+people met on the road; hostile bands and beasts are their own story); the doom stages have no roads (a doom ends its
+threat at once); scenes ask nothing of the player (no hold, no talk). Words by two sonnet helpers, read over.
+CHECKS_PLACEHOLDER
 F.5 (2026-11-06, realmwalker-b): the full forms' cast. Rivals: a kind may say `blueprints` (only those tales) and
 `prize` (what it wants when there is no thing to fetch: `rivals.prize_name`); the own kinds `hunter` (beast),
 `graverobbers` (risen, relation -1), `captain` (outlaw), weight 5 against the others' 2-3; `decide` gives no rival when

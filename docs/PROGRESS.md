@@ -46,6 +46,28 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (afternoon): Adventures & Events Part G, task G.1 — a threat's signs, everywhere — branch `dlc/06-adventures-events`
+
+- **The country shows what is happening in it.** Walking near a threat now and then gives a line of what it has done
+  to the land, different at every stage (a ewe opened and left; a grave dug out from below; hoofprints going off
+  into the scrub). These lines follow the Text detail setting: with the least detail they are not shown.
+- **Its towns talk about it.** People in a threatened village say things as you pass ("Keep the children in after
+  dark."; "Tithe day tomorrow. Count the barley."), five sayings for each stage of each threat.
+- **Folk met on the road carry its shadow.** Travellers and pedlars met near a threat whose harm has begun get an
+  extra line in their meeting: a bloodied bandage, a lantern lit at midday, a tally-stick that proves they have paid.
+- **Small scenes in the streets.** At the stage where a threat begins to do harm, its villages show it once when you
+  walk in: the beast's dead carried in on a hurdle with a mourner keening; a priest blessing the doors while
+  someone tells of a buried father seen walking; a carter at the gate, robbed and beaten. When people begin to flee,
+  refugees come in at the gate, and one of them falls in the square.
+- **The beast's wolves.** While the beast kills, wolves grown bold on what it leaves come out on the roads more often.
+- **Prices tell the story.** Food costs more where a beast is at the door or a village emptied; everything costs more
+  where the roads are robbed or the town pays the outlaws (sieges, hunger, plague and sacking keep their old
+  prices). The trade screen says why ("dear: robbed roads").
+- **On the world map:** crows circle over a beast's killing ground or an emptied village, cold lights drift round a
+  haunted one, and an outlaw's rag flies where the roads are robbed or the town pays the gang.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.1 note).
+
 ### Session, 2026-11-06 (midday): Adventures & Events Part F, task F.5 — the three tales' full casts — **Part F merged into `main`**
 
 - **Each tale has its own rival now.** When the Beast is hunted, the one racing you is usually a glory-hunter with a

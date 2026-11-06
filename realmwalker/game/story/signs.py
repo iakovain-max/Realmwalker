@@ -61,8 +61,8 @@ def words(world, t: dict, rng) -> dict:
     return threats._words(world, t, rng)
 
 
-def _fill(world, t: dict, lines, rng) -> str:
-    text = textgen.fill(rng.choice(list(lines)), rng, {}, words(world, t, rng))
+def _fill(world, t: dict, lines, rng, **more) -> str:
+    text = textgen.fill(rng.choice(list(lines)), rng, {}, {**words(world, t, rng), **more})
     return text[:1].upper() + text[1:]
 
 
@@ -91,7 +91,7 @@ def on_the_land(game) -> None:
     line = land_line(game, rng)
     if line:
         flags["land_sign"] = steps
-        game.say(f"<dim>{line}</>", "place")
+        game.say(f"<dim>{textgen.escape_markup(line)}</>", "place")  # (world-made names in it)
 
 
 # ---------------------------------------------------------------------------- the streets
@@ -108,7 +108,7 @@ def bark(game, npc, roll: int) -> str | None:
         if st is None or not st.get("barks"):
             continue
         rng = game.world.rng.child(f"threat-bark/{t['id']}/{roll}")
-        return _fill(game.world, t, st["barks"], rng)
+        return _fill(game.world, t, st["barks"], rng, place=game.world.settlements[npc.settlement].name)
     return None
 
 
@@ -121,8 +121,8 @@ def _people(game, enc) -> bool:
 def overlay(game, enc, rng):
     """An ordinary meeting in a threat's reach, once its stage's effects have come, carries its shadow: a line after
     the meeting's words (only with people who mean no harm: travellers, pedlars, folk on the move). Returns enc."""
-    if enc is None or enc.attitude == "hostile" or not _people(game, enc):
-        return enc
+    if enc is None or enc.attitude == "hostile" or enc.asleep or enc.warned or not _people(game, enc):
+        return enc  # (not at night by the fire either: what comes to a camp is its own story)
     p = game.player
     for t, st in here(game.world, game.tables, p.x, p.y):
         if t["scheme"].get("applied") and st.get("overlay"):
@@ -145,6 +145,7 @@ def on_enter_town(game, settlement) -> bool:
             continue
         rng = game.world.rng.child(f"threat-scene/{t['id']}/{st['id']}")
         w = {k: v for k, v in words(game.world, t, rng).items() if isinstance(v, str)}
+        w["place"] = settlement.name  # (the town you are in, not the first it threatens)
         if stage.start(game, st["scene"], words=w) is not None:
             t.setdefault("staged", []).append(st["id"])
             return True

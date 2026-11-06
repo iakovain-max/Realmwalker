@@ -151,6 +151,7 @@ def test_its_scene_plays_once_a_stage_in_a_town_it_threatens(made, tables):
     rec = stage.current(game)
     assert rec is not None and rec["id"] == "threat_mourning", rec
     assert rec["words"]["villain"] == threats.villain_name(game.world, t)
+    assert rec["words"]["place"] == town.name, "the town you are in"
     lm = game.local
     for _ in range(400):
         if stage.current(game) is None:
