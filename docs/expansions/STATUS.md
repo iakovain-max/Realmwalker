@@ -608,6 +608,11 @@ change. Measured over three years of a medium world's politics: two marches of t
 (one broken, one cleansed), two refugee columns, three warbands, no problems. Not here: walking onto a host offers no
 beat (its camp: parley, join, slip past) - a later part may add it; the interlude moves hosts a week at a time, so a
 warband or an army marching under a week is never seen there.
+Checks: full suite (first run: only the known turn-time tests under load, enemy casters 3 and 24-1 and tactics
+coverage archmage), autoplay OK, smoke OK, three years of politics measured (above). The fresh review's fixes (the
+dead go back when their king is laid or slain on the way; the route cache keyed by the world's id; no unused march
+flag) and the measure's (the doom ending the threat no longer drops its dead; no walking before `since`); the full
+suite again after (only enemy casters 3 under load; it passes alone).
 G.6 (2026-11-06, realmwalker-b): `world/reshape.py` (its docstring has it all). The ledger `politics["land"]` (records
 {id, kind, day, seed, shape, v, cells [[x, y, field, old, new]...], story?, spread?}), `land_version`, `land_log` (the
 last 64 changes' squares and fields: `changes_since(world, v)`, None when it no longer reaches back), `party_at` (set by
