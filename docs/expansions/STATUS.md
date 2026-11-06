@@ -617,9 +617,14 @@ step at the same place waits for it; op infiltrate in (step_done) / caught (step
 "infiltrate" in LOOSE); condition `disguised` (law.disguised). Blueprints: the Risen's binds chapter has an optional
 deliver to "lore" (priest/preacher/monk, holy_water back); the Outlaw's last chapter an optional infiltrate at home
 (bandits; gives key:backway). story/check: the beats by name, turned_as/patron_men creatures, a fate line for every
-state; check.py lets a deliver's `what` be words. Autoplay `_check_secrets`. tests/test_traitors.py (12). The test
-test_a_parley_ends_the_gang_without_blood plays "not now" on the hideout's infiltrate first. No save format change in
-F.3 (F.5 bumps it). Not in F.3: the full forms' own traitors (F.5: e.g. the Risen's waker as the patron); a traitor
+state; check.py lets a deliver's `what` be words. Autoplay `_check_secrets`. tests/test_traitors.py (13). The test
+test_a_parley_ends_the_gang_without_blood plays "not now" on the hideout's infiltrate first. The fresh review's fixes:
+condition `traitor_near` (send and steel only for one at your side), no kindness from a patron who sold you or is gone
+(`flags["gone"]`, honoured by people.py), the once-in-a-life flag given back when it never came to a betrayal
+(`_patron_spent`), the decision asked again daily while nobody can be the traitor, near tells only at camp. Checks:
+full suite (only the known timing tests under load: enemy casters, tactics coverage; they pass alone), autoplay OK,
+smoke OK; storyplay Risen 11/12, Outlaw 10/12 (the two lost to ordinary fights); storyplay's party has it out from
+the second tell. No save format change in F.3 (F.5 bumps it). Not in F.3: the full forms' own traitors (F.5: e.g. the Risen's waker as the patron); a traitor
 among a situation's people; the villain targeting the Reading's ally (F.4).
 F.2 (2026-10-26, realmwalker-a): `game/story/rivals.py` (docstring has it all). `adv["rival"]` (None: decided, no
 rival) {kind hero|deserters|noble, name, first, sex, figure (a living hero figure of the history, kind hero), child,
