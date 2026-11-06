@@ -569,14 +569,46 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.4 (*the Reading: reading.json, the
-Wayfarer's Deck of twenty great cards and four suits with original names and meanings; seers (a people.json job;
-crossroads camps, hermits at wonders); the reading staged at the seer's fire with the cards laid out as a picture;
-riddles written from the true places' own pasts; silent cards; the villain's card; the cards' imagery planted in the
-world and pointed out; card faces*), on branch `dlc/06-adventures-events` (Part E is on main; F.1-F.3 on the branch).
-Read docs/expansions/06-adventures-events.md Part F, docs/ADVENTURES.md §5.7 (and §5.6: the villain targets the ally
-the Reading named), and the F.1-F.3 notes below. The Reading must set `adv["reading"]["named"]` (the npc id of the
-ally it names): story/traitors.py already keeps that ally from being the traitor.
+Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.5 (*words (parallel), pictures, tests;
+the blueprints' full forms gain their rivals and traitors; FORMAT_VERSION +1; Part F to `main`*), on branch
+`dlc/06-adventures-events` (Part E is on main; F.1-F.4 on the branch). Read docs/expansions/06-adventures-events.md
+Part F, docs/ADVENTURES.md §5.3, §5.6, §5.7, and the F.1-F.4 notes below (the "Not in" lines of each list what F.5
+owes: the Outlaw's ally, the full forms' own rivals and traitors, e.g. the Risen's waker as the patron). F.5 ends
+with the merge of Part F into `main` (EXPANSIONS.md §5.1) and the save format bump.
+F.4 (2026-11-06, realmwalker-a): `game/story/reading.py` (its docstring has it all), data reading.json (its own
+data file, schema READING; tables.reading; keys starting "_" are comments, so the fallbacks are "any"/"default"),
+beats.reading.json (beat reading_offer, picture "reading"), people.json and dialogue.json pack fragments (job
+"seer", its day and barks and greetings). Seers: `keeps_seer` (a city, or `crossroads`: road on 3+ of the 8 squares
+round the town) placed by people.populate_town near the first gate (else at home), STAYS_AT_POST; hermits:
+`hermit_at` (crc32 of world and wonder, `hermit_chance` 0.5), offered by `hermit` at the end of story.on_arrive
+(once per `hermit_every` days a wonder: director["hermits"]). Talk "story_reading" (STORY_CHOICES; answers "none"
+with no tale, "done" when nothing may be read) -> `offer` -> beat (pay: condition reading_price, op reading pay;
+favour: op time, op reading favour; not today) -> `lay` -> director["reading"] {adv} -> GameScreen opens
+ui/screens/reading.py (GameState.story_waiting knows it) which clears it. `lay`: truths by place (TRUTHS: key = a
+fetch step's place, else a learn route's place or town, else a search/infiltrate place; hand = the live ally, else
+the cast's ally/patron/witness, bound now if their town has people (`_bind`), never a chosen traitor nor a traitor
+patron; shadow = the hidden weakness's name, else the blueprint's (shadows table), its `key` the finale key it
+foretells; door = the finale step's place; turn = a hidden traitor's reason (seen +1, once: rec traitor_told), else
+the threat's next scheme stage), silent by chance (first reading only, `silent.most`) or with no truth, cards dealt by
+`_deal` (the truth with fewest fitting cards first), riddles by `_riddle` from `_where` (tomb, ruin, scar, history
+events with the name masked by `_masked`, else kind and initial) and `look` (river, road, biome). Once a tale: the
+villain's card (`villain_card` chance + per_attention), villain.notice, rec villain_knows -> villain._helper returns
+the named npc first (alive, present, not with you, not kidnapped, not in your town, no step still needing their
+role). `readable`: "again" once adv chapter > rec chapter (silent places and the turn re-laid). Pointed out once each
+(rec pointed): key/door at their place (on_arrive), hand in Conversation.greet (on_meet: the card's marks with
+pronouns), shadow when its key is gained (beats key op -> on_key). `named(game, adv)` resolves the Hand's npc late
+(story.daily -> reading.daily); traitors._candidates excludes it (patron or ally). Journal: "The cards"
+(journal_lines). Pictures: tools/card_art.py (20 great cards, 4 suits, a back; 24x36, tiles card/*, no grading),
+ui/gfx/cards.py `table` (the cross, minors at 90 degrees, the villain's card at 180 degrees, tinted), also the beat's
+picture with the cards face down. Autoplay `_check_reading`. tests/test_reading.py (11). The fresh review's fixes:
+the Hand never a traitor chosen before the reading, the reprisal spares a needed role, the traitor warning once,
+`removeprefix`, no doubled phrase, the name masked without its article. Checks: full suite (only the known timing
+tests under load: tactics coverage, enemy casters; they pass alone), autoplay OK, smoke OK; storyplay (tests 6/6):
+the bot plays a hermit's reading and must clear director["reading"] as it clears a title card (fixed in
+tools/storyplay.py: before that, the long Lawland tales stuck "busy" and died); Beast 18 of 24 distinct lives (19
+at F.3: the seers re-roll the towns' dice; run 8 now lives, 14 and 21 die). No save format change in
+F.4 (F.5 bumps it). Decisions: the price 5 sp or an hour's work; a seer only in towns peopled from now on; no blind
+priest who reads (seers and hermits only); the beast's key is where its weakness is learned (it has no relic).
 F.3 (2026-11-06, realmwalker-b): `game/story/patrons.py` and `game/story/traitors.py` (docstrings have it all).
 `adv["patron"]` (None: no patron role) {motive plain|debt|guilt|gain|traitor, trust, gifts, gift_ch, told, answer
 forgave|paid|exposed, made}: decided once (patrons.daily from story.daily); patrons.on_night (story.on_night, morning
