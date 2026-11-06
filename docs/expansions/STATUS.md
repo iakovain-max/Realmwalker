@@ -592,6 +592,10 @@ Legends book with `set_category` tales), MARKS now every mark with `dress` in ma
 says "a fortified camp" / "a village". tests/test_beast_shown.py `test_the_console_stages_the_world_showcase`
 (the ledger replays, every host kind out on its road, a camp, a reach, the world map drawn headless with no error).
 FORMAT_VERSION 25 for Part G (threat signs and wakings, consequences, tales, land ledger, hosts, foundings).
+Checks: autoplay OK (a camp founded or grown, three save round trips), smoke OK; the fresh review found nothing
+serious (fixed from it: names escaped in `showcase world`'s lines, the camp's line only when a camp was made); the
+full suite after the fixes green but the known enemy-turn timing test under load (hobgoblin, 156 ms against 150),
+which passes alone. Part G merged into main.
 G.9 (2026-11-06, realmwalker-a): `world/founding.py` (its docstring has it all). `found(pol, x, y, kind=, people=,
 owner=, population=, name=, of=, story=)` by the checklist: Settlement appended (id = index; kind "hamlet"),
 `rebuild_index`, `Politics.set_owner` (refuses a non-realm), `fx.touch`, `world.culture` (culture_ids appended if new),
