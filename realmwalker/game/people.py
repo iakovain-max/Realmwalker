@@ -651,8 +651,10 @@ def npc_factions(game, npc: NPC) -> list:
 
 def prepare_town(game, settlement) -> Town:
     """Make a settlement's close-up map and people ahead of arrival (when work there must name them)."""
+    from realmwalker.game import founding
     from realmwalker.world.local import get_local_map
 
+    founding.before_entry(game, settlement.x, settlement.y)  # (a founded camp grown since: G.9)
     lm = get_local_map(game.world, game.tables, settlement.x, settlement.y)
     if lm.kind != "settlement":
         return town_of(game.world, settlement.id)
@@ -727,7 +729,7 @@ def outdoor_cells(game, lm, walk=None, settlement=None) -> list[tuple[int, int]]
     if settlement is not None and getattr(game.tables, "towns", None):
         from realmwalker.world.towns.plan import style_for
 
-        style = style_for(game.tables, settlement)
+        style = style_for(game.tables, settlement, game.world)
         names |= {style.get(k) for k in ("street", "lane", "plaza") if style.get(k)}
     terrain = game.remap_for(lm)[lm.terrain]
     mask = np.isin(terrain, [ids[n] for n in names if n in ids]) & walk

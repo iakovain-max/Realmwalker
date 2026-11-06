@@ -28,6 +28,7 @@ ROOF = {
     "leaves": ((70, 120, 76), (50, 92, 58), (110, 160, 110)),
     "mound": ((96, 140, 72), (72, 110, 54), (132, 170, 96)),
     "hide": ((150, 116, 80), (116, 88, 60), (178, 144, 104)),
+    "canvas": ((232, 222, 196), (186, 172, 142), (248, 242, 226)),  # (a camp's tents: G.9)
 }
 FACE = {
     "whitewash": ((240, 238, 230), (190, 184, 170)), "mudbrick": ((196, 160, 110), (150, 118, 80)),
@@ -40,14 +41,17 @@ FACE = {
     "logs": ((132, 94, 60), (104, 72, 46)), "dark_stone": ((112, 108, 104), (88, 84, 80)),
     "rock": ((112, 108, 104), (88, 84, 80)),
     "charred": ((58, 48, 42), (42, 34, 30)),  # (burned: game/placemarks.py)
+    "canvas": ((236, 226, 200), (196, 182, 152)),
 }
-FORMS = ("flat", "dome", "onion", "round", "tree", "mound", "court", "long_turf", "none")
+FORMS = ("flat", "dome", "onion", "round", "tree", "mound", "court", "long_turf", "tent", "none")
 
 
 def form_of(shape: str, roof: str, kind: str) -> str | None:
     """The form a building takes in this module, or None for roofs.py's own (gables and hips)."""
     if shape == "carved" or roof == "none":
         return "none"
+    if roof == "canvas":
+        return "tent"
     if shape == "tree" or roof == "leaves":
         return "tree"
     if shape == "mound" or roof == "mound":
@@ -73,7 +77,8 @@ def _round_wall(r: int) -> int:
 
 
 def extra_top(form: str, r: int, kind: str = "") -> int:
-    return {"dome": r, "onion": 2 * r, "tree": r, "round": _round_wall(r) + 1, "long_turf": max(3, r // 3) + 1}.get(form, 0) + \
+    return {"dome": r, "onion": 2 * r, "tree": r, "round": _round_wall(r) + 1, "long_turf": max(3, r // 3) + 1,
+            "tent": r}.get(form, 0) + \
         (r if form in ("flat", "court") and kind in ("temple",) else 0)
 
 
@@ -302,6 +307,47 @@ def draw(w: int, h: int, r: int, roof: str, wall: str, form: str, kind: str, doo
                 pic.px(mx, tip - k, col)
             pic.rect(mx - 1, tip - dr // 2 - 1, mx + 2, tip - dr // 2, (230, 210, 120))
             pic.rect(mx, tip - dr // 2 - 3, mx + 1, tip - dr // 2 + 1, (230, 210, 120))
+    elif form == "tent":  # a canvas ridge tent (G.9), its ridge pole running away from you: the front a tall
+        # triangle of canvas with its door flap tied back, swept back into the two slopes of the roof (the far end's
+        # peak at the top of the picture), seams down the slopes, a hem along the eaves, pegs at the corners
+        mx = W / 2
+        face, shade = FACE.get(wall, FACE["canvas"])
+        fh = max(6, min(Hb - 2, int(0.62 * W)))  # the front's height (a tent is about as high as half its width)
+        base_y = E + Hb  # the ground line in front
+        g0 = base_y - fh  # the front's peak
+        D = max(2, g0)  # how far back the far end stands, seen from above
+        off = np.abs(pic.xs + 0.5 - mx) / max(1.0, mx)  # 0 at the ridge, 1 at the eaves
+        k = g0 - pic.ys + fh * off  # how far back along the tent a point of the roof lies
+        tent_m = (k >= 0) & (k <= D) & (pic.ys < base_y) & (off <= 1.0)
+        front = (pic.ys >= g0) & (pic.ys < base_y) & (off <= (pic.ys + 1 - g0) / fh)
+        roof_m = tent_m & ~front
+        left = pic.xs + 0.5 < mx
+        pic.mask(roof_m & left, light)
+        pic.mask(roof_m & ~left, dark)
+        seam = roof_m & ((k.astype(int) % 7) == 0) & (k > 1)
+        pic.mask(seam & left, _sh(light, 0.86))
+        pic.mask(seam & ~left, _sh(dark, 0.86))
+        pic.mask(roof_m & (off > 1.0 - 2.5 / max(1.0, mx)), _sh(dark, 0.78))  # the hem along the eaves
+        pic.mask(roof_m & (np.abs(pic.xs + 0.5 - mx) < 1.0), _sh(light, 1.04))  # the ridge pole
+        pic.mask(front, _sh(face, 0.94))
+        pic.mask(front & ~left, _sh(shade, 0.94))
+        rim = front & ~np.roll(front, 1, 0)  # the front's edges against the roof, sewn with a darker binding
+        rim |= front & ~np.roll(front, 1, 1) | front & ~np.roll(front, -1, 1)
+        pic.mask(rim & (pic.ys < base_y - 1), _sh(dark, 0.7))
+        pic.mask(front & (pic.ys >= base_y - 2), _sh(face, 0.78))  # mud splashed up its foot
+        if door_x is not None:  # the door flap, tied back: a dark opening at the foot, the flap folded aside
+            dh = max(3, int(fh * 0.6))
+            d0 = base_y - dh
+            slit = front & (pic.ys >= d0) & (np.abs(pic.xs + 0.5 - mx) <= (pic.ys - d0 + 1) * 0.36)
+            pic.mask(slit, (58, 44, 32))
+            flap = front & ~slit & (pic.ys >= d0 + 1) & (pic.xs + 0.5 > mx) & (
+                pic.xs + 0.5 <= mx + (pic.ys - d0 + 1) * 0.36 + max(2, r // 6))
+            pic.mask(flap, _sh(face, 0.72))
+            if glow is not None:
+                glow.mask(slit & (pic.ys >= base_y - dh // 2), LAMP)
+        pic.mask(front & (np.abs(pic.xs + 0.5 - mx) < 0.8) & (pic.ys < g0 + 2), (96, 70, 46))  # the pole's top
+        for gx in (0, W - 1):  # the pegs of the guy ropes at its corners
+            pic.px(gx, base_y - 1, (96, 70, 46))
     elif form == "round":  # a yurt of felt, a round hut of thatch or hide: its roof from above, its wall below
         mx = W / 2
         felt = roof.startswith("felt")
@@ -477,7 +523,7 @@ def draw(w: int, h: int, r: int, roof: str, wall: str, form: str, kind: str, doo
         if dy < h - 2:  # a door at the back or the side shows as a gap in the roof
             gx0, gy0 = dx * r, E + dy * r
             pic.a[gy0:gy0 + r, gx0:gx0 + r] = 0
-    elif door_x is None:  # a door on another side shows as a gap
+    elif door_x is None and form != "tent":  # a door on another side shows as a gap (a tent's back is shut)
         gx0, gy0 = dx * r, E + dy * r
         pic.a[gy0:gy0 + r // 2 + 2, gx0:gx0 + r] = 0 if dy == 0 else pic.a[gy0:gy0 + r // 2 + 2, gx0:gx0 + r]
     return pic.a, (glow.a if glow is not None and glow.a[..., 3].any() else None)

@@ -21,6 +21,7 @@ and compares. The kinds and their land (biomes.json fragment of the pack):
     scorch        a ragged blob: "scorched_land" (a dragon's fire)
     drown         a flood from a low point (shape {x, y, n}): "drowned" (land under water, rivers lost in it)
     crater        a disc (shape {x, y, r}): the inside a "lake" a little lower (r >= 2), a "crater" rim with CLIFF
+    road          a road laid (shape {x, y, cells}): a founded place's way to the nearest road (world/founding.py)
 
 Never under a settlement, a site or a wonder (`wonders.avoid`), the sea or a lake, or the party's square. Who makes
 them: the risen dead's "emptying" stage (the stage op "reshape": the country round the barrow dies, spreading week by
@@ -40,7 +41,7 @@ import numpy as np
 from realmwalker.core.rng import RNG
 from realmwalker.world.model import CLIFF, RAVINE
 
-KINDS = ("rift", "blight", "dead_forest", "scorch", "drown", "crater")
+KINDS = ("rift", "blight", "dead_forest", "scorch", "drown", "crater", "road")
 BIOME_OF = {"rift": "rift", "blight": "blighted", "dead_forest": "blighted", "scorch": "scorched_land",
             "drown": "drowned", "crater": "crater"}
 NEW_BIOMES = ("rift", "rift_ledge", "blighted", "scorched_land", "drowned", "crater")
@@ -198,10 +199,14 @@ def make(world, kind: str, shape: dict, *, seed: str, day: float, keep=(), story
     rng = RNG(int(world.meta.seed), f"land/{seed}")
     mask = keep_out(world, keep)
     x, y = int(shape["x"]), int(shape["y"])
-    target = BIOME_OF[kind]
+    target = BIOME_OF.get(kind, "")
     have = [i for i, b in enumerate(world.biome_ids) if b in (target, "rift_ledge") or (kind == "crater" and b == "lake")]
     cells: list = []
-    if kind == "rift":
+    if kind == "road":  # (a founded place's way to the nearest road: world/founding.lay_road)
+        for cx, cy in shape.get("cells", ()):
+            if world.in_bounds(int(cx), int(cy)) and not mask[int(cx), int(cy)]:
+                _cell(world, cells, int(cx), int(cy), "road", True)
+    elif kind == "rift":
         line = _rift_line(world, rng, x, y, float(shape.get("dir", rng.uniform(0, 2 * math.pi))),
                           int(shape.get("len", 24)), mask)
         rift, ledge = biome_index(world, "rift"), biome_index(world, "rift_ledge")

@@ -28,7 +28,7 @@ import numpy as np
 DOORS = ("door_closed", "door_open", "doorway", "door_locked")
 # Roofs drawn as their own forms (ui/gfx/houses.py): a mark never swaps them for a blackened gable.
 OWN_ROOFS = ("flat", "dome", "dome_blue", "onion", "felt", "felt_white", "thatch_round", "leaves", "mound", "hide",
-             "turf", "none")
+             "canvas", "turf", "none")
 
 
 def _dress(game, mark: str) -> dict | None:

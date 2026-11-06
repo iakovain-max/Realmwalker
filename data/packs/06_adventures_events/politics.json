@@ -126,6 +126,30 @@
       "{place} is crowded with the people of {from}, and the price of bread has gone up.",
       "The folk of {from} have reached {place}. Some will stay.",
       "{place} has taken in the refugees of {from}. Not everyone is pleased."
+    ],
+    "camp_pitched": [
+      "With {attacker} at the walls of {place}, those who got out have pitched a camp at {camp}, a short walk off.",
+      "Refugees from besieged {place} have raised tents at {camp}. They watch the smoke over their homes.",
+      "A camp has grown up at {camp}, outside {place}: the families who fled when {attacker} came.",
+      "The people who left {place} ahead of {attacker} are living in tents at {camp}, and more come every night."
+    ],
+    "camp_home": [
+      "The siege of {place} is over, and half of {camp} has packed its tents and gone home.",
+      "Carts are rolling back from {camp} to {place}. Not everyone has a home left to go to.",
+      "Many of the refugees at {camp} have gone back to {place}. The rest say they will stay a while.",
+      "{camp} is half empty now that {place} is free; the ones who stayed are digging in."
+    ],
+    "camp_fortified": [
+      "{camp} has a palisade now, and timber halls among its tents. It is beginning to look like it means to stay.",
+      "The people of {camp} have cut stakes and ringed it with a wall. Nobody calls it a refugee camp any more.",
+      "{camp} has dug a ditch and raised a stockade; its smith has a roof over his forge.",
+      "Timber roofs rise among the tents at {camp}, and a gate stands where the road comes in."
+    ],
+    "camp_grown": [
+      "{camp} was a camp of tents not long ago. It is a village now, with houses, a chapel and a name on the maps.",
+      "The last tents at {camp} have come down: it is a village in its own right.",
+      "Those who stayed at {camp} have built it into a village. Their children will not remember the tents.",
+      "{camp} has houses where the tents stood, and a market day. The camp has become a place."
     ]
   }
 }

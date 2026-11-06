@@ -21,10 +21,10 @@ WALL_TERRAIN = {"plaster": "wall_plaster", "ochre": "wall_plaster", "rose": "wal
                 "brick": "wall_brick", "stone": "wall_stone", "dark_stone": "wall_stone", "limestone": "wall_white",
                 "sandstone": "wall_sandstone", "marble": "wall_marble", "mudbrick": "wall_mudbrick", "logs": "wall_logs",
                 "dark_wood": "wall_logs", "felt": "wall_felt", "living_wood": "giant_bark", "earth": "wall_earth",
-                "rock": "cave_wall"}
+                "rock": "cave_wall", "canvas": "wall_felt"}
 # Roofs and building shapes the pictures know (ui/gfx/roofs.py).
 ROOFS = ("thatch", "slate", "tile", "shingle", "turf", "stone", "flat", "dome", "dome_blue", "onion", "felt",
-         "felt_white", "thatch_round", "leaves", "mound", "hide", "none")
+         "felt_white", "thatch_round", "leaves", "mound", "hide", "canvas", "none")
 SHAPES = ("rect", "long", "round", "court", "tree", "mound", "carved", "pyramid", "L")
 PITCHED = ("thatch", "slate", "tile", "shingle", "stone", "turf")  # roofs that can turn a corner (an L-shaped house)
 FLOOR_FOR = {"temple": "floor_stone", "keep": "floor_stone", "hall": "floor_stone", "bathhouse": "floor_tile",
@@ -95,9 +95,14 @@ BRIDGED = ("river", "shallow_water", "marsh_reeds", "ford", "mud")
 DEEP = ("deep_water", "brine", "glow_water")
 
 
-def style_for(tables, settlement) -> dict:
-    """The way this settlement's people build (data/towns.json), the Heartland way for anyone not written down."""
+def style_for(tables, settlement, world=None) -> dict:
+    """The way this settlement's people build (data/towns.json), the Heartland way for anyone not written down; a
+    founded place's own style first (`world.politics["styles"]`, world/founding.py: a camp of tents)."""
     styles = tables.towns["styles"]
+    if world is not None:
+        own = (world.politics.get("styles") or {}).get(str(settlement.id))
+        if own in styles:
+            return styles[own]
     cid = settlement.culture
     key = tables.cultures.town_style(cid) if cid in tables.cultures.ids else cid
     return styles.get(key) or styles.get(cid) or styles["heartland"]
@@ -377,7 +382,8 @@ class Plan:
     # ------------------------------------------------------------------ buildings
     def look_for(self, kind: str, shape: str | None = None) -> dict:
         looks = self.style.get("look", {})
-        roofs, walls, shapes = looks.get(kind) or looks.get("_") or [["thatch"], ["plaster"], ["rect"]]
+        roofs, walls, shapes = looks.get(kind) or looks.get("_") or looks.get("house") or [
+            ["thatch"], ["plaster"], ["rect"]]
         return {"roof": self.rng.choice(roofs), "walls": self.rng.choice(walls),
                 "shape": shape or self.rng.choice(shapes)}
 

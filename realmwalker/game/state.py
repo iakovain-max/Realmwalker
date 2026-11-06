@@ -1001,6 +1001,9 @@ class GameState:
 
     def enter_local(self) -> LocalMap:
         p = self.player
+        from realmwalker.game import founding
+
+        founding.before_entry(self, p.x, p.y)  # (a founded camp grown since its map was laid out: G.9)
         lm = get_local_map(self.world, self.tables, p.x, p.y)
         from realmwalker.world.local import patch_land
 

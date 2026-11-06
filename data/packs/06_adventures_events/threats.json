@@ -839,6 +839,12 @@
       ]
     }
   },
+  "founding": {
+    "_comment": "Founded places (world/founding.py, G.9). refugee_camp: the chance a besieged place of these kinds gets a camp outside it, the share of its people who go there (the fewest that make a camp, the most), the share who go home when the siege lifts, the most founded places a world keeps. stages: days at a stage before a camp fortifies and before a fortified camp becomes a village (with at least town_people), how much a camp grows each week, the fewest who ever stay.",
+    "refugee_camp": {"chance": 0.45, "kinds": ["town", "city"], "share": 0.08, "least": 40, "most": 600, "home": 0.5,
+                     "most_camps": 8},
+    "stages": {"fortified_days": 60, "town_days": 300, "town_people": 150, "growth": 0.012, "floor": 30}
+  },
   "hosts": {
     "_comment": "Hosts on the map (world/hosts.py, G.7): squares a day by kind (a square is three miles), the encounter group met near each, how near (squares) and how much likelier a meeting is there, the longest march (days; longer and the thing happens at once), what a host with no war behind it does to a town, refugees (the share of a town's losses who take to the road, the fewest that make a column, how far they go), the crusade (its chance to set out against the dead, how far an order or temple answers, its strength, the days it holds a town). Names: {who} is its faction or its master.",
     "speed": {

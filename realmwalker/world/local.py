@@ -669,6 +669,12 @@ def get_local_map(world: World, tables: Tables, x: int, y: int) -> LocalMap:
         from realmwalker.world import reshape
 
         lm.meta["land_version"] = reshape.version(world)  # (built from the land as it is now)
+        from realmwalker.world import founding
+
+        s = world.settlement_at(x, y)
+        rec = founding.record_of(world, s.id) if s is not None else None
+        if rec is not None:  # (a founded camp: the stage it was laid out for, G.9)
+            lm.meta["founded_stage"] = int(rec["stage"])
         world.local_maps[key] = lm
     return lm
 

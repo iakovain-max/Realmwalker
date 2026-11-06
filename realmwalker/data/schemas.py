@@ -1359,10 +1359,11 @@ DATA_FILES.update({"wonders.json": WONDERS})
 
 # ---------------------------------------------------------------------------- how each people builds (world/towns)
 TOWN_LAYOUTS = ("organic", "grid", "medina", "camp", "kremlin", "terraces", "plaza", "longhouse", "hold", "grove",
-                "burrows", "stockade")
+                "burrows", "stockade", "encampment")
 TOWN_STYLE = Obj(
     {
         "layout": Str(choices=list(TOWN_LAYOUTS)),
+        "fortified": Bool(optional=True),  # (an encampment behind its palisade: world/founding.py stage 1)
         "city_layout": Str(choices=list(TOWN_LAYOUTS), optional=True),
         "street": Str(max_len=40), "lane": Str(max_len=40), "plaza": Str(max_len=40),
         "wall": Str(max_len=40), "palisade": Str(max_len=40),
@@ -1494,6 +1495,17 @@ THREATS = Obj({
                         "strength": List(Int(min=1, max=10000), min_items=2, max_items=2),
                         "hold_days": Int(min=1, max=365)}),
         "names": Map(word_list(3, 80)), "near_words": Map(word_list(3, 200)),
+    }, optional=True),
+    # founded places (world/founding.py, G.9): the refugee camp outside a besieged town, and how camps grow
+    "founding": Obj({
+        "refugee_camp": Obj({"chance": Float(min=0, max=1), "kinds": List(Str(choices=["hamlet", "village", "town",
+                                                                                         "city"]), min_items=1),
+                             "share": Float(min=0, max=1), "least": Int(min=1, max=10000),
+                             "most": Int(min=1, max=100000), "home": Float(min=0, max=1),
+                             "most_camps": Int(min=0, max=100)}),
+        "stages": Obj({"fortified_days": Int(min=1, max=3650), "town_days": Int(min=1, max=3650),
+                       "town_people": Int(min=1, max=100000), "growth": Float(min=0, max=0.2),
+                       "floor": Int(min=1, max=10000)}),
     }, optional=True),
 })
 

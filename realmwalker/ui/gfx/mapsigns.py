@@ -14,6 +14,8 @@ Animations "calm" or "off".
     hosts(canvas, game, columns, now, tint)        hosts on the roads (G.7): a short column of figures (three to
                                                    seven, by its strength, dolls of its own creatures) behind its
                                                    banner, with a little dust; refugees without a banner
+    founded(canvas, game, camps, now, tint)        founded camps (G.9): a camp's picture by its stage, larger
+                                                   than any town mark, its realm's banners, a fire's smoke
     reaches(canvas, game, ox, oy, ppc, now, tint)  a known threat's reach (G.8): its country washed grey, red or under
                                                    mist, a soft picture kept by the threat's reach and stage
 
@@ -235,6 +237,89 @@ def hosts(canvas, game, columns, now: float, tint) -> None:
             bw, bh = fs * 0.42, fs * 1.0
             canvas.under(Image(("sign", "banner"), _banner, (x - back * fs * 0.32 - bw * 0.2, y - bh * 1.15, bw, bh),
                                rgba=_lit(tint, a, colour), smooth=False))
+
+
+CAMP_W, CAMP_H = 36, 28  # a founded camp's picture (G.9), in its own pixels
+CANVAS = (232, 222, 196, 255)
+CANVAS_SHADE = (184, 170, 140, 255)
+FORGE_RGB = (96, 92, 90)
+
+
+def founded(canvas, game, camps, now: float, tint) -> None:
+    """Founded camps (G.9): `camps` is [(settlement, x, y, size, alpha)], the box the camp stands in. One picture by
+    its stage (rows of tents; then a palisade round tents and timber halls, smoke from the forge), its realm's banners
+    over it, a fire's smoke rising with Animations on."""
+    from realmwalker.world import founding
+
+    animate = canvas.gfx.ambient
+    t = now if animate else 0.0
+    for s, x, y, size, a in camps:
+        stage = min(1, founding.stage_of(game.world, s) or 0)
+        h = size * CAMP_H / CAMP_W
+        top = y + size - h
+        canvas.under(Image(("sign", "camp", stage), lambda st=stage: camp_picture(st), (x, top, size, h),
+                           rgba=_lit(tint, a), smooth=False))
+        f = game.world.factions.get(s.owner)
+        colour = tuple(f.color) if f is not None else (160, 40, 36)
+        k = size / CAMP_W
+        poles = ((17.5, 3.0),) if stage == 0 else ((17.5, 1.0), (15.0, 21.0), (21.0, 21.0))
+        for px, py in poles:
+            bw, bh = 6 * k, 11 * k
+            canvas.under(Image(("sign", "banner"), _banner, (x + px * k, top + py * k - bh * 0.25, bw, bh),
+                               rgba=_lit(tint, a, colour), smooth=False))
+        seed = _seed(s)
+        fires = ((16.0, 17.0),) if stage == 0 else ((16.0, 17.0), (26.0, 4.0))
+        for j, (fx_, fy_) in enumerate(fires):  # the cook fire's smoke; the forge's, darker, in a fortified camp
+            rgb = (150, 146, 140) if j == 0 else FORGE_RGB
+            for i in range(3):
+                p = (t * 0.2 + i / 3 + seed + j * 0.3) % 1.0 if animate else (i + 1) / 4
+                r = size * (0.05 + 0.1 * p)
+                cx = x + fx_ * k + size * 0.08 * p
+                cy = top + fy_ * k - size * 0.45 * p
+                canvas.under(Image(("sign", "puff", i), lambda v=i: _puff(v), (cx - r, cy - r, 2 * r, 2 * r),
+                                   rgba=_lit(tint, a, rgb, int(170 * (1.0 - p)))))
+
+
+@lru_cache(maxsize=2)
+def camp_picture(stage: int) -> np.ndarray:
+    """A camp seen from afar, in sharp pixels: rows of canvas tents round a fire (stage 0); behind a palisade of
+    stakes, with two timber halls and a forge among the tents (stage 1)."""
+    pic = np.zeros((CAMP_H, CAMP_W, 4), np.uint8)
+
+    def put(rows, x0, y0, pal):
+        for dy, row in enumerate(rows):
+            for dx, ch in enumerate(row):
+                if ch in pal and 0 <= y0 + dy < CAMP_H and 0 <= x0 + dx < CAMP_W:
+                    pic[y0 + dy, x0 + dx] = pal[ch]
+
+    tent = ("...#...", "..#w#..", ".#wws#.", "#wwdss#", "#######")
+    hall = (".########.", "#rrrrrrrr#", "#RRRRRRRR#", "#llllllll#", "#ll#dd#ll#", "##########")
+    pal = {"#": INK, "w": CANVAS, "s": CANVAS_SHADE, "d": (74, 52, 36, 255), "r": (122, 84, 52, 255),
+           "R": (98, 66, 42, 255), "l": (150, 108, 68, 255)}
+    if stage == 0:
+        spots = ((3, 9), (11, 7), (21, 7), (28, 9), (5, 15), (24, 15), (9, 21), (17, 21), (26, 21))
+        halls = ()
+    else:
+        spots = ((5, 13), (12, 12), (24, 12), (8, 19), (19, 19))
+        halls = ((5, 6), (19, 6))
+        yy, xx = np.mgrid[0:CAMP_H, 0:CAMP_W]
+        d = ((xx - 17.5) / 16.5) ** 2 + ((yy - 15.5) / 11.0) ** 2
+        ring = (d <= 1.0) & (d > 0.78)
+        gate = (np.abs(xx - 17.5) < 2.6) & (yy > 20)
+        stake = ring & ~gate
+        pic[stake] = (128, 90, 56, 255)
+        tips = stake & ~np.roll(stake, 1, 0)
+        pic[tips] = INK
+        pic[stake & (xx % 2 == 0) & ~tips] = (104, 72, 44, 255)
+    for hx, hy in halls:
+        put(hall, hx, hy, pal)
+    if stage:
+        put(("#.#", "###"), 25, 4, {"#": (70, 66, 64, 255)})  # (the forge's chimney stones, on its hall)
+    for tx, ty in spots:
+        put(tent, tx, ty, pal)
+    pic[17:19, 15:18] = (226, 120, 50, 255)  # the fire in the middle
+    pic[18, 16] = (250, 210, 110, 255)
+    return pic
 
 
 def reaches(canvas, game, ox: float, oy: float, ppc: float, now: float, tint) -> None:

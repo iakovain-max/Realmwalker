@@ -86,6 +86,9 @@ class Politics:
         from realmwalker.world import hosts
 
         hosts.advance(self)  # (armies, warbands, the dead and refugees on the roads: G.7)
+        from realmwalker.world import founding
+
+        founding.weekly(self)  # (camps going home, growing, fortifying: G.9)
         if self.changed:
             fx.touch(self.w)
 
@@ -533,6 +536,9 @@ class Politics:
         marks.add(w, target, "siege", self.day, self.t, war=war["id"], by=besieger.id)
         self.say("siege", {"attacker": besieger.name, "place": target.name}, where=(target.x, target.y),
                  importance=3, factions=[besieger], places=[target])
+        from realmwalker.world import founding
+
+        founding.refugee_camp(self, target, besieger)  # (its frightened outside the walls: G.9)
         return True
 
     def take(self, target, winner, loser, war: dict) -> None:

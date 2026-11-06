@@ -25,8 +25,12 @@ LAND_HALO = (232, 218, 182, 190)
 WATER_HALO = (206, 224, 232, 150)
 
 
-def town_mark(tables, s, default: str) -> str:
-    """The picture of a settlement on the map: its people's manner of building, by its size."""
+def town_mark(tables, s, default: str, world=None) -> str:
+    """The picture of a settlement on the map: its people's manner of building, by its size; a founded camp's own
+    ("map/town_encampment_small|big", drawn by mapsigns.founded rather than from the tile sheet: G.9)."""
+    if world is not None and (world.politics.get("styles") or {}).get(str(s.id)):
+        style = world.politics["styles"][str(s.id)]
+        return f"map/town_encampment_{'big' if style.endswith('fortified') else 'small'}"
     if s.kind in ("hamlet", "village", "town", "city"):
         style = tables.cultures.town_style(s.culture) if s.culture in tables.cultures.ids else s.culture
         if style in TOWN_STYLES:
@@ -242,8 +246,9 @@ class WorldView:
         sp = game.tables.sprites["world"]
         stypes = sp["settlements"]
         names, dst, cols = [], [], []
-        labels, signs = [], []
+        labels, signs, camps = [], [], []
         light = tint[0] / 255
+        own = world.politics.get("styles") or {}
         for s in world.settlements:
             known = s.id in p.known_settlements
             if not explored[s.x, s.y] and not known:
@@ -254,9 +259,19 @@ class WorldView:
             size = max(10, ppc * {"hamlet": 1.1, "village": 1.35, "town": 1.6, "city": 2.0}.get(s.kind, 1.5))
             if getattr(s, "great", False):  # a great city: twice the mark of any other
                 size = max(16, ppc * 3.0)
-            names.append(town_mark(game.tables, s, stypes.get(s.kind, "map/village")))
-            dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             a = 1.0 if explored[s.x, s.y] else 0.6
+            mark = town_mark(game.tables, s, stypes.get(s.kind, "map/village"), world if own else None)
+            if mark.startswith("map/town_encampment"):  # a founded camp: drawn larger than any town mark (G.9)
+                size = max(16, ppc * (2.6 if mark.endswith("small") else 3.0))
+                box = (sx + ppc / 2 - size / 2, sy + ppc - size * 0.86, size, size)
+                camps.append((s, box[0], box[1], size, a))
+                if s.status:
+                    signs.append((s, box[0], box[1], size, a))
+                if ppc >= 6:
+                    labels.append((sx + ppc / 2, sy + ppc + 1, s.name, "town", a))
+                continue
+            names.append(mark)
+            dst.append((sx + ppc / 2 - size / 2, sy + ppc - size * 0.92, size, size))
             if s.status:
                 signs.append((s, dst[-1][0], dst[-1][1], size, a))
             cols.append((light, light, min(1.0, light * 1.05), a))
@@ -274,6 +289,8 @@ class WorldView:
             cols.append((light, light, light, 1.0))
         if signs:  # what the towns are going through (Expansion 6): the far side of it behind their marks
             mapsigns.under(canvas, game, signs, now, tint)
+        if camps:  # founded camps (G.9), growing with their stages
+            mapsigns.founded(canvas, game, camps, now, tint)
         if names:
             canvas.under(*tile_batch(gfx.atlas, names, np.array(dst, np.float32), np.array(cols, np.float32)))
         if signs:

@@ -17,7 +17,7 @@ def town_description(game, settlement, rng: RNG) -> str:
     if getattr(game.tables, "towns", None):  # each people's own words for their places (data/towns.json)
         from realmwalker.world.towns.plan import style_for
 
-        own = style_for(game.tables, settlement).get("words")
+        own = style_for(game.tables, settlement, game.world).get("words")
         if own:
             tables = {**tables, **own}
     land = game.biome_def(settlement.x, settlement.y)["name"]

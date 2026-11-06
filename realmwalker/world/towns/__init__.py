@@ -28,7 +28,7 @@ def build(b, settlement) -> None:
     """Lay out the settlement on the builder's map (its ground, water, river and road are already there)."""
     from realmwalker.world.towns import layouts
 
-    style = style_for(b.tables, settlement)
+    style = style_for(b.tables, settlement, b.world)
     plan = Plan(b, settlement, style)
     layout = style.get("layout", "organic")
     if settlement.kind in ("town", "city") and style.get("city_layout") and settlement.kind == "city":
