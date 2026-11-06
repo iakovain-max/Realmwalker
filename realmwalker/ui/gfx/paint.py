@@ -24,7 +24,8 @@ from realmwalker.ui.gfx import stamps
 from realmwalker.world.model import CLIFF, DIRS, RAVINE
 
 MARKS = {"grass": 1, "broadleaf": 2, "pine": 3, "hills": 4, "mountains": 5, "peaks": 6, "marsh": 7, "tundra": 8, "dunes": 9,
-         "steppe": 10, "acacia": 11, "jungle": 12, "fey": 13, "mesa": 14, "salt": 15, "cinder": 16, "glacier": 17}
+         "steppe": 10, "acacia": 11, "jungle": 12, "fey": 13, "mesa": 14, "salt": 15, "cinder": 16, "glacier": 17,
+         "dead": 18, "ash": 19, "drowned": 20, "rubble": 21}  # (18-21: lands made while you play, G.6)
 STAMP_OF = {10: "steppe", 11: "acacia", 12: "jungle", 13: "fey", 14: "mesa", 15: "salt", 16: "cinder", 17: "glacier"}
 CANON = 12  # map pixels to a square: the whole world is painted once at this grain
 OVERVIEW = 3  # ...and once, small, to stand in until the chunks are done
@@ -33,6 +34,9 @@ SHALLOW_SEA = np.array([74, 150, 158], np.float32)
 DEEP_SEA = np.array([28, 58, 98], np.float32)
 GLOW = np.array([120, 236, 210], np.float32)
 GORGE = (150, 70, 46, 255)
+RIFT_GLOW = (214, 84, 44, 255)  # the rift: glowing red lips, a dark gorge between
+RIFT_DARK = (34, 18, 20, 255)
+FLOOD = np.array([96, 140, 150], np.float32)
 BIG_WONDERS = ("great_peak", "volcano")
 WONDER_SIZE = 1.5  # wonders are drawn half as large again as the things round them
 MARGIN = 2  # squares painted around a chunk and cut away, so coasts and stamps meet across the seams
@@ -57,13 +61,36 @@ class WorldPainter:
     def __init__(self, world, tables) -> None:
         sp = tables.sprites["world"]
         self.world = world
+        self.sp = sp
         self.seed = int(world.meta.seed)
-        W, H = world.width, world.height
+        self.W, self.H = world.width, world.height
+        self.road_rgb = tuple(int(c) for c in sp["road"])
+        self.river_rgb = tuple(int(c) for c in sp["river"])
+        self.paper = np.array(sp.get("paper", [222, 204, 162]), np.float32)
+        self.ink = np.array(sp["ink"], np.float32)
+        self._derive()
+        self.rivers = self._trace_rivers()
+        self.roads = self._road_segments()
+        rng = np.random.default_rng(self.seed ^ 0x5EED)
+        self.jitter = rng.random((self.W, self.H, 8)).astype(np.float32)
+
+    def refresh(self, cells=(), fields=()) -> None:
+        """The land changed (world/reshape.py): read the world's arrays again, and trace the rivers and the roads again
+        only if they changed. Called on the painting thread (ChunkCache), never while a chunk is being painted."""
+        self._derive()
+        if "river" in fields or "biome" in fields:  # (a river through new water is left out where it is water)
+            self.rivers = self._trace_rivers()
+        if "road" in fields:
+            self.roads = self._road_segments()
+
+    def _derive(self) -> None:
+        """The painter's own copies of the world: colours, water, height, shading, marks (from the arrays as they
+        are now)."""
+        sp, world = self.sp, self.world
+        W, H = self.W, self.H
         biomes = sp["biomes"]
         keys = list(world.biome_ids)
         default = biomes.get("plains", {"color": [100, 110, 70]})
-        self.paper = np.array(sp.get("paper", [222, 204, 162]), np.float32)
-        self.ink = np.array(sp["ink"], np.float32)
         pal = np.array([biomes.get(k, default)["color"] for k in keys], np.float32)
         self.pal = np.clip(_paperise(pal, self.paper, 0.2) * 1.08, 0, 255).astype(np.float32)
         self.sea = _paperise(np.array(sp.get("sea", [52, 86, 108]), np.float32), self.paper, 0.3)
@@ -117,13 +144,11 @@ class WorldPainter:
         self.shade = np.clip(1.0 - (gx + gy) / 260.0, 0.6, 1.32).astype(np.float32)
         self.marks = marks[b]
         self.density = dens[b]
-        self.road_rgb = tuple(int(c) for c in sp["road"])
-        self.river_rgb = tuple(int(c) for c in sp["river"])
-        self.W, self.H = W, H
-        self.rivers = self._trace_rivers()
-        self.roads = self._road_segments()
-        rng = np.random.default_rng(self.seed ^ 0x5EED)
-        self.jitter = rng.random((W, H, 8)).astype(np.float32)
+        # The lands made while you play: the rift's squares (its ledges kept apart: a crossing), drowned country.
+        rift = np.array([k == "rift" for k in keys], bool)[b]
+        ledge = np.array([k == "rift_ledge" for k in keys], bool)[b]
+        self.flood = np.array([k == "drowned" for k in keys], bool)[b]
+        self.rift_segs = _rift_segments(rift, ledge)
 
     # ------------------------------------------------------------------ lines
     def _trace_rivers(self) -> list[list[tuple[float, float, int]]]:
@@ -286,6 +311,10 @@ class WorldPainter:
         near_sea[:, 1:] |= sea[:, :-1]
         near_sea[:, :-1] |= sea[:, 1:]
         col[land & near_sea] = self.ink
+        if self.flood.any():  # drowned country: still water over the land, in dithered ripples, the hedges showing
+            fl = land & (_bilinear(self.flood.astype(np.float32), U, V) > 0.5)
+            col[fl] = col[fl] * 0.35 + FLOOD * 0.65
+            col[fl & (thr < 0.18)] = col[fl & (thr < 0.18)] * 0.6 + self.paper * 0.4
         # A faint grain in the paper, in whole map pixels.
         grain = np.random.default_rng(zlib.crc32(f"{self.seed}/{X0}/{Y0}/{k}".encode())).normal(1.0, 0.015, (Wl, Hl))
         col *= grain.astype(np.float32)[..., None]
@@ -293,6 +322,8 @@ class WorldPainter:
         rgba[..., :3] = np.clip(col, 0, 255).astype(np.uint8).transpose(1, 0, 2)
         rgba[..., 3] = 255
         rgba = self._draw_rivers(rgba, X0, Y0, NX, NY, k)
+        if self.rift_segs:
+            rgba = self._draw_rift(rgba, X0, Y0, NX, NY, k)
         self._draw_roads(rgba, X0, Y0, NX, NY, k)
         if detail and k >= 6:
             self._cliffs(rgba, X0, Y0, NX, NY, k)
@@ -320,6 +351,30 @@ class WorldPainter:
             for (ax, ay, sz), (bx, by, _) in zip(pts[:-1], pts[1:]):
                 w = 1 if (sz <= 1 or k < 8) else (2 if sz == 2 or k < 12 else 3)
                 draw.line([(ax, ay), (bx, by)], fill=colour, width=w)
+        return np.array(im)
+
+    def _draw_rift(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> np.ndarray:
+        """The rift: a gorge drawn along its squares, glowing red at the lips and dark down the middle; a ledge is a
+        pale bar of rock across it."""
+        near = [(ax, ay, bx, by, kind) for ax, ay, bx, by, kind in self.rift_segs
+                if X0 - 2 <= ax <= X0 + NX + 2 and Y0 - 2 <= ay <= Y0 + NY + 2]
+        if not near:
+            return rgba
+        im = Image.fromarray(rgba, "RGBA")
+        draw = ImageDraw.Draw(im)
+        px = [((ax - X0) * k, (ay - Y0) * k, (bx - X0) * k, (by - Y0) * k, kind) for ax, ay, bx, by, kind in near]
+        for width, colour in ((max(3, int(k * 0.8)), INK), (max(2, int(k * 0.6)), RIFT_GLOW),
+                              (max(1, int(k * 0.3)), RIFT_DARK)):
+            for ax, ay, bx, by, kind in px:
+                draw.line([(ax, ay), (bx, by)], fill=colour, width=width)
+        for ax, ay, bx, by, kind in px:
+            if kind == "ledge":  # the crossing: a bar of rock over the glow
+                mx, my = (ax + bx) / 2, (ay + by) / 2
+                dx, dy = by - ay, ax - bx  # (across the line)
+                n = max(1e-6, (dx * dx + dy * dy) ** 0.5)
+                h = k * 0.45
+                draw.line([(mx - dx / n * h, my - dy / n * h), (mx + dx / n * h, my + dy / n * h)],
+                          fill=(168, 150, 120, 255), width=max(2, k // 4))
         return np.array(im)
 
     def _cliffs(self, rgba: np.ndarray, X0, Y0, NX, NY, k) -> None:
@@ -449,6 +504,18 @@ class WorldPainter:
                 put("tuft", int(r[1] * 3), px + k * r[2], py + k * (0.3 + 0.6 * r[3]))
             elif kind == 8 and k >= 10 and r[5] < 0.4:
                 put("scrub", int(r[1] * 3), px + k * r[2], py + k * (0.3 + 0.6 * r[3]))
+            elif kind == 18:  # blight: bare grey trees
+                for q in range(2 if k >= 8 else 1):
+                    if busy and q > 0:
+                        break
+                    put("dead_tree", int(r[7] * 4 + q) % 4, px + k * (0.15 + 0.7 * r[1 + q]),
+                        py + k * (0.3 + 0.65 * r[4 + (q % 4)]))
+            elif kind == 19 and not busy:  # scorched: black stumps
+                put("stump", int(r[1] * 3), px + k * (0.2 + 0.6 * r[2]), py + k * (0.4 + 0.5 * r[3]))
+            elif kind == 20:  # drowned: dead trees standing in the water
+                put("snag", int(r[1] * 3), px + k * (0.2 + 0.6 * r[2]), py + k * (0.4 + 0.5 * r[3]))
+            elif kind == 21 and k >= 6:  # a crater's rim, a ledge: thrown-up rocks
+                put("rocks", int(r[1] * 3), px + k * (0.2 + 0.6 * r[2]), py + k * (0.4 + 0.5 * r[3]))
             elif kind == 9 and k >= 8:
                 put("dune", int(r[1] * 3), px + k * (0.5 + 0.3 * (r[2] - 0.5)), py + k * (0.5 + 0.4 * r[3]))
         items.sort(key=lambda t: t[0])
@@ -466,6 +533,29 @@ class WorldPainter:
     def overview(self, ppc: int) -> Image.Image:
         """The whole world at a small scale (the world map, and a stand-in while chunks are painted)."""
         return self.paint(0, 0, self.W, self.H, ppc, detail=ppc >= 4)
+
+
+def _rift_segments(rift: np.ndarray, ledge: np.ndarray) -> list[tuple[float, float, float, float, str]]:
+    """The rift as segments between the centres of neighbouring squares of it (diagonals too, as its crack wanders);
+    a segment touching a ledge says so."""
+    both = rift | ledge
+    if not both.any():
+        return []
+    out = []
+    for x, y in np.argwhere(both):
+        x, y = int(x), int(y)
+        for dx, dy in ((1, 0), (0, 1), (1, 1), (1, -1)):
+            nx, ny = x + dx, y + dy
+            if not (0 <= nx < both.shape[0] and 0 <= ny < both.shape[1]) or not both[nx, ny]:
+                continue
+            if dx and dy and (both[x + dx, y] or both[x, y + dy]):
+                continue  # (a corner already joined the straight way)
+            out.append((x + 0.5, y + 0.5, nx + 0.5, ny + 0.5, "ledge" if ledge[x, y] or ledge[nx, ny] else "rift"))
+    joined = {(a, b) for a, b, *_ in out} | {(c, d) for _, _, c, d, _ in out}
+    for x, y in np.argwhere(both):  # (a square of it alone: a short crack of its own)
+        if (int(x) + 0.5, int(y) + 0.5) not in joined:
+            out.append((x + 0.2, y + 0.5, x + 0.8, y + 0.5, "ledge" if ledge[x, y] else "rift"))
+    return out
 
 
 def _world_noise(w: int, h: int, cell: float, seed: int, ox: int, oy: int) -> np.ndarray:
@@ -660,6 +750,35 @@ def sprite(kind: str, k: int, variant: int) -> np.ndarray:
         out[0, 1] = out[1, 0] = out[1, 2] = (110, 112, 92, 255)
         out[1, 1] = (92, 96, 80, 255)
         return out
+    if kind in ("dead_tree", "snag"):  # a bare grey tree: a trunk and a few crooked limbs
+        h = max(4, int(round(k * (0.55 if kind == "dead_tree" else 0.4))))
+        W, H = 5, h + 2
+        out = np.zeros((H, W, 4), np.uint8)
+        grey = (150, 144, 132, 255) if kind == "dead_tree" else (110, 108, 100, 255)
+        out[1:H - 1, 2] = grey
+        b = 2 + int(rng.integers(0, max(1, h // 2)))
+        out[b, 1] = out[b - 1, 0] = grey
+        out[min(H - 2, b + 1), 3] = out[b, 4] = grey
+        mask = out[..., 3] > 0
+        o = _outline(mask)
+        o[-1] = False
+        out[o] = INK
+        if kind == "snag":
+            out[-1, 0:5] = (180, 204, 210, 255)  # (a ripple at its foot)
+        return out
+    if kind == "stump":
+        out = np.zeros((3, 4, 4), np.uint8)
+        out[1:3, 1:3] = (30, 24, 22, 255)
+        out[0, 1] = (30, 24, 22, 255)
+        out[2, 0] = out[2, 3] = (80, 70, 64, 255)
+        return out
+    if kind == "rocks":
+        out = np.zeros((3, 5, 4), np.uint8)
+        out[1:3, 0:2] = (120, 110, 100, 255)
+        out[0:3, 2:4] = (100, 92, 84, 255)
+        out[2, 4] = (90, 82, 76, 255)
+        out[0, 2] = INK
+        return out
     if kind == "dune":
         w = max(4, int(k * 0.7))
         out = np.zeros((2, w, 4), np.uint8)
@@ -673,7 +792,14 @@ def sprite(kind: str, k: int, variant: int) -> np.ndarray:
 class ChunkCache:
     """The world painted once: chunks of `n` squares a side at CANON map pixels a square, by (gx, gy), painted in a
     background thread, nearest to where the eye is first, and kept; and a small picture of the whole world
-    (OVERVIEW map pixels a square) painted before them all, to stand in for what is not done yet."""
+    (OVERVIEW map pixels a square) painted before them all, to stand in for what is not done yet.
+
+    When the land changes (world/reshape.py) `refresh` queues again only the chunks the changed squares touch: the
+    painter reads the world again on the thread (`WorldPainter.refresh`), the overview is painted again, then those
+    chunks, nearest first, while the old pictures stand in. Each chunk has a version (`painted`), and so has the
+    overview (`overview_v`): the GPU keys of their pictures carry it, so a new picture is a new texture."""
+
+    REACH = MARGIN + 2  # squares round a change whose chunks it touches (the margin, stamps leaning over the seam)
 
     def __init__(self, painter: WorldPainter) -> None:
         self.painter = painter
@@ -681,29 +807,85 @@ class ChunkCache:
         self.cols = (painter.W + self.n - 1) // self.n
         self.rows = (painter.H + self.n - 1) // self.n
         self.done: dict = {}
+        self.painted: dict = {}  # (gx, gy) -> the version of the picture in `done`
+        self.stale: set = set()  # chunks whose picture is old: painted again, the old one standing in meanwhile
         self.overview: Image.Image | None = None
+        self.overview_v = 0
+        self.overview_stale = False
+        self.pending: tuple[set, set] | None = None  # (cells, fields) the painter has not read yet
+        self.land_version = 0  # the land the painter knows (world.politics["land_version"])
         self.focus = (0, 0)
         self.lock = threading.Lock()
         self.wake = threading.Event()
         self.stop = False
         self.thread: threading.Thread | None = None
         self.version = 0
+        self.gen = 0  # one more at every change of the land (a chunk painted across one is still stale)
 
     @property
     def finished(self) -> bool:
-        return self.overview is not None and len(self.done) >= self.cols * self.rows
+        return (self.overview is not None and len(self.done) >= self.cols * self.rows and not self.stale
+                and self.pending is None and not self.overview_stale)
 
     def get(self, key):
         with self.lock:
             return self.done.get(key)
 
+    def get_painted(self, key):
+        """A chunk's picture and its version together (its GPU key carries the version)."""
+        with self.lock:
+            return self.done.get(key), self.painted.get(key, 0)
+
     def look_at(self, cx: float, cy: float) -> None:
-        """Paint what is near this square (in world squares) first; start painting if not yet started."""
+        """Paint what is near this square (in world squares) first; start painting if not yet started (or again,
+        when the land has changed since the thread finished)."""
         self.focus = (int(cx) // self.n, int(cy) // self.n)
-        if self.thread is None and not self.finished:
+        if (self.thread is None or not self.thread.is_alive()) and not self.finished and not self.stop:
             self.thread = threading.Thread(target=self._run, name="map painter", daemon=True)
             self.thread.start()
         self.wake.set()
+
+    def chunks_of(self, cells) -> set:
+        r, n = self.REACH, self.n
+        out = set()
+        for x, y in cells:
+            for gx in range(max(0, (x - r) // n), min(self.cols - 1, (x + r) // n) + 1):
+                for gy in range(max(0, (y - r) // n), min(self.rows - 1, (y + r) // n) + 1):
+                    out.add((gx, gy))
+        return out
+
+    def refresh(self, cells, fields, land_version: int) -> set:
+        """The land changed in these squares: queue the painter's reading and the chunks they touch (returned)."""
+        cells = {(int(x), int(y)) for x, y in cells}
+        touched = self.chunks_of(cells)
+        with self.lock:
+            had_cells, had_fields = self.pending or (set(), set())
+            self.pending = (had_cells | cells, had_fields | set(fields))
+            self.stale |= touched
+            self.gen += 1
+            self.overview_stale = True
+            self.land_version = int(land_version)
+            self.version += 1
+        if self.thread is not None and not self.thread.is_alive() and not self.stop:
+            self.look_at(self.focus[0] * self.n, self.focus[1] * self.n)  # (the thread had finished: again)
+        self.wake.set()
+        return touched
+
+    def catch_up(self) -> None:
+        """Do what the thread would do first after a change: the painter reads the world again and the overview is
+        painted again. (On the thread; headless, where no thread paints, the screen calls it.)"""
+        with self.lock:
+            pend = self.pending
+            self.pending = None
+        if pend is not None:
+            self.painter.refresh(*pend)
+        if self.overview_stale or self.overview is None:
+            im = self.painter.overview(OVERVIEW)
+            with self.lock:
+                self.overview = im
+                self.overview_v += 1
+                self.overview_stale = False
+                self.version += 1
 
     def paint_overview(self) -> Image.Image:
         if self.overview is None:
@@ -716,9 +898,14 @@ class ChunkCache:
     def paint_now(self, key) -> Image.Image:
         im = self._paint(key)
         with self.lock:
-            self.done[key] = im
-            self.version += 1
+            self._store(key, im)
         return im
+
+    def _store(self, key, im) -> None:
+        self.done[key] = im
+        self.painted[key] = self.painted.get(key, 0) + 1
+        self.stale.discard(key)
+        self.version += 1
 
     def _paint(self, key) -> Image.Image:
         gx, gy = key
@@ -730,6 +917,7 @@ class ChunkCache:
     def _next(self):
         fx, fy = self.focus
         todo = [(gx, gy) for gx in range(self.cols) for gy in range(self.rows) if (gx, gy) not in self.done]
+        todo = todo or sorted(self.stale & set(self.done))
         if not todo:
             return None
         return min(todo, key=lambda c: (max(abs(c[0] - fx), abs(c[1] - fy)), c))
@@ -743,20 +931,31 @@ class ChunkCache:
         except Exception:
             log.exception("Could not paint the small map")
         while not self.stop:
+            if self.pending is not None or self.overview_stale:
+                try:
+                    self.catch_up()
+                except Exception:
+                    log.exception("Could not read the changed land")
+                    with self.lock:
+                        self.pending, self.overview_stale = None, False
             with self.lock:
                 key = self._next()
+                gen = self.gen
             if key is None:
-                return  # everything is painted: the thread's work is done
+                return  # everything is painted: the thread's work is done (refresh starts it again)
             try:
                 im = self._paint(key)
             except Exception:
                 log.exception("Could not paint the map at %r", key)
                 with self.lock:
                     self.done[key] = None  # do not try that piece again
+                    self.stale.discard(key)
                 continue
             with self.lock:
-                self.done[key] = im
-                self.version += 1
+                fresh = self.gen == gen or key not in self.stale
+                self._store(key, im)
+                if not fresh:
+                    self.stale.add(key)  # (the land changed again while it was painted: once more)
 
     def close(self) -> None:
         self.stop = True

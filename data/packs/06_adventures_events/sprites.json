@@ -1,0 +1,14 @@
+{
+  "_comment": "The lands made while you play (Part G.6) on the painted world map: their colours and the little things stamped on them (ui/gfx/paint.py MARKS: dead trees, ash and stumps, drowned snags, a crater's rocks). The rift itself is drawn as a stroke along its squares.",
+  "world": {
+    "biomes": {
+      "_merge": true,
+      "rift": {"color": [118, 98, 84]},
+      "rift_ledge": {"color": [112, 96, 84], "marks": "rubble", "density": 0.5},
+      "blighted": {"color": [134, 130, 118], "marks": "dead", "density": 0.55},
+      "scorched_land": {"color": [62, 52, 46], "marks": "ash", "density": 0.5},
+      "drowned": {"color": [84, 118, 124], "marks": "drowned", "density": 0.45},
+      "crater": {"color": [92, 80, 72], "marks": "rubble", "density": 0.7}
+    }
+  }
+}

@@ -509,6 +509,12 @@
             [
               "danger",
               1
+            ],
+            [
+              "reshape",
+              "blight",
+              2,
+              5
             ]
           ],
           "roads": {

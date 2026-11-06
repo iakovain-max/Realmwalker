@@ -88,6 +88,42 @@ class DebugConsole(Screen):
             game.encounter = make_encounter(game, args[0], game.world.rng.child(f"debug/{game.world.time}/{args[0]}"))
             self.close()
 
+        @self.command("land", "land <kind> [size] — change the land near you (rift, blight, dead_forest, scorch, "
+                              "drown, crater; land undo: the last change)")
+        def _land(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.world import reshape
+
+            w = game.world
+            if args and args[0] == "undo":
+                led = reshape.ledger(w)
+                ok = bool(led) and reshape.undo(w, led[-1]["id"])
+                game.land_check()
+                self.say("The last change to the land is undone." if ok else "<warn>Nothing to undo.</>")
+                return
+            if not args or args[0] not in reshape.KINDS:
+                self.say("Kinds: " + ", ".join(reshape.KINDS))
+                return
+            kind = args[0]
+            size = float(args[1]) if len(args) > 1 and args[1].replace(".", "", 1).isdigit() else None
+            x, y = game.player.x, game.player.y
+            off = 1 if kind == "rift" else 4
+            shape = {"x": min(w.width - 1, x + off), "y": y}
+            if kind == "rift":
+                shape.update({"dir": 1.5708, "len": int(size or 24)})
+                shape["y"] = max(0, y - int(size or 24) // 2)
+            elif kind == "drown":
+                shape["n"] = int(size or 24)
+            else:
+                shape["r"] = size or 2.5
+            rec = reshape.make(w, kind, shape, seed=f"debug/{w.time}/{kind}", day=w.time / 1440.0,
+                               keep=[(x, y)])
+            game.land_check()
+            game.dirty = True
+            self.say(f"Changed {len(rec['cells'])} cells ({kind})." if rec else "<warn>Nothing there to change.</>")
+
         @self.command("quest", "quest <kind> — take on work of that kind (quest list: show kinds)")
         def _quest(args):
             game = need_game()

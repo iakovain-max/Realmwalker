@@ -764,3 +764,19 @@ def _gang(pol, t: dict, how: str = "grow") -> None:
     gang.wealth += pol.rng.randint(10, 30)
     hx, hy = home_xy(pol.w, t)
     pol.say("threat_gang_grows", _words(pol.w, t, pol.rng), where=(hx, hy), importance=2, factions=[gang])
+
+
+@stage_op("reshape")
+def _reshape(pol, t: dict, kind: str = "blight", r: float = 2, most: float = 5) -> None:
+    """The land itself changes round its home (world/reshape.py): the risen king's country dies, ring by ring each
+    week while he walks (`reshape.weekly`), a dead grey country on the map and in every close-up map of it."""
+    from realmwalker.world import reshape
+
+    w = pol.w
+    hx, hy = home_xy(w, t)
+    if any(str(rec.get("story")) == str(t["id"]) for rec in reshape.ledger(w)):
+        return  # (once a threat: its blight grows on its own)
+    rec = reshape.make(w, kind, {"x": hx, "y": hy, "r": float(r)}, seed=f"threat/{t['id']}", day=pol.day,
+                       story=str(t["id"]), spread={"threat": str(t["id"]), "max": float(most)})
+    if rec is not None:
+        pol.say(f"land_{kind}", _words(w, t, pol.rng), where=(hx, hy), importance=3)

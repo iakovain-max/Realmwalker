@@ -80,6 +80,9 @@ class Politics:
         from realmwalker.world import threats
 
         threats.advance(self, days)  # the schemes of the world's villains (Expansion 6)
+        from realmwalker.world import reshape
+
+        reshape.weekly(self)  # (a blight spreading round a barrow: G.6)
         if self.changed:
             fx.touch(self.w)
 
@@ -673,6 +676,10 @@ class Politics:
         if self.rng.chance(0.45):
             marks.add(w, s, "burned", self.day, self.t)
             s.population = max(10, int(s.population * self.rng.uniform(0.5, 0.8)))
+            from realmwalker.world import reshape  # (G.6: its fields burned black for miles round, on the map too)
+
+            reshape.make(w, "scorch", {"x": s.x, "y": s.y, "r": round(self.rng.uniform(1.5, 2.6), 2)},
+                         seed=f"dragon/{d['name']}/{int(self.day)}", day=self.day)
             self.say("dragon", {"dragon": d["name"], "place": s.name}, where=(s.x, s.y), importance=4,
                      factions=[realm] if realm else [], places=[s])
         else:

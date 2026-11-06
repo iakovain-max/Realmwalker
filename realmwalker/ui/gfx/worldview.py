@@ -109,11 +109,21 @@ class WorldView:
         self.shared = True
 
     def ready(self, game) -> None:
+        from realmwalker.world import reshape
+
+        v = reshape.version(game.world)
+        if self.world is game.world and self.cache is not None and self.cache.land_version != v:
+            changed = reshape.changes_since(game.world, self.cache.land_version)
+            if changed is not None:  # (the land changed: only what it touched is painted again, on the thread)
+                self.cache.refresh(*changed, v)
+            else:
+                self.world = None  # (too much has changed to follow: the whole map is painted again)
         if self.world is not game.world:
             self.close()
             self.world = game.world
             self.painter = WorldPainter(game.world, game.tables)
             self.cache = ChunkCache(self.painter)
+            self.cache.land_version = v
             self.cache.paint_overview()  # small and quick: it stands in until the map is painted in full
             self.cam = None
             self.glide = None
@@ -191,10 +201,13 @@ class WorldView:
         # The painted country: far out, the small picture of the whole world; nearer, the chunks of the map painted
         # in full (the small picture standing in for any not painted yet).
         cache = self.cache
+        if not canvas.gfx.background and (cache.pending is not None or cache.overview_stale):
+            cache.catch_up()  # (headless, no thread paints: the changed land is read at once)
         overview = cache.overview or cache.paint_overview()
+        ov_key = ("map overview", id(world), cache.overview_v)
         W, H = world.width, world.height
         if ppc <= 2 * OVERVIEW:
-            canvas.under(Image(("map overview", id(world)), lambda: overview, (ox, oy, W * ppc, H * ppc),
+            canvas.under(Image(ov_key, lambda: overview, (ox, oy, W * ppc, H * ppc),
                                rgba=(*tint, 255), smooth=not sharp_at(ppc, OVERVIEW)))
         else:
             n = cache.n
@@ -206,12 +219,12 @@ class WorldView:
                 for gy in range(gy0, gy1 + 1):
                     cw, ch = min(n, W - gx * n), min(n, H - gy * n)
                     dst = (ox + gx * n * ppc, oy + gy * n * ppc, cw * ppc, ch * ppc)
-                    im = cache.get((gx, gy))
+                    im, cv = cache.get_painted((gx, gy))
                     if im is not None:
-                        canvas.under(Image(("chunk", id(world), gx, gy), lambda im=im: im, dst, rgba=(*tint, 255),
+                        canvas.under(Image(("chunk", id(world), gx, gy, cv), lambda im=im: im, dst, rgba=(*tint, 255),
                                            smooth=not sharp))
                     else:
-                        canvas.under(Image(("map overview", id(world)), lambda: overview, dst,
+                        canvas.under(Image(ov_key, lambda: overview, dst,
                                            src=(gx * n * OVERVIEW, gy * n * OVERVIEW, cw * OVERVIEW, ch * OVERVIEW),
                                            rgba=(*tint, 255), smooth=True))
             if canvas.gfx.background:

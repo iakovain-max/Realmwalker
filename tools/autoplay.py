@@ -312,6 +312,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
                     fail(f"{f.name} still shares a draconic spirit's resistance without holding Summon Dragon")
         _check_factions(game, fail)
         _check_threats(game, fail)
+        _check_land(game, fail)
         _check_adventures(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
@@ -734,6 +735,28 @@ def _check_part_d(game, fail) -> None:
                 st = story.find_step(game, tag.get("adv"), tag.get("step"))
                 if st is not None and st["kind"] != "capture":
                     fail(f"{c.name} is wanted alive by a step that is no capture")
+
+
+def _check_land(game, fail) -> None:
+    """Changes to the land (G.6): the ledger replays to today's land, every square of it inside the world, never on a
+    settlement or a site; the game has followed the change (its biome remap covers every land the world knows)."""
+    from realmwalker.world import reshape
+
+    w = game.world
+    for problem in reshape.check(w):
+        fail(problem)
+    for rec in reshape.ledger(w):
+        if rec["kind"] not in reshape.KINDS:
+            fail(f"land change {rec['id']} of an unknown kind {rec['kind']!r}")
+        for x, y, field, old, new in rec["cells"]:
+            if not w.in_bounds(x, y):
+                fail(f"land change {rec['id']} outside the world at {x},{y}")
+            elif w.settlement_grid[x, y] >= 0 or w.site_grid[x, y] >= 0:
+                fail(f"land change {rec['id']} fell on a settlement or site at {x},{y}")
+    if len(game._biome_remap) < len(w.biome_ids):
+        fail("the game has not followed the land: a biome the world knows has no remap")
+    if game._land_seen != reshape.version(w) and not game.busy:
+        game.land_check()
 
 
 def _check_threats(game, fail) -> None:

@@ -119,7 +119,13 @@ class GameState:
         self.travel: TravelPlan | None = None
         self._cost_cache: np.ndarray | None = None
         B = tables.biomes
+        from realmwalker.world import reshape
+
+        for bid in reshape.NEW_BIOMES:  # (the lands made while you play have their places from the start: G.6)
+            if bid in B.index:
+                reshape.biome_index(world, bid)
         self._biome_remap = np.array([B.index.get(b, B.index["plains"]) for b in world.biome_ids], dtype=np.int32)
+        self._land_seen = reshape.version(world)
         self.dirty = False  # something changed since the last save
         self.encounter = None  # a hostile group met on the road, before the fight (game.encounters)
         self.battle = None  # the fight in progress (rules.combat.Battle)
@@ -380,7 +386,9 @@ class GameState:
                 from realmwalker.world import politics
 
                 if getattr(self, "politics_live", True):
+                    self.world.politics["party_at"] = [int(self.player.x), int(self.player.y)]
                     politics.tick(self.world, self.tables)
+                    self.land_check()
                     if self.in_local and self.local is not None and self.local.kind == "settlement":
                         from realmwalker.game import placemarks  # (a mark came or went while you stood here)
 
@@ -994,6 +1002,10 @@ class GameState:
     def enter_local(self) -> LocalMap:
         p = self.player
         lm = get_local_map(self.world, self.tables, p.x, p.y)
+        from realmwalker.world.local import patch_land
+
+        if patch_land(self.world, self.tables, lm):  # (built before the land changed round it: G.6)
+            self._remaps.pop(lm.key, None)
         p.local_key = lm.key
         p.lx, p.ly = lm.entry
         if lm.kind == "settlement":  # (what the town has been through, on its map before anyone is placed)
@@ -1434,8 +1446,46 @@ class GameState:
             self.encounter = roll_encounter(self, minutes * 0.5)  # sitting still draws less notice
 
     # ------------------------------------------------------------------ travel
+    def land_check(self) -> bool:
+        """Follow the land if it has changed since this game last looked (world/reshape.py). True if it had."""
+        from realmwalker.world import reshape
+
+        if reshape.version(self.world) == self._land_seen:
+            return False
+        self.land_changed()
+        return True
+
+    def land_changed(self) -> None:
+        """What must follow a change to the land (G.6): the biome remap (a world may have learned a new land), the
+        travel costs, the maps' terrain remaps, and the journey under way if it crosses a changed square."""
+        from realmwalker.world import reshape
+
+        B = self.tables.biomes
+        self._biome_remap = np.array([B.index.get(b, B.index["plains"]) for b in self.world.biome_ids], dtype=np.int32)
+        self._cost_cache = None
+        changed = reshape.changes_since(self.world, self._land_seen)
+        self._land_seen = reshape.version(self.world)
+        cells = changed[0] if changed is not None else None
+        for key in list(self._remaps):
+            try:
+                x, y = (int(v) for v in key.split("/")[0].split(",")[:2])
+            except ValueError:
+                x, y = -1, -1
+            if cells is None or (x, y) in cells:
+                self._remaps.pop(key, None)
+        plan = self.travel
+        if plan is not None and plan.path and (cells is None or any(tuple(c) in cells for c in plan.path)):
+            dest = plan.destination
+            self.travel = self.plan_travel(dest) if dest is not None else None
+            if self.travel is not None:
+                self.travel.destination = dest
+                self.say("The land ahead has changed; you find another way.", "warn")
+            else:
+                self.say("The land ahead has changed, and there is no way through to where you were going.", "warn")
+
     def travel_costs(self) -> np.ndarray:
         """Integer cost grid (minutes per tile, 0 = impassable) for path-finding."""
+        self.land_check()
         if self._cost_cache is None:
             B = self.tables.biomes
             hours = B.move_hours[self._biome_remap[self.world.biome]]

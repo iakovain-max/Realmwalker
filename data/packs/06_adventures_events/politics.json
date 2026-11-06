@@ -48,6 +48,12 @@
       "The standards over {place} are down. {holder} rules there again, and the gallows in the square came down first.",
       "Word from {place}: the occupiers are gone, and the town has gone back to {holder}.",
       "{holder} holds {place} again. Its people took down the strangers' banners with their own hands."
+    ],
+    "land_blight": [
+      "The country round {home} is dying: the grass gone grey, the trees bare in their season, the wells of {area} gone bitter. The people of {place} say {villain} breathes it out.",
+      "A blight has come down on {area}. Whatever grows near {home} withers in a night, and the herders of {place} are driving their beasts the other way.",
+      "Word from {place}: the fields towards {home} have died, every blade, as if frost and fire had passed together. No one has seen a bird there since.",
+      "The dead land spreads from {home}. The charcoal-burners of {area} say it creeps a field's width a week, and nothing they burn will stop it."
     ]
   }
 }

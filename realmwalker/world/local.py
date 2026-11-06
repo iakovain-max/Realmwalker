@@ -169,6 +169,8 @@ class LocalBuilder:
 
             wonders.shape_local(self, wonder)
             meta["wonder"] = wonder.id
+        elif self.biome_id in SHAPED:  # (a crater's rim, the rift's ledge: G.6)
+            PATCHES[self.biome_id](self.tables, self.t, self.np)
         if not meta.get("underground"):
             self._ensure_passable_edges()
         variant = (self.np.integers(0, 256, size=(self.w, self.h))).astype(np.uint8)
@@ -664,6 +666,9 @@ def get_local_map(world: World, tables: Tables, x: int, y: int) -> LocalMap:
     lm = world.local_maps.get(key)
     if lm is None:
         lm = LocalBuilder(world, tables, x, y).build()
+        from realmwalker.world import reshape
+
+        lm.meta["land_version"] = reshape.version(world)  # (built from the land as it is now)
         world.local_maps[key] = lm
     return lm
 
@@ -671,3 +676,145 @@ def get_local_map(world: World, tables: Tables, x: int, y: int) -> LocalMap:
 def terrain_remap(lm: LocalMap, tables: Tables) -> np.ndarray:
     """Array converting this map's stored terrain indices to the current data's indices."""
     return np.array([tables.terrain.index.get(t, tables.terrain.index["dirt"]) for t in lm.terrain_ids], dtype=np.int32)
+
+
+# ---------------------------------------------------------------------------- land changed while you play (G.6)
+TREES = ("tree_broadleaf", "tree_pine", "tree_acacia", "tree_jungle", "tree_palm", "tree_fey", "olive_tree",
+         "tree_cypress", "tree_birch")
+GREEN = ("grass", "tall_grass", "dry_grass", "feather_grass", "dirt", "marsh_reeds", "sand", "snow")
+
+
+def _names(tables, t: np.ndarray, names) -> np.ndarray:
+    return np.isin(t, [tables.terrain.index[n] for n in names if n in tables.terrain.index])
+
+
+def _swap(tables, t: np.ndarray, where: np.ndarray, name: str) -> None:
+    if name in tables.terrain.index:
+        t[where] = tables.terrain.index[name]
+
+
+def _crack(tables, t: np.ndarray, rng: np.random.Generator) -> None:
+    """The rift across the map: a band of chasm from one edge to the other, wandering, and a way over kept where
+    the ledge holds (rock to walk on, the pit either side)."""
+    w, h = t.shape
+    across = rng.random() < 0.5  # (west to east, or north to south)
+    n = w if across else h
+    m = h if across else w
+    mid = m / 2 + (rng.random() - 0.5) * m * 0.3
+    half = 1.5 + rng.random() * 1.5
+    way = int(n * (0.3 + 0.4 * rng.random()))
+    for i in range(n):
+        mid += (rng.random() - 0.5) * 1.6
+        mid = min(max(mid, m * 0.25), m * 0.75)
+        width = half + (rng.random() - 0.5)
+        for j in range(int(mid - width), int(mid + width) + 1):
+            if 0 <= j < m:
+                x, y = (i, j) if across else (j, i)
+                if abs(i - way) <= 1:
+                    _swap(tables, t, np.s_[x, y], "ledge")
+                else:
+                    _swap(tables, t, np.s_[x, y], "chasm")
+        for j in (int(mid - width) - 1, int(mid + width) + 1):  # (raw rock along its lips)
+            if 0 <= j < m and abs(i - way) > 1:
+                x, y = (i, j) if across else (j, i)
+                if tables.terrain.walk[t[x, y]]:
+                    _swap(tables, t, np.s_[x, y], "red_rock")
+
+
+def _rim(tables, t: np.ndarray, rng: np.random.Generator) -> None:
+    """A crater's rim: a ragged ring of thrown-up rock with gaps in it, rubble and ash inside and out."""
+    w, h = t.shape
+    cx, cy = w / 2 + (rng.random() - 0.5) * w * 0.2, h / 2 + (rng.random() - 0.5) * h * 0.2
+    xs = np.arange(w)[:, None]
+    ys = np.arange(h)[None, :]
+    d = np.sqrt((xs - cx) ** 2 + (ys - cy) ** 2) + (rng.random((w, h)) - 0.5) * 1.6
+    r = min(w, h) * 0.32
+    ang = np.arctan2(ys - cy, xs - cx)
+    gaps = rng.random(3) * 2 * np.pi
+    gap = np.zeros((w, h), bool)
+    for g in gaps:
+        gap |= np.abs((ang - g + np.pi) % (2 * np.pi) - np.pi) < 0.22
+    _swap(tables, t, (d < r - 1.5), "rubble")
+    _swap(tables, t, (d < r - 1.5) & (rng.random((w, h)) < 0.4), "ash")
+    _swap(tables, t, (np.abs(d - r) <= 1.2) & ~gap, "crater_rim")
+    _swap(tables, t, (d > r + 1.2) & (d < r + 6) & (rng.random((w, h)) < 0.5), "scorched")
+
+
+def _blighted(tables, t: np.ndarray, rng: np.random.Generator) -> None:
+    _swap(tables, t, _names(tables, t, TREES), "dead_tree")
+    _swap(tables, t, _names(tables, t, ("bush",)), "dry_earth")
+    green = _names(tables, t, GREEN)
+    _swap(tables, t, green & (rng.random(t.shape) < 0.6), "dry_earth")
+    _swap(tables, t, green & (rng.random(t.shape) < 0.004), "bones")
+
+
+def _scorched(tables, t: np.ndarray, rng: np.random.Generator) -> None:
+    trees = _names(tables, t, TREES)
+    _swap(tables, t, trees & (rng.random(t.shape) < 0.6), "dead_tree")
+    _swap(tables, t, _names(tables, t, TREES + ("bush",)), "ash")
+    green = _names(tables, t, GREEN)
+    _swap(tables, t, green & (rng.random(t.shape) < 0.65), "scorched")
+    _swap(tables, t, green & (rng.random(t.shape) < 0.5), "ash")
+
+
+def _drowned(tables, t: np.ndarray, rng: np.random.Generator) -> None:
+    _swap(tables, t, _names(tables, t, TREES), "dead_tree")
+    walk = tables.terrain.walk[t] & ~_names(tables, t, ("road", "bridge", "ford"))
+    pools = fbm(rng, t.shape[0], t.shape[1], cell=8, octaves=3, aspect=ASPECT)
+    _swap(tables, t, walk & (pools > 0.35), "shallow_water")
+    _swap(tables, t, walk & (pools <= 0.35), "mud")
+
+
+PATCHES = {"blighted": _blighted, "scorched_land": _scorched, "drowned": _drowned, "crater": _rim,
+           "rift_ledge": _crack}
+SHAPED = ("crater", "rift_ledge")  # (lands whose close-up maps are shaped as they are built, not only patched)
+
+
+def _free_near(lm: LocalMap, walk: np.ndarray, x: int, y: int) -> tuple[int, int]:
+    if 0 <= x < lm.width and 0 <= y < lm.height and walk[x, y]:
+        return x, y
+    pts = np.argwhere(walk)
+    if not len(pts):
+        return x, y
+    i = int(np.argmin((pts[:, 0] - x) ** 2 + (pts[:, 1] - y) ** 2))
+    return int(pts[i, 0]), int(pts[i, 1])
+
+
+def patch_land(world: World, tables: Tables, lm: LocalMap) -> bool:
+    """A close-up map built before the land round it changed takes the change on entry (world/reshape.py): the
+    dead trees of a blight, ash where the fire passed, the flood, the crater's rim, the crack across a ledge's map
+    with its way over. Bands, things on the ground and the way in move off squares that are no longer walkable.
+    True if the map was changed."""
+    from realmwalker.world import reshape
+
+    v = reshape.version(world)
+    have = int(lm.meta.get("land_version", 0))
+    if have >= v:
+        return False
+    lm.meta["land_version"] = v
+    if lm.kind != "wilderness" or "/" in lm.key or lm.meta.get("underground"):
+        return False
+    try:
+        x, y = (int(c) for c in lm.key.split(","))
+    except ValueError:
+        return False
+    if not reshape.changed_at(world, x, y, have):
+        return False
+    fn = PATCHES.get(world.biome_id(x, y))
+    if fn is None:
+        return False
+    remap = terrain_remap(lm, tables)
+    t = remap[lm.terrain].astype(np.uint16)
+    fn(tables, t, RNG(world.meta.seed, f"land patch/{lm.key}/{v}").numpy("cells"))
+    lm.terrain = t
+    lm.terrain_ids = list(tables.terrain.ids)
+    walk = tables.terrain.walk[t]
+    lm.entry = _free_near(lm, walk, *lm.entry)
+    for a in lm.actors:
+        if hasattr(a, "x"):
+            a.x, a.y = _free_near(lm, walk, int(a.x), int(a.y))
+    for (ix, iy) in list(lm.items):
+        nx, ny = _free_near(lm, walk, ix, iy)
+        if (nx, ny) != (ix, iy):
+            lm.items.setdefault((nx, ny), []).extend(lm.items.pop((ix, iy)))
+    return True
