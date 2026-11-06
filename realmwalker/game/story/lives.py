@@ -300,6 +300,14 @@ def fill(text: str, vals: dict) -> str:
     return text
 
 
+def _words_for(lines, vals: dict, rng) -> str | None:
+    """One of `lines` filled, among those every word of which can be filled now; None when none can (the tie it is
+    about has died since the want was chosen: the words lapse rather than show their braces)."""
+    filled = [fill(x, vals) for x in lines]
+    fit = [x for x in filled if "{" not in x]
+    return rng.choice(fit) if fit else None
+
+
 def write_profile(game, npc, rng) -> None:
     """The person's words (want, fear, secret) written from their life: one source."""
     d = data(game)
@@ -307,18 +315,25 @@ def write_profile(game, npc, rng) -> None:
     if not lf:
         return
     vals = values(game, npc, lf)
+    picks = []
     if lf.get("want") and not npc.flags.get("grudge"):  # (a blood feud of the history keeps its own words)
-        npc.profile["want"] = fill(rng.choice(d["wants"][lf["want"]]["words"]), vals)
+        picks.append(("want", d["wants"][lf["want"]]["words"], vals))
     if lf.get("fear"):
-        npc.profile["fear"] = fill(rng.choice(d["fears"][lf["fear"]]["words"]), vals)
+        picks.append(("fear", d["fears"][lf["fear"]]["words"], vals))
     if lf["secrets"]:
         sec = lf["secrets"][0]
         v = dict(vals)
         if sec.get("to"):
             v.update({"creditor": sec["to"], "lover": sec["to"]})
-        npc.profile["secret"] = fill(rng.choice(d["secrets"][sec["kind"]]["words"]), v)
+        picks.append(("secret", d["secrets"][sec["kind"]]["words"], v))
     else:
         npc.profile.pop("secret", None)
+    for key, lines, v in picks:
+        text = _words_for(lines, v, rng)
+        if text is None:
+            npc.profile.pop(key, None)
+        else:
+            npc.profile[key] = text
 
 
 def family_line(game, npc) -> str | None:

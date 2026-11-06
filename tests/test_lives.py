@@ -257,3 +257,24 @@ def test_a_sick_helper_does_not_shut_the_house_and_a_shut_keeper_sells_nothing(t
     keeper.flags.setdefault("life", lives.make(game, keeper, [], [keeper], w.rng.child("k")))
     lives.happen(game, town, keeper, "sickness", w.rng.child("ks"))
     assert not services.services_for(game, keeper), "a shut house sells no beds and no cures"
+
+
+def test_words_about_kin_who_died_lapse_rather_than_show_braces(tables):
+    """A want or fear about a son, a parent, an enemy... written when they lived: when they die and the words are
+    written again, no line can name them, so those words lapse (autoplay once found '{son}' in a profile)."""
+    game, town = a_life(tables, SEEDS[0])
+    folk = [n for n in npcs_in(game.world, town.id) if n.alive and n.flags.get("life")]
+    wants = tables.lives["wants"]
+    about_kin = [k for k, v in wants.items() if all("{" + k2 + "}" in " ".join(v["words"]) for k2 in ("son",))]
+    if not folk or not about_kin:
+        pytest.skip("nobody with a life, or no want about a son")
+    n = folk[0]
+    lf = n.flags["life"]
+    lf["want"] = about_kin[0]
+    lf["ties"] = [{"kind": "son", "name": "Ivo", "state": "alive", "npc": None}]
+    n.flags.pop("grudge", None)
+    lives.write_profile(game, n, game.world.rng.child("test/words"))
+    assert "Ivo" in n.profile["want"]
+    lf["ties"][0]["state"] = "dead"
+    lives.write_profile(game, n, game.world.rng.child("test/words"))
+    assert "{" not in n.profile.get("want", "") + n.profile.get("fear", "") + n.profile.get("secret", "")
