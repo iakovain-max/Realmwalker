@@ -834,8 +834,9 @@ def _meeting(game, sit: dict, spec: dict, rng) -> dict | None:
     twin = {s["meeting"]["kind"] for s in records(game.world).values() if s.get("meeting") and s is not sit
             and s["predicament"] == sit["predicament"] and s["root"].get("kind") == sit["root"].get("kind")
             and (s.get("life") == life or s["state"] == "latent")}  # (never two alike in root, shape and meeting)
-    fresh = [k for k in ok if k not in seen and k not in twin] or [k for k in ok if k not in twin] or \
-        [k for k in ok if k not in seen] or ok
+    fresh = [k for k in ok if k not in seen and k not in twin] or [k for k in ok if k not in twin]
+    if not fresh:
+        return None  # (only a twin of one already met would fit: this trouble is not forged, another is)
     return {"kind": rng.choice(fresh), "state": "waiting"}
 
 

@@ -46,6 +46,24 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (afternoon): Adventures & Events Part G, task G.2 — sleeping dangers wake — branch `dlc/06-adventures-events`
+
+- **What happens in the world wakes what sleeps in it.** A battle fought near an old barrow, or a plague that fills
+  the pits, can rouse the barrow's dead king; a famine makes a beast hungry and outlaws bold; a sacked town leaves
+  the roads unguarded for the gangs; a dragon's fire drives the beasts of the hills down onto the farms.
+- **And so do you.** Open the coffins of a barrow or take its king's hoard and he wakes, at once, and you feel it
+  (the air goes cold; something far below answers the lid). Walk into a beast's own lair and it may be roused too.
+- **The Storyteller makes sure you have something to face.** If you are out in the land with nothing stirring within
+  a week or so's walk that you could take on, the nearest sleeping danger fit for your level begins to stir (never a
+  barrow king for a first-level band).
+- **The world fights back without you.** Besides the priests who lay the dead to rest and the heroes who hunt
+  beasts, a lord may now call a great hunt on a beast that eats his farms, or send riders to burn out an outlaw's
+  hideout and hang its captain. You hear of it on the roads.
+- **Between lives.** When a new character starts in an old world, the "while you were away" page now also says which
+  dangers woke, grew worse, had their way, or were ended by others.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.2 note).
+
 ### Session, 2026-11-06 (afternoon): Adventures & Events Part G, task G.1 — a threat's signs, everywhere — branch `dlc/06-adventures-events`
 
 - **The country shows what is happening in it.** Walking near a threat now and then gives a line of what it has done

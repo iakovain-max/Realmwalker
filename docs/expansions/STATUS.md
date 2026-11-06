@@ -571,11 +571,40 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.2 (*waking dormant threats: triggers,
-the Storyteller's need, chance; `seed_from` from every `Politics` method that can make one; threats in the
-interlude's "what changed"; the world's own endings for every kind*), on branch `dlc/06-adventures-events` (Parts A-F
-are on main). Read docs/expansions/06-adventures-events.md Part G, docs/ADVENTURES.md §5.1, and the G.1 and D.1 notes
-below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.3 (*every consequence op of
+ADVENTURES.md §8.6: owners, successions, relations, laws, emptying and rebuilding, ruin in full (a `ruined` mark, a
+floor of survivors, the townsfolk's fates, the map re-stamped), monuments, renaming, songs, relics, land, rights; the
+marks' whole course; the ledger replay stays true*), on branch `dlc/06-adventures-events` (Parts A-F are on main).
+Read docs/expansions/06-adventures-events.md Part G, docs/ADVENTURES.md §5.1 and §8.6, and the G.2, G.1 and D.1
+notes below.
+G.2 (2026-11-06, realmwalker-b): world/threats.py "waking (G.2)" (its docstring has it all). `threats.wake(world,
+tables, t, rng, day=, why=, force=)` is the one door from dormant to stirring (keeps `t["woke"]` {why, day}; minds
+`room_for` unless forced); the weekly chance in `advance` goes through it (why "chance"). Triggers: threats.json
+`triggers` {why: {kinds, chance, within (x reach), force, felt}} fired by `threats.trigger(pol, why, points)` /
+`trigger_world(world, tables, rng, why, points, day=, site=)`: Politics.battle "battle" (risen), take when sacked
+"sacked" (outlaw, risen), plague "plague" (risen, every struck town), famine "famine" (beast, outlaw, every holding),
+raid "raid" (outlaw), dragon_wakes "dragon" (beast); the hero's own: `story.disturbed(game, site, why)` from
+dungeon.open_chest (a coffin or a hoard: "tomb_robbed", forced, chance 1) and story.on_descend ("lair_disturbed",
+forced, 0.6), the hero told by a `felt` line. The Storyteller's need: threats.json `need` {tiles 40, chance 0.5,
+every_days 7, over 1, levels [1,5,11,17]}; `story._need` from story.daily (not while the opening waits: its state
+"waiting") calls `threats.needed(world, tables, rng, x, y, level, day=, taken=)`: no live threat within `tiles` but
+those your tales engage, the budget's hi + `over` not reached, then the nearest dormant one of `hero_tier(level)` or
+below wakes (why "need"). `seed_from(pol, kind, figure=, site=, faction=, **more)` now finds a threat of that kind by
+figure, faction or home site, and is called by dragon_wakes ("dragon"), plague ("sickness"), raid ("warband"), a cult
+spreading ("circle") and the crown crisis in `succeed` ("crown"): those kinds do not exist yet, so it returns None
+(each kind's maker comes with it). World endings: every kind has `ends`; `ENDINGS[kind](pol, t)` returns the extra
+words for its news or None (could not happen this week; `_ends_alone` then does nothing): risen `_laid_by_others`,
+beast `_great_hunt` (the realm of `_lord_near`: kills the figure, pops the lair; outcome "hunted", politics.json
+threat_great_hunt, chance 0.006), outlaw `_broken_by_riders` (pol.fall(gang), the captain hanged; outcome "fallen",
+threat_broken, chance 0.01); `_lord_near` is the top liege at the home, never a tribe, gang or cult. The interlude:
+`snapshot` keeps threats {id: (state, stage)}; `interlude.threat_changes` writes threats.json `interlude` lines
+(woke, grew, doom, ended; rumour words, escaped), nearest `director["at"]` first, THREAT_LINES=4 at most. Autoplay
+`_check_threats` checks `woke.why` is known and that a woken threat is not asleep again (sequels aside).
+tests/test_threat_waking.py (10). No save format change (`woke`, `need_day` optional). Decisions: the hero's own
+deeds wake past the budget (you did it, you should see it); the Storyteller may stretch the budget by one; a battle
+or plague wakes only the dead, a famine only the hungry (beast, outlaw); a first-level hero is never handed a wight
+by the need (risen are tier 2 or more); threats born and ended inside one interlude are not mentioned.
+CHECKS_G2
 G.1 (2026-11-06, realmwalker-a): `game/story/signs.py` (its docstring has it all). Every stage of every threat kind
 (threats.json) has `signs` (news, as before) >= 4, `flavour` >= 4 (words on the land: `signs.on_the_land` after each
 overworld step in GameState's walk, behind `flavour(1)`, at most one line in LAND_GAP=30 steps (20 at rich), chance

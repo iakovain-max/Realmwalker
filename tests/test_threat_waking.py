@@ -93,9 +93,9 @@ def test_a_trigger_only_wakes_the_kinds_it_touches_and_minds_the_budget(world, t
     others = [o for o in threats.records(world).values() if o["id"] != t["id"]][:hi]
     for o in others:
         o["state"] = "active"
-    if len(threats.live(world)) >= hi:
-        assert threats.trigger(pol, "plague", [threats.home_xy(world, t)]) == [], "no room in the world"
-        assert t["state"] == "dormant"
+    assert len(threats.live(world)) >= hi
+    assert threats.trigger(pol, "plague", [threats.home_xy(world, t)]) == [], "no room in the world"
+    assert t["state"] == "dormant"
 
 
 def test_the_politics_engine_fires_its_triggers_and_seeds(world, tables, monkeypatch):
@@ -220,9 +220,10 @@ def test_the_world_ends_each_kind_by_itself(world, tables, monkeypatch):
         kind = tables.threats["kinds"][kid]
         monkeypatch.setitem(kind, "ends", dict(kind["ends"], chance=1.0))
         ts = [t for t in _sleeping(world, kid) if threats._lord_near(pol, t) is not None]
-        if not ts:
-            continue
+        assert ts, f"a {kid} in some realm's land"
         t = ts[0]
+        lord = threats._lord_near(pol, t)
+        assert tables.factions["kinds"][lord.kind]["group"] == "realms"
         t["state"] = "stirring"
         name = threats.villain_name(world, t)
         threats._ends_alone(pol, t)
@@ -230,7 +231,7 @@ def test_the_world_ends_each_kind_by_itself(world, tables, monkeypatch):
         assert not threats.villain_lives(world, t)
         assert any(name in n["text"] for n in world.news[-5:]), "the roads hear of it"
         ended += 1
-    assert ended, "a beast or an outlaw lord in some lord's land"
+    assert ended == 2
 
 
 def test_with_no_lord_near_the_riders_do_not_come(world, tables, monkeypatch):
@@ -260,5 +261,25 @@ def test_the_interlude_says_what_woke_and_what_ended(world, tables):
     lines = threat_changes(world, tables, before, snapshot(world)["threats"])
     assert len(lines) == 2 and all("{" not in line for line in lines)
     assert any(line.startswith("<warn>") for line in lines) and any(line.startswith("<good>") for line in lines)
+    unheard = next((t for t in threats.records(world).values() if t["state"] == "dormant"), None)
+    if unheard is not None:  # (a sleeping threat ended by others before anyone heard of it: no line)
+        before = snapshot(world)["threats"]
+        threats.end(world, unheard, "slain", pol.day)
+        assert threat_changes(world, tables, before, snapshot(world)["threats"]) == []
     summary = pass_the_years(world, tables, RNG(5), days=60)
     assert all("{" not in line for line in summary["lines"])
+
+
+def test_a_busy_interlude_still_has_room_for_the_threats(world, tables, monkeypatch):
+    from realmwalker.game import interlude
+
+    t = next(t for t in threats.records(world).values() if threats.villain_lives(world, t))
+    t["state"], t["scheme"]["stage"] = "dormant", -1
+    before = interlude.snapshot(world)
+    pol = _politics(world, tables)
+    threats.wake(world, tables, t, pol.rng, day=pol.day, why="chance", force=True)
+    for s in world.settlements[:30]:  # (a world on fire: a line for every burned town)
+        s.status["burned"] = {"since": pol.day}
+    lines = interlude.changes(world, tables, before, interlude.snapshot(world))
+    assert len(lines) == interlude.MAX_LINES
+    assert lines[-1].startswith("<warn>") and "burned" not in lines[-1], "the threat's line is kept"

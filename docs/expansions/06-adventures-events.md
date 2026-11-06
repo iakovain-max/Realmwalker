@@ -381,7 +381,7 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
 - [x] G.1 Full sign sets for every threat kind's stages, as news, scenes, marks and map signs; overlays on road
   encounters (`story.overlay` from `encounters.roll_encounter`), on prices (marks read by `game/economy`) and on the
   land's flavour (only the extra lines behind Text detail).
-- [ ] G.2 Waking dormant threats (triggers, the Storyteller's need, chance); `seed_from` from every `Politics` method
+- [x] G.2 Waking dormant threats (triggers, the Storyteller's need, chance); `seed_from` from every `Politics` method
   that can make one; threats in the interlude's "what changed"; the world's own endings for every kind.
 - [ ] G.3 Every consequence op of ADVENTURES.md §8.6: owners (`Politics.set_owner`), successions, relations, laws,
   emptying and rebuilding, **ruin in full** (designed here: a `ruined` mark, a floor of survivors, the townsfolk's

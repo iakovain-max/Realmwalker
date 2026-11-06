@@ -468,13 +468,14 @@ def _ends_alone(pol, t: dict) -> None:
 
 
 def _lord_near(pol, t: dict):
-    """The realm whose land a threat's home is in (None in the wild, or where a tribe or outlaws hold it)."""
+    """The realm whose land a threat's home is in (None in the wild, or where no realm holds it: a tribe, outlaws)."""
     from realmwalker.world import factions as fx
 
     lord = fx.lord_at(pol.w, *home_xy(pol.w, t))
-    if lord is None or lord.kind in ("tribe", "bandit_gang", "cult"):
+    lord = fx.top_liege(pol.w, lord) if lord is not None else None
+    if lord is None or pol.t.factions["kinds"].get(lord.kind, {}).get("group") != "realms":
         return None
-    return fx.top_liege(pol.w, lord)
+    return lord
 
 
 def _laid_by_others(pol, t: dict) -> dict:
@@ -506,6 +507,7 @@ def _broken_by_riders(pol, t: dict) -> dict | None:
     gang = gang_of(pol.w, t)
     if lord is None or gang is None or not gang.active:
         return None
+    _new_captain(pol.w, t)  # (the captain they hang is the one the news names)
     leader = fx.leader_of(pol.w, gang)
     pol.fall(gang)
     if leader is not None and leader.alive:

@@ -111,8 +111,8 @@ def changes(world, tables, before: dict, after: dict) -> list[str]:
     for name, alive in after["dragons"].items():
         if alive and not before["dragons"].get(name, True):
             lines.append(f"<danger>{esc(name)} is awake.</>")
-    lines += threat_changes(world, tables, before.get("threats", {}), after.get("threats", {}))
-    return lines[:MAX_LINES]
+    dark = threat_changes(world, tables, before.get("threats", {}), after.get("threats", {}))
+    return lines[:MAX_LINES - len(dark)] + dark  # (room kept for the threats, however busy the world was)
 
 
 THREAT_LINES = 4  # (the darkness in the world takes a few lines of the page at most, nearest the last hero first)
@@ -133,8 +133,8 @@ def threat_changes(world, tables, before: dict, after: dict) -> list[str]:
         was = before.get(tid)  # (None: born while nobody played)
         t = world.politics["threats"][tid]
         if state == "ended":
-            if was is None or was[0] == "ended":
-                continue
+            if was is None or was[0] == "ended" or (was[0] == "dormant" and "woke" not in t):
+                continue  # (an end to something nobody had heard of is no news)
             how = "doom" if t.get("outcome") == "doom" else "ended"
         elif state == "dormant":
             continue

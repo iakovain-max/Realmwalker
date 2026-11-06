@@ -749,7 +749,8 @@ def on_descend(game, lm) -> None:
     from realmwalker.game.story import deeds
 
     deeds.on_descend(game, lm)  # (a step's band on a level filled before: D.2)
-    disturbed(game, lm.meta.get("site"), "lair_disturbed")  # (into the beast's own lair: it knows, G.2)
+    if int(lm.meta.get("level", 1)) == 1:  # (one chance a visit, on the way in)
+        disturbed(game, lm.meta.get("site"), "lair_disturbed")  # (into the beast's own lair: it knows, G.2)
     from realmwalker.game.story import rivals
 
     rivals.on_descend(game, lm)  # (a rival who went in ahead of you, found: F.2)
