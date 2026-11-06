@@ -365,6 +365,7 @@ def _check_adventures(game, fail) -> None:
     _check_allies(game, fail)
     _check_rivals(game, fail)
     _check_threat_signs(game, fail)
+    _check_consequences(game, fail)
     _check_secrets(game, fail)
     _check_reading(game, fail)
     _check_early(game, fail)
@@ -401,6 +402,42 @@ def _check_allies(game, fail) -> None:
             fail(f"{where}: joined, but not in the company under oath (nor carried, fallen)")
         if c is not None and (npc is None or not npc.alive):
             fail(f"{where}: with you, and dead")
+
+
+def _check_consequences(game, fail) -> None:
+    """Expansion 6 G.3: what the world keeps of a tale. An occupied town is held by its occupier (alive) and knows
+    whom it was taken from; a ruin or a rebuilding town remembers at least the people it has; a monument has words; a
+    song to be sung has a living author's record; the fallen townsfolk are not about; a holding and a right name a
+    real town; a renamed place is called by its new name."""
+    w = game.world
+    for s in w.settlements:
+        occ = s.status.get("occupied")
+        if isinstance(occ, dict) and s.owner == occ.get("by"):
+            by = w.factions.get(occ.get("by"))
+            if by is None or not by.active:
+                fail(f"{s.name} is occupied by a faction that has fallen")
+        for m in ("ruined", "rebuilding"):
+            v = s.status.get(m)
+            if isinstance(v, dict) and int(v.get("was", s.population)) < s.population // 2:
+                fail(f"{s.name} is {m} but remembers fewer people than it has ({v.get('was')} < {s.population})")
+        mem = s.status.get("memorial")
+        if isinstance(mem, dict) and mem.get("what") and not mem.get("words"):
+            fail(f"{s.name}'s monument has no words")
+    for work in w.politics.get("works") or ():
+        if isinstance(work, dict) and work.get("sung") and work.get("author") not in w.figures:
+            fail(f"the song {work.get('title')!r} has no author")
+    for npc in w.npcs.values():
+        if (not npc.alive or npc.flags.get("gone")) and npc.present:
+            fail(f"{npc.name} is about in town, though {npc.flags.get('fate', 'gone')}")
+            break
+    n = len(w.settlements)
+    for rec in list(game.renown.flags.get("lands") or ()) + list(game.renown.flags.get("rights") or ()):
+        if "settlement" in rec and not 0 <= int(rec["settlement"]) < n:
+            fail(f"a holding or right in a town that does not exist ({rec})")
+    for key, r in (w.politics.get("renamed") or {}).items():
+        thing = w.sites[int(key[1:])] if key[0] == "X" else w.settlements[int(key[1:])]
+        if thing.name != r["new"]:
+            fail(f"{r['old']} was renamed {r['new']}, but is called {thing.name}")
 
 
 def _check_threat_signs(game, fail) -> None:

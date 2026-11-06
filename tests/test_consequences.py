@@ -216,12 +216,33 @@ def test_an_outlaw_doom_occupies_the_town_until_the_band_falls(made, tables):
     assert s.owner == old and "occupied" not in s.status and _replays(w), "freed, and the ledger still true"
 
 
+def test_an_occupation_whose_time_is_out_gives_the_town_back(made, tables):
+    game, adv, t = _tale(made, tables, "outlaw", tier=3)
+    w = game.world
+    s = _town(game, adv)
+    old = s.owner
+    s.status.pop("siege", None)
+    endings.OPS["set_owner"](game, adv, "town", "villain", 1)
+    if s.owner == old:
+        pytest.skip("this town cannot be occupied (a city)")
+    pol = _politics(game)
+    pol.day = float(s.status["occupied"]["until"]) + 1
+    pol.expire_status()
+    assert s.owner == old and "occupied" not in s.status and _replays(w)
+
+
 def test_the_lord_of_a_place_dies_or_steps_down_and_the_seat_passes(made, tables):
     game, adv, t = _tale(made, tables, "risen", tier=3)
     w = game.world
     s = _town(game, adv)
     f = w.factions[s.owner]
     lord = fx.leader_of(w, f)
+    if f.kind in consequences.CROWNS:
+        assert endings.OPS["figure_dies"](game, adv, "lord:town", "cause_risen", 3) == [] and lord.alive,             "a tale never kills a crown"
+        house = next(x for x in w.factions.values() if x.active and x.kind not in consequences.CROWNS
+                     and x.kind not in ("bandit_gang", "pirate_crew") and fx.leader_of(w, x) is not None)
+        _politics(game).set_owner(s, house.id)
+        f, lord = house, fx.leader_of(w, house)
     endings.OPS["figure_dies"](game, adv, "lord:town", "cause_risen", 3)
     assert not lord.alive and fx.leader_of(w, f) is not None and fx.leader_of(w, f) is not lord
     second = fx.leader_of(w, f)

@@ -47,6 +47,7 @@ from realmwalker.game.story.endings import _place, consequence
 
 DAY = 24 * 60
 FATE_JOBS = ("wayfarer", "adventurer", "pilgrim")  # (passing through: never counted among a town's own)
+CROWNS = ("kingdom", "empire")  # (a tale's ending kills or unseats a town's lord, never a crown: that is a war's)
 
 
 def spec(game) -> dict:
@@ -178,7 +179,7 @@ def _figure_dies(game, adv, who: str = "villain", cause: str = "", min_tier: int
     elif who.startswith("lord:"):
         s = _near_settlement(game, adv, who[5:])
         f = w.factions.get(s.owner) if s is not None else None
-        fig = fx.leader_of(w, f) if f is not None else None
+        fig = fx.leader_of(w, f) if f is not None and f.kind not in CROWNS else None
     else:
         return []
     if fig is None or not fig.alive:
@@ -248,7 +249,8 @@ def _set_owner(game, adv, place: str, to: str, min_tier: int = 1) -> list[str]:
         return [f"<good>{esc(s.name)} is free again.</>"]
     if to == "villain":
         f = _villain_faction(game, adv)
-        if f is None or not f.active or s.owner == f.id or s.status.get("siege"):
+        if f is None or not f.active or s.owner == f.id or s.status.get("siege") or \
+                isinstance(s.status.get("occupied"), dict) or s.kind == "city" or getattr(s, "great", False):
             return []
         was = s.owner
         pol.set_owner(s, f.id)
@@ -274,7 +276,7 @@ def _succession(game, adv, place: str, min_tier: int = 1, cause: str = "") -> li
     s = _near_settlement(game, adv, place)
     f = w.factions.get(s.owner) if s is not None else None
     old = fx.leader_of(w, f) if f is not None and f.active else None
-    if old is None or f.kind in ("bandit_gang", "pirate_crew"):
+    if old is None or f.kind in ("bandit_gang", "pirate_crew") or f.kind in CROWNS:
         return []
     pol = _politics(game)
     why = _words(game, adv, cause, _rng(game, adv, "succession")) if cause else "stepped down"
@@ -386,8 +388,8 @@ def _ruin(game, adv, place: str = "town", min_tier: int = 1) -> list[str]:
     if not _tier_ok(adv, min_tier):
         return []
     s = _settlement(game, adv, place)
-    if s is None or "ruined" in s.status:
-        return []
+    if s is None or "ruined" in s.status or s.kind == "city" or getattr(s, "great", False):
+        return []  # (a city is too great to fall to one tale's ending)
     w = game.world
     sp = spec(game).get("ruin", {})
     was = int(s.population)
@@ -595,7 +597,8 @@ def _title(game, adv, place: str = "town", min_tier: int = 2) -> list[str]:
     if not _tier_ok(adv, min_tier):
         return []
     realm = _realm(game, adv, place)
-    if realm is None or realm.kind not in game.tables.law["titles"]["names"] or             any(t.get("realm") == realm.id for t in game.renown.flags.get("titles", [])):
+    if realm is None or realm.kind not in game.tables.law["titles"]["names"] or \
+            any(t.get("realm") == realm.id for t in game.renown.flags.get("titles", [])):
         return []
     return [reputation.grant_title(game, realm, earned=True)]
 
@@ -668,10 +671,11 @@ def recommends(game, npc) -> int:
     from realmwalker.rules.inventory import carried
     from realmwalker.world import factions as fx
 
-    if npc.social != "high" and npc.job not in ("guard", "lord", "headman"):
+    if getattr(npc, "social", "") != "high" and getattr(npc, "job", "") not in ("guard", "lord", "headman"):
         return 0
     w = game.world
-    s = w.settlements[npc.settlement] if 0 <= npc.settlement < len(w.settlements) else None
+    sid = getattr(npc, "settlement", -1)
+    s = w.settlements[sid] if 0 <= sid < len(w.settlements) else None
     realm = fx.realm_of_settlement(w, s) if s is not None else None
     if realm is None:
         return 0
@@ -739,8 +743,9 @@ def fates(game, s) -> int:
     town.flags.setdefault("folk_full", len(folk))
     went = 0
     where = s.name
+    talking = getattr(game, "talk_to", None)
     for npc in folk:
-        if npc.notable or npc.flags.get("story") or npc.flags.get("figure") is not None or \
+        if npc is talking or npc.id == getattr(talking, "id", None) or npc.notable or npc.flags.get("story") or npc.flags.get("figure") is not None or \
                 npc.flags.get("companion") or npc.flags.get("with_party"):
             continue
         r = (_h(s.id, key, npc.id) % 1000) / 1000.0
@@ -772,8 +777,8 @@ def newcomers(game, s) -> int:
     target = int(town.flags["folk_full"] * min(1.0, s.population / was))
     here = [w.npcs[i] for i in town.npcs if i in w.npcs and w.npcs[i].alive and not w.npcs[i].flags.get("gone")
             and not w.npcs[i].flags.get("visitor") and w.npcs[i].job not in FATE_JOBS]
-    empty = [w.npcs[i] for i in town.npcs if i in w.npcs and w.npcs[i].flags.get("fate")
-             and not w.npcs[i].flags.get("replaced")]
+    empty = [w.npcs[i] for i in town.npcs if i in w.npcs and (w.npcs[i].flags.get("fate") or not w.npcs[i].alive)
+             and not w.npcs[i].notable and not w.npcs[i].flags.get("replaced")]
     n = min(target - len(here), len(empty), int(spec(game).get("newcomers_a_visit", 6)))
     if n <= 0:
         return 0

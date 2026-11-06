@@ -571,12 +571,55 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.3 (*every consequence op of
-ADVENTURES.md §8.6: owners, successions, relations, laws, emptying and rebuilding, ruin in full (a `ruined` mark, a
-floor of survivors, the townsfolk's fates, the map re-stamped), monuments, renaming, songs, relics, land, rights; the
-marks' whole course; the ledger replay stays true*), on branch `dlc/06-adventures-events` (Parts A-F are on main).
-Read docs/expansions/06-adventures-events.md Part G, docs/ADVENTURES.md §5.1 and §8.6, and the G.2, G.1 and D.1
-notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.4 (*the epilogue in full, with vignettes
+of the places as they now are; adventures as named chapters of the history in the Legends book; sequel threats*), on
+branch `dlc/06-adventures-events` (Parts A-F are on main). Read docs/expansions/06-adventures-events.md Part G,
+docs/ADVENTURES.md §5.9 and §5.13, and the G.3, G.2 and G.1 notes below.
+G.3 (2026-11-06, realmwalker-a): `game/story/consequences.py` (its docstring lists every op and its arguments) adds
+the rest of ADVENTURES.md 8.6's consequence ops to `endings.OPS` (registered by importing it at the end of
+endings.py): figure_dies ("villain" or "lord:<place>", through Politics.die with `led`, so the seat's succession runs),
+figure_rests (the risen's `politics["tombs"]` entry goes; `politics["rested"]`), faction_falls (Politics.fall, then
+threats.settle; never a kingdom), set_owner (Politics.set_owner, the ledger: to "villain" = an occupation, the new
+`occupied` mark {by, was}; "freed" = Politics.free; or to the holder of another place), succession (the place's lord
+steps down, Politics.succeed), relation, law (the realm that makes the laws there; words `law_<key>`), standing,
+status (add or lift a mark), rebuild (lifts ruined/emptied/burned/sacked/burned_out into `rebuilding` with the
+greatest `was`), ruin (min_tier; `ruined` mark {was, by, adv}, population to `consequences.ruin` floor 0.1 / least 5,
+news and history, `fates`, re-stamped at once if you stand there), lay_barrow / lay_scar (endings._lay now calls
+them), monument (memorial mark {what, words, adv}: marks.json memorial `dress.forms` statue/shrine/cairn/gibbet
+(cage)/stone; the prop's square is kept in `lm.meta["marks"]["memorial"]["props"]`; `monument_look` from
+describe_local), rename (a site, or a hamlet or village; `politics["renamed"]` {key X<id>/S<id>: old, new, year, adv};
+dungeon metas renamed too), song (a bard figure made by fx.make_figure, a work in `politics["works"]` with `sung`
+{from, x, y, reach}; `song_at_inn` from services._room and _meal, once a town: `renown.flags["songs_heard"]`), relic
+(to "hero": a trinket named from the words, tag relic:<adv>; to "temple": `politics["relics"]`, `relic_line`), title
+(reputation.grant_title(earned=True): the honour past its thresholds, once a realm), land (`renown.flags["lands"]`
+{settlement, realm, name, rent, paid}; `rent` paid by `on_visit` in whole months), right (board:
+`renown.flags["rights"]`, services.stay_price 0; letter: a letters.py page in a sealed_letter tagged
+recommends:<realm>, read by people.papers_impression through `recommends`), threat_grows (tier +1 once), ally_fate
+("broke": dismissed, stakes.after_tale writes the fate). Their words are adventures.consequences.json
+`consequences.words` (not the story words: the storybook would flag a tale's words in another's), checked per tale
+by the test. The marks' course: new marks ruined (ages into rebuilding after 300-480 days; age() carries `was`),
+cursed (lasts 150-260), occupied (lasts 120-240; Politics.expire_status frees it when its time is out or its
+occupier is gone, Politics.fall frees a town held by force before handing the rest to the liege; politics.json
+occupation_ended); marks.json `leaves` {mark, chance}: rebuilding (0.35) and plague (0.2) may leave a memorial
+(`marks.leave`, from age and threats._recover); rebuilding's dressing has scaffolds; Politics.regrow fills a
+rebuilding town 1-3% of its `was` a month; `consequences.on_visit` (story.on_enter_town) gives a ruined or emptied
+town's folk their fates (by hash: ruined 20% stay, 45% die, the rest `gone`; emptied 35/15; notables, story people,
+figures and companions always stay; `town.flags` fates, folk_full) and newcomers to a rebuilding one (`newcomers`:
+into the homes and posts of the departed, at most 6 a visit, then lives.ensure). placemarks: a mark whose record is
+made anew (its `since` changed) is re-stamped; a prop that finds no square open all round stands where blocking it
+cuts no square off (`_props_squeezed`: before this, hamlets got no props at all). The endings: beast slain (rebuild,
+statue, the lair renamed at tier 2+, ballad, tooth, standing +5, title and land at tier 3), beast doom (lament, the
+lord put aside and the town ruined at tier 3); outlaw bargained (realm-gang relation +15, harsh law "cruel", the ally
+walks away), pardoned (faction_falls moved out of outlaw_pardoned, a letter, ballad), broken/spared/taken (freed,
+free board, the gibbet's cage when taken, ballad, title at tier 3), doom (occupation at tier 3, lament); risen
+bargained (threat_grows, the ally walks away), laid_to_rest (figure_rests, haunting lifted, rebuild, shrine, relic
+to the temple, lament, title at 4), destroyed (cairn, relic to you, title and land at 4), doom (cursed, the lord
+taken by the dead at 3, ruin at 4). Autoplay `_check_consequences`. tests/test_consequences.py (10). No save format
+change (every new record is optional). Decisions: a kingdom never falls to a tale; only hamlets and villages are
+renamed (a town keeps its name); a ruin spares the temple's building (the survivors gather there); the dead and the
+fled stay so (newcomers replace them, they do not come back); a title from a tale ignores the standing and fame
+thresholds but not "once a realm".
+Checks: (pending).
 G.2 (2026-11-06, realmwalker-b): world/threats.py "waking (G.2)" (its docstring has it all). `threats.wake(world,
 tables, t, rng, day=, why=, force=)` is the one door from dormant to stirring (keeps `t["woke"]` {why, day}; minds
 `room_for` unless forced); the weekly chance in `advance` goes through it (why "chance"). Triggers: threats.json

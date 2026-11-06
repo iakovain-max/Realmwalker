@@ -707,7 +707,14 @@ class Politics:
         was = self.w.factions.get(occ.get("was"))
         while was is not None and not was.active and was.liege >= 0:
             was = self.w.factions.get(was.liege)
-        if was is not None and was.active and s.owner != was.id:
+        if was is None or not was.active:  # (nobody left to give it back to: the occupier's liege, or no lord)
+            by = self.w.factions.get(occ.get("by"))
+            liege = self.w.factions.get(by.liege) if by is not None and by.liege >= 0 else None
+            if s.owner == occ.get("by"):
+                self.set_owner(s, liege.id if liege is not None and liege.active else -1)
+                self.changed = True
+            return
+        if s.owner != was.id:
             self.set_owner(s, was.id)
             self.changed = True
             if "occupation_ended" in self.data["text"]:

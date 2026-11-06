@@ -371,8 +371,10 @@ def _meal(game, npc, svc, arg):
     game.pass_time(40, "rest")
     rng = game.world.rng.child(f"meal/{npc.id}/{game.world.time}")
     text = MEAL_WORDS[grade]
-    return [f"{text[:1].upper()}{text[1:]} ({money_text(price)})." + (" You feel almost human." if grade not in
-                                                                     ("squalid", "poor") else "")] + _bad_food(game, grade, rng) +         _sung(game, npc)
+    paid = f" ({money_text(price)})" if price or not _board(game, npc) else ", and the innkeeper will take no coin"
+    return [f"{text[:1].upper()}{text[1:]}{paid}." + (" You feel almost human." if grade not in
+                                                      ("squalid", "poor") else "")] + _bad_food(game, grade, rng) + \
+        _sung(game, npc)
 
 
 def _board(game, npc) -> bool:

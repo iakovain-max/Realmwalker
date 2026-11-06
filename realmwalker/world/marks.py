@@ -19,7 +19,8 @@ from __future__ import annotations
 
 DAY_FORM = ("sacked", "burned")  # a day number (what politics has always written)
 NAME_FORM = ("tribute",)  # the name of whoever takes it
-OWNED = ("siege", "emptied", "rebuilding")  # ended elsewhere: a siege by its war, the rest by world/threats.py
+OWNED = ("siege", "emptied", "rebuilding", "occupied")  # ended elsewhere: a siege by its war, emptied and rebuilding
+# by world/threats.py, an occupation by Politics.expire_status (the town goes back to its lord: G.3)
 
 
 def table(tables) -> dict:

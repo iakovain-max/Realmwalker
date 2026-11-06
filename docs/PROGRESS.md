@@ -46,6 +46,30 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (afternoon, later): Adventures & Events Part G, task G.3 — what the world keeps of a tale — branch `dlc/06-adventures-events`
+
+- **Win a tale and the world remembers it.** Kill the beast and its lair takes a new name ("Hungerfell's Grave"),
+  the town raises a statue in its square with words cut in it (walk up to it and Look), and you keep its tooth. Lay
+  the dead king to rest and the haunting lifts, a shrine stands for the dead, his grave-gold goes to the temple.
+  Hang the outlaw captain and his cage swings from a gibbet by the well.
+- **Songs.** A few weeks after a tale, a real bard of the world (you can find them in the Legends book) has made a
+  ballad of it, and it is sung at the inns round about: once in each town, and the room raises a cup to you.
+- **Rewards that last.** For a great deed a realm may make you a knight (or its like), grant you a holding whose
+  steward brings you the rent whenever you come back to that town, give you free board at the town's inns for life,
+  or a letter of recommendation that makes lords and guards think better of you wherever that realm rules.
+- **Lose, and the world remembers that too.** If a great beast's or the risen king's scheme wins, the town itself
+  can be ruined in full: most of its houses roofless shells, fresh graves by the road, a handful of survivors
+  living round the temple (the rest dead or fled, and they stay so). A failed lord may be put aside by his own people;
+  the dead may take the lord himself, and his heir takes the seat. An outlaw lord who wins may take the town and hold
+  it, his standards in the square and a gallows by the well, until his band is broken; then it goes back to its own
+  lord. A town under the risen king's curse turns grey and silent for a season.
+- **Places come back.** A ruin creeps back to life after a year or so: scaffolds and new timber, the people growing
+  back month by month, newcomers moving into the empty houses (new faces you can talk to); when it is done, it may
+  raise a memorial to what it went through. A town that lived through a plague may do the same.
+- Take the outlaw's bargain and the lord's justice grows cruel, and your ally, sickened, walks away.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.3 note).
+
 ### Session, 2026-11-06 (afternoon): Adventures & Events Part G, task G.2 — sleeping dangers wake — branch `dlc/06-adventures-events`
 
 - **What happens in the world wakes what sleeps in it.** A battle fought near an old barrow, or a plague that fills

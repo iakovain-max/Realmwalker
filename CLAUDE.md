@@ -677,6 +677,12 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   writes what would be heard (float32 stereo 48 kHz raw) for `audio/levels` to measure. A new sound: add it
   to tools/build_sounds.py EFFECTS (or make it there), run it, add the entry to data/sounds.json, commit
   assets/sounds; tests/test_audio.py checks every name the code asks for exists and every file is at one loudness.
+- What a tale's ending does to the world (Expansion 6 G.3): consequence ops in `game/story/endings.py` and
+  `game/story/consequences.py` (its docstring lists them: owners through `Politics.set_owner` and occupations
+  (`occupied` mark, `Politics.free`), deaths and successions through `Politics.die`/`succeed`, ruin in full, monuments,
+  songs sung at inns, relics, titles, holdings, rights...). Their words are adventures.consequences.json
+  `consequences.words`. A ruined or emptied town's folk get their fates and a rebuilding one newcomers at a visit
+  (`consequences.on_visit`); never change a settlement's owner except through `Politics.set_owner` (the ledger).
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.
