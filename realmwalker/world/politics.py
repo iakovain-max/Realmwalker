@@ -819,15 +819,16 @@ class Politics:
         self.say("gang_destroyed", {"lord": fx.top_liege(w, lord).name, "gang": gang.name}, where=where, importance=2,
                  factions=[gang, lord])
 
-    def new_gang(self, near=None) -> None:
-        """Outlaws take to the roads: often deserters after a war."""
+    def new_gang(self, near=None, *, quiet: bool = False):
+        """Outlaws take to the roads: often deserters after a war. Returns the band (None if no hideout was free);
+        `quiet` makes no threat of it (a tale's sequel makes its own, asleep: story/sequels.py)."""
         w = self.w
         lairs = [s for s in w.sites if s.faction < 0 and s.kind in ("ruin", "cave", "tower")]
         if near is not None:
             lairs = [s for s in lairs if math.hypot(s.x - near[0], s.y - near[1]) < 40] or lairs
         lairs = [s for s in lairs if w.road[max(0, s.x - 8):s.x + 9, max(0, s.y - 8):s.y + 9].any()]
         if not lairs:
-            return
+            return None
         site = self.rng.choice(lairs)
         human = [s for s in w.settlements if s.kind in fx.HUMAN_SETTLEMENTS]
         home = min(human, key=lambda s: (s.x - site.x) ** 2 + (s.y - site.y) ** 2) if human else None
@@ -862,9 +863,11 @@ class Politics:
                 fx.set_relation(w, fid, other.id, v + self.rng.gauss(0, 8))
         self.say("gang_new", {"gang": gang.name, "place": land}, where=(site.x, site.y), importance=2,
                  factions=[gang])
-        from realmwalker.world import threats
+        if not quiet:
+            from realmwalker.world import threats
 
-        threats.seed_from(self, "outlaw", figure=leader, faction=gang)  # (an outlaw lord in the making: Expansion 6)
+            threats.seed_from(self, "outlaw", figure=leader, faction=gang)  # (an outlaw lord in the making: Exp 6)
+        return gang
 
 
 # ---------------------------------------------------------------------------- the live world

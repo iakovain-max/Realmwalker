@@ -74,6 +74,9 @@ def finish(game, adv: dict) -> list[str]:
     e = choose(game, adv)
     adv["ending"] = e["id"]
     lines: list[str] = []
+    from realmwalker.game.story import epilogue
+
+    before = epilogue.snapshot(game)  # (what the epilogue's last page tells changed: G.4)
     for op in e["ops"]:
         lines += OPS[op[0]](game, adv, *op[1:]) or []
     adv["state"] = "won" if e["id"] in WON else "abandoned" if e["id"] == "abandoned" else "lost"
@@ -104,6 +107,8 @@ def finish(game, adv: dict) -> list[str]:
 
     patrons.after_tale(game, adv)  # (what the patron did not tell, once it came out; the innocent's fate: F.3)
     traitors.after_tale(game, adv)  # (the traitor's fate and page: F.3)
+    epilogue.compose(game, adv, before)  # (the places as they now are, the realm, the sequel, you last: G.4)
+    epilogue.chronicle(game, adv)  # (a named chapter of the world's history, for the Legends book: G.4)
     t = threats.records(game.world).get(adv["threat"])
     if t is not None and t.get("adventure") == adv["id"]:
         t["adventure"] = None  # (the threat goes on in the world if it was not ended)
@@ -475,3 +480,4 @@ def _outlaw_pardoned(game, adv, *args) -> list[str]:
 
 
 from realmwalker.game.story import consequences as _consequences  # noqa: E402,F401  (the rest of the ops: G.3)
+from realmwalker.game.story import sequels as _sequels  # noqa: E402,F401  (the sequel threats: G.4)

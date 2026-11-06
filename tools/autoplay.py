@@ -366,6 +366,7 @@ def _check_adventures(game, fail) -> None:
     _check_rivals(game, fail)
     _check_threat_signs(game, fail)
     _check_consequences(game, fail)
+    _check_tales(game, fail)
     _check_secrets(game, fail)
     _check_reading(game, fail)
     _check_early(game, fail)
@@ -438,6 +439,38 @@ def _check_consequences(game, fail) -> None:
         thing = w.sites[int(key[1:])] if key[0] == "X" else w.settlements[int(key[1:])]
         if thing.name != r["new"]:
             fail(f"{r['old']} was renamed {r['new']}, but is called {thing.name}")
+
+
+def _check_tales(game, fail) -> None:
+    """Expansion 6 G.4: every ended or orphaned tale is a chapter of the history, once, and its epilogue ends with
+    you (8 pages at most); a sequel threat names a tale that exists, is a real threat of its kind (the heir in its own
+    lair, the new gang standing) while it lives, and the tale forged on it follows on from that tale."""
+    from realmwalker.game import story
+    from realmwalker.game.story import epilogue
+    from realmwalker.world import threats
+
+    w = game.world
+    advs = story.adventures(w)
+    tales = w.politics.get("tales") or []
+    seen = [r.get("adv") for r in tales]
+    if len(seen) != len(set(seen)):
+        fail("a tale is written twice in the history")
+    for adv in advs.values():
+        if adv.get("state") in ("won", "lost", "abandoned", "orphaned") and adv["id"] not in seen:
+            fail(f"the tale {adv.get('title')!r} ended ({adv['state']}) but is not in the history")
+        pages = adv.get("epilogue") or []
+        if adv.get("ending") and pages and (len(pages) > epilogue.MOST or pages[-1].get("about") != "hero"):
+            fail(f"the epilogue of {adv.get('title')!r} is out of order ({[p.get('about') for p in pages]})")
+        if adv.get("sequel_of") and adv["sequel_of"] not in advs:
+            fail(f"the tale {adv.get('title')!r} follows on from a tale that does not exist")
+    for t in threats.records(w).values():
+        rec = t.get("sequel_of")
+        if not rec or t["state"] == "ended":
+            continue
+        if rec.get("adv") not in advs:
+            fail(f"the sequel threat {t['id']} names a tale that does not exist")
+        if not threats.villain_lives(w, t):
+            fail(f"the sequel threat {t['id']} ({rec.get('kind')}) has no villain, yet goes on")
 
 
 def _check_threat_signs(game, fail) -> None:

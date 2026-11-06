@@ -1577,6 +1577,13 @@ ADVENTURES = Obj({
         "letter_bonus": Int(min=0, max=20),
         "song_reach": Int(min=1, max=200),
         "words": Map(word_list(1, 400)),  # (each filled with its own tale's words: tests/test_consequences.py)
+        # (G.4) sequel threats (story/sequels.py): the villain's heir (a beast's get: its names and epithets, filled
+        # with {beast}, and the days it grows), the gang that fills the gap a broken band leaves
+        "sequels": Obj({
+            "heir": Obj({"names": word_list(3, 60), "epithets": word_list(2, 40),
+                         "days": List(Int(min=7, max=3650), min_items=2, max_items=2)}),
+            "vacuum": Obj({"days": List(Int(min=7, max=3650), min_items=2, max_items=2)}),
+        }, optional=True),
     }, optional=True),
     # the first hour (story/opening.py, D.4): crisis, summons, terror; `kinds` of threat it fits (none: any), `near`
     # (the start town within the threat's reach or among its stakes), and extra weight by the hero's background

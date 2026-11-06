@@ -430,6 +430,11 @@
               "land",
               "town",
               3
+            ],
+            [
+              "sequel_threat",
+              "heir",
+              0.5
             ]
           ],
           "pages": {

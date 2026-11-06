@@ -3,8 +3,9 @@
 Like Dwarf Fortress's Legends mode, every person, realm, place, war, beast, artifact, age, god and song of a world
 has a page built from the structured history: who they were, how they are tied to everything else, and every event
 they appear in, in order. Links are written [[REF|words]] where REF is "H12" a figure, "F3" a faction, "S5" a
-settlement, "X7" a site, "W2" a war, "A4" an artifact, "E1" an age, "K3" a work and "P0" one of the player's own lives
-(a character of theirs who died in the world, listed first among the People); the screen draws them in their own
+settlement, "X7" a site, "W2" a war, "A4" an artifact, "E1" an age, "K3" a work, "P0" one of the player's own lives
+(a character of theirs who died in the world, listed first among the People) and "C2" a tale (an adventure, a named
+chapter of the world's history: game/story/epilogue.chronicle writes it, G.4); the screen draws them in their own
 colour and follows them. Everything else in a line is ordinary markup (ui/markup).
 """
 
@@ -17,7 +18,7 @@ from collections import defaultdict
 from realmwalker.core.textgen import a_or_an, count_of
 from realmwalker.world import factions as fx
 
-CATEGORIES = [("ages", "Ages"), ("realms", "Realms"), ("people", "People"), ("places", "Places"),
+CATEGORIES = [("ages", "Ages"), ("tales", "Tales"), ("realms", "Realms"), ("people", "People"), ("places", "Places"),
               ("wonders", "Wonders"), ("wars", "Wars"), ("beasts", "Beasts"), ("artifacts", "Artifacts"),
               ("gods", "Gods"), ("works", "Songs and books")]
 LINK_RE = re.compile(r"\[\[([A-Z]\d+)\|([^\]]*)\]\]")
@@ -239,6 +240,9 @@ def _entries(world, tables, category: str) -> list[tuple[str, str]]:
                 when = f"{year_text(era['start'])}–{year_text(era['end'] - 1)}"
             out.append((f"E{i}", f"{cap(era['name'])} ({when})"))
         return out
+    if category == "tales":
+        return [(f"C{i}", f"{cap(r['title'])} ({year_text(r.get('year'))})")
+                for i, r in reversed(list(enumerate(w.politics.get("tales", []))))]
     if category == "realms":
         active = sorted(fx.active_factions(w), key=lambda f: (tables.factions["kinds"][f.kind]["group"] != "realms",
                                                                f.liege >= 0, f.name.lower().removeprefix("the ")))
@@ -312,6 +316,8 @@ def page(world, tables, ref: str) -> tuple[str, list[str]]:
             return life_page(world, tables, n)
         if kind == "M" and n < len(world.wonders):
             return wonder_page(world, tables, n)
+        if kind == "C" and n < len(world.politics.get("tales", [])):
+            return tale_page(world, tables, n)
     except (KeyError, IndexError, TypeError, ValueError):
         pass
     return "Nothing", ["<dim>Nothing is remembered of that.</>"]
@@ -416,6 +422,9 @@ def figure_page(world, tables, hid: int) -> tuple[str, list[str]]:
         deeds.append("<dim>Wrote:</> " + ", ".join(link(f"K{i}", w.politics["works"][i]["title"]) for i in works))
     if fig.notes:
         deeds.append("<dim>Remembered for:</> " + "; ".join(clean(n) for n in fig.notes) + ".")
+    told = tales_line(w, tale_refs(w, figure=hid))
+    if told:
+        deeds.append(told)
     beside, against = comrades(w, ix, hid)
     if beside:
         deeds.append("<dim>Fought beside:</> " + ", ".join(fig_link(w, h) for h in beside))
@@ -543,6 +552,9 @@ def settlement_page(world, tables, sid: int) -> tuple[str, list[str]]:
     arts = [i for i, a in enumerate(w.politics.get("artifacts", [])) if a.get("place") == own and a.get("holder", -1) < 0]
     if arts:
         lines.append("<dim>Kept here:</> " + ", ".join(link(f"A{i}", w.politics["artifacts"][i]["name"]) for i in arts))
+    told = tales_line(w, tale_refs(w, place=own))
+    if told:
+        lines.append(told)
     life = timeline(w, ix.place.get(sid, []), own)
     if life:
         lines += ["", section("What happened here")] + life
@@ -585,6 +597,9 @@ def site_page(world, tables, site_id: int) -> tuple[str, list[str]]:
     arts = [i for i, a in enumerate(pol.get("artifacts", [])) if a.get("site") == site_id]
     if arts:
         lines.append("<dim>Said to lie here:</> " + ", ".join(link(f"A{i}", pol["artifacts"][i]["name"]) for i in arts))
+    told = tales_line(w, tale_refs(w, place=own))
+    if told:
+        lines.append(told)
     life = timeline(w, ix.site.get(site_id, []), own)
     if life:
         lines += ["", section("What happened here")] + life
@@ -751,6 +766,9 @@ def life_page(world, tables, i: int) -> tuple[str, list[str]]:
         facts.append("<dim>Travelled with:</> " + ", ".join(clean(c) for c in r["companions"]))
     if r.get("deeds"):
         facts.append("<dim>Remembered for:</> " + "; ".join(clean(d) for d in r["deeds"]) + ".")
+    told = tales_line(w, tale_refs(w, life=life_key(w, r)), "Their tales")
+    if told:
+        facts.append(told)
     if facts:
         lines += [""] + facts
     if r.get("obituary"):
@@ -764,6 +782,71 @@ def life_page(world, tables, i: int) -> tuple[str, list[str]]:
     if life:
         lines += ["", section("What the world remembers")] + life
     return name, lines
+
+
+# ---------------------------------------------------------------------------- tales (Expansion 6 G.4)
+TALE_ENDS = {"won": "It ended well.", "lost": "It ended badly: the darkness had its way.",
+             "abandoned": "It was given up, and what it was about went on without its hero.",
+             "orphaned": "It was never finished: its hero died with it under way."}
+
+
+def life_key(world, r: dict) -> str:
+    """The life id a fallen record was (story/forge.life_of): the world, the name, the day they set out."""
+    return f"{world.meta.id}:{r.get('name')}:{int(r.get('day', 0)) - int(r.get('days_lived', 0))}"
+
+
+def tale_refs(world, *, figure: int | None = None, place: str | None = None, life: str | None = None) -> list[int]:
+    """The tales (politics["tales"] indexes) of a villain, a place or one of your lives, oldest first."""
+    out = []
+    for i, r in enumerate(world.politics.get("tales", [])):
+        if (figure is not None and r.get("villain") == figure) or (place is not None and place in r.get("places", ())) \
+                or (life is not None and r.get("life") == life):
+            out.append(i)
+    return out
+
+
+def tales_line(world, idxs: list[int], label: str = "In the tales") -> str:
+    tales = world.politics.get("tales", [])
+    if not idxs:
+        return ""
+    return f"<dim>{label}:</> " + ", ".join(link(f"C{i}", f"{tales[i]['title']} ({year_text(tales[i].get('year'))})")
+                                         for i in idxs[:8])
+
+
+def tale_page(world, tables, i: int) -> tuple[str, list[str]]:
+    """A tale as a named chapter of the history: its hero, its villain, its places, its chapters, how it ended,
+    what became of them, and what the world remembers of it."""
+    w = world
+    r = w.politics["tales"][i]
+    tales = w.politics["tales"]
+    began, year = r.get("began", r.get("year")), r.get("year")
+    when = year_text(year) if began == year else f"{year_text(began)}–{year_text(year)}"
+    lines = [f"<dim>A tale of {when}.</>"]
+    life = next((k for k, f in enumerate(w.politics.get("fallen", [])) if life_key(w, f) == r.get("life")), None)
+    hero = link(f"P{life}", r.get("hero", "someone")) if life is not None else clean(r.get("hero", "someone"))
+    villain = r.get("villain")
+    foe = fig_link(w, villain) if villain is not None and villain in w.figures else clean(r.get("villain_name", ""))
+    lines.append(f"The tale of {hero}" + (f", against {foe}." if foe else "."))
+    places = [place_ref_link(w, ref) for ref in r.get("places", ())]
+    if places:
+        lines.append("<dim>Where:</> " + ", ".join(places))
+    if r.get("chapters"):
+        lines.append("<dim>Its chapters:</> " + "; ".join(clean(c) for c in r["chapters"]))
+    lines.append(TALE_ENDS.get(r.get("state", ""), TALE_ENDS["won" if r.get("won") else "lost"]))
+    before = next((k for k, t in enumerate(tales) if t.get("adv") == r.get("sequel_of")), None)
+    if before is not None:
+        lines.append("<dim>It came after:</> " + link(f"C{before}", tales[before]["title"]))
+    after = [k for k, t in enumerate(tales) if t.get("sequel_of") == r.get("adv") and k != i]
+    if after:
+        lines.append("<dim>What came of it:</> " + ", ".join(link(f"C{k}", tales[k]["title"]) for k in after))
+    if r.get("pages"):
+        lines += ["", section("What became of them")]
+        lines += [f"<fg>{clean(p.get('text', ''))}</>" for p in r["pages"] if p.get("text")]
+    ids = [k for k, e in enumerate(w.history) if (e.get("data") or {}).get("adventure") == r.get("adv")]
+    told = timeline(w, ids, f"C{i}")
+    if told:
+        lines += ["", section("What the world remembers")] + told
+    return f"{cap(r['title'])}, {year_text(year)}", lines
 
 
 # ---------------------------------------------------------------------------- reading a line

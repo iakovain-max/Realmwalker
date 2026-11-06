@@ -25,6 +25,8 @@ def world(tables):
 def test_every_kind_of_thing_has_pages(world, tables):
     for category, _ in legends.CATEGORIES:
         items = legends.entries(world, tables, category)
+        if category == "tales":
+            continue  # (a new world has none: tales are played, tests/test_epilogue.py)
         assert items, category
         for ref, label in items[:40]:
             title, lines = legends.page(world, tables, ref)

@@ -305,6 +305,9 @@ def daily(game) -> None:
     from realmwalker.game.story import early
 
     early.daily(game)  # (a villain you put down walks again: you hear of it first, E.4)
+    from realmwalker.game.story import sequels
+
+    sequels.daily(game)  # (what your tale left behind stirs: the heir, the new gang - you hear of it, G.4)
     from realmwalker.game.story import rivals
 
     rivals.daily(game)  # (a rival for each tale, their race run, a band left pinned: F.2)
@@ -1338,8 +1341,11 @@ def on_death(game) -> None:
     """The hero is dead: their tales are orphaned (the threats go on, and remember), and no beat waits."""
     from realmwalker.game.story import beats
 
+    from realmwalker.game.story import epilogue
+
     for adv in active(game):
         adv["state"] = "orphaned"
+        epilogue.chronicle(game, adv)  # (the tale as far as it went, in the world's history: G.4)
         t = threat_of(game, adv)
         if t is not None and t.get("adventure") == adv["id"]:
             t["adventure"] = None

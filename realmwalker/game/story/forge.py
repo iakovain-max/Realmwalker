@@ -247,6 +247,8 @@ class Forge:
         from realmwalker.game.story import early
 
         early.on_forge(game, adv, t)  # (a villain come back, and angry: E.4)
+        if (t.get("sequel_of") or {}).get("adv"):
+            adv["sequel_of"] = t["sequel_of"]["adv"]  # (the tale it follows on from: the Legends book links them, G.4)
         # (the words are written once the cast is bound: the patron, the villain's kind, its victim, the area)
         from realmwalker.game.story import words as wordsmod
 

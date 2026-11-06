@@ -227,7 +227,7 @@
         {
           "id": "pardoned",
           "if": ["flag:pardoned"],
-          "ops": [["outlaw_pardoned"], ["danger", "home", -1], ["faction_falls", "villain"], ["right", "town", "letter"], ["song", "ballad", 21, 42]],
+          "ops": [["outlaw_pardoned"], ["danger", "home", -1], ["faction_falls", "villain"], ["right", "town", "letter"], ["song", "ballad", 21, 42], ["sequel_threat", "vacuum", 0.5]],
           "pages": {
             "place": [
               "The wagons go out of {town} with no more guard than a boy and a dog now. Prices have come down by half.",
@@ -264,7 +264,7 @@
         {
           "id": "broken",
           "if": ["boss_dead"],
-          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["set_owner", "town", "freed"], ["rebuild", "town"], ["right", "town", "board"], ["song", "ballad", 21, 42], ["standing", "town", 4], ["title", "town", 3]],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["set_owner", "town", "freed"], ["rebuild", "town"], ["right", "town", "board"], ["song", "ballad", 21, 42], ["standing", "town", 4], ["title", "town", 3], ["sequel_threat", "vacuum", 0.5]],
           "pages": {
             "place": [
               "{town} hung what was left of {gang}'s rag over the gate, upside down, and the carters spit on it as they pass.",
@@ -301,7 +301,7 @@
         {
           "id": "spared",
           "if": ["boss_taken", "flag:villain_spared"],
-          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 2], ["set_owner", "town", "freed"], ["right", "town", "board"]],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 2], ["set_owner", "town", "freed"], ["right", "town", "board"], ["sequel_threat", "vacuum", 0.5]],
           "pages": {
             "place": [
               "{town} heard that you let {villain} go, and did not know what to make of it. The roads are open, all the same.",
@@ -338,7 +338,7 @@
         {
           "id": "taken",
           "if": ["boss_taken"],
-          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["set_owner", "town", "freed"], ["monument", "town", "gibbet", "monument_gibbet"], ["right", "town", "board"], ["standing", "town", 5]],
+          "ops": [["outlaw_broken"], ["danger", "home", -1], ["fame", 3], ["set_owner", "town", "freed"], ["monument", "town", "gibbet", "monument_gibbet"], ["right", "town", "board"], ["standing", "town", 5], ["sequel_threat", "vacuum", 0.5]],
           "pages": {
             "place": [
               "{town} turned out to watch {villain} hang. Some cheered. More of them only watched.",
