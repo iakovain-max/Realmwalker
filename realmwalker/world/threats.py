@@ -639,7 +639,8 @@ def seed_from(pol, kind: str, *, figure=None, site: int | None = None, faction=N
             (fid is not None and t["source"].get("faction") == fid) or \
             (site is not None and figure is None and fid is None and t["home"].get("site") == site)
         if mine:
-            if t["state"] == "dormant":
+            held = t.get("sequel") and pol.day < float(t["scheme"].get("held_until") or 0)
+            if t["state"] == "dormant" and not held:  # (a sequel sleeps its weeks: story/sequels.py, G.4)
                 wake(w, tables, t, pol.rng, day=pol.day, why=f"seed:{kind}")
             return t
     if kind == "beast" and figure is not None and site is not None:

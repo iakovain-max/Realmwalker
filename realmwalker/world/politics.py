@@ -821,7 +821,8 @@ class Politics:
 
     def new_gang(self, near=None, *, quiet: bool = False):
         """Outlaws take to the roads: often deserters after a war. Returns the band (None if no hideout was free);
-        `quiet` makes no threat of it (a tale's sequel makes its own, asleep: story/sequels.py)."""
+        `quiet` makes no threat of it (a tale's sequel makes its own, asleep: story/sequels.py); the news of the
+        band goes out either way."""
         w = self.w
         lairs = [s for s in w.sites if s.faction < 0 and s.kind in ("ruin", "cave", "tower")]
         if near is not None:

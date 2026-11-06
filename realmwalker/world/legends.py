@@ -827,7 +827,7 @@ def tale_page(world, tables, i: int) -> tuple[str, list[str]]:
     villain = r.get("villain")
     foe = fig_link(w, villain) if villain is not None and villain in w.figures else clean(r.get("villain_name", ""))
     lines.append(f"The tale of {hero}" + (f", against {foe}." if foe else "."))
-    places = [place_ref_link(w, ref) for ref in r.get("places", ())]
+    places = [x for x in (place_ref_link(w, ref) for ref in r.get("places", ())) if x]
     if places:
         lines.append("<dim>Where:</> " + ", ".join(places))
     if r.get("chapters"):

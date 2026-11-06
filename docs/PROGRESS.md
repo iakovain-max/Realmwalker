@@ -52,7 +52,7 @@ the expansion programme (the first entries below).
   (the beast's town rebuilding with its statue in the square; the lair under its new name; a ruin with a lamp still
   lit in one window; a town under strange banners), the one who asked, the ally, the rival, its lieutenants, the
   innocent, then the realm (how the king took it), what is left to come back, and last you: what that realm thinks of
-  you now, the title it gave you, and how far your name goes on the roads. Four to eight pages, each with its picture.
+  you now, the title it gave you, and how far your name goes on the roads. Four to ten pages, each with its picture.
 - **The Legends book has Tales.** Every tale you finish (or that your hero died in the middle of) is written into the
   world's history as a named chapter: "The Hunt for Hungerfell the Night-Howler, 1047", with its hero, its villain,
   its places, its chapters, how it ended, every epilogue page and what the world remembers of it. The villain's page,

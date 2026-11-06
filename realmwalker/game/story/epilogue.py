@@ -10,8 +10,8 @@ cast module adds its own (lieutenants, the ally's fate, the rival, the patron's 
 - the realm: how its lord took the ending (won, lost, abandoned);
 - what is left to come back (story/sequels.py: the heir, the gang in the gap, the dead who will walk again);
 - you, last: your standing with that realm now, the title the tale gave you, your name on the roads;
-then orders the pages by ORDER and keeps MOST at most (dropping by DROP: a second vignette or lieutenant first, the
-hero's never).
+then orders the pages by ORDER and keeps MOST at most (dropping by DROP: a second vignette and the bystanders first,
+each lieutenant last, the hero's never).
 Every line comes from adventures consequences `words` (vignette_<mark>, epilogue_realm_<how>, epilogue_sequel_<kind>,
 hero_standing, hero_title, hero_fame, hero_infamy), filled with the tale's names.
 
@@ -26,12 +26,13 @@ from __future__ import annotations
 VIGNETTE_MARKS = ("ruined", "occupied", "cursed", "emptied", "burned", "rebuilding", "haunted", "memorial",
                   "festival")
 VIGNETTES = 2  # vignette pages of other places, at most
-MOST = 8  # pages in all (ADVENTURES.md §5.9: 4-8)
+MOST = 10  # pages in all (ADVENTURES.md 5.9 says 4-8 and lists ten kinds: a full cast keeps each one's page)
 ORDER = ("place", "place:", "patron", "traitor", "ally", "witness", "carter", "suspect", "taken", "rival",
          "lieutenant:", "innocent", "realm", "sequel", "hero")
 # (what goes first when there are too many: (kind, how many of it to keep while anything else can go))
-DROP = (("place:", 1), ("lieutenant:", 1), ("witness", 0), ("suspect", 0), ("carter", 0), ("taken", 0),
-        ("lieutenant:", 0), ("place:", 0), ("traitor", 0), ("rival", 0), ("realm", 0), ("innocent", 0))
+# (each lieutenant keeps its page longest: their fates are the tale's own, ADVENTURES.md 5.5)
+DROP = (("place:", 1), ("witness", 0), ("suspect", 0), ("carter", 0), ("taken", 0), ("realm", 0),
+        ("place:", 0), ("innocent", 0), ("lieutenant:", 1), ("traitor", 0), ("rival", 0), ("lieutenant:", 0))
 SPOKEN = 10  # standing with the realm (either way) from which your page says what it thinks of you
 FAMED = 20  # fame (or infamy) from which your name goes before you, and the hero's page says so
 REALMS = "realms"  # (the faction group whose lord takes notice)
@@ -102,6 +103,8 @@ def vignette_pages(game, adv: dict) -> list[dict]:
     for key in sorted(adv["places"]):
         p = adv["places"][key] or {}
         if "settlement" in p:
+            if not 0 <= int(p["settlement"]) < len(w.settlements):
+                continue
             s = w.settlements[int(p["settlement"])]
             if ("S", s.id) in seen:
                 continue
@@ -214,8 +217,8 @@ def compose(game, adv: dict, before: dict | None = None) -> list[dict]:
         cut = next((i for kind, keep in DROP for i in range(len(pages) - 1, -1, -1)
                     if _kind(pages[i]["about"]) == kind
                     and sum(_kind(p["about"]) == kind for p in pages) > keep), None)
-        if cut is None:
-            break
+        if cut is None:  # (only kinds DROP never names: the last but the hero's goes)
+            cut = len(pages) - 2 if pages[-1]["about"] == "hero" else len(pages) - 1
         pages.pop(cut)
     adv["epilogue"] = pages
     return pages

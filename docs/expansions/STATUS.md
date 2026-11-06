@@ -582,8 +582,8 @@ page gets a closing line for its most telling mark (VIGNETTE_MARKS), other place
 (VIGNETTES=2: a town by its marks; a site renamed by this tale, laid, cleared, or still held by a live threat), a
 "realm" page (the town's realm of group realms; words by won/lost/abandoned with {realm} {ruler} {town}), a "sequel"
 page (`sequels.of_tale`), and the hero's page gains `hero_lines` (standing with that realm when |standing| >= SPOKEN 10,
-a title gained since the snapshot, fame or infamy past FAMED 20 that grew); pages sorted by ORDER, at most MOST=8,
-trimmed by DROP (a second vignette or lieutenant first; the hero's never). `chronicle(game, adv)` writes
+a title gained since the snapshot, fame or infamy past FAMED 20 that grew); pages sorted by ORDER, at most MOST=10 (a full cast has that many people),
+trimmed by DROP (a second vignette, the bystanders and the realm first, each lieutenant last; the hero's never). `chronicle(game, adv)` writes
 `politics["tales"]` [{adv, title, year, began, hero, life, kind, ending, state, won, villain, villain_name, places
 (S/X refs), chapters (done or open), pages, sequel_of}] once, from finish and from story.on_death (orphaned). Legends
 (world/legends.py): category "tales" (second), refs "C<i>", `tale_page` (hero linked to the life page through
