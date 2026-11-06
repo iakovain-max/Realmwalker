@@ -133,9 +133,11 @@ def _why(game, cond: str, value) -> str:
         names = [game.tables.items.get(i)["name"] for i in (value if isinstance(value, list) else [value])
                  if game.tables.items.get(i)]
         return f"needs {' or '.join(names) or 'something you do not have'}"
-    if cond == "money":
+    if cond in ("money", "reading_price"):
         from realmwalker.game.economy import money_text
 
+        if cond == "reading_price":
+            value = int((getattr(game.tables, "reading", None) or {}).get("price", 0))
         return f"needs {money_text(int(value))}"
     if cond == "party_room":
         return "your company is full"
@@ -335,6 +337,9 @@ def _key(game, rec, k: str):
     if adv is not None and k not in adv["keys"]:
         adv["keys"].append(k)
         out = [f"<good>Something to remember for the end of this: {_key_words(game, adv, k)}.</>"]
+        from realmwalker.game.story import reading
+
+        out += reading.on_key(game, adv, k)  # (as the Shadow foretold: F.4)
         if k == "ally":
             from realmwalker.game.story import stakes
 

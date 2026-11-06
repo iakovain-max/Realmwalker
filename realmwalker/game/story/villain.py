@@ -243,6 +243,13 @@ def _helper(game, adv: dict) -> int | None:
     you are not in, and needed by no step still to do."""
     from realmwalker.game.story import cast
 
+    here = game.world.settlement_at(game.player.x, game.player.y)
+    rd = adv.get("reading") or {}
+    if rd.get("villain_knows") and rd.get("named") is not None:  # (it knows whom the cards favour: F.4)
+        npc = game.world.npcs.get(int(rd["named"]))
+        in_party = any((c.companion or {}).get("npc") == int(rd["named"]) for c in game.party[1:])
+        if npc is not None and getattr(npc, "alive", False) and not in_party and npc.present and                 not npc.flags.get("kidnapped") and (here is None or npc.settlement != here.id):
+            return int(npc.id)
     roles = game.tables.villains.get("reprisal_roles", [])
     needed, helped = set(), set()
     for ch in adv["chapters"]:

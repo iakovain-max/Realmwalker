@@ -107,6 +107,13 @@ class Conversation:
         if self.greeted:
             return
         self.greeted = True
+        self._greet()
+        from realmwalker.game.story import reading
+
+        for line in reading.on_meet(self.game, self.npc):  # (the one the cards' Hand named: F.4)
+            self.note(line)
+
+    def _greet(self) -> None:
         npc = self.npc
         opener = npc.flags.pop("opener", None)
         if opener:  # (they came to you, in a scene: what they came to say comes first: game/story/stage.py)

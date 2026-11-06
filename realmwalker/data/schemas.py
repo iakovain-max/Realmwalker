@@ -1893,6 +1893,39 @@ FAVOURS = Obj({  # favours and contacts (game/story/favours.py, C.7)
 }, optional=True)
 DATA_FILES.update({"favours.json": FAVOURS})
 PACK_ONLY.update({"favours.json": {}})
+_CARD = Obj({"name": Str(max_len=40), "meaning": Str(max_len=200), "tags": List(Str(max_len=30), min_items=2),
+             "signs": word_list(3, 300), "marks": word_list(2, 300)})
+_TAGGED = Obj({"words": word_list(1, 300), "tags": List(Str(max_len=30), min_items=1)})
+READING = Obj({  # the Reading and the Wayfarer's Deck (game/story/reading.py, F.4)
+    "price": Int(min=0, max=100_000), "favour_minutes": Int(min=0, max=24 * 60),
+    "silent": Obj({"chance": Float(min=0, max=1), "most": Int(min=0, max=5)}),
+    "villain_card": Obj({"chance": Float(min=0, max=1), "per_attention": Float(min=0, max=1),
+                         "notice": Int(min=0, max=5)}),
+    "seers": Obj({"crossroads": Int(min=2, max=8), "hermit_chance": Float(min=0, max=1),
+                  "hermit_every": Int(min=1, max=60)}),
+    "positions": Obj({p: Obj({"name": Str(max_len=40), "asks": Str(max_len=120)})
+                      for p in ("key", "hand", "shadow", "door", "turn")}),
+    "great": Map(_CARD, min_items=20),
+    "suits": Map(Obj({"name": Str(max_len=30), "meaning": Str(max_len=120), "low": Str(max_len=60),
+                      "high": Str(max_len=60)}), min_items=4),
+    "ranks": List(Str(max_len=20), min_items=10, max_items=10),
+    "crossed": word_list(2, 200),
+    "riddles": Obj({k: word_list(3, 300) for k in ("key", "door", "hand", "shadow", "turn_traitor", "turn_scheme")}),
+    "pasts": Map(word_list(1, 300)),
+    "event_tags": Map(List(Str(max_len=30), min_items=1)),
+    "places": Obj({"kinds": Map(_TAGGED), "looks": Map(word_list(1, 200)), "initial": word_list(1, 200),
+                   "tomb": word_list(1, 300), "ruin": word_list(1, 300), "scar": word_list(1, 300)}),
+    "trades": Map(_TAGGED), "shadows": Map(_TAGGED), "turns": Map(_TAGGED), "traitor": Map(_TAGGED),
+    "villain": Obj({"cards": Map(List(Str(max_len=30), min_items=1)), "voice": Map(word_list(1, 600))}),
+    "silent_words": word_list(3, 300), "pointed": word_list(3, 300), "met": word_list(2, 300),
+    "shadow_seen": word_list(2, 300),
+    "talk": Obj({"ask": word_list(2, 120), "none": word_list(2, 300), "done": word_list(2, 300),
+                 "yes": word_list(2, 300)}),
+    "intros": Obj({"seer": word_list(3, 600), "hermit": word_list(2, 600)}),
+    "asks": word_list(3, 300), "hermits": word_list(2, 100),
+}, optional=True)
+DATA_FILES.update({"reading.json": READING})
+PACK_ONLY.update({"reading.json": {}})
 DATA_FILES.update({"threats.json": THREATS, "adventures.json": ADVENTURES, "villains.json": VILLAINS,
                    "beats.json": BEATS, "scenes.json": SCENES, "marks.json": MARKS, "work.json": WORK})
 PACK_ONLY.update({"threats.json": {"kinds": {}}, "adventures.json": {"blueprints": {}},

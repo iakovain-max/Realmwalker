@@ -23,6 +23,11 @@ def picture(canvas: Canvas, game, name: str, rect: tuple[float, float, float, fl
 
         scenes.camp(canvas, game, px, canvas.now)
         return True
+    if name == "reading":  # (the seer's fire, the cards still face down: F.4)
+        from realmwalker.ui.gfx import cards
+
+        cards.table(canvas, game, px, None, canvas.now)
+        return True
     from realmwalker.ui.gfx import vignette
 
     backdrop = backdrop_for(game, name, rec)
@@ -155,7 +160,7 @@ class BeatScreen(Screen):
             for line in self.result:
                 tail += markup.wrap(line, iw) if line else []
         pic = game.tables.beats.get(self.rec["beat"], {}).get("picture") if self.page == 0 else None
-        pic_rows = PICTURE_ROWS + 1 if pic == "camp_night" or backdrop_for(game, pic, self.rec) else 0
+        pic_rows = PICTURE_ROWS + 1 if pic in ("camp_night", "reading") or backdrop_for(game, pic, self.rec) else 0
         height = len(body) + len(tail) + len(opts) + 8 + pic_rows
         x, y, w, h = modal_box(canvas, width, height, beats.title(game, self.rec) or self.title)
         row = y + 2

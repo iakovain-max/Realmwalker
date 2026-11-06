@@ -150,6 +150,11 @@ def tale_lines(game, adv) -> str:
     doubts = [x for x in (patrons.journal_line(game, adv), traitors.journal_line(game, adv)) if x]
     if doubts:  # (what the patron kept back; the one who does not add up: F.3)
         lines += ["", "<title>Doubts</> " + "; ".join(doubts)]
+    from realmwalker.game.story import reading
+
+    cards = reading.journal_lines(game, adv)  # (the seer's reading, and its riddles: F.4)
+    if cards:
+        lines += ["", "<title>The cards</>"] + cards
     hands = lieutenants.journal_lines(game, adv)  # (its lieutenants as far as you know them: E.3)
     if hands:
         lines += ["", "<title>Its hands</>"] + hands

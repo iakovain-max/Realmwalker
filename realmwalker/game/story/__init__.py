@@ -26,11 +26,13 @@ HANDLER_MODULES = ("realmwalker.world.threats", "realmwalker.game.story.selector
                    "realmwalker.game.story.finale", "realmwalker.game.story.stage", "realmwalker.game.story.goals",
                    "realmwalker.game.story.situations", "realmwalker.game.story.opening",
                    "realmwalker.game.story.arenas", "realmwalker.game.story.stakes", "realmwalker.game.story.rivals",
-                   "realmwalker.game.story.deeds", "realmwalker.game.story.patrons", "realmwalker.game.story.traitors")
+                   "realmwalker.game.story.deeds", "realmwalker.game.story.patrons", "realmwalker.game.story.traitors",
+                   "realmwalker.game.story.reading")
 STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "sit_ask", "sit_take", "sit_refuse",
                  "sit_act", "fav_call", "fav_hide", "contact_ask",  # (situations, C.6; favours and contacts, C.7)
                  "story_recruit", "story_rally", "story_confront", "story_escort",  # (Part D's steps: story/deeds.py)
-                 "story_accuse"}  # (a traitor patron faced in their own town: story/traitors.py, F.3)
+                 "story_accuse",  # (a traitor patron faced in their own town: story/traitors.py, F.3)
+                 "story_reading"}  # (a seer asked to read the cards: story/reading.py, F.4)
 
 
 def load_all() -> None:
@@ -268,6 +270,9 @@ def daily(game) -> None:
     from realmwalker.game.story import favours
 
     favours.daily(game)  # (letters from your contacts, and their warnings: C.7)
+    from realmwalker.game.story import reading
+
+    reading.daily(game)  # (the Hand's name, once their town has its people: F.4)
     for adv in active(game):
         villain.quiet(game, adv)
         villain.lapse(game, adv)  # (an invitation never taken up: E.2)
@@ -426,8 +431,9 @@ def _due_slay(game) -> bool:
 def on_arrive(game) -> bool:
     """The party stands on a tile of the world map: a step that is here (go, search, a learning route's check) plays
     its beat, or is done. True when a beat waits."""
-    from realmwalker.game.story import beats, places
+    from realmwalker.game.story import beats, places, reading
 
+    reading.on_arrive(game)  # (a card's place met, pointed out: F.4)
     if beats.pending(game) is not None:
         return False
     for adv in active(game):
@@ -460,7 +466,7 @@ def on_arrive(game) -> bool:
 
     if deeds.on_arrive(game):  # (a band waiting here, a hold's night, a rite: D.2)
         return True
-    return _offer_choice(game)
+    return _offer_choice(game) or reading.hermit(game)  # (a hermit's fire at a wonder: F.4)
 
 
 def after_beat(game) -> None:
@@ -1066,6 +1072,9 @@ def talk_choices(conv) -> list:
     from realmwalker.game.story import traitors
 
     out += traitors.talk_choices(conv)  # (a traitor patron faced with what you know: F.3)
+    from realmwalker.game.story import reading
+
+    out += reading.talk_choices(conv)  # (a seer: the Wayfarer's Deck, F.4)
     from realmwalker.game.story import favours
 
     out += favours.call_choices(conv)  # (a favour called in, a contact's news: C.7)
@@ -1115,6 +1124,11 @@ def talk_choose(conv, choice) -> None:
 
     if cid in traitors.TALK_CHOICES:
         traitors.talk_choose(conv, choice)
+        return
+    from realmwalker.game.story import reading
+
+    if cid in reading.TALK_CHOICES:
+        reading.talk_choose(conv, choice)
         return
     if cid == "story_hook":
         from realmwalker.world import threats

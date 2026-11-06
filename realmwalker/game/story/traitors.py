@@ -70,15 +70,15 @@ def hidden(adv: dict) -> dict | None:
 
 # ---------------------------------------------------------------------------- who
 def _candidates(game, adv: dict) -> list[tuple[str, object]]:
-    from realmwalker.game.story import patrons, stakes
+    from realmwalker.game.story import patrons, reading, stakes
 
     out: list[tuple[str, object]] = []
+    named = reading.named(game, adv)  # (never the one the Reading's Hand named: F.4)
     p = patrons.npc(game, adv)
     rec = patrons.record(adv)
-    if p is not None and rec is not None and rec["motive"] == "plain" and not _patron_spent(game, adv):
+    if p is not None and rec is not None and rec["motive"] == "plain" and not _patron_spent(game, adv) and             (named is None or int(named) != int(p.id)):
         out.append(("patron", p))
     ally = adv.get("ally") or {}
-    named = (adv.get("reading") or {}).get("named")
     a = stakes.npc_of(game, adv)
     if ally.get("state") in ("joined", "riding") and a is not None and a.alive and \
             (named is None or int(named) != int(a.id)):
