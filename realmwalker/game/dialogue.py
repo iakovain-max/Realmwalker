@@ -17,6 +17,9 @@ DIFFICULTY_DC = {"easy": 10, "medium": 13, "hard": 16, "very hard": 19}
 
 OUTCOMES = ("reveal_info", "reveal_hook", "reveal_clue", "disposition_up", "disposition_down", "reputation_up", "reputation_down",
             "price_down", "price_up", "give_item", "agree", "refuse", "fight", "call_guards", "flee", "unlock_topic", "none")
+CLUE_NONE = ("\"I've told you all I know of it. Ask someone who was there.\"",
+             "\"That's the lot. I wish there were more.\"",
+             "They shake their head. \"Nothing you don't know already.\"")  # (reveal_clue with nothing left to point)
 BRIBES = (50, 200, 1000)  # 5 silver, 2 gold, 10 gold
 SKILLS_ALLOWED = {"insight", "persuasion", "deception", "intimidation", "performance", "investigation", "history",
                   "religion", "nature", "medicine", "athletics", "sleight_of_hand", "arcana", "survival", "animal_handling"}
@@ -558,6 +561,9 @@ class Conversation:
             from realmwalker.game.story import rumours
 
             lines = rumours.tell_clue(game, npc, self.rng) if outcome == "reveal_clue" else None
+            if lines is None and outcome == "reveal_clue" and _has_tale(game):
+                self.npc_says(self.fill(self.rng.choice(CLUE_NONE)))
+                return
             if lines is None:
                 lines = rumours.tell_hook(game, self.settlement, self.rng)
             if lines is None:

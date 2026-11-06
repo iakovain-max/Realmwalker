@@ -571,11 +571,30 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.5 (*rumours, letters and notice boards
-that lead somewhere: `reveal_hook` repurposed, `reveal_clue` added to dialogue's OUTCOMES*), on branch
-`dlc/06-adventures-events` (Parts A-F are on main; Part G goes to main at G.10). Read
-docs/expansions/06-adventures-events.md Part G, docs/ADVENTURES.md (search reveal_hook, rumours, notice boards), and
-the G.4-G.1 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.6 (*land changes: `world/reshape.py`,
+the ledger and its records, apply and undo, the new biomes, `game.land_changed()`, the repaint of only what changed,
+`local.patch_land`*), on branch `dlc/06-adventures-events` (Parts A-F are on main; Part G goes to main at G.10). Read
+docs/expansions/06-adventures-events.md Part G (G.6 in full), docs/ADVENTURES.md §5.21 (changed land), and the G.5-G.1
+notes below.
+G.5 (2026-11-06, realmwalker-a): `game/story/rumours.py` (its docstring has it all). `nearest_hook(game, x, y,
+within=)`: the nearest live untaken threat `story._can_take` allows, within threats.json start.tiles (the boards'
+reach). Dialogue OUTCOMES gain `reveal_clue`; `reveal_hook` and `reveal_clue` share one branch in
+`Conversation.apply_outcome`: `tell_clue` (a taken tale's current chapter: a learn step's talk routes (the person,
+known now) and place routes, a witness's person, a step's place (not choose/slay/prepare/endure); required steps
+first; the teller never points at themselves; each pointer once, `adv["hints"]` "<step>/<route i>|w|p"; the line goes
+into the tale's journal and the place on the map), else `tell_hook` (the hook line in a rumour's words, the den
+explored, its latest sign put in `renown.heard` so map_signs shows the claw marks, and `offer_hook(staged=False)`
+unless `beats.director["pending"]` already holds a beat: never pushed aside), else the news as before (a note).
+`tell_rumour` first tries `rumour_line` (RUMOUR_CHANCE 0.3: the nearest threat's den on the map, no offer). The found
+letter (`books._letter`, first reading only; the words are kept as before) tries `letter_lines` first (LETTER_CHANCE
+0.7 within LETTER_REACH 2x the boards' reach of the player: den, hook offered). Special options: pack dialogue.json
+`special` appends any (reveal_hook insight, reveal_clue investigation), innkeeper (reveal_hook), guard
+(reveal_clue); `builtin_special` drops reveal_clue options while no tale is taken. Words: adventures.rumours.json
+(rumour_hook, rumour_near, rumour_clue_who/_saw/_place, letter_hook, letter_den; 3+ each). Autoplay: hints unique.
+tests/test_rumours.py (8). No save format change. Notice boards already showed every stirring threat within a week's
+walk (G.1/C), so nothing changed there. Decision: a rumour's clue gives no `clues` count (those finish confronts and
+needs; a rumour only points the way).
+Checks: CHECKS_G5
 G.4 (2026-11-06, realmwalker-b): `game/story/epilogue.py` (its docstring has it all): `compose(game, adv, before)` is
 the last thing endings.finish does after every after_tale (before = `snapshot` taken before the ops): the tale's town
 page gets a closing line for its most telling mark (VIGNETTE_MARKS), other places of the tale get "place:<key>" pages

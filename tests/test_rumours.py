@@ -113,8 +113,8 @@ def test_a_clue_points_where_the_tale_goes_on_and_is_never_told_twice(made, tabl
         rumours.tell_clue(game, npc, game.world.rng.child(f"c{i + 2}"))
     assert len(adv["hints"]) == len(set(adv["hints"])), "a pointer is told once"
     conv = Conversation(game, npc)
-    conv.apply_outcome("reveal_clue", "")  # (nothing left to point at: the nearest tale's hook, else the news)
-    assert conv.lines
+    conv.apply_outcome("reveal_clue", "")  # (nothing left to point at: they say so)
+    assert conv.lines and conv.lines[-1][0] == "npc"
 
 
 def test_the_clue_option_needs_a_tale(made, tables):

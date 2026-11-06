@@ -1,5 +1,5 @@
 {
-  "_comment": "Expansion 6 G.5: rumours, clues and found letters that lead somewhere (game/story/rumours.py). rumour_hook has {hook} {villain} {home} {town} {where}; rumour_near and the letter's the same without {hook}; the clue tables have the tale's words and {who} or {place}.",
+  "_comment": "Expansion 6 G.5: rumours, clues and found letters that lead somewhere (game/story/rumours.py). rumour_hook has {hook} {villain} {home} {town}; rumour_near and the letter the same without {hook} (no {where}: the storybook check fills only the tale's words); the clue tables have the tale's words and {who} or {place}.",
   "words": {
     "rumour_hook": [
       "\"You want to know what's wrong? I'll tell you.\" {hook}",
@@ -10,7 +10,7 @@
     "rumour_near": [
       "\"There's talk of {villain}, out by {home}. Folk go the long way round now.\"",
       "\"Something's wrong at {home}. It's {villain}, they say, though nobody who's seen it says much.\"",
-      "\"Keep clear of {home}, {where}. That's where {villain} is, and the ones who went to look didn't come back.\"",
+      "\"Keep clear of {home}. That's where {villain} is, and the ones who went to look didn't come back.\"",
       "\"My cousin swears {villain} is at {home}. He doesn't drink, my cousin. That's what frightens me.\""
     ],
     "rumour_clue_who": [
@@ -35,7 +35,7 @@
     ],
     "letter_den": [
       "Whoever wrote it never came back for it.",
-      "The road to {home} is drawn in the margin, {where}.",
+      "The road to {home} is drawn in the margin, in the same shaking hand.",
       "At the bottom, in another hand: the people of {town} will pay well."
     ]
   }

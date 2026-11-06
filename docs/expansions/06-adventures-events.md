@@ -391,7 +391,7 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
   ledger replay stays true.
 - [x] G.4 The epilogue in full, with vignettes of the places as they now are; adventures as named chapters of the
   history in the Legends book; sequel threats.
-- [ ] G.5 Rumours, letters and notice boards that lead somewhere (`reveal_hook` repurposed, `reveal_clue` added to
+- [x] G.5 Rumours, letters and notice boards that lead somewhere (`reveal_hook` repurposed, `reveal_clue` added to
   dialogue's OUTCOMES).
 - [ ] G.6 **Land changes** (`world/reshape.py`): the ledger and its records, apply (never under the party's square or
   the map it is on) and undo, the new biomes (`biomes.json`), `game.land_changed()` (`_biome_remap`, `_cost_cache`,

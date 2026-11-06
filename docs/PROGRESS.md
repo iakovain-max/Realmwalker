@@ -46,6 +46,23 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (late afternoon): Adventures & Events Part G, task G.5 — rumours, letters and notice boards that lead somewhere — branch `dlc/06-adventures-events`
+
+- **Talk leads somewhere.** Win someone over with a new talk option ("[Insight] Ask what people round here are afraid
+  of", or at the inn "[Persuasion] Ask who has been asking strangers for help") and they tell you of the nearest real
+  trouble within a week's walk: its den goes on your map with its claw marks, and you are asked whether you will take
+  the tale on (the same choice the board and the headman give). With nothing near, you hear the news as before.
+- **Clues for a tale you have taken.** While you are on a tale, "[Investigation] Ask what they know about the trouble
+  you are chasing" (or asking a guard what the watch has heard) points you onward: the herbwife in the next village
+  who knows what the beast fears, the boy who saw it, the old mill where to look. The person becomes known to you, the
+  place goes on your map, and the line is written in the tale's journal. Nobody tells you the same thing twice.
+- **Rumours are about real things.** Now and then the ordinary rumours of the tavern are about a real threat near
+  here, and its den goes on your map (no offer: you go and see, or you ask).
+- **A letter in a chest.** A dead stranger's water-stained letter is now usually about a live threat in reach: who
+  wrote it, where the thing lairs, which town would pay for its end; the den is on your map and its tale is offered.
+- No save change: your current world keeps working.
+  Checks: see STATUS.md (G.5 note).
+
 ### Session, 2026-11-06 (afternoon, last): Adventures & Events Part G, task G.4 — the epilogue in full, tales in the Legends book, sequels — branch `dlc/06-adventures-events`
 
 - **What became of them, in full.** The pages at the end of a tale now tell of every place it touched as it now is

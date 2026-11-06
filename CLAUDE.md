@@ -687,6 +687,10 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   places as they now are, the realm, the sequel, you last; 10 pages at most) and `chronicle` (`politics["tales"]`, the
   Legends book's Tales, refs "C<i>"); sequel threats are the op `sequel_threat` in `game/story/sequels.py` (a beast's
   heir, the gang in a broken band's gap: dormant with `sequel_of`, stirring after `held_until`).
+- Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
+  nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
+  and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found
+  letters (`books._letter`) may be about a real threat. Words: adventures.rumours.json.
 - Battles: `rules/combat.Battle` is pure logic driven by `step()` / `pending_party()` / `do_*()`; the screen
   (`ui/screens/battle.py`) only paces and asks. `GameState.busy` (encounter, battle, aftermath or death pending)
   blocks moving; `GameScreen._open_event_screen()` opens the right screen. Debug console: `fight <group>`.

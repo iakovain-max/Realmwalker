@@ -22,7 +22,7 @@ def _quiet_tales(request, monkeypatch):
         from realmwalker.game import story
         from realmwalker.game.story import opening
 
-        monkeypatch.setattr(story, "offer_hook", lambda game, t, town=None: None)
+        monkeypatch.setattr(story, "offer_hook", lambda game, t, town=None, staged=True: None)
         monkeypatch.setattr(opening, "begin", lambda game, t: None)
 
 

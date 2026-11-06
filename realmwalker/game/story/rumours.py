@@ -40,10 +40,12 @@ def nearest_hook(game, x: int, y: int, within: float | None = None) -> dict | No
     limit = reach(game) if within is None else within
     best = None
     for t in threats.live(w):
-        if t.get("adventure") is not None or not story._can_take(game, t):
+        if t.get("adventure") is not None:
             continue
         d = threats.distance(w, t, x, y)
-        if d <= limit and (best is None or (d, int(t["id"][1:])) < best[0]):
+        if d > limit or (best is not None and (d, int(t["id"][1:])) >= best[0]):
+            continue
+        if story._can_take(game, t):  # (the dear test last: only for one in reach and nearer)
             best = ((d, int(t["id"][1:])), t)
     return best[1] if best else None
 
@@ -84,8 +86,9 @@ def _offer(game, t: dict, town) -> bool:
 
     if _waiting(game):
         return False
+    before = t.get("offer")
     story.offer_hook(game, t, town, staged=False)
-    return bool(t.get("offer"))
+    return t.get("offer") is not before
 
 
 def tell_hook(game, settlement, rng) -> list[str] | None:
@@ -176,6 +179,7 @@ def tell_clue(game, npc, rng) -> list[str] | None:
         hinted.append(key)
         words = wordsmod.for_adventure(game, adv)
         fill = {k: v for k, v in words.items() if isinstance(v, str)}
+        fill.setdefault("villain", "the enemy")  # (its threat record gone: never a raw slot)
         fill.update({k: v for k, v in values.items() if not k.startswith("_")})
         line = _fill(game, table, rng, fill)
         out = [esc(line)]
