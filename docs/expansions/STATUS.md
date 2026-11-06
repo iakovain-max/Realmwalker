@@ -571,10 +571,28 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.8 (*a threat's reach washed on the map
-once known: the `overlays` hook, cached by reach and version*), on branch `dlc/06-adventures-events` (Parts A-F are on
-main; Part G goes to main at G.10). Read docs/expansions/06-adventures-events.md Part G (G.8 in full), docs/ADVENTURES.md
-§5.21 (signs on the map: a threat's reach washed grey, red or under mist) and §8.16, and the G.7-G.1 notes below.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.9 (*Founding*: `world/founding.py` by
+the checklist of docs/ADVENTURES.md §8.16; `politics["styles"]` read by `plan.style_for` and `worldview.town_mark`; the
+encampment layout and the canvas tent; its stages; its world-map composite in `mapsigns`; the first use: a refugee camp
+outside a besieged city), on branch `dlc/06-adventures-events` (Parts A-F are on main; Part G goes to main at G.10).
+Read docs/expansions/06-adventures-events.md Part G (G.9 in full), docs/ADVENTURES.md §5.21 (new places) and §8.16
+(Founding, the checklist), and the G.8-G.1 notes below.
+G.8 (2026-11-06, realmwalker-b): `story.known_reaches(game)` (beside `map_signs`): live threats whose tale the hero
+has taken (`active`), or whose signs they have heard (`renown.heard`) with the den explored (the claw marks' test);
+each {id, x, y, r, wash, strength, key}: r is half the kind's reach at the first stage up to all of it at the last
+(min 2), strength 0.45..1.0 likewise, `key` = (id, x, y, r, wash, stage). threats.json kinds `wash` (beast red, risen
+mist, outlaw grey; schema choices grey/red/mist, grey when not said). `mapsigns.reaches` (called by `WorldView.draw`
+right after the `overlays` loop and before the fog, so both the side map and the world map screen draw it and unseen
+country stays hidden): one Image a threat keyed ("reach", *key), made by `wash_picture` (WASH_PX 4 pixels a square,
+a soft disc with a ragged edge from value noise seeded by the threat's id, patchy body, never cut by its side), laid
+over its bounding squares clipped to the world (src), alpha by strength and the daylight tint; mist breathes with
+Animations on (`WASHES` colour, most opacity, raggedness, drift). The design's "overlays hook, whole-world picture"
+became a picture a threat over its own squares (same layer, a fraction of the pixels). tests/test_reaches.py (6). No
+save format change.
+Checks: full suite green, smoke OK, the fresh review found nothing. Autoplay's first run failed on a townsperson's
+'{son}' left in their words: `lives.write_profile` wrote the want again after the son died and the tie was marked dead
+(values() fills only living ties); it now picks only lines it can fill, and the words lapse when none fit
+(tests/test_lives.py braces test). Autoplay OK after; the full suite again after the fix: green.
 G.7 (2026-11-06, realmwalker-a): `world/hosts.py` (its docstring has it all). Records `politics["hosts"]` {id "H<n>",
 kind (army, horde, the_dead, crusade, warband, refugees), faction (-1 none), group, strength, x, y, path (start..goal,
 8-connected, roads cost 1, land 3, impassable 0 by the biome remap; cached by land_version), at, goal {settlement},

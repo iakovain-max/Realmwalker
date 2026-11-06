@@ -406,7 +406,8 @@ the roads; a camp can be founded and grow. ADVENTURES.md §5.1, §5.9, §5.19, �
   refugees, news) for hordes, the dead and crusades; encounters near them; `news.faction_place`; drawn by `mapsigns`
   as a column of figures behind a banner, with dust; refugee columns on the roads. Tests:
   `tests/test_hosts.py`; autoplay `_check_hosts`.
-- [ ] G.8 A threat's reach washed on the map once known (the `overlays` hook, cached by reach and version).
+- [x] G.8 A threat's reach washed on the map once known (the `overlays` hook, cached by reach and version):
+  `story.known_reaches`, threats.json kinds `wash`, `mapsigns.reaches` / `wash_picture`. Tests: `tests/test_reaches.py`.
 - [ ] G.9 **Founding** (`world/founding.py`) by the checklist of ADVENTURES.md §8.16; `politics["styles"]` read by
   `plan.style_for` and `worldview.town_mark` (both gaining a `world` argument); the **encampment** layout, built on the
   `camp` layout's method, and the canvas tent form (`ui/gfx/houses.py`); its stages (a camp → a fortified camp → a

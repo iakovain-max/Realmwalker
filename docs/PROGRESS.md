@@ -46,6 +46,20 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (night, later): Adventures & Events Part G, task G.8 — a threat's shadow on the map — branch `dlc/06-adventures-events`
+
+- **The country a threat troubles is shaded on the world map once you know of it**: once you have heard its signs
+  (news, rumours, a townsperson's tale) and seen its den, or have taken on its tale. A beast's hunting ground is washed
+  a dull blood red, a risen barrow king's country lies under a pale mist (which slowly breathes, with Animations on),
+  an outlaw band's roads are washed smoke grey. Each shadow has its own ragged edge.
+- **It grows with the danger**: at a threat's first stage it covers half its reach, faintly; stage by stage it spreads
+  and thickens until, at the last, it covers all the country the threat touches. When the threat ends it lifts.
+- It lies under the fog: country you have never seen stays unknown. Both the side map and the full world map show it.
+- Choices made while Anton was away: which colour goes with which kind (red for beasts, mist for the risen, grey for
+  outlaws), and showing only part of the reach at early stages (so the map tells you how far along a threat is).
+- No save change.
+  Checks: see STATUS.md (G.8 note).
+
 ### Session, 2026-11-06 (night): Adventures & Events Part G, task G.7 — hosts on the roads — branch `dlc/06-adventures-events`
 
 - **Armies march to their sieges.** When a war goes well enough for one side to besiege a town, its army now sets out

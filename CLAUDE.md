@@ -698,6 +698,9 @@ tools/                     autoplay.py, balance.py (the design's targets), arena
   `Politics.begin_siege`, `war["march"]` while it walks; a warband: `Politics.raid(target=)`; else `strike`),
   `refugees`, `near` (encounters), `check` (autoplay `_check_hosts`). Raise one through `march_to_siege`, `ride_out`,
   `the_dead_march` (threat op `host`) or `crusade`; never set a war's siege while its army marches.
+- A threat's reach on the map (Expansion 6 G.8): `story.known_reaches` (a tale taken, or signs heard with the den
+  seen; spreading by stage) drawn by `mapsigns.reaches` under the fog, one soft picture a threat keyed by reach and
+  stage; its look is threats.json kinds `wash` (grey, red, mist: `mapsigns.WASHES`).
 - Rumours that lead somewhere (Expansion 6 G.5): `game/story/rumours.py`. Dialogue outcomes `reveal_hook` (the
   nearest takeable threat: den on the map, hook offered with `offer_hook(staged=False)` unless a beat already waits)
   and `reveal_clue` (where a taken tale goes on, each pointer once: `adv["hints"]`); ordinary rumours and found
