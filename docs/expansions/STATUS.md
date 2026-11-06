@@ -604,7 +604,13 @@ tests/test_threat_waking.py (10). No save format change (`woke`, `need_day` opti
 deeds wake past the budget (you did it, you should see it); the Storyteller may stretch the budget by one; a battle
 or plague wakes only the dead, a famine only the hungry (beast, outlaw); a first-level hero is never handed a wight
 by the need (risen are tier 2 or more); threats born and ended inside one interlude are not mentioned.
-CHECKS_G2
+Checks: full suite twice (only the known turn-time tests under load: enemy casters 1, tactics coverage bugbear and the
+brown bear boss; all pass alone), autoplay OK, smoke OK. The first suite run found a twin situation in
+test_situations' thirty-met measure: the world's dice changed (the Storyteller wakes threats), and the forge's last
+fallback in `situations._meeting` allowed a meeting already met with the same root and predicament; it now returns
+None (the trouble is not forged; another is). The fresh review's fixes: room kept for the threat lines on a busy
+interlude page, no line for the end of a threat nobody had heard of, only a realm (group "realms") calls a great hunt
+or sends riders, the captain hanged is the one the news names, a lair rouses only on the way in (level 1).
 G.1 (2026-11-06, realmwalker-a): `game/story/signs.py` (its docstring has it all). Every stage of every threat kind
 (threats.json) has `signs` (news, as before) >= 4, `flavour` >= 4 (words on the land: `signs.on_the_land` after each
 overworld step in GameState's walk, behind `flavour(1)`, at most one line in LAND_GAP=30 steps (20 at rich), chance
