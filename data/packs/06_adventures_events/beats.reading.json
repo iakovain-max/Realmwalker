@@ -7,7 +7,7 @@
       "weight": 0,
       "title": ["The cards", "{seer} reads", "The Wayfarer's Deck", "At {seer}'s fire"],
       "text": [
-        ["{seer_intro}"],
+        ["{seer_intro}", "{seer_intro} The light is going, and the fire is the brightest thing for a mile.", "{seer_intro} Somewhere behind you a dog barks, and stops, as if told to."],
         ["{seer_ask}"]
       ],
       "choices": [

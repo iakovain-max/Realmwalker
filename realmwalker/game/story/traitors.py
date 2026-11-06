@@ -76,7 +76,8 @@ def _candidates(game, adv: dict) -> list[tuple[str, object]]:
     named = reading.named(game, adv)  # (never the one the Reading's Hand named: F.4)
     p = patrons.npc(game, adv)
     rec = patrons.record(adv)
-    if p is not None and rec is not None and rec["motive"] == "plain" and not _patron_spent(game, adv) and             (named is None or int(named) != int(p.id)):
+    if p is not None and rec is not None and rec["motive"] == "plain" and not _patron_spent(game, adv) and \
+            (named is None or int(named) != int(p.id)):
         out.append(("patron", p))
     ally = adv.get("ally") or {}
     a = stakes.npc_of(game, adv)

@@ -367,7 +367,7 @@ ADVENTURES.md §5.3, §5.6, §5.7.
   scene in the lair) and a relation from −2 to 2.
 - [x] F.3 Patrons' hidden motives (a betrayal at most once in a hero's life), traitors with at least two tells,
   innocents' fates; step kinds `deliver`, `infiltrate`.
-- [ ] F.4 The Reading: `reading.json` (the Wayfarer's Deck – twenty great cards and four suits, original names and
+- [x] F.4 The Reading: `reading.json` (the Wayfarer's Deck – twenty great cards and four suits, original names and
   meanings), seers (a people.json job; crossroads camps, hermits at wonders), the reading staged at the seer's fire
   with the cards laid out as a picture, riddles written from the true places' own pasts, silent cards, the villain's
   card; the cards' imagery planted in the world and pointed out; card faces.

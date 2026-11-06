@@ -223,7 +223,10 @@ def _masked(game, place: dict, text: str) -> str:
     if "settlement" in place:
         stand = {"hamlet": "the hamlet", "village": "the village", "city": "the city", "hold": "the hold"}.get(
             game.world.settlements[int(place["settlement"])].kind, "the town")
-    text = text.replace(name, stand).strip().rstrip(".")
+    text = text.replace(name, stand)
+    if name.lower().startswith("the "):
+        text = text.replace(name[4:], stand)  # (the history's own form of it, without its article)
+    text = text.strip().rstrip(".")
     for article in ("The ", "A ", "An "):
         if text.startswith(article):
             return article.lower() + text[len(article):]
@@ -277,9 +280,11 @@ def _where(game, place: dict, rng) -> tuple[str, str]:
 
         name = pls.name(w, place)
         if "settlement" in place or "site" in place:
-            pasts.append(_phrase(game, rng.choice(pl["initial"]), rng, {"initial": name.lstrip("the ").strip()[:1]
+            pasts.append(_phrase(game, rng.choice(pl["initial"]), rng, {"initial": name.removeprefix("the ").strip()[:1]
                                                                       .upper() or "a letter"}))
     where = pasts[0] if pasts and rng.chance(0.8) else (rng.choice(pasts) if pasts else look)
+    if where == look:  # (nothing but the land to go on: one phrase, not the same one twice)
+        look = ""
     return where, look
 
 
@@ -344,9 +349,11 @@ def _hand_truth(game, adv: dict, rng) -> dict | None:
     from realmwalker.game.story import cast, patrons, stakes
 
     w = game.world
+    tr = adv.get("traitor") or {}
+    false = {int(tr["npc"])} if tr.get("npc") is not None and tr.get("state") not in ("never", "faltered") else set()
     ally = stakes.npc_of(game, adv)
     role = None
-    if ally is not None and ally.alive:
+    if ally is not None and ally.alive and int(ally.id) not in false:
         role, entry = "ally", {"npc": int(ally.id), "settlement": ally.settlement, "job": ally.job}
     else:
         entry = None
@@ -355,11 +362,12 @@ def _hand_truth(game, adv: dict, rng) -> dict | None:
             if not e or not ("npc" in e or "job" in e):
                 continue
             if r == "patron" and ((patrons.record(adv) or {}).get("motive") == "traitor"
-                                  or (adv.get("traitor") or {}).get("role") == "patron"):
+                                  or tr.get("role") == "patron"):
                 continue
             entry = _bind(game, adv, r)
             p = cast.person(w, entry)
-            if "npc" in entry and (p is None or not getattr(p, "alive", False)):
+            if "npc" in entry and (p is None or not getattr(p, "alive", False) or int(entry["npc"]) in false):
+                entry = None
                 continue
             role = r
             break
@@ -470,7 +478,7 @@ def minor_means(game, minor: list) -> str:
 def _riddle(game, pos: str, truth: dict, rng) -> str:
     r = spec(game)["riddles"]
     if pos in ("key", "door"):
-        text = rng.choice(r[pos])
+        text = rng.choice([t for t in r[pos] if truth.get("look") or "{look}" not in t] or r[pos])
         return _fill(game, text, rng, {"where": truth["where"], "look": truth["look"]})
     if pos == "hand":
         return _fill(game, rng.choice(r["hand"]), rng, {"who": truth["who"]})
@@ -522,8 +530,9 @@ def lay(game, adv: dict, seer: str) -> list[str]:
             rec["named"] = int(truth["npc"])
         if pos == "turn" and not silent[pos] and truth.get("what") == "traitor":
             tr = traitors.hidden(adv)
-            if tr is not None:
-                tr["seen"] = int(tr.get("seen", 0)) + 1  # (the cards warn of them: one of their tells)
+            if tr is not None and not rec.get("traitor_told"):
+                tr["seen"] = int(tr.get("seen", 0)) + 1  # (the cards warn of them: one of their tells, once)
+                rec["traitor_told"] = True
     rec["seer"] = seer
     rec["chapter"] = int(adv["chapter"])
     adv["reading"] = rec

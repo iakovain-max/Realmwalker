@@ -365,6 +365,7 @@ def _check_adventures(game, fail) -> None:
     _check_allies(game, fail)
     _check_rivals(game, fail)
     _check_secrets(game, fail)
+    _check_reading(game, fail)
     _check_early(game, fail)
     _check_finale(game, fail)
     for key in ("threats", "adventures", "director", "story_sites", "story_people"):
@@ -425,6 +426,34 @@ def _check_rivals(game, fail) -> None:
             fail(f"{where}: holds the prize, but is {r.get('state')}")
         if adv["state"] == "active" and r.get("state") == "truce" and "rival" not in adv["keys"]:
             fail(f"{where}: under truce, but the tale has no key 'rival'")
+
+
+def _check_reading(game, fail) -> None:
+    """Expansion 6 F.4: a reading's cards are cards of the deck, each with whole words; the Hand names a person, and
+    never the tale's traitor."""
+    from realmwalker.game import story
+    from realmwalker.game.story import reading
+
+    sp = reading.spec(game)
+    if not sp:
+        return
+    for adv in story.adventures(game.world).values():
+        rec = adv.get("reading")
+        if not rec:
+            continue
+        where = f"tale {adv['id']}, reading"
+        for pos, c in rec.get("cards", {}).items():
+            if pos not in reading.POSITIONS or c.get("card") not in sp["great"] or \
+                    c.get("minor", [""])[0] not in sp["suits"]:
+                fail(f"{where}: {pos} is not a card of the deck ({c.get('card')}, {c.get('minor')})")
+            if not c.get("riddle") or "{" in c["riddle"] or "}" in c["riddle"]:
+                fail(f"{where}: {pos}'s riddle is not whole: {c.get('riddle')!r}")
+        named = rec.get("named")
+        if named is not None and int(named) not in game.world.npcs:
+            fail(f"{where}: the Hand names npc {named}, who is not in the world")
+        t = adv.get("traitor") or {}
+        if named is not None and t.get("npc") is not None and int(t["npc"]) == int(named):
+            fail(f"{where}: the one the Hand named is the traitor")
 
 
 def _check_secrets(game, fail) -> None:

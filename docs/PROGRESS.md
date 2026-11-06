@@ -46,6 +46,37 @@ game got sound and music, then worlds began to live their history, then the worl
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
 
+### Session, 2026-11-06 (late morning): Adventures & Events Part F, task F.4 — the Reading — branch `dlc/06-adventures-events`
+
+- **A seer can read the cards for you.** In every city, and in any town where three roads or more meet, a seer keeps
+  a fire near the gate (a road-woman, a rune-caster in a dwarven hold, a star-reader among the elves). Talk to them
+  and ask for a reading: they want a coin (5 silver) or an hour's work about their fire. Out in the wild, a hermit
+  lives at about half of the world's wonders and offers the same when you come there with a tale on your hands.
+- **The game's own deck, the Wayfarer's Deck:** twenty great cards (the Lantern, the Hound, the Widow, the Ford,
+  the Crown, the Bell, the Mask, the Key, the Ash Tree, the Bride, the Smith, the Pilgrim, the Sleeper, the Broken
+  Shield, the Crow, the Mother, the Grave, the Wheel, the Candle, the Wolf) and four suits of small cards (Blades,
+  Coins, Cups, Stones), each with its own picture. The reading is laid at the seer's fire as a picture: five cards
+  in a cross on a red cloth, each crossed by a small card. Arrow keys (or a click) pick a card and show what it
+  means and the riddle it gives.
+- **The five cards answer the tale's hidden questions, truly.** The Key: where the thing you need lies. The Hand:
+  who will stand with you. The Shadow: what the villain fears. The Door: where the end will be. The Turn: what is
+  coming next (or, if someone close to you secretly serves the villain, a warning about them, which counts as one
+  of their clues). The game knows the answer first and picks the card that fits it, then writes a riddle out of the
+  real place's own history and land ("where one called the Unburied was laid in the earth, dead in 580, where
+  nothing grows above the knee"), never its name. The journal keeps every riddle under "The cards".
+- **Silent cards.** A card may stay face down ("Not yet. Come back when the road has turned."). Once the tale's
+  next chapter begins, ask again: the silent cards speak, and the Turn is read anew.
+- **Sometimes the villain's own card turns up**, upside down across the corner. It speaks through the seer's mouth,
+  it knows about you now (it pays more attention to you), and the person the Hand named becomes the first one it
+  goes after.
+- **The cards come true in the world, and the game points it out:** arriving at the Key's or the Door's place
+  ("A horseshoe is nailed over the way in, rusted the colour of old blood. The Smith, as Old Maud said."), meeting
+  the person the Hand named (a mark on them), finding the thing the Shadow spoke of. And the person the Hand names
+  is never the traitor.
+- Not in F.4: a blind priest who reads (seers and hermits only).
+  Checks: see STATUS.md (F.4 note). No save format change (F.5 bumps it); towns you had already
+  visited keep their people, so a seer appears only in towns filled from now on. Part F joins `main` at F.5.
+
 ### Session, 2026-11-06 (morning): Adventures & Events Part F, task F.3 — patrons, traitors, innocents — branch `dlc/06-adventures-events`
 
 - **The one who sent for you may not have told you everything.** About one patron in three has a reason of their

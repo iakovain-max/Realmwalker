@@ -135,6 +135,13 @@ def test_the_villains_card_raises_its_attention_and_it_strikes_at_the_one_named(
     assert _whole(rec["villain"]["voice"])
     named = game.world.npcs[rec["named"]]
     game.player.x, game.player.y = 0, 0  # (away from their town)
+    role = next(r for r, e in adv["cast"].items() if isinstance(e, dict) and e.get("npc") == named.id)
+    needing = [st for ch in adv["chapters"] for st in ch["steps"] if st["state"] != "done" and
+               role in {st["target"].get("role")} | {r.get("role") for r in st["target"].get("routes", [])}]
+    if needing:
+        assert villain._helper(game, adv) != named.id, "never one a step still needs: the tale stays winnable"
+        for st in needing:
+            st["state"] = "done"
     assert villain._helper(game, adv) == named.id, "it strikes first at the one the cards favour"
 
 
@@ -262,3 +269,15 @@ def test_the_readings_screen_opens_draws_and_closes(pictured, monkeypatch):
     render()
     assert beats.director(game.world).get("reading") is None
     assert app.error_count == 0
+
+
+def test_a_traitor_chosen_before_the_reading_is_never_the_hand(made, tables, monkeypatch):
+    game, adv, t = _tale(made, tables, "risen")
+    prepare_town(game, game.world.settlements[adv["places"]["town"]["settlement"]])
+    first = reading._hand_truth(game, adv, game.world.rng.child("t"))
+    assert first and first["npc"] is not None
+    adv["traitor"] = {"role": "ally", "npc": first["npc"], "name": "X", "first": "X", "sex": "male",
+                      "reason": "kin", "used": {"near": [], "far": []}, "seen": 0, "last": 0, "state": "hidden",
+                      "made": 0}
+    rec = _read(game, adv, monkeypatch)
+    assert rec["named"] != first["npc"], "the cards never name the one who serves the villain"
