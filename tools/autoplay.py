@@ -55,6 +55,7 @@ class AutoplayReport:
     quests: int = 0
     quest_trips: int = 0
     battle_turns: int = 0
+    camps: int = 0
     elapsed: float = 0.0
 
     @property
@@ -69,7 +70,7 @@ class AutoplayReport:
             f"  fights started by the bot: {self.fights}  travel events: {self.events}  talks: {self.talks}  "
             f"crimes: {self.crimes}  companions hired: {self.hires}  dungeons: {self.dungeons}  work taken on: "
             f"{self.quests} (visited: {self.quest_trips})  troubles acted on: {getattr(self, 'sits', 0)}  "
-            f"turns spent in battle: {self.battle_turns}",
+            f"turns spent in battle: {self.battle_turns}  camps founded or grown: {self.camps}",
             "  RESULT: " + ("OK" if self.ok else f"FAILED ({len(self.errors)} problems)"),
         ]
         lines += [f"    - {e}" for e in self.errors[:20]]
@@ -314,6 +315,7 @@ def _check_invariants(app: App, report: AutoplayReport, turn: int) -> None:
         _check_threats(game, fail)
         _check_land(game, fail)
         _check_hosts(game, fail)
+        _check_founded(game, fail)
         _check_adventures(game, fail)
         _check_law(game, fail)
         _check_quests(game, fail)
@@ -745,6 +747,66 @@ def _check_hosts(game, fail) -> None:
 
     for problem in hosts.check(game.world, game.tables):
         fail(problem)
+
+
+def _check_founded(game, fail) -> None:
+    """Founded places (G.9): each record names a real settlement at its index and square, held by a realm, with
+    people, at a known stage laid out in that stage's style; every style override names a real place and style; a
+    founded camp's map, once laid out, is for its stage or waits for its folk (game/founding.free)."""
+    from realmwalker.game import founding as play
+    from realmwalker.world import founding
+    from realmwalker.world.local import local_key
+
+    w = game.world
+    for problem in founding.check(w, game.tables):
+        fail(problem)
+    for rec in founding.records(w):
+        s = w.settlements[int(rec["settlement"])] if 0 <= int(rec["settlement"]) < len(w.settlements) else None
+        lm = w.local_maps.get(local_key(s.x, s.y)) if s is not None else None
+        if lm is not None and lm.kind != "settlement":
+            fail(f"{s.name}, founded, keeps a wilderness map on its square")
+        elif lm is not None and int(lm.meta.get("founded_stage", -1)) not in range(len(founding.STAGES)):
+            fail(f"{s.name}'s map does not say which stage it was laid out for")
+
+
+def _found_a_camp(app, report) -> None:
+    """Now and then (G.9): a refugee camp outside the town nearest the party, or the camp there is grows a stage, so
+    founding, its maps and its pictures are lived through in play (the invariants and the save round trip follow)."""
+    from realmwalker.core.rng import RNG
+    from realmwalker.world import factions as fx, founding, news
+    from realmwalker.world.politics import Politics
+
+    game = app.game
+    if game is None or game.busy:
+        return
+    w = game.world
+    pol = Politics(w, game.tables, RNG(int(w.time), "autoplay camp"), day=news.now_days(w))
+    here = (game.player.x, game.player.y)
+    w.politics["party_at"] = list(here)
+    camps = [r for r in founding.records(w) if r["stage"] < len(founding.STAGES) - 1]
+    if camps and len(camps) >= 2:
+        rec = camps[0]
+        founding.set_stage(pol, rec, w.settlements[int(rec["settlement"])], int(rec["stage"]) + 1)
+        report.camps += 1
+        return
+    towns = sorted((s for s in w.settlements if s.kind in ("town", "city") and s.owner in w.factions),
+                   key=lambda s: abs(s.x - here[0]) + abs(s.y - here[1]))
+    sp = founding.spec(game.tables).get("refugee_camp") or {}
+    old = sp.get("chance")
+    sp["chance"] = 1.0
+    try:
+        for s in towns[:4]:
+            realm = fx.top_liege(w, w.factions.get(s.owner))
+            enemy = next((f for f in fx.active_factions(w, *fx.REALM_KINDS) if realm is None or f.id != realm.id), None)
+            camp = founding.refugee_camp(pol, s, enemy)
+            if camp is not None:
+                report.camps += 1
+                break
+    finally:
+        sp["chance"] = old
+    if pol.changed:
+        fx.touch(w)
+    game.land_check()
 
 
 def _check_land(game, fail) -> None:
@@ -1678,6 +1740,8 @@ def run_autoplay(*, turns: int = 3000, seed: int = 1, home: Path | None = None) 
                     _check_save_round_trip(app, report, turn)
                 if report.game_turns % 150 == 0:
                     _start_a_fight(app, rng, report)
+                if report.game_turns % 500 == 250:
+                    _found_a_camp(app, report)
                 if app.game is not None and app.game.battle is not None:
                     report.battle_turns += 1
             report.turns = turn + 1

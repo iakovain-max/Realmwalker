@@ -124,6 +124,54 @@ class DebugConsole(Screen):
             game.dirty = True
             self.say(f"Changed {len(rec['cells'])} cells ({kind})." if rec else "<warn>Nothing there to change.</>")
 
+        @self.command("camp", "camp — refugees pitch a camp outside the town nearest you; camp grow: the nearest "
+                              "founded camp grows a stage (a palisade, then a village)")
+        def _camp(args):
+            game = need_game()
+            if game is None:
+                return
+            from realmwalker.core.rng import RNG
+            from realmwalker.world import factions as fx, founding, news
+            from realmwalker.world.politics import Politics
+
+            w = game.world
+            x, y = game.player.x, game.player.y
+            w.politics["party_at"] = [x, y]
+            pol = Politics(w, game.tables, RNG(int(w.time), "debug camp"), day=news.now_days(w))
+
+            def far(s):
+                return abs(s.x - x) + abs(s.y - y)
+
+            if args and args[0] == "grow":
+                recs = [r for r in founding.records(w) if r["stage"] < len(founding.STAGES) - 1]
+                if not recs:
+                    self.say("<warn>No camp to grow.</>")
+                    return
+                rec = min(recs, key=lambda r: far(w.settlements[int(r["settlement"])]))
+                s = w.settlements[int(rec["settlement"])]
+                founding.set_stage(pol, rec, s, int(rec["stage"]) + 1)
+                self.say(f"{s.name} is now a {founding.STAGES[int(rec['stage'])]} (its map changes at your next visit).")
+                return
+            sp = founding.spec(game.tables).get("refugee_camp") or {}
+            old = sp.get("chance")
+            sp["chance"] = 1.0
+            try:
+                for s in sorted((s for s in w.settlements if s.kind in ("town", "city")), key=far)[:5]:
+                    realm = fx.top_liege(w, w.factions.get(s.owner))
+                    enemy = next((f for f in fx.active_factions(w, *fx.REALM_KINDS)
+                                  if realm is None or f.id != realm.id), None)
+                    camp = founding.refugee_camp(pol, s, enemy)
+                    if camp is not None:
+                        fx.touch(w)
+                        game.land_check()
+                        game.player.known_settlements.add(camp.id)
+                        game.dirty = True
+                        self.say(f"Refugees of {s.name} have pitched {camp.name} at {camp.x},{camp.y}.")
+                        return
+            finally:
+                sp["chance"] = old
+            self.say("<warn>No room for a camp outside the towns near you.</>")
+
         @self.command("host", "host <kind> — a host sets out from the town nearest you for the next one (army, horde, "
                               "the_dead, crusade, warband, refugees)")
         def _host(args):

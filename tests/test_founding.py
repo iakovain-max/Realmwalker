@@ -236,3 +236,31 @@ def test_a_tent_has_its_own_picture():
     pic, glow = houses.draw(5, 4, 16, "canvas", "canvas", "tent", "house", (2, 3), 7, True)
     assert pic.shape[1] == 80 and pic.shape[0] == 64 + houses.extra_top("tent", 16)
     assert (pic[..., 3] > 0).mean() > 0.6 and glow is not None
+
+
+def test_the_console_pitches_and_grows_a_camp_and_walking_in_works(make_app):
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import DebugConsole
+
+    app = make_app()
+    w = copy.deepcopy(cached_world(WorldOptions("Signland", 21, "small", history=60), app.tables))
+    game = new_game(w, app.tables)
+    game.survival = False
+    app.start_game(game)
+    n = len(w.settlements)
+    console = DebugConsole(app)
+    console.run("camp")
+    if len(w.settlements) == n:
+        pytest.skip("no room for a camp")
+    s = w.settlements[-1]
+    game.player.local_key = None
+    game.player.x, game.player.y = s.x, s.y
+    game.enter_local()
+    assert game.local.kind == "settlement" and game.local.meta["founded_stage"] == 0
+    assert any(b.look.get("roof") == "canvas" for b in game.local.buildings)
+    console.run("camp grow")
+    assert founding.stage_of(w, s) == 1
+    game.player.local_key = None  # (out, and in again)
+    game.enter_local()
+    assert game.local.meta["founded_stage"] == 1, "laid out again for its new stage"
+    assert app.error_count == 0
