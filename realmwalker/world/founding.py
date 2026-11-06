@@ -240,7 +240,7 @@ def refugee_camp(pol, target, besieger) -> object | None:
     w = pol.w
     if any(r.get("of") == target.id and r["stage"] == 0 for r in records(w)):
         return None
-    if len(records(w)) >= int(sp.get("most_camps", 6)):
+    if sum(1 for r in records(w) if r["stage"] < len(STAGES) - 1) >= int(sp.get("most_camps", 6)):
         return None
     if not pol.rng.chance(float(sp.get("chance", 0.5))):
         return None
@@ -287,7 +287,7 @@ def weekly(pol) -> None:
                 of.population += back
                 pol.say("camp_home", {"camp": s.name, "place": of.name}, where=(s.x, s.y), importance=2,
                         places=[s.id, of.id])
-            continue
+                continue
         if rec["kind"] == "refugee_camp" and rec.get("home") is None:
             continue  # (while the siege lasts it is only a camp of the frightened)
         if stage < len(STAGES) - 1:

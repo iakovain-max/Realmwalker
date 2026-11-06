@@ -587,7 +587,7 @@ no road found: `reshape._bump` the camp's square. `spot_near`: 2..3.6 squares of
 within one square, no land change there, away from `away` (the besieger's `place_of`), dry open ground (move_hours,
 not coast/marsh), near a road. `refugee_camp(pol, target, besieger)` from `Politics.begin_siege` (threats.json
 "founding" refugee_camp: chance 0.45, kinds town/city, share 0.08, least 40, most 600 and at most a third of the town,
-home 0.5, most_camps 8; one stage-0 camp a town; the realm is `top_liege` of the owner; news "camp_pitched", importance
+home 0.5, most_camps 8 not yet villages; one stage-0 camp a town; the realm is `top_liege` of the owner; news "camp_pitched", importance
 3 so history). `weekly(pol)` from `Politics.advance`: a refugee camp waits while its town is besieged; 7+ days after
 the siege lifts, `home` share go back (floor 30, "camp_home"); then growth 1.2% a week, `set_stage` 1 after 60 days
 (style encampment_fortified, walled, "camp_fortified"), 2 after 300 days with 150 people (style popped, kind village,
@@ -605,6 +605,10 @@ companion/story/grateful, or a giver/target npc of an offered/active quest) or t
 grows). Debug `camp`, `camp grow`. tests/test_founding.py (9). No save format change. Not in G.9: sites founded while
 you play (the same checklist; their first use comes with the rift's depths), the crusaders' camp-city and a realm's
 border fort (other kinds for `KINDS` when their stories come).
+Checks: full suite green (the first run failed only the known mage turn-time test under load, 156 ms against 150; it
+passes alone), autoplay OK (two camps founded or grown in play, three save round trips), smoke OK. The fresh review
+found nothing serious; fixed from it: a small camp still grows the week its refugees go home, and `most_camps` counts
+only camps not yet villages. The full suite again after the fixes: green.
 G.8 (2026-11-06, realmwalker-b): `story.known_reaches(game)` (beside `map_signs`): live threats whose tale the hero
 has taken (`active`), or whose signs they have heard (`renown.heard`) with the den explored (the claw marks' test);
 each {id, x, y, r, wash, strength, key}: r is half the kind's reach at the first stage up to all of it at the last
