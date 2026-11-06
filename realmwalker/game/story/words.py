@@ -40,6 +40,10 @@ def for_adventure(game, adv: dict | None) -> dict:
         gang = threats.gang_of(w, t) if t["kind"] == "outlaw" else None
         if gang is not None:
             out["gang"] = gang.name
+        elif t["kind"] == "outlaw":
+            out["gang"] = "the gang"  # (its faction gone: never a bare slot in the words - F.5)
+        if t["kind"] == "risen":
+            out.setdefault("king", "king")
         temper = game.tables.villains.get("tempers", {}).get(t["villain"].get("temper") or "", {})
         if temper.get("omens"):
             rng = w.rng.child(f"omen/{adv['id']}/{game.moment.total_days}")

@@ -150,7 +150,11 @@ def _reason(sp: dict, adv: dict, role: str, rng) -> str:
     bp = adv["blueprint"]
     fits = {k: v for k, v in sp["reasons"].items() if int(v["weight"]) > 0
             and bp in v.get("blueprints", [bp]) and role in v.get("roles", [role])}
+    fits = fits or {k: v for k, v in sp["reasons"].items() if not v.get("blueprints") and not v.get("roles")} \
+        or dict(sp["reasons"])  # (no reason written for this tale and role: any plain one)
     reasons = sorted(fits)
+    if not any(int(fits[k]["weight"]) > 0 for k in reasons):
+        return reasons[0]
     return rng.weighted(reasons, [float(fits[k]["weight"]) for k in reasons])
 
 

@@ -95,9 +95,9 @@
       "woke": {
         "weight": 8, "blueprints": ["risen"], "roles": ["patron"],
         "why": [
-          "It was {traitor} who paid to have {home} opened. A crown's worth of grave-goods, {they} thought, and a dead king too long dead to mind. {They} did not think the king would mind so much.",
+          "It was {traitor} who paid to have {home} opened. A crown's worth of grave-goods, {they} thought, and a dead {king} too long dead to mind. {They} did not think the {king} would mind so much.",
           "{traitor} hired the waker. {They} wanted what lay in {home}, and {they} wanted the old stories proved, and {they} got both. Every death since has been {theirs} to answer for, and {they} sent for you to answer it.",
-          "The candles in {home} were bought with {traitor}'s silver. {They} believed a waked king could be bargained with, and {they} believe it still, and that is why {they} keep telling {villain_short} where you are."
+          "The candles in {home} were bought with {traitor}'s silver. {They} believed a waked {king} could be bargained with, and {they} believe it still, and that is why {they} keep telling {villain_short} where you are."
         ],
         "near": [
           "{traitor} knows the way through the old graves better than a priest ought to, and stops at one of them as if remembering a spade.",
@@ -110,9 +110,9 @@
           "{traitor} sold a gold ring in the market of {town} last month, old work, the kind they only find in graves."
         ],
         "waker": [
-          "On the waker's body, folded small, is a list of the grave-goods of {home} in a fair clerk's hand, and against each a price. The hand is {traitor}'s. You have seen it on the letter that brought you here.",
+          "On the waker, folded small, is a list of the grave-goods of {home} in a fair clerk's hand, and against each a price. The hand is {traitor}'s. You have seen it on the letter that brought you here.",
           "The waker's purse is fat with new coin of {town}, and wrapped round it is a note: \"The rest when the door is open.\" It is sealed with {traitor}'s ring.",
-          "Before the waker dies it laughs at you. \"Ask the one who sent for you,\" it says, \"who paid for the candles.\" Then it says nothing more, ever."
+          "Beaten, the waker laughs at you. \"Ask the one who sent for you,\" it says, \"who paid for the candles.\" It will say nothing more, whatever is done to it."
         ]
       },
       "toll": {

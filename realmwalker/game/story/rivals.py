@@ -83,7 +83,7 @@ def decide(game, adv: dict) -> None:
     if not kinds:
         adv["rival"] = None
         return
-    kind =rng.weighted(kinds, [float(sp["kinds"][k]["weight"]) for k in kinds])
+    kind = rng.weighted(kinds, [float(sp["kinds"][k]["weight"]) for k in kinds])
     ks = sp["kinds"][kind]
     rec = {"kind": kind, "relation": int(ks["relation"]), "state": "unmet", "made": _today(game), "met": None,
            "due": None, "prize": None, "last": _today(game), "seen": [], "lost": 0, "sold": False, "holds": False,

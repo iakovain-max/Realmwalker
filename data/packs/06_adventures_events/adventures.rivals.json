@@ -48,7 +48,7 @@
                 "a glory-hunter with a trophy wall in {town} and one empty place left on it",
                 "a beast-killer with a song already half written about the night {they} take {villain_short}"],
         "band_words": ["{rival}'s hunting party", "{rival} and {their} trackers", "{rival}'s hounds and huntsmen"],
-        "prize": ["{villain_short}'s head, for {their} wall", "the pelt and the head of {villain_short}",
+        "prize": ["{villain_short}'s head, for a wall in {town}", "the pelt and the head of {villain_short}",
                   "the kill, and the song that comes after it"]
       },
       "graverobbers": {
