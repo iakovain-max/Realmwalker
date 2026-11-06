@@ -151,7 +151,10 @@ def roll_encounter(game, minutes: float) -> PendingEncounter | None:
         return None
     from realmwalker.game import glamour
 
-    return glamour.on_meeting(game, make_encounter(game, group, rng))  # (Antipathy/Sympathy, Part E.4)
+    from realmwalker.game import story
+
+    enc = glamour.on_meeting(game, make_encounter(game, group, rng))  # (Antipathy/Sympathy, Part E.4)
+    return story.overlay(game, enc, rng.child("overlay"))  # (a threat's shadow on folk met in its reach: G.1)
 
 
 def land_budget(game, rng: RNG, *, difficulty: str | None = None, deeper: int = 0) -> int:

@@ -80,6 +80,10 @@ def problems(tables) -> list[str]:
             group = (stage.get("roads") or {}).get("group")
             if group and creatures is not None and group not in creatures.encounters:
                 out.append(f"threats.json: {kid}, stage {stage['id']}: the road band '{group}' is not an encounter.")
+            scenes = getattr(tables, "scenes", None)
+            if stage.get("scene") and scenes is not None and stage["scene"] not in scenes:
+                out.append(f"threats.json: {kid}, stage {stage['id']}: the scene '{stage['scene']}' is not in "
+                           f"scenes.json.")
         if kind.get("creature") and creatures is not None and kind["creature"] not in creatures:
             out.append(f"threats.json: {kid}: the creature '{kind['creature']}' is not one the game has.")
         if kind.get("band") and creatures is not None and kind["band"] not in creatures.encounters:

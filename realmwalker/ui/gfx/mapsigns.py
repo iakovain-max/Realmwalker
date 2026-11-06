@@ -2,7 +2,9 @@
 seen from afar over its mark - smoke rising from a burning, burned or sacked town (darker, and lit from below at night,
 while it burns), a ring of tents and banners round a besieged one (in the besieger's colours; a beset one's in the
 horde's), the black flag of plague, a dragon's shadow circling over a town that pays it tribute, lanterns strung for a
-festival, a statue beside a town that keeps a memorial. Drawn every frame from the marks (world/marks.py) in a handful
+festival, a statue beside a town that keeps a memorial; and a threat's marks (G.1): crows wheeling over a beast's killing
+ground or an emptied village, cold lights about a haunted place, an outlaw's rag on a pole where the roads are robbed
+or the town pays the gang. Drawn every frame from the marks (world/marks.py) in a handful
 of small pictures made once; nothing is painted into the map's chunks, and nothing here changes the game. Still with
 Animations "calm" or "off".
 
@@ -24,7 +26,12 @@ import numpy as np
 from realmwalker.ui.gfx.scene import Image, Lines
 
 SMOKE = ("burning", "sacked", "burned")  # one column of smoke a town, the strongest of these
-SHOWN = SMOKE + ("siege", "beset", "plague", "tribute", "festival", "memorial")
+SHOWN = SMOKE + ("siege", "beset", "plague", "tribute", "festival", "memorial", "emptied", "beast", "haunted",
+                 "extorted", "bled")
+CROWS = ("emptied", "beast")  # one flight of crows a town, the first of these (G.1: a threat's marks)
+RAGS = ("extorted", "bled")  # one outlaw's rag a town
+RAG_RGB = (128, 30, 26)
+WISP_RGB = (150, 230, 200)
 BESET_RGB = (120, 34, 30)  # a horde has no realm's colours: its banners are old blood
 SMALLEST = 24.0  # pixels: signs round a smaller mark are laid as round one this big
 LANTERNS = ((236, 92, 60), (248, 204, 90), (120, 200, 120), (236, 140, 70), (150, 170, 240))
@@ -40,8 +47,11 @@ SMOKE_LOOK = {
 def signed(s) -> list[str]:
     st = s.status
     out = [m for m in SHOWN if st.get(m) is not None and st.get(m) is not False]
-    smoke = [m for m in out if m in SMOKE]
-    return [m for m in out if m not in SMOKE or m == (smoke[0] if smoke else None)]
+    keep = []
+    for group in (SMOKE, CROWS, RAGS):  # (the strongest of each kind only)
+        first = next((m for m in out if m in group), None)
+        keep += [m for m in out if m in group and m != first]
+    return [m for m in out if m not in keep]
 
 
 def _seed(s) -> float:
@@ -133,6 +143,17 @@ def over(canvas, game, places, now: float, tint) -> None:
                 _shadow(canvas, s, x, y, size, a, t)
             elif mark == "festival":
                 _lanterns(canvas, s, x, y, size, a, tint, t, animate, night)
+            elif mark in CROWS:
+                _crows(canvas, s, x, y, size, a, tint, t, 5 if mark == "emptied" else 3)
+            elif mark == "haunted":
+                _wisps(canvas, s, x, y, size, a, t, night)
+            elif mark in RAGS:
+                h = max(9.0, size * 0.48)
+                w = h * 0.62
+                frame = int(t * 1.7 + _seed(s) * 2) % 2 if animate else 0
+                canvas.under(Image(("sign", "rag", frame), lambda f=frame: _rag(f),
+                                   (x + size * 0.02 - w * 0.2, y + size * 0.55 - h, w, h),
+                                   rgba=_lit(tint, a, RAG_RGB), smooth=False))
             elif mark == "memorial":
                 h = max(9.0, size * 0.42)
                 canvas.under(Image(("sign", "statue"), _statue, (x - h * 0.2, y + size * 0.92 - h, h * 0.64, h),
@@ -170,6 +191,36 @@ def _shadow(canvas, s, x, y, size, a, t) -> None:
     canvas.under(Image(("sign", "dragon_shadow"), _dragon, (px - w / 2, py - h / 2, w, h), rgba=(255, 255, 255,
                                                                                                 int(105 * a)),
                        angle=heading))
+
+
+def _crows(canvas, s, x, y, size, a, tint, t, n: int) -> None:
+    """Crows wheeling over a place where the dead lie unburied (a beast's killing ground, a village emptied)."""
+    seed = _seed(s)
+    cx, cy = x + size / 2, y - size * 0.05
+    bw = max(4.0, size * 0.16)
+    for i in range(n):
+        ang = t * (0.55 + 0.08 * i) + seed * math.tau + math.tau * i / n
+        rx, ry = size * (0.38 + 0.07 * (i % 3)), size * (0.16 + 0.03 * (i % 2))
+        px, py = cx + math.cos(ang) * rx, cy + math.sin(ang) * ry - size * 0.05 * (i % 2)
+        frame = int(t * 4.0 + i) % 2 if t else i % 2
+        canvas.under(Image(("sign", "crow", frame), lambda f=frame: _crow(f), (px - bw / 2, py - bw * 0.3, bw, bw * 0.6),
+                           rgba=_lit(tint, a, (255, 255, 255), 235), smooth=False))
+
+
+def _wisps(canvas, s, x, y, size, a, t, night) -> None:
+    """Cold lights going slowly about a haunted place, the brighter the darker the hour."""
+    seed = _seed(s)
+    for i in range(3):
+        k = seed * 7 + i * 2.1
+        px = x + size * (0.2 + 0.6 * ((math.sin(t * 0.21 + k) + 1) / 2))
+        py = y + size * (0.45 + 0.25 * math.sin(t * 0.33 + k * 1.7)) - size * 0.1 * i
+        pulse = 0.65 + 0.35 * math.sin(t * 1.9 + k * 3) if t else 0.8
+        g = max(6.0, size * 0.34)
+        canvas.under(Image(("sign", "wisp"), _glow, (px - g / 2, py - g / 2, g, g),
+                           rgba=(*WISP_RGB, int((50 + 150 * night) * pulse * a))))
+        d = max(2.0, size * 0.06)
+        canvas.under(Image(("sign", "wisp"), _glow, (px - d, py - d, 2 * d, 2 * d),
+                           rgba=(220, 255, 240, int((110 + 140 * night) * pulse * a))))
 
 
 def _lanterns(canvas, s, x, y, size, a, tint, t, animate, night) -> None:
@@ -248,6 +299,22 @@ def _black_flag(frame: int):
     cloth = (("#bbbbb.", "#bbbbbb", "#bbbbg.", "#bbbb..", "#bb...."),
              ("#bbbb..", "#bbbbbb", "#bbbbbg", "#bbbb..", "#b....."))[frame]
     return _grid(cloth + ("#......",) * 6, {"#": (70, 58, 48, 255), "b": (20, 18, 20, 255), "g": (44, 40, 42, 255)})
+
+
+@lru_cache(maxsize=2)
+def _crow(frame: int):
+    """A crow from below, its wings up or down."""
+    rows = (("b.......b", ".bb...bb.", "...bbb...", "....b...."),
+            (".........", "...bbb...", "bbbbbbbbb", "b...b...b"))[frame]
+    return _grid(rows, {"b": (22, 20, 24, 255)})
+
+
+@lru_cache(maxsize=2)
+def _rag(frame: int):
+    """A pole with a torn rag on it, the outlaws' (white, tinted to old blood as it is drawn)."""
+    cloth = (("#cccc.", "#ccckc", "#cc.c.", "#c.c..", "#c...."),
+             ("#ccc..", "#cccck", "#ccc.c", "#c.c..", "#.c..."))[frame]
+    return _grid(cloth + ("#.....",) * 6, {"#": (60, 52, 46, 255), "c": (255, 255, 255, 255), "k": (200, 200, 200, 255)})
 
 
 @lru_cache(maxsize=1)

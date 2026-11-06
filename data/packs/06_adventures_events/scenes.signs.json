@@ -1,0 +1,202 @@
+{
+  "_comment": "Signs of a threat (Expansion 6): scenes played when you walk into a village its threat has begun to trouble. They need nothing from the player. Words: {villain} the threat's name, {home} its lair, {place} the village.",
+  "scenes": {
+    "threat_mourning": {
+      "about": "The villagers carry one of the dead in from the fields on a hurdle; a crowd gathers, a mourner kneels and keens, and the bearers take the dead away to be buried.",
+      "cues": [
+        {"cue": "pick", "role": "mourner", "jobs": ["farmer", "herder", "labourer", "woodcutter"], "within": 60},
+        {"cue": "pick", "role": "bearer", "jobs": ["porter", "labourer", "woodcutter", "carter", "farmer"], "within": 60},
+        {"cue": "walk", "who": "bearer", "to": "square"},
+        {"cue": "crowd", "at": "bearer", "count": 7, "radius": 2, "key": "murmur", "ticks": 14},
+        {"cue": "kneel", "who": "mourner"},
+        {"cue": "say", "who": "mourner", "key": "keen", "ticks": 4},
+        {"cue": "say", "who": "bearer", "key": "bearer", "ticks": 3},
+        {"cue": "rise", "who": "mourner"},
+        {"cue": "walk", "who": "bearer", "to": "away"},
+        {"cue": "disperse", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "Who is it? Who have they brought in?",
+          "Cover the face, for pity's sake.",
+          "That is the third since the new moon.",
+          "Found him past the last fence. What was left of him.",
+          "Keep the children indoors.",
+          "{villain} again. It can only be.",
+          "God keep him. He was a quiet man.",
+          "Nobody goes out after dusk now."
+        ],
+        "keen": [
+          "Oh, my love. Oh, my own love, what did it do to you?",
+          "He went to see to the sheep. Only to see to the sheep.",
+          "I could not even wash him. There was not enough to wash.",
+          "Who will tell the little ones? Who will tell them?",
+          "Every night I hear it. Every night, and now it has him.",
+          "Get up. Please get up. It is only the cold.",
+          "The sheep came home without him. They knew."
+        ],
+        "bearer": [
+          "Make way. Make way, there.",
+          "Gently now. We have a long walk and a short grave.",
+          "The priest is waiting. Let us through.",
+          "Keep your eyes off, those that cannot bear it.",
+          "Another for the churchyard. We shall run out of ground.",
+          "Mind the hurdle. It is all we had to carry him on.",
+          "No one is to speak of how he was found."
+        ]
+      }
+    },
+    "threat_wake": {
+      "about": "The priest comes out into the square to bless the doors against the dead; a crowd gathers, a villager says their buried father was seen walking, and the priest says the words.",
+      "cues": [
+        {"cue": "pick", "role": "priest", "jobs": ["priest", "preacher", "acolyte", "monk"], "within": 70},
+        {"cue": "pick", "role": "witness", "jobs": ["farmer", "washerwoman", "labourer", "weaver", "herder"], "within": 60},
+        {"cue": "walk", "who": "priest", "to": "square"},
+        {"cue": "crowd", "at": "priest", "count": 8, "radius": 2, "key": "murmur", "ticks": 14},
+        {"cue": "walk", "who": "witness", "to": "priest"},
+        {"cue": "say", "who": "witness", "key": "seen", "ticks": 4},
+        {"cue": "say", "who": "priest", "key": "words", "ticks": 4},
+        {"cue": "say", "who": "priest", "key": "bless", "ticks": 3},
+        {"cue": "disperse", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "Chalk the lintels. Chalk them all.",
+          "They say the barrow is open.",
+          "I heard the churchyard gate last night. Nobody opened it.",
+          "Bar the doors and keep the dogs in.",
+          "Salt on the sill. It is all my mother ever said to do.",
+          "It was the cold, I told her. It was only the cold.",
+          "{villain} has called them up. Mark my words.",
+          "Hush. Let the priest speak."
+        ],
+        "seen": [
+          "My father, Father. In his shroud. Walking by the well.",
+          "I buried him myself, and there he was at the end of our lane.",
+          "He did not look at me. His feet were bare and black with earth.",
+          "He stood at the door all night and never knocked.",
+          "I saw his face in the moon. It was not the face I buried.",
+          "He is dead ten winters. Why would he come back now?"
+        ],
+        "words": [
+          "Peace, child. What walks is not your father. Only the shape of him.",
+          "The dead are not theirs to call. They are God's, and shall be given back.",
+          "Do not speak to them. Do not open to them. Whatever they say.",
+          "Go home, bar the door, and say the evening prayers aloud.",
+          "I have prayed over {place} since midnight. I do not know that it was enough.",
+          "I will lay hands on every door. That much I can do."
+        ],
+        "bless": [
+          "May no cold hand lift this latch. May no dead foot cross this stone.",
+          "Light before, light behind, and the door between shut fast.",
+          "Let the grave keep its own, and the night keep to itself.",
+          "Rest the dead. Spare the living. Amen.",
+          "From the wanderer in the dark, deliver us.",
+          "Go in peace. Go in, and go in early."
+        ]
+      }
+    },
+    "threat_robbed": {
+      "about": "A carter staggers in at the gate, stripped and beaten by robbers on the road; he shouts what was done in the square, a crowd murmurs, and a guard says there is nothing to be done.",
+      "cues": [
+        {"cue": "arrive", "role": "victim", "job": "carter"},
+        {"cue": "pick", "role": "guard", "jobs": ["guard", "soldier", "headman"], "within": 70},
+        {"cue": "walk", "who": "victim", "to": "square"},
+        {"cue": "shout", "who": "victim", "key": "cry", "ticks": 3},
+        {"cue": "crowd", "at": "victim", "count": 7, "radius": 2, "key": "murmur", "ticks": 14},
+        {"cue": "say", "who": "victim", "key": "told", "ticks": 4},
+        {"cue": "walk", "who": "guard", "to": "victim"},
+        {"cue": "say", "who": "guard", "key": "answer", "ticks": 4},
+        {"cue": "disperse", "always": true}
+      ],
+      "words": {
+        "cry": [
+          "Robbed! They took the lot - cart, horse, coat and all!",
+          "Is there no law here? Is there nobody?",
+          "Four miles out! They were waiting in the trees!",
+          "They took everything but my life, and that was close!",
+          "Look at me! Look what they did!",
+          "{villain}'s men! I saw the badge on the cloak!"
+        ],
+        "murmur": [
+          "The road is not safe any more.",
+          "That is the fourth this month.",
+          "Where's his horse? Where's his cart?",
+          "Somebody fetch him a blanket.",
+          "{villain}, I'll be bound.",
+          "My cousin was due in by that road.",
+          "Nobody dares carry goods past {home} now.",
+          "They'll be at our doors next."
+        ],
+        "told": [
+          "There were nine. Masked. One of them laughed the whole while.",
+          "They said the toll was paid to {villain} now, and took double.",
+          "I knew the road. I have driven it twenty years. They knew me too.",
+          "They left me in the ditch with a warning. Pay the toll, or walk.",
+          "A man with a lord's voice said I was lucky. Lucky!",
+          "They were gone before I could stand. Into the hills, towards {home}."
+        ],
+        "answer": [
+          "We have six men, a ditch and a rusted gate. What would you have us do?",
+          "Go after nine, in their own woods? I have a wife.",
+          "Write to the lord. Much good it will do. Aye, write.",
+          "I am sorry. Truly. There is nothing the watch can do.",
+          "Sit down, friend. Have something warm. That is all I can give.",
+          "If anyone is fool enough to try, it will not be the watch."
+        ]
+      }
+    },
+    "threat_refugees": {
+      "about": "People fleeing the country round the threat's lair come in at the gate one after another and make for the square; one falls and is helped up, a crowd gathers, and they say what they fled.",
+      "cues": [
+        {"cue": "arrive", "role": "first", "job": "pilgrim"},
+        {"cue": "arrive", "role": "second", "job": "farmer"},
+        {"cue": "walk", "who": "first", "to": "square"},
+        {"cue": "walk", "who": "second", "to": "square"},
+        {"cue": "fall", "who": "second"},
+        {"cue": "crowd", "at": "second", "count": 7, "radius": 2, "key": "murmur", "ticks": 14},
+        {"cue": "say", "who": "first", "key": "help", "ticks": 3},
+        {"cue": "rise", "who": "second"},
+        {"cue": "say", "who": "second", "key": "fled", "ticks": 4},
+        {"cue": "say", "who": "first", "key": "fled_more", "ticks": 4},
+        {"cue": "disperse", "always": true}
+      ],
+      "words": {
+        "murmur": [
+          "More of them. Where are they coming from?",
+          "Look at their feet. They have walked for days.",
+          "They have brought nothing. Not a bundle between them.",
+          "Is there food for them? There is hardly food for us.",
+          "They came from up by {home}, I heard.",
+          "Give the poor soul some air.",
+          "If they are running, what are we staying for?",
+          "Fetch water. Quickly."
+        ],
+        "help": [
+          "Up, friend. Up now. Lean on me.",
+          "Just a little further. There's the well.",
+          "Steady. You've walked far enough.",
+          "Someone give us a hand here, please!",
+          "Don't stop now. We are nearly safe.",
+          "You're all right. You're here. Get up."
+        ],
+        "fled": [
+          "We left at night. We left the fire still burning.",
+          "Everything we had is behind us, near {home}.",
+          "The cattle were taken first. Then the neighbours.",
+          "My roof is burnt. My field is salted with blood.",
+          "We heard it in the hills for weeks. Then it was in the yard.",
+          "We saw {villain}'s work. We did not stop to look twice."
+        ],
+        "fled_more": [
+          "The whole valley is on the road. We are only the first.",
+          "There's nothing left past the river. Do not go that way.",
+          "Is there a priest? Is there anyone who will take us in?",
+          "Hold fast to your doors. It will come this way too.",
+          "We have not eaten in two days. Do not ask us more yet.",
+          "If you have any sense, you'll pack your things and come with us."
+        ]
+      }
+    }
+  }
+}

@@ -15,9 +15,12 @@ MARKS = {
     "burning": {"since": 0.0}, "sacked": 0.0, "burned": 0.0, "siege": {"since": 0.0, "by": 0},
     "beset": {"since": 0.0, "by": "the Horde"}, "plague": {"since": 0.0}, "tribute": "Vorgath",
     "festival": {"since": 0.0}, "memorial": {"since": 0.0},
+    "emptied": {"since": 0.0}, "beast": {"since": 0.0}, "haunted": {"since": 0.0}, "extorted": {"since": 0.0},
+    "bled": {"since": 0.0},  # (a threat's marks: G.1)
 }
 KEYS = {"burning": "puff", "sacked": "puff", "burned": "puff", "siege": "tent", "beset": "tent", "plague": "black_flag",
-        "tribute": "dragon_shadow", "festival": "lantern", "memorial": "statue"}
+        "tribute": "dragon_shadow", "festival": "lantern", "memorial": "statue", "emptied": "crow", "beast": "crow",
+        "haunted": "wisp", "extorted": "rag", "bled": "rag"}
 
 
 def _game(make_app):
@@ -52,6 +55,9 @@ def test_only_the_strongest_smoke_shows():
     assert mapsigns.signed(s) == ["sacked"]
     s.status = {"raided": {"since": 1}, "rebuilding": {"since": 1}}
     assert mapsigns.signed(s) == []
+    s.status = {"beast": {"since": 1}, "emptied": {"since": 2}, "bled": {"since": 1}, "extorted": {"since": 1},
+                "haunted": {"since": 1}}
+    assert mapsigns.signed(s) == ["emptied", "haunted", "extorted"], "one flight of crows, one rag a town"
 
 
 def test_every_mark_with_a_sign_is_drawn_on_the_world_map(make_app):
@@ -85,7 +91,9 @@ def test_every_mark_with_a_sign_is_drawn_on_the_world_map(make_app):
 
 def test_the_pictures_are_made(make_app):
     for make in (mapsigns._tent, mapsigns._banner, mapsigns._statue, mapsigns._lantern, mapsigns._glow,
-                 lambda: mapsigns._black_flag(0), lambda: mapsigns._black_flag(1), lambda: mapsigns._puff(2)):
+                 lambda: mapsigns._black_flag(0), lambda: mapsigns._black_flag(1), lambda: mapsigns._puff(2),
+                 lambda: mapsigns._crow(0), lambda: mapsigns._crow(1), lambda: mapsigns._rag(0),
+                 lambda: mapsigns._rag(1)):
         a = make()
         assert a.ndim == 3 and a.shape[2] == 4 and a[..., 3].max() > 0
     assert mapsigns._dragon().size == (64, 40)

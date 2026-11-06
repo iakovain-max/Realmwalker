@@ -35,6 +35,13 @@ STORY_CHOICES = {"story_witness", "story_learn", "story_patron", "story_hook", "
                  "story_reading"}  # (a seer asked to read the cards: story/reading.py, F.4)
 
 
+def overlay(game, enc, rng):
+    """A threat's shadow on an ordinary meeting in its reach (story/signs.overlay, from encounters.roll_encounter)."""
+    from realmwalker.game.story import signs
+
+    return signs.overlay(game, enc, rng)
+
+
 def load_all() -> None:
     import importlib
 
@@ -500,6 +507,10 @@ def on_enter_town(game, settlement) -> None:
     from realmwalker.game.story import villain
 
     if villain.seen_in_town(game, settlement):  # (one who helped you, made an example of: E.2)
+        return
+    from realmwalker.game.story import signs
+
+    if _on_its_map(game, settlement) and signs.on_enter_town(game, settlement):  # (a threat's stage, shown: G.1)
         return
     for t in threats.live(game.world):
         if settlement.id in t["stakes"][:6] and t.get("adventure") is None and _can_take(game, t):

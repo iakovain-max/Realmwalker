@@ -1428,7 +1428,10 @@ THREAT_STAGE = Obj({
     "id": Str(max_len=30),
     "days": DAY_BAND,  # how long the stage lasts at tier 1 (threats.json stage_days stretches it for the tiers above)
     "signs": word_list(1, 300),  # news when it begins ({villain}, {home}, {place}, {area})
-    "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail
+    "flavour": List(Str(max_len=300), optional=True),  # words on the land, behind Text detail (story/signs.py)
+    "barks": List(Str(max_len=70), optional=True),  # said in passing in the towns it threatens ({villain}, {home})
+    "overlay": List(Str(max_len=200), optional=True),  # after an ordinary meeting's words in its reach
+    "scene": Str(max_len=40, optional=True),  # played once in a town it threatens, while the stage holds
     "effects": ops_list(optional=True),  # world/threats.STAGE_OPS
     "doom": Bool(optional=True),
     # while its effects hold, its bands are met more often on the land in its reach (game/encounters.py)
@@ -1776,6 +1779,9 @@ MARK = Obj({
     "moments": word_list(3, 300),  # a thing seen in its streets
     "description": word_list(1, 300),  # a line for a town's first description
     "dress": Obj({"share": Float(min=0, max=1, optional=True)}, strict=False, optional=True),  # (game/placemarks.py)
+    # what it does to prices in its shops: food (and drink), arms, and everything else (game/economy.troubles_factor)
+    "prices": Obj({"food": Float(min=0.2, max=5, optional=True), "arms": Float(min=0.2, max=5, optional=True),
+                   "other": Float(min=0.2, max=5, optional=True)}, optional=True),
 })
 FIRE = Obj({  # live fire on a town's map (game/fire.py)
     "burns": Map(List(Float(min=0, max=100), min_items=2, max_items=2)),

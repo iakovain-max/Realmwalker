@@ -571,6 +571,9 @@ class GameState:
             from realmwalker.game.companions import road_talk
 
             road_talk(self)
+        from realmwalker.game.story import signs
+
+        signs.on_the_land(self)  # (what a threat here has done to the country, behind Text detail: Expansion 6 G.1)
         self._check_bearings()
         if crossing == "under" and not self.world.river[nx, ny]:
             self.say("You walk down into the cold water and along the lake's bottom, breathing it like air, and come "
