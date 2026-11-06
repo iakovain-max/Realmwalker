@@ -602,7 +602,14 @@ the thread restarts when it had finished; stale chunks after unpainted ones, nea
 picture with its version: keys ("chunk", id, gx, gy, v) and ("map overview", id, overview_v). `WorldView.ready` follows
 `land_version` (a full rebuild when `changes_since` is None). tests/test_reshape.py (9). No save format change (G.10
 bumps it). Not here (later parts): the rift as a Wonder with its depths site (cataclysms), red light on the crack's
-close-up map, a crusaders' bridge.
+close-up map, a crusaders' bridge. Known: an undo (debug console only) is not followed by close-up maps already built
+(they keep their dead trees); a newer change may lie over an older one (a rift over blight; `undo` refuses the older
+until the newer is undone), but a blight never fills a rift or a crater.
+Checks: full suite (first run: only the known turn-time tests under load, enemy casters 3 and 16-0 and tactics
+coverage mage), autoplay OK, smoke OK; the fresh review's fixes (overview stale kept when the land changes while it is
+painted, a failed read repaints the whole map, the interlude drops the dead hero's `party_at`, a re-planned journey
+keeps its plan object, blights keep out of rifts and craters, plain numbers in shapes); the full suite again after
+(only enemy casters 3 under load; it and the other two pass alone).
 G.5 (2026-11-06, realmwalker-a): `game/story/rumours.py` (its docstring has it all). `nearest_hook(game, x, y,
 within=)`: the nearest live untaken threat `story._can_take` allows, within threats.json start.tiles (the boards'
 reach). Dialogue OUTCOMES gain `reveal_clue`; `reveal_hook` and `reveal_clue` share one branch in
