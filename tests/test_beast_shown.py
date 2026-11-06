@@ -176,3 +176,42 @@ def test_the_console_stages_marks_scenes_and_the_showcase(make_app):
     console.run("scene plea")
     assert (stage.current(game) or {}).get("id") == "plea"
     assert app.error_count == 0
+
+
+def test_the_console_stages_the_world_showcase(make_app):
+    """Part G's showcase (G.10): the land changed, a host of each kind, a refugee camp and a known reach, all staged
+    about the party and drawn on the world map."""
+    import copy
+
+    import tcod.console
+
+    from realmwalker.game import story
+    from realmwalker.game.state import new_game
+    from realmwalker.ui.screens.debug_console import LAND_SHOWN, DebugConsole
+    from realmwalker.ui.screens.world_map import WorldMapScreen
+    from realmwalker.world import founding, hosts, reshape
+    from realmwalker.world.generator import WorldOptions
+
+    app = make_app()
+    t = app.tables
+    game = new_game(copy.deepcopy(cached_world(WorldOptions("Signland", 21, "small", history=60), t)), t)
+    game.survival = False
+    app.start_game(game)
+    DebugConsole(app).run("showcase world")
+    w = game.world
+    kinds = {r["kind"] for r in reshape.ledger(w)}
+    assert len(kinds & {k for k, _ in LAND_SHOWN}) >= len(LAND_SHOWN) - 1, kinds
+    assert reshape.check(w) == [], "the ledger replays"
+    marching = [h for h in hosts.records(w) if h["state"] == "marching"]
+    assert {h["kind"] for h in marching} == set(hosts.KINDS)
+    assert all(0 < h["at"] < len(h["path"]) - 1 for h in marching), "out on the road, not at the gate"
+    assert founding.records(w), "a refugee camp pitched"
+    assert story.known_reaches(game), "a threat's reach known"
+    wm = WorldMapScreen(app, app.top)
+    app.push(wm)
+    wm.target = wm.ppc = 32.0
+    con = tcod.console.Console(160, 50, order="F")
+    for _ in range(3):
+        app.render(con)
+        app.update()
+    assert app.error_count == 0
