@@ -218,6 +218,9 @@ class Politics:
                     self.say("crisis", {"old": old.full_name(), "cause": cause, "new": usurper.full_name(),
                                         "house": strongest.name, "seat": "throne"},
                              where=where, importance=4, factions=[f, strongest])
+                    from realmwalker.world import threats
+
+                    threats.seed_from(self, "crown", figure=usurper, faction=f)  # (the crown in shadow: later)
                     return
             cousin = self.new_leader(f, family=fx.family_of(old))
             self.crown(f, cousin)
@@ -446,6 +449,9 @@ class Politics:
         big = self.rng.chance(0.3)
         self.say("battle", {"winner": winner.name, "loser": loser.name, "place": place.name},
                  where=(place.x, place.y), importance=3 if big else 2, factions=[winner, loser], places=[place])
+        from realmwalker.world import threats
+
+        threats.trigger(self, "battle", [(place.x, place.y)])  # (fresh dead near an old barrow: Expansion 6 G.2)
 
     def sieges(self, war: dict, a, d, days: float) -> None:
         w = self.w
@@ -518,6 +524,10 @@ class Politics:
         self.say(kind, {"attacker": winner.name, "defender": loser.name if loser else "its lord", "place": target.name},
                  where=(target.x, target.y), importance=4, factions=[winner] + ([loser] if loser else []),
                  places=[target])
+        if sacked:
+            from realmwalker.world import threats
+
+            threats.trigger(self, "sacked", [(target.x, target.y)])  # (the watch dead, the roads unguarded)
 
     def end_war(self, war: dict, winner) -> None:
         w = self.w
@@ -656,6 +666,10 @@ class Politics:
             self.say("dragon_tribute", {"dragon": d["name"], "place": s.name}, where=(s.x, s.y), importance=3,
                      factions=[realm] if realm else [], places=[s])
         self.changed = True
+        from realmwalker.world import threats
+
+        threats.seed_from(self, "dragon", site=int(d["lair"]), dragon=d, place=s.id)  # (its kind comes later)
+        threats.trigger(self, "dragon", [(s.x, s.y)])  # (the beasts of the hills driven down before its fire)
 
     def expire_status(self) -> None:
         """Marks grow older (world/marks.py): a plague passes, a burned town begins to build again."""
@@ -677,11 +691,19 @@ class Politics:
             marks.add(w, s, "plague", self.day, self.t, until=self.day + self.rng.uniform(45, 120))
         self.say("plague", {"place": start.name, "deaths": f"{round(deaths, -1 if deaths < 1000 else -2):,}"},
                  where=(start.x, start.y), importance=4, factions=[realm], places=struck)
+        from realmwalker.world import threats
+
+        threats.seed_from(self, "sickness", faction=realm, place=start.id)  # (the sickness: its kind comes later)
+        threats.trigger(self, "plague", [(s.x, s.y) for s in struck])  # (the dead in pits, too many to bury)
 
     def famine(self, realm) -> None:
-        for s in fx.holdings(self.w, realm, deep=True):
+        towns = fx.holdings(self.w, realm, deep=True)
+        for s in towns:
             marks.add(self.w, s, "famine", self.day, self.t, until=self.day + self.rng.uniform(90, 200))
         self.say("famine", {"faction": realm.name}, where=self.place_of(realm), importance=3, factions=[realm])
+        from realmwalker.world import threats
+
+        threats.trigger(self, "famine", [(s.x, s.y) for s in towns])  # (hungry beasts, hungry men)
 
     def raid(self, tribe) -> None:
         w = self.w
@@ -703,6 +725,10 @@ class Politics:
             fx.change_relation(w, tribe.id, realm.id, -8)
         self.say("burned" if burned else "raid", {"tribe": tribe.name, "place": s.name}, where=(s.x, s.y),
                  importance=3 if burned else 2, factions=[tribe] + ([realm] if realm else []), places=[s])
+        from realmwalker.world import threats
+
+        threats.seed_from(self, "warband", faction=tribe, place=s.id)  # (the warband: its kind comes later)
+        threats.trigger(self, "raid", [(s.x, s.y)])  # (the hamlet's men gone after the raiders, its roads bare)
 
     def cult_year(self, cult, share: float) -> None:
         w = self.w
@@ -715,6 +741,9 @@ class Politics:
             if near:
                 cult.presence.append(self.rng.choice(near).id)
                 cult.military += self.rng.randint(2, 8)
+                from realmwalker.world import threats
+
+                threats.seed_from(self, "circle", faction=cult)  # (the hidden circle: its kind comes later)
         if towns and self.rng.chance(float(rates["cult_incident"]) * share):
             s = self.rng.choice(towns)
             self.say("cult_incident", {"place": s.name}, where=(s.x, s.y), importance=1, places=[s])

@@ -258,6 +258,7 @@ def daily(game) -> None:
         return
     d["day"] = today
     d["at"] = [int(game.player.x), int(game.player.y)]
+    _need(game, d, today)  # (nothing stirring near you: the Storyteller wakes something, G.2)
     for adv in active(game):  # (a villain taken alive whom no aftermath judged: the lord's justice, D.3)
         if adv.get("boss_taken") and int(adv.get("taken_day", today)) < today:
             for line in endings.finish(game, adv):
@@ -315,6 +316,40 @@ def daily(game) -> None:
         if int(item["day"]) <= today and beats.pending(game) is None:
             d["scheduled"].remove(item)
             _play_scheduled(game, item)
+
+
+def _need(game, d: dict, today: int) -> None:
+    """The Storyteller's need (world/threats.needed), once in `every_days`: out in the land, with nothing live near
+    that the hero has not already taken on, the nearest dormant threat of the hero's tier wakes. Not before the
+    opening has had its say (story.begin chose the first)."""
+    from realmwalker.world import news, threats
+
+    spec = game.tables.threats.get("need")
+    if not spec or (d.get("opening") or {}).get("state") == "waiting":
+        return
+    if today < int(d.get("need_day", -10 ** 6)) + int(spec["every_days"]):
+        return
+    d["need_day"] = today
+    w = game.world
+    taken = {adv.get("threat") for adv in active(game)}
+    threats.needed(w, game.tables, w.rng.child(f"need/{today}"), game.player.x, game.player.y, game.leader.level,
+                   day=news.now_days(w), taken=taken)
+
+
+def disturbed(game, site: int | None, why: str) -> bool:
+    """The hero did something that may wake a dormant threat at this site (threats.json triggers: the barrow's dead
+    robbed, the beast's lair walked into). The hero feels it (law 7: a sign before anything comes of it)."""
+    from realmwalker.world import news, threats
+
+    if site is None:
+        return False
+    w = game.world
+    woke = threats.trigger_world(w, game.tables, w.rng.child(f"disturbed/{why}/{site}/{int(w.time)}"), why,
+                                 day=news.now_days(w), site=int(site))
+    felt = game.tables.threats.get("triggers", {}).get(why, {}).get("felt")
+    if woke and felt:
+        game.say(w.rng.child(f"felt/{why}/{site}").choice(felt), "warn")
+    return bool(woke)
 
 
 def _play_scheduled(game, item: dict) -> None:
@@ -714,6 +749,7 @@ def on_descend(game, lm) -> None:
     from realmwalker.game.story import deeds
 
     deeds.on_descend(game, lm)  # (a step's band on a level filled before: D.2)
+    disturbed(game, lm.meta.get("site"), "lair_disturbed")  # (into the beast's own lair: it knows, G.2)
     from realmwalker.game.story import rivals
 
     rivals.on_descend(game, lm)  # (a rival who went in ahead of you, found: F.2)

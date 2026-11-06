@@ -75,6 +75,110 @@
     "per_fame": 0.002
   },
   "interlude_stages": 1,
+  "triggers": {
+    "battle": {
+      "kinds": [
+        "risen"
+      ],
+      "chance": 0.5
+    },
+    "plague": {
+      "kinds": [
+        "risen"
+      ],
+      "chance": 0.35
+    },
+    "famine": {
+      "kinds": [
+        "beast",
+        "outlaw"
+      ],
+      "chance": 0.15
+    },
+    "sacked": {
+      "kinds": [
+        "outlaw",
+        "risen"
+      ],
+      "chance": 0.4
+    },
+    "raid": {
+      "kinds": [
+        "outlaw"
+      ],
+      "chance": 0.25
+    },
+    "dragon": {
+      "kinds": [
+        "beast"
+      ],
+      "chance": 0.3
+    },
+    "tomb_robbed": {
+      "kinds": [
+        "risen"
+      ],
+      "chance": 1.0,
+      "force": true,
+      "felt": [
+        "<warn>The air in the barrow goes cold all at once, as if a door had opened somewhere below.</>",
+        "<warn>Far down in the dark, something answers the sound of the lid: a long scrape of stone.</>",
+        "<warn>The torch gutters. For a moment you are sure that someone below said your name.</>",
+        "<warn>Dust falls from the roof. Deeper in the barrow, something old has been disturbed.</>"
+      ]
+    },
+    "lair_disturbed": {
+      "kinds": [
+        "beast"
+      ],
+      "chance": 0.6,
+      "force": true,
+      "felt": [
+        "<warn>The bones here are fresh, and the musk is strong. Whatever lairs here knows you came.</>",
+        "<warn>Something has marked this place against you: a low sound in the dark that is not wind.</>",
+        "<warn>You have walked into its larder. It will not forgive that, and it will come down hungry.</>",
+        "<warn>Tracks over your own tracks. It was close behind you all the while, and now it is roused.</>"
+      ]
+    }
+  },
+  "need": {
+    "tiles": 40,
+    "chance": 0.5,
+    "every_days": 7,
+    "over": 1,
+    "levels": [
+      1,
+      5,
+      11,
+      17
+    ]
+  },
+  "interlude": {
+    "woke": [
+      "<warn>Folk round {place} say that something has begun near {home}.</>",
+      "<warn>The talk in {area} is of {villain} again.</>",
+      "<warn>Something stirs near {home}: {place} keeps its doors barred at night now.</>",
+      "<warn>In {area} they have started to speak of {villain} in low voices.</>"
+    ],
+    "grew": [
+      "<danger>Whatever troubles {area} has grown worse: {place} is afraid.</>",
+      "<danger>{villain} is bolder now, and {area} knows it.</>",
+      "<danger>The trouble near {home} has not passed. It has grown.</>",
+      "<danger>Things are worse round {place}: the shadow of {villain} lies longer.</>"
+    ],
+    "doom": [
+      "<danger>Nobody stopped {villain}: {area} has paid for it.</>",
+      "<danger>{villain} had its way in {area}, and {place} will not forget it.</>",
+      "<danger>What was feared near {home} has come to pass.</>",
+      "<danger>{area} lost to {villain} what nobody came to defend.</>"
+    ],
+    "ended": [
+      "<good>{villain} troubles {area} no more.</>",
+      "<good>The trouble near {home} is over, and {place} sleeps again.</>",
+      "<good>{area} is rid of {villain}, and it was not your doing.</>",
+      "<good>Nobody in {place} fears {villain} now.</>"
+    ]
+  },
   "kinds": {
     "beast": {
       "name": "the beast",
@@ -92,6 +196,11 @@
       "ask": "I hear something is killing your people.",
       "learn_ask": "What does {villain} fear? What will kill it?",
       "reach": 14,
+      "ends": {
+        "chance": 0.006,
+        "outcome": "hunted",
+        "text": "threat_great_hunt"
+      },
       "stages": [
         {
           "id": "spoor",
@@ -519,6 +628,11 @@
       "band": "bandit_hideout",
       "minions": "bandits",
       "reach": 18,
+      "ends": {
+        "chance": 0.01,
+        "outcome": "fallen",
+        "text": "threat_broken"
+      },
       "creature": "bandit_captain",
       "stages": [
         {

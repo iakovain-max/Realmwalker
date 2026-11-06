@@ -1468,6 +1468,18 @@ THREATS = Obj({
     "emptied": Obj({"floor": Float(min=0.05, max=1), "rebuild_days": Int(min=7, max=3650)}, optional=True),
     "hunters": Obj({"chance": Float(min=0, max=1), "per_fame": Float(min=0, max=1)}, optional=True),
     "interlude_stages": Int(min=0, max=5, optional=True),
+    # what wakes a dormant threat (G.2): {why: the kinds it touches, a chance, how far beyond their reach it is felt,
+    # whether it wakes them past the world's budget (the hero did it), and what the hero feels when they did it}
+    "triggers": Map(Obj({"kinds": List(Str(max_len=30), min_items=1), "chance": Float(min=0, max=1),
+                         "within": Float(min=0.1, max=4, optional=True), "force": Bool(optional=True),
+                         "felt": List(Str(max_len=160), min_items=3, optional=True)}), optional=True),
+    # the Storyteller's need: nothing live near the hero (tiles), so the nearest dormant threat of their tier wakes
+    "need": Obj({"tiles": Int(min=5, max=200), "chance": Float(min=0, max=1), "every_days": Int(min=1, max=60),
+                 "over": Int(min=0, max=5), "levels": List(Int(min=1, max=20), min_items=4, max_items=4)},
+                optional=True),
+    # the interlude's "what changed" for threats ({villain}, {home}, {place}, {area})
+    "interlude": Obj({"woke": word_list(4, 160), "grew": word_list(4, 160), "doom": word_list(4, 160),
+                      "ended": word_list(4, 160)}, optional=True),
     "kinds": Map(THREAT_KIND),
 })
 

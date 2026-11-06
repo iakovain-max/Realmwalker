@@ -32,6 +32,8 @@ def snapshot(world) -> dict:
         "wars": {w["id"] for w in world.wars if w.get("ended") is None},
         "status": {s.id: tuple(sorted(s.status)) for s in world.settlements},
         "dragons": {d["name"]: bool(d.get("alive")) for d in world.politics.get("dragons", [])},
+        "threats": {tid: (t["state"], int(t["scheme"]["stage"]))
+                    for tid, t in world.politics.get("threats", {}).items()},
     }
 
 
@@ -109,7 +111,54 @@ def changes(world, tables, before: dict, after: dict) -> list[str]:
     for name, alive in after["dragons"].items():
         if alive and not before["dragons"].get(name, True):
             lines.append(f"<danger>{esc(name)} is awake.</>")
+    lines += threat_changes(world, tables, before.get("threats", {}), after.get("threats", {}))
     return lines[:MAX_LINES]
+
+
+THREAT_LINES = 4  # (the darkness in the world takes a few lines of the page at most, nearest the last hero first)
+
+
+def threat_changes(world, tables, before: dict, after: dict) -> list[str]:
+    """The threats that woke, grew, won or ended while nobody played (Expansion 6 G.2), in the words of rumour:
+    nothing here names what the hero has not heard of yet beyond what the roads are saying."""
+    from realmwalker.core import textgen
+    from realmwalker.world import threats
+
+    words = tables.threats.get("interlude")
+    if not words:
+        return []
+    at = world.politics.get("director", {}).get("at") or [world.width // 2, world.height // 2]
+    found = []
+    for tid, (state, stage) in after.items():
+        was = before.get(tid)  # (None: born while nobody played)
+        t = world.politics["threats"][tid]
+        if state == "ended":
+            if was is None or was[0] == "ended":
+                continue
+            how = "doom" if t.get("outcome") == "doom" else "ended"
+        elif state == "dormant":
+            continue
+        elif was is None or was[0] == "dormant":
+            how = "woke"
+        elif stage > was[1]:
+            how = "grew"
+        else:
+            continue
+        found.append((threats.distance(world, t, at[0], at[1]), int(tid[1:]), how, t))
+    found.sort(key=lambda f: (f[0], f[1]))
+    out = []
+    for _, _, how, t in found[:THREAT_LINES]:
+        rng = world.rng.child(f"interlude/threat/{t['id']}/{how}")
+        values = {k: textgen.escape_markup(v) for k, v in threats._words(world, t, rng).items()}
+        line = textgen.fill(rng.choice(words[how]), rng, {}, values)
+        out.append(_capital(line))
+    return out
+
+
+def _capital(line: str) -> str:
+    """The first letter after the opening colour tag in capitals ("the beast" at the start of a line)."""
+    i = line.find(">") + 1 if line.startswith("<") else 0
+    return line[:i] + line[i:i + 1].upper() + line[i + 1:]
 
 
 def summary_text(world, tables, summary: dict) -> list[str]:

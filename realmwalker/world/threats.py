@@ -15,8 +15,18 @@ moves in the interlude between lives too (at most `interlude_stages` stages ther
   risen to rest; politics hangs gangs, which ends their outlaw lord); a threat whose villain is gone ends
   (`villain_lives`: a beast in its lair, the risen while his barrow is not laid, the outlaw lord while his gang
   stands - a new captain takes his place in the threat).
-- `seed_from(politics, kind, **refs)` while you play: a beast that comes down, or a new gang, wakes (or makes) its
-  threat.
+- `seed_from(politics, kind, **refs)` while you play: every `Politics` method that can make a threat calls it with
+  what it touched (a beast that comes down, a new gang, a dragon on the wing, a plague's first town, a tribe's raid, a
+  cult spreading, a crown in crisis); it wakes that threat if there is one, makes one for the kinds that can be made
+  then (beast, outlaw), and does nothing for kinds this world does not have yet.
+- Waking (G.2): a dormant threat stirs (`wake`, which keeps why in `t["woke"]`) when a trigger fires near it
+  (`trigger(politics, why, points)` / `trigger_world`: threats.json `triggers` {why: kinds, chance, within, force}:
+  a battle or a plague by a barrow, a famine round a lair, a town sacked near a hideout, the player robbing the
+  tomb or walking into the lair), when the Storyteller needs one near the hero (`needed`, from game/story.daily:
+  threats.json `need`), or slowly by chance (`wake`, a week's chance in `advance`).
+- `ENDINGS[kind](politics, threat)`: the world's own ending of a kind nobody has taken on (its `ends`): priests lay
+  the risen, a lord's great hunt kills the beast, a lord's riders break the outlaw's band. It returns the words for
+  its news, or None when it could not happen this week.
 - `on_the_road(world, tables, x, y, night)`: the threat whose stage keeps its bands on the land here (a stage's
   `roads`: the dead on the road at night, the gang at the ford), for game/encounters.py.
 
@@ -288,8 +298,8 @@ def advance(pol, days: float) -> None:
             if t.get("sequel"):  # (put down without its anchor: it sleeps its weeks and then comes back, E.4)
                 if day >= float(t["scheme"].get("held_until") or 0) and room_for(w, tables, t):
                     stir(w, tables, t, pol.rng, day=day)
-            elif pol.rng.chance(float(tables.threats.get("wake", 0.0)) * days / 7.0) and room_for(w, tables, t):
-                stir(w, tables, t, pol.rng, day=day)
+            elif pol.rng.chance(float(tables.threats.get("wake", 0.0)) * days / 7.0):
+                wake(w, tables, t, pol.rng, day=day, why="chance")
             continue
         sch = t["scheme"]
         held = sch.get("held_until") is not None and day < float(sch["held_until"])
@@ -445,20 +455,68 @@ def _ends_alone(pol, t: dict) -> None:
         return
     if not pol.rng.chance(float(spec["chance"])):
         return
-    ENDINGS[t["kind"]](pol, t)
     hx, hy = home_xy(pol.w, t)
     fid = t["villain"].get("figure")
-    pol.say(spec["text"], _words(pol.w, t, pol.rng), where=(hx, hy), importance=3, places=t["stakes"][:1],
+    words = _words(pol.w, t, pol.rng)  # (before the ending: the villain's name as it was)
+    more = ENDINGS[t["kind"]](pol, t)
+    if more is None:
+        return  # (it could not happen this week: no lord near to send his riders)
+    words.update(more)
+    pol.say(spec["text"], words, where=(hx, hy), importance=3, places=t["stakes"][:1],
             figures=[fid] if fid is not None else [])
     end(pol.w, t, spec["outcome"], pol.day)
 
 
-def _laid_by_others(pol, t: dict) -> None:
+def _lord_near(pol, t: dict):
+    """The realm whose land a threat's home is in (None in the wild, or where a tribe or outlaws hold it)."""
+    from realmwalker.world import factions as fx
+
+    lord = fx.lord_at(pol.w, *home_xy(pol.w, t))
+    if lord is None or lord.kind in ("tribe", "bandit_gang", "cult"):
+        return None
+    return fx.top_liege(pol.w, lord)
+
+
+def _laid_by_others(pol, t: dict) -> dict:
     """The risen laid to rest by priests or a hermit of the land: his barrow is only a grave again."""
     pol.w.politics.setdefault("laid", {})[str(t["home"]["site"])] = pol.year
+    return {}
+
+
+def _great_hunt(pol, t: dict) -> dict | None:
+    """A lord calls a great hunt on the beast that eats his farms: hounds, beaters, a hundred spears, and its head on
+    his gate."""
+    lord = _lord_near(pol, t)
+    beast = villain_figure(pol.w, t)
+    if lord is None or beast is None:
+        return None
+    site = t["home"]["site"]
+    beast.died = pol.year
+    beast.cause = f"killed in the great hunt of {lord.name}"
+    beast.died_at = f"X{site}"
+    pol.w.politics.get("lairs", {}).pop(str(site), None)
+    return {"lord": lord.name}
+
+
+def _broken_by_riders(pol, t: dict) -> dict | None:
+    """A lord's riders run the outlaw lord's band to earth: the hideout burned, the captain on the gallows."""
+    from realmwalker.world import factions as fx
+
+    lord = _lord_near(pol, t)
+    gang = gang_of(pol.w, t)
+    if lord is None or gang is None or not gang.active:
+        return None
+    leader = fx.leader_of(pol.w, gang)
+    pol.fall(gang)
+    if leader is not None and leader.alive:
+        leader.died = pol.year
+        leader.cause = "on the gallows"
+    return {"lord": lord.name}
 
 
 ENDINGS["risen"] = _laid_by_others
+ENDINGS["beast"] = _great_hunt
+ENDINGS["outlaw"] = _broken_by_riders
 
 
 def _recover(pol) -> None:
@@ -485,31 +543,113 @@ def _recover(pol) -> None:
             s.population = max(s.population, int(int(r.get("was", s.population)) * 0.8))
 
 
+# ---------------------------------------------------------------------------- waking (G.2)
+def wake(world, tables, t: dict, rng, *, day: float, why: str, force: bool = False) -> bool:
+    """A dormant threat stirs, if the world has room for it (`force`: the hero did it, or the Storyteller needs it,
+    and it wakes regardless). Why it woke is kept (`t["woke"]`): the interlude says so."""
+    if t["state"] != "dormant" or not villain_lives(world, t):
+        return False
+    if not force and not room_for(world, tables, t):
+        return False
+    t["woke"] = {"why": why, "day": float(day)}
+    stir(world, tables, t, rng, day=day)
+    return True
+
+
+def _touches(world, t: dict, points, within: float) -> bool:
+    r = float(t["reach"]["r"]) * within
+    return any(distance(world, t, x, y) <= r for x, y in points)
+
+
+def trigger_world(world, tables, rng, why: str, points=(), *, day: float, site: int | None = None) -> list[dict]:
+    """Something happened here (threats.json `triggers`): each dormant threat of the trigger's kinds whose reach it
+    touches (or whose home is `site`) may wake. Returns the threats that woke."""
+    spec = tables.threats.get("triggers", {}).get(why)
+    if not spec:
+        return []
+    points = [(int(x), int(y)) for x, y in points]
+    woke = []
+    for t in sorted(records(world).values(), key=lambda t: int(t["id"][1:])):
+        if t["state"] != "dormant" or t["kind"] not in spec["kinds"]:
+            continue
+        if site is not None:
+            hit = t["home"].get("site") == site
+        else:
+            hit = _touches(world, t, points, float(spec.get("within", 1.0)))
+        if hit and rng.chance(float(spec["chance"])) and \
+                wake(world, tables, t, rng, day=day, why=why, force=bool(spec.get("force"))):
+            woke.append(t)
+    return woke
+
+
+def trigger(pol, why: str, points, *, site: int | None = None) -> list[dict]:
+    """`trigger_world` from inside the politics engine (its rng and day)."""
+    return trigger_world(pol.w, pol.t, pol.rng, why, points, day=pol.day, site=site)
+
+
+def hero_tier(tables, level: int) -> int:
+    """The tier of play a hero of this level is in (DMG: 1-4, 5-10, 11-16, 17-20; threats.json need.levels)."""
+    starts = tables.threats.get("need", {}).get("levels", [1, 5, 11, 17])
+    return max(1, sum(1 for lv in starts if level >= int(lv)))
+
+
+def needed(world, tables, rng, x: int, y: int, level: int, *, day: float, taken=()) -> dict | None:
+    """The Storyteller's need (threats.json `need`): when nothing live is near the hero that they have not taken on
+    already, the nearest dormant threat of their tier or below within reach wakes (the world's budget stretched by
+    `over` at most). `taken`: the ids of the threats the hero's own tales engage."""
+    spec = tables.threats.get("need")
+    if not spec:
+        return None
+    tiles = float(spec["tiles"])
+    if any(t["id"] not in taken and distance(world, t, x, y) <= tiles for t in live(world)):
+        return None
+    lo, hi = budget(world, tables)
+    if len(live(world)) >= hi + int(spec.get("over", 0)):
+        return None
+    if not rng.chance(float(spec.get("chance", 1.0))):
+        return None
+    tier = hero_tier(tables, level)
+    sleeping = [t for t in records(world).values() if t["state"] == "dormant" and t["tier"] <= tier
+                and villain_lives(world, t) and distance(world, t, x, y) <= tiles]
+    if not sleeping:
+        return None
+    t = min(sleeping, key=lambda t: (distance(world, t, x, y), int(t["id"][1:])))
+    wake(world, tables, t, rng, day=day, why="need", force=True)
+    return t
+
+
 # ---------------------------------------------------------------------------- while you play
-def seed_from(pol, kind: str, *, figure=None, site: int | None = None, faction=None) -> dict | None:
-    """Something politics did may wake a threat (a beast came down, a new gang took to the roads): its own if it has
-    one, else a new one."""
+def seed_from(pol, kind: str, *, figure=None, site: int | None = None, faction=None, **more) -> dict | None:
+    """Something politics did may wake a threat (a beast came down, a new gang took to the roads, a dragon flew, a
+    plague began, a tribe raided, a cult spread, a crown fell into crisis): its own if it has one (by its figure, its
+    faction or its home site), else a new one for the kinds made while you play. A kind this world's data does not
+    have yet does nothing (its threats come with their kinds). `more` are refs a later kind may read (a place, the
+    dragon's record)."""
     w, tables = pol.w, pol.t
     if kind not in tables.threats.get("kinds", {}):
         return None
-    for t in records(w).values():
-        if t["state"] != "ended" and figure is not None and t["villain"].get("figure") == figure.id:
-            if t["state"] == "dormant" and room_for(w, tables, t):
-                stir(w, tables, t, pol.rng, day=pol.day)
+    fid = getattr(faction, "id", faction)
+    for t in sorted(records(w).values(), key=lambda t: int(t["id"][1:])):
+        if t["state"] == "ended" or t["kind"] != kind:
+            continue
+        mine = (figure is not None and t["villain"].get("figure") == figure.id) or \
+            (fid is not None and t["source"].get("faction") == fid) or \
+            (site is not None and figure is None and fid is None and t["home"].get("site") == site)
+        if mine:
+            if t["state"] == "dormant":
+                wake(w, tables, t, pol.rng, day=pol.day, why=f"seed:{kind}")
             return t
     if kind == "beast" and figure is not None and site is not None:
         t = make(w, tables, pol.rng.child(f"beast/{site}/{int(pol.day)}"), "beast",
                  source={"kind": "lairs", "site": int(site), "figure": figure.id}, home={"site": int(site)},
                  figure=figure, day=pol.day)
-        if room_for(w, tables, t):
-            stir(w, tables, t, pol.rng, day=pol.day)
+        wake(w, tables, t, pol.rng, day=pol.day, why=f"seed:{kind}")
         return t
     if kind == "outlaw" and figure is not None and faction is not None and 0 <= faction.site < len(w.sites):
         t = make(w, tables, pol.rng.child(f"outlaw/{faction.id}/{int(pol.day)}"), "outlaw",
                  source={"kind": "gangs", "faction": faction.id, "site": faction.site, "figure": figure.id},
                  home={"site": faction.site}, figure=figure, day=pol.day)
-        if room_for(w, tables, t):
-            stir(w, tables, t, pol.rng, day=pol.day)
+        wake(w, tables, t, pol.rng, day=pol.day, why=f"seed:{kind}")
         return t
     return None
 

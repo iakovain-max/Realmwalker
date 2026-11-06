@@ -1,5 +1,5 @@
 {
-  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold.",
+  "_comment": "Expansion 6: what the politics engine says of threats (world/threats.py): a beast brought down by a hero of the history, a dead king laid to rest by others, a place emptied by a doom, a place filling again, a gang grown bold, a beast killed in a lord's great hunt, an outlaw's band broken by a lord's riders (G.2).",
   "text": {
     "threat_hunted": [
       "{hero} brought {beast} down at last, in its lair at {home}, and came home with its head.",
@@ -30,6 +30,18 @@
       "{villain}'s men rode through {area} forty strong. {gang} is no longer a band of robbers but a little army.",
       "Recruits keep coming to {gang} at {home}. {villain} pays in silver taken off the roads.",
       "There are more of {gang} every week. {villain} turns nobody away who can hold a blade."
+    ],
+    "threat_great_hunt": [
+      "{lord} called a great hunt on {villain}: hounds and beaters went up to {home}, and its head hangs on a gate now.",
+      "{villain} is dead. The huntsmen of {lord} ran it down near {home} with a hundred spears, and lost good men doing it.",
+      "Word from {area}: the great hunt of {lord} found {villain} at {home} and finished it. The farms of {place} feast tonight.",
+      "The horns of {lord} were heard over {area} for three days. On the fourth, they brought {villain} down below {home}."
+    ],
+    "threat_broken": [
+      "The riders of {lord} burned {gang} out of {home}. {villain} was hanged at the crossroads above {place}.",
+      "{gang} is finished: {lord} sent soldiers to {home}, and {villain} swung for it before the week was out.",
+      "Word from {area}: {lord}'s men took {home} by night, and the roads round {place} are free of {gang}.",
+      "{villain} is dead on a rope, and {gang} scattered to the hills. {lord} has had enough of tolls on its roads."
     ]
   }
 }

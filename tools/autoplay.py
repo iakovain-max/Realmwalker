@@ -691,6 +691,15 @@ def _check_threats(game, fail) -> None:
                 fail(f"outlaw threat {tid} has no band")
         elif t["state"] == "ended" and not t.get("outcome"):
             fail(f"threat {tid} ended without an outcome")
+        woke = t.get("woke")  # (G.2: why it woke - a trigger, the Storyteller's need, chance or politics' seed)
+        if woke is not None:
+            why = str(woke.get("why", ""))
+            known = why in game.tables.threats.get("triggers", {}) or why in ("need", "chance") or \
+                why.startswith("seed:")
+            if not known:
+                fail(f"threat {tid} woke for no reason the game knows ({why!r})")
+            if t["state"] == "dormant" and not t.get("sequel"):
+                fail(f"threat {tid} woke and is asleep again")
     for s in w.settlements:
         if s.population <= 0:
             fail(f"{s.name} has nobody left in it")
