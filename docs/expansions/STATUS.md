@@ -1,6 +1,6 @@
 # Expansion programme – status
 
-Current: 06 Adventures & Events · Part F (the cast and the Reading) · branch dlc/06-adventures-events
+Current: 06 Adventures & Events · Part G (the world changes) · branch dlc/06-adventures-events
 On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Destiny (v1.1.0, 2026-10-13: the rules kernel,
   the 2024 rules, the 2025 creatures, reactions that ask, Tactics 2.0, magic items and treasure, encounters by the
   budget, cards and status icons, adapted monster pictures, spell looks, the shelf) · 02 Blades & Backgrounds
@@ -30,7 +30,9 @@ On GitHub (main): World Variety · Clearing the decks (§0.4) · 01 Dice & Desti
   format 22) · Part E (2026-10-25: villains who act - attention, schemes staged on the map, letters in
   their hands, lieutenants who remember, nemeses, escapes, returns and early ends; the finale in full - arenas,
   phases, great attacks, every key, retreat and defeat, measured fair; every move in its temper's words, seals,
-  the villain's shadow in the journal; saves format 23)
+  the villain's shadow in the journal; saves format 23) · Part F (2026-11-06: allies with stakes under oath, rivals on
+  their own clocks, patrons' hidden motives and traitors with their tells, the innocent's fate, the Reading of the
+  Wayfarer's Deck with seers and hermits, each tale's own rival and traitor; saves format 24)
 Codex coverage: 2,951 entries from the three books, every one assigned to an expansion; Expansion 1: all 327 settled
   (237 done, 65 adapted, 25 omitted; `tools/codex/coverage.py --dlc`); Expansion 2: all 384 settled (310 done, 74
   adapted); Expansion 3: all 560 settled (223 done, 336 adapted, 1 omitted); Expansion 4: all 66 settled (36 done,
@@ -569,12 +571,30 @@ Ideas for later:
   to its mages. Where magic is forbidden: no open sale of scrolls or magic things but the temple's (cleric) scrolls; a
   mage casts for pay only with no other witness in sight, at x1.5. Towns visited before G.2 keep their people (no
   mages there); no save format change.
-Next session starts at: Expansion 6, **Adventures & Events**, Part F, task F.5 (*words (parallel), pictures, tests;
-the blueprints' full forms gain their rivals and traitors; FORMAT_VERSION +1; Part F to `main`*), on branch
-`dlc/06-adventures-events` (Part E is on main; F.1-F.4 on the branch). Read docs/expansions/06-adventures-events.md
-Part F, docs/ADVENTURES.md §5.3, §5.6, §5.7, and the F.1-F.4 notes below (the "Not in" lines of each list what F.5
-owes: the Outlaw's ally, the full forms' own rivals and traitors, e.g. the Risen's waker as the patron). F.5 ends
-with the merge of Part F into `main` (EXPANSIONS.md §5.1) and the save format bump.
+Next session starts at: Expansion 6, **Adventures & Events**, Part G, task G.1 (*full sign sets for every threat
+kind's stages, as news, scenes, marks and map signs; overlays on road encounters, prices and the land's flavour*), on
+branch `dlc/06-adventures-events` (Parts A-F are on main). Read docs/expansions/06-adventures-events.md Part G,
+docs/ADVENTURES.md §5.1, §5.9, §5.19, §5.21, §8.13, §8.16, and the Part B notes below on marks and map signs.
+F.5 (2026-11-06, realmwalker-b): the full forms' cast. Rivals: a kind may say `blueprints` (only those tales) and
+`prize` (what it wants when there is no thing to fetch: `rivals.prize_name`); the own kinds `hunter` (beast),
+`graverobbers` (risen, relation -1), `captain` (outlaw), weight 5 against the others' 2-3; `decide` gives no rival when
+no kind fits. Traitors: `from_by` {blueprint: {role: weight}} over `from` (risen: patron 5); reasons may say
+`blueprints` and `roles` (`traitors._reason`); `woke` (risen, patron only, weight 8: the patron paid the waker) has
+`waker` lines: `_waker_falls` (traitors.daily) sets `rec["waker"]` "due" once the waker lieutenant's fate is past
+met/escaped or its defeat step is done, and on_night tells it first at the next inn or camp morning ("told", seen +1,
+journal); `toll` (outlaw, any role: a cut of the gang's take). The Outlaw: cast `ally` (veteran_of, carter_of), an
+optional recruit step (persuasion 12) in the "inside" chapter, finale key `ally` -> ally_fights; stakes `robbed_road`
+and `deserter_out` (outlaw, by jobs) in adventures.allies.json. Schemas ADVENTURES rivals/traitors take the new keys.
+Words (two sonnet helpers): every result/fail_result of beats.rivals/cast/allies/reading at 3 variants or more (pages
+that are one code-filled placeholder stay one), patron answers and rival fate "bought" at 3, every great card's
+`marks` at 3. Pictures: none new (the beats' pictures and the card faces came with F.1-F.4; the new bands wear their
+people's dress). Autoplay `_check_rivals` (an own kind in its own tale only) and `_check_secrets` (a reason of the
+tale and role). tests/test_full_forms.py (9); test_rivals' every-kind test covers the beast's kinds;
+test_traitors' `_with_traitor` clears `from_by`. FORMAT_VERSION 24. Decisions: the Outlaw's ally is optional (the
+tale's chapter needs no recruit); the Risen's waker stays a cultist lieutenant (the patron paid it: the design's "the
+waker's identity, sometimes the patron" as a hidden hand, not the same body, so the defeat step and the patron's town
+life never clash); the Beast's own rival is a beast-hunter beside the old hero kind (the design: "a glory-hunter").
+Checks: CHECKS_PLACEHOLDER
 F.4 (2026-11-06, realmwalker-a): `game/story/reading.py` (its docstring has it all), data reading.json (its own
 data file, schema READING; tables.reading; keys starting "_" are comments, so the fallbacks are "any"/"default"),
 beats.reading.json (beat reading_offer, picture "reading"), people.json and dialogue.json pack fragments (job

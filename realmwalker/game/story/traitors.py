@@ -30,6 +30,12 @@ page of the epilogue (`after_tale`; a patron's replaces the grateful patron's pa
     decide(game, adv)   daily(game)   on_night(game, where, morning)   at_finale(battle, game, adv, boss)
     on_battle(game, result)   read_letter(game, q, first)   talk_choices(conv)   talk_choose(conv, choice)
     after_tale(game, adv)   journal_line(game, adv)
+
+The full forms (F.5): `from_by` gives a blueprint its own weights by role (the Risen's patron most of all), and a
+reason may be a tale's or a role's own (`blueprints`, `roles`: the Risen's patron who paid the waker, "woke"; the
+Outlaw's cut of the toll, "toll"). A reason with `waker` lines: once the tale's waker is beaten (its lieutenant's
+fate, or its defeat step done) while the traitor is hidden, `rec["waker"]` is "due" (daily) and what was found on it
+is told at the next fire or inn before any other tell ("told"), whatever the clock says.
 """
 
 from __future__ import annotations
@@ -114,14 +120,14 @@ def decide(game, adv: dict) -> None:
     if not sp or not rng.chance(float(sp["chance"].get(adv["blueprint"], 0.0))):
         adv["traitor"] = None
         return
-    cands = [(r, w) for r, w in _candidates(game, adv) if int(sp["from"].get(r, 0)) > 0]
+    weights = dict(sp["from"], **sp.get("from_by", {}).get(adv["blueprint"], {}))  # (F.5: a tale's own)
+    cands = [(r, w) for r, w in _candidates(game, adv) if int(weights.get(r, 0)) > 0]
     if not cands:
         if _in_finale(adv):
             adv["traitor"] = None
         return
-    role, who = rng.weighted(cands, [float(sp["from"][r]) for r, _ in cands])
-    reasons = sorted(k for k, v in sp["reasons"].items() if int(v["weight"]) > 0)
-    reason = rng.weighted(reasons, [float(sp["reasons"][k]["weight"]) for k in reasons])
+    role, who = rng.weighted(cands, [float(weights[r]) for r, _ in cands])
+    reason = _reason(sp, adv, role, rng)
     if role == "companion":
         npc_id = (who.companion or {}).get("npc")
         name, sex = who.name, who.sex
@@ -139,9 +145,35 @@ def decide(game, adv: dict) -> None:
     rec["why"] = _say(game, adv, sp["reasons"][reason]["why"], rng.child("why"))
 
 
+def _reason(sp: dict, adv: dict, role: str, rng) -> str:
+    """Why they do it: a reason that fits this tale and this role (the full forms' own among them: F.5)."""
+    bp = adv["blueprint"]
+    fits = {k: v for k, v in sp["reasons"].items() if int(v["weight"]) > 0
+            and bp in v.get("blueprints", [bp]) and role in v.get("roles", [role])}
+    reasons = sorted(fits)
+    return rng.weighted(reasons, [float(fits[k]["weight"]) for k in reasons])
+
+
 def daily(game) -> None:
     for adv in _story().active(game):
         decide(game, adv)
+        _waker_falls(game, adv)
+
+
+def _waker_falls(game, adv: dict) -> None:
+    """The Risen's waker beaten while the one who paid it is still hidden: what is found on it is a tell, told at
+    the next fire or inn (F.5, ADVENTURES.md §6.2: the waker's identity, sometimes the patron)."""
+    rec = hidden(adv)
+    if rec is None or rec.get("waker") or not spec(game)["reasons"][rec["reason"]].get("waker"):
+        return
+    from realmwalker.game.story import lieutenants
+
+    lt = lieutenants.of(game, adv, "waker")
+    beaten = lt is not None and lt["fate"] not in ("unmet", "met", "escaped")
+    beaten = beaten or any(st["kind"] == "defeat" and st["target"].get("role") == "waker" and st["state"] == "done"
+                           for ch in adv["chapters"] for st in ch["steps"])
+    if beaten:
+        rec["waker"] = "due"
 
 
 def companion(game, adv: dict, *, waiting: bool = True):
@@ -221,6 +253,14 @@ def on_night(game, where: str, *, morning: bool = True) -> bool:
             if not close and morning and (rec["role"] != "ally" or npc(game, adv) is not None):
                 return _offer(game, adv, "traitor_sells", where, {})
             continue
+        if rec.get("waker") == "due" and morning and not (close and where != "camp"):
+            rec["waker"] = "told"  # (what was found on the waker: told first, whatever the clock says)
+            tell = _say(game, adv, sp["reasons"][rec["reason"]]["waker"],
+                        game.world.rng.child(f"traitor-waker/{adv['id']}"))
+            rec["seen"] = int(rec["seen"]) + 1
+            rec["last"] = today
+            _note(game, adv, tell)
+            return _offer(game, adv, "traitor_tell", where, {"tell": tell, "doubt": _doubt(rec)})
         if not morning or (close and where != "camp") or today - int(rec["made"]) < int(clock["tell_after"]) or \
                 today - int(rec["last"]) < int(clock["every"]) or int(rec["seen"]) >= int(clock["tells"]):
             continue

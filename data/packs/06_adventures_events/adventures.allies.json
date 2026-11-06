@@ -79,6 +79,36 @@
           "\"You've heard what they say of me,\" {ally} says. \"It's true. I was on watch, and I slept, and the fire took the granary. Everyone remembers. I want them to remember something else.\"",
           "{ally} pokes the fire hard. \"I ran from a fight once. Just the once. You'd be surprised how long they talk about a thing like that, in a small place.\""
         ]
+      },
+      "robbed_road": {
+        "blueprints": ["outlaw"], "jobs": ["carter", "porter", "labourer", "herder", "farmer"],
+        "crisis": "revenge", "values": ["brave", "compassionate"], "want": "revenge",
+        "stake": [
+          "the wagon {they} lost on the road out of {town}, and the boy who drove it with {them}",
+          "a load that was everything {they} owned, taken by {villain_short}'s men",
+          "the carter's mate {they} buried by the road, under a stone with no name on it"
+        ],
+        "mine": ["my wagon, and the lad who drove it with me", "everything I owned, on one load", "my mate, under a stone by the road"],
+        "confidence": [
+          "\"They took the team as well,\" {ally} says to the fire. \"Two greys I'd had since they were foals. The load I could stand to lose. The lad who sat up front with me, I couldn't. He was fifteen. He reached for the whip, that's all. Just reached for it.\"",
+          "\"Twenty years on that road,\" {ally} says. \"Never lost so much as a sack. Then {villain_short}'s lot stepped out of the trees one morning as if they'd been told the hour. They had been. That's the part I can't swallow.\"",
+          "{ally} turns a wagon-pin over in {their} fingers. \"It's all that came home. I walk past the yard in {town} every morning and the place where my wagon stood is empty, and everyone looks at me as if I'd done it myself.\""
+        ]
+      },
+      "deserter_out": {
+        "blueprints": ["outlaw"], "jobs": ["soldier", "guard", "smith", "woodcutter"],
+        "crisis": "doubt", "values": ["honourable", "cautious"], "want": "cause",
+        "stake": [
+          "the months {they} rode with {villain_short}, before {they} got out",
+          "the men {they} left behind at {home}, who were {their} friends once",
+          "a pardon {they} mean to earn with the sword {they} once sold"
+        ],
+        "mine": ["the months I rode with them", "the men I left at {home}", "my pardon, if I can earn it"],
+        "confidence": [
+          "\"I'll tell you before someone else does,\" {ally} says, very low. \"I rode with them. A winter and a spring, after the war turned us loose with no pay. I held the horses the day they took the salt wagons. I left when they started on the carters. That's the truth of me.\"",
+          "\"There's a man at {home} called the Sergeant by everyone,\" {ally} says. \"He taught me to throw a knife. He'll be there at the end, and so will I, on the other side. I've been trying to think what I'll say to him. There isn't anything.\"",
+          "{ally} pulls back a sleeve: a crude brand, half burned away with a hot iron. \"{villain_short}'s mark. Every one of them has it. I put the iron to it myself the night I ran. It didn't take it all off. Nothing does.\""
+        ]
       }
     },
     "riding": [

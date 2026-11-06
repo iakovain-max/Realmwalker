@@ -46,15 +46,15 @@
     "answers": {
       "forgave": [
         "You let it lie. {patron} will not forget that you could have done otherwise.",
-        "You keep {patron}'s secret. Some debts are paid by silence."
+        "You keep {patron}'s secret. Some debts are paid by silence.", "You say nothing of what you know. {patron} knows it, and is careful of you ever after."
       ],
       "paid": [
         "{patron} paid for your silence, and you took it. That is a thing between you now, for good.",
-        "The purse was heavy. {patron} did not look at you as {they} handed it over."
+        "The purse was heavy. {patron} did not look at you as {they} handed it over.", "{patron} counted out the silver without a word, and you took it. Neither of you speaks of it, and neither forgets."
       ],
       "exposed": [
         "{town} knows what {patron} did. {They} still live there. It is not the same as living there before.",
-        "You told {town} the truth about {patron}. Some thanked you for it. More did not."
+        "You told {town} the truth about {patron}. Some thanked you for it. More did not.", "You laid what {patron} had done before {town}. {They} stayed on, and {town} did not forget it."
       ]
     },
     "trust": {"gift_after": 1, "gifts": 2, "betray_at": 2},
@@ -69,6 +69,7 @@
   "traitors": {
     "chance": {"beast": 0.15, "risen": 0.25, "outlaw": 0.3},
     "from": {"patron": 2, "ally": 2, "companion": 1},
+    "from_by": {"risen": {"patron": 5, "ally": 1, "companion": 1}, "outlaw": {"patron": 2, "ally": 3, "companion": 2}},
     "clock": {"tell_after": 2, "every": 3, "event_chance": 0.5, "tells": 3},
     "reasons": {
       "kin": {
@@ -89,6 +90,47 @@
           "In a dead servant's purse you find a little carved horse, a child's toy, and a scrap of paper in {traitor}'s hand: only a day and a road.",
           "Someone in {town} says {traitor}'s house has been shut and dark for weeks, the children's beds empty, and {traitor} says they are visiting kin.",
           "The servants of {villain_short} knew which road you took. Only {traitor} knew it too."
+        ]
+      },
+      "woke": {
+        "weight": 8, "blueprints": ["risen"], "roles": ["patron"],
+        "why": [
+          "It was {traitor} who paid to have {home} opened. A crown's worth of grave-goods, {they} thought, and a dead king too long dead to mind. {They} did not think the king would mind so much.",
+          "{traitor} hired the waker. {They} wanted what lay in {home}, and {they} wanted the old stories proved, and {they} got both. Every death since has been {theirs} to answer for, and {they} sent for you to answer it.",
+          "The candles in {home} were bought with {traitor}'s silver. {They} believed a waked king could be bargained with, and {they} believe it still, and that is why {they} keep telling {villain_short} where you are."
+        ],
+        "near": [
+          "{traitor} knows the way through the old graves better than a priest ought to, and stops at one of them as if remembering a spade.",
+          "There is grave-earth under {traitor}'s nails, the grey earth of {home}, and {they} keep{s} {their} hands out of the firelight.",
+          "{traitor} speaks of {villain_short} by a title nobody in {town} has used in three hundred years, and then pretends {they} did not."
+        ],
+        "far": [
+          "The sexton of {town} says {traitor} asked him, a season ago, which of the old barrows had never been opened.",
+          "A carter swears he drove a cart for {traitor} by night towards {home}, with picks and lamp-oil under the sacking.",
+          "{traitor} sold a gold ring in the market of {town} last month, old work, the kind they only find in graves."
+        ],
+        "waker": [
+          "On the waker's body, folded small, is a list of the grave-goods of {home} in a fair clerk's hand, and against each a price. The hand is {traitor}'s. You have seen it on the letter that brought you here.",
+          "The waker's purse is fat with new coin of {town}, and wrapped round it is a note: \"The rest when the door is open.\" It is sealed with {traitor}'s ring.",
+          "Before the waker dies it laughs at you. \"Ask the one who sent for you,\" it says, \"who paid for the candles.\" Then it says nothing more, ever."
+        ]
+      },
+      "toll": {
+        "weight": 4, "blueprints": ["outlaw"],
+        "why": [
+          "{traitor} has taken a cut of every wagon {gang} stopped. One part in ten, paid at the crossroads on the first night of the month, and never once late.",
+          "{villain_short} pays {traitor} a share of the toll. {traitor} told {gang} the days, and {gang} took the wagons, and {traitor} bought land with it.",
+          "{traitor} has been in it with {villain_short} since before the first wagon burned. The informer in {town} was {theirs}, and {traitor} was the one who paid them."
+        ],
+        "near": [
+          "{traitor} knows how many men {gang} keeps at {home} before anyone has told you. {They} guess{es} the number. {They} guess{es} it exactly.",
+          "A coin falls out of {traitor}'s boot when {they} pull{s} it off at the fire: new silver, cut through, the way the gang cuts it.",
+          "{traitor} is sure, too sure, which road the wagon should take, and the road {they} choose{s} is always the quiet one."
+        ],
+        "far": [
+          "A merchant of {town} says {traitor}'s wagons are the only ones that have never been touched. Not once, in two years.",
+          "The man you took on the road spits when he hears {traitor}'s name. \"Ask {them} what {they} get for it,\" he says, and will say nothing else.",
+          "{traitor} bought a mill outside {town} this spring, for silver, all at once. Nobody knows where the silver came from."
         ]
       },
       "paid": {

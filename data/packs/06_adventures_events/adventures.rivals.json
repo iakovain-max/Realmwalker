@@ -37,6 +37,45 @@
                 "the youngest {child} of a great house, out to win the name the eldest was given",
                 "a lord's {child} who has paid good coin for swords and means to be seen using them"],
         "band_words": ["{rival}'s paid swords", "{rival} and {their} hired men", "the swords {rival} has bought"]
+      },
+      "hunter": {
+        "weight": 5, "relation": 0, "blueprints": ["beast"],
+        "leader": [["bandit_captain", "berserker"], ["berserker", "bandit_captain"], ["assassin", "berserker"], ["assassin", "mage"]],
+        "band": [["bandit_archer", "thug"], ["bandit_archer", "thug", "berserker"], ["berserker", "bandit_archer", "priest"],
+                 ["berserker", "bandit_archer", "mage_apprentice"]],
+        "most": [3, 4, 5, 6],
+        "who": ["a hunter of beasts who means to hang {villain_short}'s head over {their} own door",
+                "a glory-hunter with a trophy wall in {town} and one empty place left on it",
+                "a beast-killer with a song already half written about the night {they} take {villain_short}"],
+        "band_words": ["{rival}'s hunting party", "{rival} and {their} trackers", "{rival}'s hounds and huntsmen"],
+        "prize": ["{villain_short}'s head, for {their} wall", "the pelt and the head of {villain_short}",
+                  "the kill, and the song that comes after it"]
+      },
+      "graverobbers": {
+        "weight": 5, "relation": -1, "blueprints": ["risen"],
+        "leader": [["bandit_captain", "thug"], ["bandit_captain", "mage_apprentice"], ["mage", "assassin"], ["assassin", "mage"]],
+        "band": [["bandit", "thug", "bandit"], ["thug", "bandit_archer", "bandit"], ["thug", "berserker", "bandit_archer"],
+                 ["berserker", "thug", "mage_apprentice"]],
+        "most": [3, 4, 5, 6],
+        "who": ["a barrow-breaker who has opened three kings' graves and drunk every coin of them",
+                "a digger of old graves with a map of {home} bought from a dying man",
+                "a treasure-seeker who says the dead have no use for gold and has never yet been proved wrong"],
+        "band_words": ["{rival}'s diggers", "{rival} and {their} spades", "the grave-robbers with {rival}"],
+        "prize": ["the gold in {villain_short}'s barrow", "the grave-goods of {home}",
+                  "what was buried with {villain_short}"]
+      },
+      "captain": {
+        "weight": 5, "relation": 0, "blueprints": ["outlaw"],
+        "leader": [["bandit_captain"], ["bandit_captain", "berserker"], ["berserker", "assassin"], ["assassin", "berserker"]],
+        "band": [["guard", "guard", "bandit_archer"], ["guard", "thug", "bandit_archer"], ["thug", "berserker", "bandit_archer"],
+                 ["berserker", "thug", "priest"]],
+        "most": [4, 5, 6, 6],
+        "who": ["the lord's own captain, who was sent after {gang} twice and wants it said that the third time was {theirs}",
+                "a captain of the lord's riders with a name to make and the lord's ear to make it in",
+                "the captain of {town}'s riders, stung that a stranger was asked to do {their} work"],
+        "band_words": ["{rival}'s riders", "the captain and {their} men", "{rival} and the lord's riders"],
+        "prize": ["the glory of taking {villain_short}", "{villain_short} in chains, and the lord's thanks for it",
+                  "the credit for ending {gang}"]
       }
     },
     "fates": {
@@ -53,7 +92,7 @@
                 "{rival_full} won that race. {They} still tell{s} the story of it in the inns, and {they} tell{s} it well.",
                 "{prize} hangs on {rival_full}'s wall now, and {they} will show it to anyone who asks."],
       "bought": ["{rival_full} sold you {prize} and drank the price in {town}. {They} speak{s} well of you, which is something.",
-                 "You paid {rival_full} for what you should have had for nothing. {They} took the silver with a grin, and {they} earned it."],
+                 "You paid {rival_full} for what you should have had for nothing. {They} took the silver with a grin, and {they} earned it.", "{rival_full} named a price for {prize}, and you paid it. {They} drank to you in {town} for a week after, and meant it."],
       "friend": ["{rival_full} kept the truce, to the end and after it. When you pass through {town}, the first drink is {theirs}.",
                  "You and {rival_full} wanted the same thing, and in the end you shared it. {They} speak{s} of you as a friend.",
                  "{rival_full} rides on, somewhere, and when {they} hear{s} your name, {they} raise{s} a cup to it."],

@@ -22,12 +22,14 @@
         {
           "label": ["Take it, with your thanks."],
           "ops": [["patron", "gift"]],
-          "result": ["{patron} looks relieved, as if you had done {them} a kindness by taking it.", "\"Good,\" {patron} says. \"Good. Now eat something.\""]
+          "result": ["{patron} looks relieved, as if you had done {them} a kindness by taking it.", "\"Good,\" {patron} says. \"Good. Now eat something.\"",
+                                                                                                    "{patron} presses it on you, and is plainly glad when you close your hand on it. It seems to matter more to {them} than to you."]
         },
         {
           "label": ["Refuse it. You have not earned it yet."],
           "ops": [["patron", "refuse"]],
-          "result": ["\"Then you'll have it when you have,\" {patron} says, and means it.", "{patron} shakes {their} head at you, and is pleased, and pays for your supper instead."]
+          "result": ["\"Then you'll have it when you have,\" {patron} says, and means it.", "{patron} shakes {their} head at you, and is pleased, and pays for your supper instead.",
+                                                                                            "{patron} nods slowly, and takes back what was offered, and says only that you are an honest one. Supper, though, is at {their} cost."]
         }
       ]
     },
@@ -48,17 +50,20 @@
         {
           "label": ["Let it lie. The dead are still dead, whatever {patron}'s reasons."],
           "ops": [["patron", "forgive"]],
-          "result": ["{patron} cannot speak for a while. Then {they} take{s} your hand and hold{s} it.", "\"Thank you,\" {patron} says, very quietly."]
+          "result": ["{patron} cannot speak for a while. Then {they} take{s} your hand and hold{s} it.", "\"Thank you,\" {patron} says, very quietly.",
+                                                                                                         "{patron} bows {their} head, and for a time there is nothing said. When {they} look{s} up, {their} eyes are wet."]
         },
         {
           "label": ["Name your price for keeping it quiet."],
           "ops": [["patron", "paid"]],
-          "result": ["{patron} pays. {They} do{es} not argue. That is almost worse.", "The coin is counted out in silence, and you put it away in silence."]
+          "result": ["{patron} pays. {They} do{es} not argue. That is almost worse.", "The coin is counted out in silence, and you put it away in silence.",
+                                                                                      "{patron} names a sum back to you without haggling, and pays it. Neither of you speaks of why."]
         },
         {
           "label": ["{town} should know. Tell them."],
           "ops": [["patron", "expose"]],
-          "result": ["By noon it is all over {town}. {patron} keeps to {their} house.", "You say it in the square, where everyone can hear. Nobody looks at {patron}'s door for the rest of the day."]
+          "result": ["By noon it is all over {town}. {patron} keeps to {their} house.", "You say it in the square, where everyone can hear. Nobody looks at {patron}'s door for the rest of the day.",
+                                                                                        "You tell it plainly, to whoever will listen, and by evening the whole of {town} has it. {patron}'s shutters stay closed."]
         }
       ]
     },
@@ -74,7 +79,8 @@
       "choices": [
         {
           "label": ["Say nothing, and watch {traitor}."],
-          "result": ["You say nothing. But you will be watching now.", "You keep it to yourself, and the night goes on as nights do."]
+          "result": ["You say nothing. But you will be watching now.", "You keep it to yourself, and the night goes on as nights do.",
+                                                                       "You hold your tongue, and your eyes stay open. If there is something to see, you will see it."]
         },
         {
           "label": ["Have it out with {traitor}: make {them} tell you everything."],
@@ -82,20 +88,24 @@
           "check": {"skill": "insight", "dc": 12},
           "success": [["traitor", "yield"]],
           "failure": [["traitor", "flee"]],
-          "result": ["You lay it out, all of it, and watch {traitor}'s face as you do. Before you are done {they} {are} weeping.", "\"You know,\" {traitor} says. It is not a question. \"Then you had better hear the rest.\""],
-          "fail_result": ["You have it half said when {traitor} is gone - out of the light and into the dark, running.", "{traitor} hears you out with a blank face, and in the morning {they} {are} gone, and the road to {home} has fresh tracks."]
+          "result": ["You lay it out, all of it, and watch {traitor}'s face as you do. Before you are done {they} {are} weeping.", "\"You know,\" {traitor} says. It is not a question. \"Then you had better hear the rest.\"",
+                                                                                                                                   "You say what you have seen, one thing after another, and {traitor} does not interrupt. At the end {they} {are} sitting very still, and then it all comes out."],
+          "fail_result": ["You have it half said when {traitor} is gone - out of the light and into the dark, running.", "{traitor} hears you out with a blank face, and in the morning {they} {are} gone, and the road to {home} has fresh tracks.",
+                                                                                                                         "You press, and {traitor} gives you nothing. By first light {they} {are} gone, and the road toward {home} shows a single track."]
         },
         {
           "label": ["Send {traitor} away, tonight, and say why."],
           "requires": {"traitor_tells": 2, "traitor_near": true},
           "ops": [["traitor", "send"]],
-          "result": ["{traitor} does not deny it. {They} only nod{s}, and go{es}.", "\"I'm sorry,\" {traitor} says at the end, and it might even be true."]
+          "result": ["{traitor} does not deny it. {They} only nod{s}, and go{es}.", "\"I'm sorry,\" {traitor} says at the end, and it might even be true.",
+                                                                                    "You say what you know and where it leaves {traitor}. {traitor} does not argue. {They} take{s} up a pack in the dark, and go{es}."]
         },
         {
           "label": ["Draw steel. {traitor} will answer for it here."],
           "requires": {"traitor_tells": 2, "traitor_near": true},
           "ops": [["traitor", "fight"]],
-          "result": ["{traitor} sees it in your face, and steel is out on both sides.", "\"So be it,\" {traitor} says, and does not pretend any more."]
+          "result": ["{traitor} sees it in your face, and steel is out on both sides.", "\"So be it,\" {traitor} says, and does not pretend any more.",
+                                                                                        "Steel comes out, and {traitor} is already moving. There was never going to be any other ending."]
         }
       ]
     },
@@ -148,28 +158,38 @@
           "check": {"skill": "deception", "dc": 10},
           "success": [["infiltrate", "in"]],
           "failure": [["infiltrate", "caught"]],
-          "result": ["Nobody stops you. Nobody even looks twice.", "A nod, a grunt, and you are inside."],
-          "fail_result": ["A face turns. A hand goes to a hilt. \"You're not one of ours.\""]
+          "result": ["Nobody stops you. Nobody even looks twice.", "A nod, a grunt, and you are inside.",
+                                                                   "You keep your head up and your pace even, and the guard looks through you. You are inside."],
+          "fail_result": ["A face turns. A hand goes to a hilt. \"You're not one of ours.\"",
+                          "Someone steps into your way and looks you up and down. \"Where did you get that coat?\" he says, and there is no friendliness in it.",
+                          "Your story is half out when a man by the wall laughs. \"I know every one of ours,\" he says, \"and you are none.\""]
         },
         {
           "label": ["Creep in by the dark side, unseen."],
           "check": {"skill": "stealth", "dc": 14},
           "success": [["infiltrate", "in"]],
           "failure": [["infiltrate", "caught"]],
-          "result": ["You are in, and nobody knows it.", "A loose board, a shadow, a held breath, and you are past them."],
-          "fail_result": ["A stone turns under your foot. The shout goes up."]
+          "result": ["You are in, and nobody knows it.", "A loose board, a shadow, a held breath, and you are past them.",
+                                                         "You go along the wall, low and slow, and the dark takes you in. Not a head turns."],
+          "fail_result": ["A stone turns under your foot. The shout goes up.",
+                          "Your cloak catches on a nail and tears loud in the quiet. A voice calls out, asking who is there.",
+                          "A lantern swings round the corner and finds you crouched against the wall. \"Here!\" someone cries."]
         },
         {
           "label": ["Talk your way past the watch."],
           "check": {"skill": "deception", "dc": 14},
           "success": [["infiltrate", "in"]],
           "failure": [["infiltrate", "caught"]],
-          "result": ["You talk, and keep talking, and somewhere in it they stand aside.", "\"Go on, then,\" the watch says at last, sick of you."],
-          "fail_result": ["\"Funny,\" the watch says. \"Nobody said.\" And then louder: \"Here! To me!\""]
+          "result": ["You talk, and keep talking, and somewhere in it they stand aside.", "\"Go on, then,\" the watch says at last, sick of you.",
+                                                                                          "You have an answer for every question, and a worse one ready for the next. In the end it is simpler for them to let you pass."],
+          "fail_result": ["\"Funny,\" the watch says. \"Nobody said.\" And then louder: \"Here! To me!\"",
+                          "The watch hears you out, and then nods to someone behind you. \"Hold that one,\" he says.",
+                          "Something in your tale does not sit right. The watch narrows his eyes, and then raises his voice for the others."]
         },
         {
           "label": ["Not now. Come back another night."],
-          "result": ["You slip away the way you came. Another night.", "Not tonight. You will be back."]
+          "result": ["You slip away the way you came. Another night.", "Not tonight. You will be back.",
+                                                                       "You turn back quietly, and the dark closes behind you. There will be a better night."]
         }
       ]
     }

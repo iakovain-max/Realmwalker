@@ -33,7 +33,7 @@ Newest session first. Each milestone lists what's new, how to try it, decisions 
 | **Expansion 3, *Demigods & Magics*** (version 1.3.0) | ✅ Released (2026-10-17), branch `dlc/03-demigods-magics` |
 | **Expansion 4, *Steel & Shadows*** (version 1.4.0) | ✅ Released (2026-10-17), branch `dlc/04-steel-shadows` |
 | **Expansion 5, *Schools & Domains*** (version 1.5.0) | ✅ Released (2026-10-18), branch `dlc/05-schools-domains` |
-| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-E on main (2026-10-25): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; villains who act and the finale in full; Parts F-K to come |
+| **Expansion 6, *Adventures & Events*** (version 1.6.0) | Parts A-F on main (2026-11-06): the story engine and the Beast; the stage and pictures for stories; quests reborn as situations; the Risen, the Outlaw Lord and the first hour; villains who act and the finale in full; the cast (allies, rivals, patrons and traitors) and the Reading; Parts G-K to come |
 | **The expansion programme** (`docs/EXPANSIONS.md`, `docs/expansions/STATUS.md`) | Expansions 1-5 released; Expansion 6 under way (see STATUS.md) |
 
 ---
@@ -45,6 +45,30 @@ new interface; then combat moved onto a grid, then every item was given a use, t
 game got sound and music, then worlds began to live their history, then the world got its peoples, its extremes and
 wonders and a new map, then its towns were rebuilt by each people and came alive, then the decks were cleared for
 the expansion programme (the first entries below).
+
+### Session, 2026-11-06 (midday): Adventures & Events Part F, task F.5 — the three tales' full casts — **Part F merged into `main`**
+
+- **Each tale has its own rival now.** When the Beast is hunted, the one racing you is usually a glory-hunter with a
+  trophy wall and one empty place on it, after the beast's head and pelt. In the Risen's tale it is a crew of
+  barrow-breakers after the gold buried with the dead king (they start out unfriendly). Against the Outlaw Lord it
+  is the lord's own captain and his riders, stung that a stranger was asked to do his work, after the glory of
+  taking the outlaw. The older kinds (a famous hero, deserters, a lord's child) still turn up now and then.
+- **The Risen's patron may be the one who woke the dead.** When the Risen's tale hides a traitor, it is most often
+  the very person who sent for you: they paid the grave-robber to open the barrow, for its gold. Beat the waker and
+  what you find on the body gives them away (a priced list of the grave-goods in their hand, a purse with their
+  seal, or the waker's last laugh), told at your next fire or inn. Catch them out as before (accuse them in their
+  own town), or be betrayed at the end. This can still happen only once in a hero's life.
+- **The Outlaw's traitor has their own reason:** a cut of every wagon the gang stopped, with their own clues (their
+  wagons are the only ones never robbed; a gang-cut coin in a boot).
+- **The Outlaw Lord's tale has an ally.** In its second chapter you may win over a robbed carter or an old soldier
+  (the "Win over" step is optional). Their stake is of the road: a wagon lost with the lad who drove it, or months
+  ridden with the gang before running from it (a half-burned brand on the arm). They come under oath as the other
+  tales' allies do, and fight beside you in the hideout.
+- **More words:** every answer in the rival, patron, traitor, ally and seer scenes has at least three wordings now,
+  and every card of the Wayfarer's Deck three ways of turning up in the world.
+- **New world needed:** the save format changed (24). Saves from before this cannot be loaded (the game says so and
+  leaves the files untouched); start a new world.
+  Checks: see STATUS.md (F.5 note).
 
 ### Session, 2026-11-06 (late morning): Adventures & Events Part F, task F.4 — the Reading — branch `dlc/06-adventures-events`
 

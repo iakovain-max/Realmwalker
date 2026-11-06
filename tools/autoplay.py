@@ -418,6 +418,8 @@ def _check_rivals(game, fail) -> None:
         where = f"tale {adv['id']}, rival {r.get('name')}"
         if r.get("kind") not in sp["kinds"] or r.get("state") not in rivals.STATES:
             fail(f"{where}: an unknown kind or state ({r.get('kind')}, {r.get('state')})")
+        elif adv["blueprint"] not in sp["kinds"][r["kind"]].get("blueprints", [adv["blueprint"]]):
+            fail(f"{where}: another tale's own rival ({r['kind']})")  # (F.5)
         if not -2 <= int(r.get("relation", 0)) <= 2:
             fail(f"{where}: a relation out of bounds ({r.get('relation')})")
         if r.get("state") == "racing" and (r.get("prize") is None or r.get("due") is None):
@@ -477,6 +479,11 @@ def _check_secrets(game, fail) -> None:
         if t.get("role") not in ("patron", "ally", "companion") or t.get("reason") not in tsp.get("reasons", {}) \
                 or t.get("state") not in traitors.STATES:
             fail(f"{where}: traitor {t.get('name')} with an unknown role, reason or state")
+        else:
+            rs = tsp["reasons"][t["reason"]]
+            if adv["blueprint"] not in rs.get("blueprints", [adv["blueprint"]]) or \
+                    t["role"] not in rs.get("roles", [t["role"]]):
+                fail(f"{where}: traitor {t.get('name')}'s reason '{t['reason']}' is another tale's or role's (F.5)")
         if t.get("role") == "patron" and adv["hero"]["life"] == life_of(game) and \
                 t.get("state") not in ("faltered", "never"):
             patron_traitors += 1

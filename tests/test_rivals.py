@@ -61,7 +61,9 @@ def _battle(game, *, win=True):
 
 def test_every_kind_of_rival_is_made_and_written_whole(made, tables, monkeypatch):
     game, adv, _ = _tale(made, tables, "beast")
-    for kind in tables.adventures["rivals"]["kinds"]:
+    for kind, ks in tables.adventures["rivals"]["kinds"].items():
+        if "beast" not in ks.get("blueprints", ["beast"]):
+            continue  # (another tale's own rival: tests/test_full_forms.py)
         r = _with_rival(game, adv, monkeypatch, kind=kind)
         assert r["kind"] == kind and r["state"] == "unmet" and -2 <= r["relation"] <= 2
         assert r["name"] and _no_slots(r["who"]) and _no_slots(r["band_words"])

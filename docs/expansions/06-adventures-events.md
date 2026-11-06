@@ -371,7 +371,7 @@ ADVENTURES.md §5.3, §5.6, §5.7.
   meanings), seers (a people.json job; crossroads camps, hermits at wonders), the reading staged at the seer's fire
   with the cards laid out as a picture, riddles written from the true places' own pasts, silent cards, the villain's
   card; the cards' imagery planted in the world and pointed out; card faces.
-- [ ] F.5 Words *(parallel)*, pictures, tests; the blueprints' full forms gain their rivals and traitors;
+- [x] F.5 Words *(parallel)*, pictures, tests; the blueprints' full forms gain their rivals and traitors;
   FORMAT_VERSION +1; Part F to `main`.
 
 ### Part G – The world changes

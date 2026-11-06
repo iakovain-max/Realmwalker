@@ -46,6 +46,7 @@ def _with_traitor(game, adv, monkeypatch, role, reason="kin"):
     tr = game.tables.adventures["traitors"]
     monkeypatch.setitem(tr["chance"], adv["blueprint"], 1.0)
     monkeypatch.setitem(tr, "from", {role: 1})
+    monkeypatch.setitem(tr, "from_by", {})
     monkeypatch.setitem(tr, "reasons", {reason: tr["reasons"][reason]})
     adv.pop("traitor", None)
     patrons.decide(game, adv)

@@ -34,14 +34,14 @@
       "choices": [
         {"label": ["Talk {them} down. You will go together, and you will go ready."], "check": {"skill": "persuasion", "dc": 13},
          "success": [["ally", "held", 5]], "failure": [["ally", "breaks"]],
-         "result": ["{ally} stands a long time with {their} hand on the pack. Then {they} let{s} it fall. \"Together,\" {they} say{s}. \"Ready. Aye. But soon.\"", "\"You're right,\" {ally} says at last, and sits. \"I'd only die, and it'd only laugh.\""],
-         "fail_result": ["{ally} hears you out, and shakes {their} head, and goes. You hear {their} steps on the road a long while in the dark.", "\"No,\" {ally} says. \"You've had your chance to be quick about it.\" And {they} {are} gone."]},
+         "result": ["{ally} stands a long time with {their} hand on the pack. Then {they} let{s} it fall. \"Together,\" {they} say{s}. \"Ready. Aye. But soon.\"", "\"You're right,\" {ally} says at last, and sits. \"I'd only die, and it'd only laugh.\"", "{ally} says nothing for a long while. Then {they} take{s} {their} hand from the pack. \"Together, then. But I'll not wait long.\""],
+         "fail_result": ["{ally} hears you out, and shakes {their} head, and goes. You hear {their} steps on the road a long while in the dark.", "\"No,\" {ally} says. \"You've had your chance to be quick about it.\" And {they} {are} gone.", "{ally} shakes {their} head before you have done, and is away down the road. You do not see {them} again that night."]},
         {"label": ["Take the pack from {them}. {They} {are} not going anywhere."], "check": {"skill": "intimidation", "dc": 12},
          "success": [["ally", "held_hard", -8]], "failure": [["ally", "breaks"]],
-         "result": ["You take it from {them}. For a moment you think {ally} will fight you. Then {they} sit{s} down, and will not look at you again that night.", "{ally} lets you take the pack, and hates you for it, and stays."],
-         "fail_result": ["{ally} twists out of your grip and is gone into the dark, and you do not follow.", "\"Don't,\" {ally} says, and there is a knife in {their} hand. You let {them} go."]},
+         "result": ["You take it from {them}. For a moment you think {ally} will fight you. Then {they} sit{s} down, and will not look at you again that night.", "{ally} lets you take the pack, and hates you for it, and stays.", "{ally} gives up the pack with a shove that is almost a blow, and sits with {their} back to you till morning."],
+         "fail_result": ["{ally} twists out of your grip and is gone into the dark, and you do not follow.", "\"Don't,\" {ally} says, and there is a knife in {their} hand. You let {them} go.", "{ally} ducks your hand and is gone before you can close it. You hear nothing after, not even footsteps."]},
         {"label": ["Let {them} go. It is {their} grief, not yours."], "ops": [["ally", "breaks"]],
-         "result": ["You stand aside. {ally} grips your arm once, hard, and goes.", "\"Thank you,\" {ally} says, of all things, and walks off into the dark towards {home}."]}
+         "result": ["You stand aside. {ally} grips your arm once, hard, and goes.", "\"Thank you,\" {ally} says, of all things, and walks off into the dark towards {home}.", "You say nothing. {ally} looks at you once, and goes, and the dark takes {them} within a few steps."]}
       ]
     },
     "ally_crisis_doubt": {
@@ -57,14 +57,14 @@
       "choices": [
         {"label": ["Tell {them} what you have seen, and why you will win."], "check": {"skill": "persuasion", "dc": 12},
          "success": [["ally", "held", 6]], "failure": [["ally", "home"]],
-         "result": ["{ally} listens, and the doubt goes slowly out of {their} face. \"All right,\" {they} say{s}. \"All right. I'll see it through.\"", "\"Aye,\" {ally} says at last. \"Put like that. Aye.\""],
-         "fail_result": ["{ally} hears you out, and is sorry, and is gone home in the morning.", "\"You believe it,\" {ally} says. \"I can see that. I just don't.\" {They} leave{s} at first light."]},
+         "result": ["{ally} listens, and the doubt goes slowly out of {their} face. \"All right,\" {they} say{s}. \"All right. I'll see it through.\"", "\"Aye,\" {ally} says at last. \"Put like that. Aye.\"", "{ally} is quiet a long while. \"Then you had best be right,\" {they} say{s}, and puts down {their} pack."],
+         "fail_result": ["{ally} hears you out, and is sorry, and is gone home in the morning.", "\"You believe it,\" {ally} says. \"I can see that. I just don't.\" {They} leave{s} at first light.", "{ally} listens to the end, and says nothing, and in the morning {their} blanket is cold and {their} pack is gone."]},
         {"label": ["Ask what is really frightening {them}."], "check": {"skill": "insight", "dc": 13},
          "success": [["ally", "held", 10]], "failure": [["ally", "home"]],
-         "result": ["It comes out at last, the real fear, and once it is said aloud it is smaller. {ally} stays, and is better company for it.", "\"It's not dying,\" {ally} says. \"It's dying for nothing.\" You talk until the fire is out. {They} stay{s}."],
-         "fail_result": ["You guess wrong, and {ally} shuts up like a door. In the morning {they} {are} gone home.", "\"That's not it,\" {ally} says. \"You don't understand. Never mind.\" At dawn {they} {are} gone."]},
+         "result": ["It comes out at last, the real fear, and once it is said aloud it is smaller. {ally} stays, and is better company for it.", "\"It's not dying,\" {ally} says. \"It's dying for nothing.\" You talk until the fire is out. {They} stay{s}.", "{ally} talks, haltingly, of the thing underneath, and is lighter for it by the end. {They} stay{s}, and say{s} no more of going home."],
+         "fail_result": ["You guess wrong, and {ally} shuts up like a door. In the morning {they} {are} gone home.", "\"That's not it,\" {ally} says. \"You don't understand. Never mind.\" At dawn {they} {are} gone.", "You ask, and it is the wrong question. {ally} says it is nothing, and by morning {they} {are} on the road home."]},
         {"label": ["Go home, then, with my thanks."], "ops": [["ally", "home"]],
-         "result": ["{ally} looks almost ashamed of how glad {they} {are}. \"I'll tell them in {town} what you're doing,\" {they} say{s}. \"I'll tell them right.\""]}
+         "result": ["{ally} looks almost ashamed of how glad {they} {are}. \"I'll tell them in {town} what you're doing,\" {they} say{s}. \"I'll tell them right.\"", "\"Thank you,\" {ally} says. \"I'd not have asked it of you.\" {They} {are} gone down the road to {town} before the fire is cold.", "{ally} grips your hand. \"I'll say a good word for you in {town},\" {they} say{s}, and goes at first light."]}
       ]
     },
     "ally_crisis_taken": {

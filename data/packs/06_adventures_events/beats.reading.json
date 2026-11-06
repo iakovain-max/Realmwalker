@@ -14,13 +14,13 @@
         {"label": ["Cross {seer}'s palm with {price}.", "Pay {price}, and sit down by the fire."],
          "requires": {"reading_price": 1},
          "ops": [["reading", "pay"]],
-         "result": ["The coin vanishes somewhere about {seer}. The cards are cut, and cut again, and laid down one by one on the cloth.", "\"Good,\" says {seer}, and the first card goes down on the cloth, face up."]},
+         "result": ["The coin vanishes somewhere about {seer}. The cards are cut, and cut again, and laid down one by one on the cloth.", "\"Good,\" says {seer}, and the first card goes down on the cloth, face up.", "{seer} takes the payment without a word and shuffles, slowly, the cards worn soft as cloth."]},
         {"label": ["Offer a favour instead: an hour's work about the fire.", "Carry water and wood for an hour, as the price."],
          "ops": [["reading", "favour"]],
-         "result": ["You fetch, carry, mend and stack until {seer} is satisfied, and then sit down, and the cards come out.", "An hour of work, and {seer} nods at last, and lays out the cards."]},
+         "result": ["You fetch, carry, mend and stack until {seer} is satisfied, and then sit down, and the cards come out.", "An hour of work, and {seer} nods at last, and lays out the cards.", "You split wood and haul water until your arms ache. {seer} watches, and when it is done, takes up the deck."]},
         {"label": ["Not today."],
          "ops": [],
-         "result": ["{seer} shrugs, and the cards go back into their cloth. \"The road will still be there.\"", "\"Another time, then,\" says {seer}, not at all surprised."]}
+         "result": ["{seer} shrugs, and the cards go back into their cloth. \"The road will still be there.\"", "\"Another time, then,\" says {seer}, not at all surprised.", "{seer} wraps the cards without a word. \"As you like. They keep.\""]}
       ]
     }
   }

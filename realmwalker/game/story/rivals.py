@@ -22,6 +22,10 @@ road to the villain (its attention, and no surprising it at the finale); at -2 a
 key "rival": they come to the finale on its second round (`at_finale`). Fights with them are bands tagged with the
 tale (role "rival"); `on_battle` follows them. The epilogue names them (`after_tale`, `fates`).
 
+The full forms (F.5): a kind with `blueprints` rides only in those tales (the Beast's glory-hunter "hunter", the
+Risen's barrow-breakers "graverobbers", the Outlaw's lord's own captain "captain", each weighted above the rest), and
+its `prize` words are what it wants when there is no thing to fetch (instead of the villain's head).
+
     decide(game, adv)   daily(game)   on_night(game, where)   on_descend(game, lm)   to_battle(battle, game, advs)
     at_finale(battle, game, adv, boss)   on_battle(game, result)   after_tale(game, adv)   journal_line(game, adv)
 """
@@ -74,8 +78,12 @@ def decide(game, adv: dict) -> None:
     if not sp or not rng.chance(float(sp["chance"].get(adv["blueprint"], 0.0))):
         adv["rival"] = None
         return
-    kinds = sorted(k for k, v in sp["kinds"].items() if int(v["weight"]) > 0)
-    kind = rng.weighted(kinds, [float(sp["kinds"][k]["weight"]) for k in kinds])
+    kinds = sorted(k for k, v in sp["kinds"].items() if int(v["weight"]) > 0
+                   and adv["blueprint"] in v.get("blueprints", [adv["blueprint"]]))
+    if not kinds:
+        adv["rival"] = None
+        return
+    kind =rng.weighted(kinds, [float(sp["kinds"][k]["weight"]) for k in kinds])
     ks = sp["kinds"][kind]
     rec = {"kind": kind, "relation": int(ks["relation"]), "state": "unmet", "made": _today(game), "met": None,
            "due": None, "prize": None, "last": _today(game), "seen": [], "lost": 0, "sold": False, "holds": False,
@@ -151,6 +159,12 @@ def prize_name(game, adv: dict) -> str:
     from realmwalker.game.story import words as wordsmod
 
     w = wordsmod.for_adventure(game, adv)
+    rec = adv.get("rival") or {}
+    own = (spec(game).get("kinds", {}).get(rec.get("kind"), {}) or {}).get("prize")
+    if own and "villain_short" in w:  # (the full forms' own: the barrow's gold, the captain's glory - F.5)
+        rng = game.world.rng.child(f"rival-prize/{adv['id']}")
+        words = {k: v for k, v in w.items() if isinstance(v, str)}
+        return textgen.fill(rng.choice(list(own)), rng, game.tables.adventures.get("words", {}), words)
     return f"{w['villain_short']}'s head" if "villain_short" in w else "the prize"
 
 

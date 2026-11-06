@@ -1599,7 +1599,10 @@ ADVENTURES = Obj({
                           "leader": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
                           "band": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
                           "most": List(Int(min=1, max=12), min_items=4, max_items=4),
-                          "who": word_list(3, 200), "band_words": word_list(3, 100)}), min_items=1),
+                          "who": word_list(3, 200), "band_words": word_list(3, 100),
+                          # (F.5) a blueprint's own kind: only for these tales; what they want instead of the head
+                          "blueprints": List(Str(max_len=30), optional=True),
+                          "prize": List(Str(max_len=120), min_items=2, optional=True)}), min_items=1),
         "fates": Map(word_list(2, 400)),
     }, optional=True),
     # (F.3) the cast's secrets (story/patrons.py, story/traitors.py): the patron's hidden motives and their kindnesses
@@ -1615,10 +1618,16 @@ ADVENTURES = Obj({
     "traitors": Obj({
         "chance": Map(Float(min=0, max=1)),
         "from": Map(Int(min=0, max=20)),
+        "from_by": Map(Map(Int(min=0, max=20)), optional=True),  # (F.5) a blueprint's own weights by role
         "clock": Obj({"tell_after": Int(min=0, max=60), "every": Int(min=1, max=30),
                       "event_chance": Float(min=0, max=1), "tells": Int(min=2, max=4)}),
         "reasons": Map(Obj({"weight": Int(min=0, max=20), "why": word_list(2, 400), "near": word_list(3, 400),
-                            "far": word_list(3, 400)}), min_items=1),
+                            "far": word_list(3, 400),
+                            # (F.5) the full forms' own reasons: only for these tales and roles; `waker` the tell
+                            # found when the tale's waker falls (the Risen's patron who woke the dead)
+                            "blueprints": List(Str(max_len=30), optional=True),
+                            "roles": List(Str(choices=["patron", "ally", "companion"]), optional=True),
+                            "waker": List(Str(max_len=400), min_items=2, optional=True)}), min_items=1),
         "turned_as": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
         "patron_men": List(List(Str(max_len=40), min_items=1), min_items=4, max_items=4),
         "fates": Map(word_list(2, 400)),
